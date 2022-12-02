@@ -75,7 +75,7 @@
         app:layout_constraintTop_toBottomOf="@+id/toAddress" />
 
     <Button
-        android:id="@+id/realSendButton"
+        android:id="@+id/addNetwork"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"

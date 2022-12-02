@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.Editable
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -13,13 +12,11 @@ import org.ethereumphone.walletmanager.R
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.utils.WalletSDK
 import org.kethereum.eip137.model.ENSName
-import org.web3j.ens.EnsResolver
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import org.kethereum.ens.ENS
 import org.kethereum.rpc.HttpEthereumRPC
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
 
 
@@ -44,7 +41,7 @@ class SendActivity : AppCompatActivity() {
     private fun updateUi() {
         val textView = findViewById<TextView>(R.id.sendTitle)
         val toAddr = findViewById<EditText>(R.id.toAddress)
-        val sendButton = findViewById<Button>(R.id.realSendButton)
+        val sendButton = findViewById<Button>(R.id.addNetwork)
         val context: Context = this
 
         textView.setText("Send " + network.chainCurrency)

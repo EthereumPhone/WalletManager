@@ -68,9 +68,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         allNetworks.forEach {
             nameArray.add(it.chainName)
         }
+
+        val stringList = nameArray.toArray(arrayOfNulls<String>(nameArray.size))
         val adapter: ArrayAdapter<String> = ArrayAdapter<String>(
             this@MainActivity,
-            android.R.layout.simple_spinner_item, nameArray.toArray() as Array<out String>
+            android.R.layout.simple_spinner_item, stringList
         )
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -85,7 +87,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private fun loadNetworks() {
         val gson = Gson()
 
-        val sharedPreferences = this.getPreferences(MODE_PRIVATE)
+        val sharedPreferences = this.getSharedPreferences("NETWORKS", Context.MODE_PRIVATE)
+
         val allNetworksString = sharedPreferences.getString("allNetworks", "")
         if (allNetworksString == "") {
             allNetworks.add(selectedNetwork)
@@ -102,19 +105,21 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             val itemType = object : TypeToken<ArrayList<Network>>() {}.type
             allNetworks = gson.fromJson(allNetworksString, itemType)
         }
-
-
     }
 
     private fun setupOnClicks() {
-        val sendButton = findViewById<Button>(R.id.realSendButton)
+        val sendButton = findViewById<Button>(R.id.addNetwork)
         val receiveButton = findViewById<Button>(R.id.receiveButton)
+        val addNetworkButton = findViewById<Button>(R.id.addNetworkButton)
 
         sendButton.setOnClickListener {
             startSend()
         }
         receiveButton.setOnClickListener {
             showReceive()
+        }
+        addNetworkButton.setOnClickListener {
+            startActivity(Intent(this, AddNetworkActivity::class.java))
         }
     }
 
@@ -137,8 +142,6 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             web3j.ethGetBalance(phoneAddress, DefaultBlockParameterName.LATEST).sendAsync()
                 .get().balance
         )
-        val spinner = findViewById<Spinner>(R.id.spinner)
-        val items = arrayOf("1", "2", "three")
 
         // Update currency amount textView
         amountTextView.setText(
@@ -149,8 +152,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-        println("Clicked!")
-        println(parent?.getItemAtPosition(pos).toString())
+        allNetworks.forEach {
+            if (it.chainName == parent?.getItemAtPosition(pos).toString()) {
+                selectedNetwork = it
+                updateValues()
+            }
+        }
     }
 
     override fun onNothingSelected(p0: AdapterView<*>?) {
