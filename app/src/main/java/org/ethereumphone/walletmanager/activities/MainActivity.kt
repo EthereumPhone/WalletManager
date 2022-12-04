@@ -12,11 +12,20 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.ethereumphone.walletmanager.R
 import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.json.JSONArray
+import org.json.JSONObject
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
+import java.io.InputStream
+import java.io.OutputStreamWriter
 import java.math.BigDecimal
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 fun Context.copyToClipboard(text: CharSequence) {
@@ -148,6 +157,50 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN)
                 .toPlainString() + " " + selectedNetwork.chainCurrency
         )
+
+    }
+
+    fun getHistoricTransactions(address: String): ArrayList<Transaction> {
+        try {
+            val output = ArrayList<Transaction>()
+
+            val url = URL("https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z")
+            val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
+            httpConn.setRequestMethod("POST")
+
+            httpConn.setRequestProperty("Content-Type", "application/json")
+
+            httpConn.setDoOutput(true)
+            val writer = OutputStreamWriter(httpConn.getOutputStream())
+            writer.write("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"alchemy_getAssetTransfers\",\"params\":[{\"fromBlock\":\"0x0\",\"fromAddress\":\"$address\", \"category\": [\"external\"]}]}")
+            writer.flush()
+            writer.close()
+            httpConn.getOutputStream().close()
+
+            val responseStream: InputStream =
+                if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
+            val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
+            val response = if (s.hasNext()) s.next() else ""
+
+            val json = JSONObject(response).getJSONObject("result").getJSONArray("transfers") as JSONArray
+
+            for (i in 0..json.length()-1) {
+                val transferData = json.get(i) as JSONObject
+                output.add(
+                    Transaction(
+                        type = (transferData.getString("to") == address),
+                        value = transferData.getString("value"),
+                        hash = transferData.getString("hash"),
+                        fromAddr = transferData.getString("from"),
+                        toAddr = transferData.getString("to")
+                    )
+                )
+            }
+            return output
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ArrayList<Transaction>()
+        }
 
     }
 
