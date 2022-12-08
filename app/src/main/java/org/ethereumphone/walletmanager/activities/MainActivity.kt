@@ -5,19 +5,24 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.R
+import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletmanager.utils.ExchangeApi
 import org.ethereumphone.walletmanager.utils.WalletSDK
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
-import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import java.io.InputStream
@@ -26,6 +31,7 @@ import java.math.BigDecimal
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import kotlin.collections.ArrayList
 
 
@@ -217,5 +223,31 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     override fun onNothingSelected(p0: AdapterView<*>?) {
         println("nothing selected")
+    }
+
+    fun startPriceUpdater() {
+        val mainHandler = Handler(Looper.getMainLooper())
+
+        mainHandler.post(object : Runnable {
+            override fun run() {
+                val completableFuture = CompletableFuture<Exchange>()
+                CompletableFuture.runAsync {
+                    GlobalScope.launch {
+                        val output = ExchangeApi.retrofitService.getExchange(
+                            symbol = "ETHUSDT"
+                        )
+                        completableFuture.complete(output)
+                    }
+                }
+                completableFuture.whenComplete { exchange, throwable ->
+                    // Exchange is the object with price and ticker
+                    println(exchange)
+                }
+
+                mainHandler.postDelayed(this, 60 * 1000)
+            }
+        })
+
+
     }
 }

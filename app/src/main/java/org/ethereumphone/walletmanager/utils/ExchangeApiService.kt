@@ -21,7 +21,7 @@ interface ExchangeApiService {
     @GET("/api/v3/ticker/price")
     suspend fun getExchange(
         @Query("symbol") symbol: String? = null
-    ): List<Exchange>
+    ): Exchange
 }
 
 // Singleton

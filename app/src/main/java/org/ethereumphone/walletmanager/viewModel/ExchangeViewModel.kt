@@ -15,7 +15,7 @@ class ExchangeViewModel: ViewModel() {
         viewModelScope.launch {
             try {
                 val listResult = ExchangeApi.retrofitService.getExchange(symbol)
-                _exchange.value = listResult[0].price
+                _exchange.value = listResult.price
             } catch (e: Exception) {
                 _exchange.value =  "Error: ${e.message}"
             }
