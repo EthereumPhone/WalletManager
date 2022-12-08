@@ -5,6 +5,5 @@ data class Transaction(
     val value: String,
     val hash: String,
     val toAddr: String,
-    val fromAddr: String,
-    val timestamp: Int
+    val fromAddr: String
 )

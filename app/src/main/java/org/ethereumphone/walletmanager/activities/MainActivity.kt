@@ -17,6 +17,7 @@ import org.ethereumphone.walletmanager.utils.WalletSDK
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import java.io.InputStream
@@ -40,7 +41,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     var allNetworks: ArrayList<Network> = ArrayList<Network>()
     var selectedNetwork: Network = Network(
         chainId = 1,
-        chainRPC = "https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7",
+        chainRPC = "https://rpc.flashbots.net/",
         chainCurrency = "eth",
         chainName = "Mainnet"
     )
@@ -163,8 +164,9 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     fun getHistoricTransactions(address: String): ArrayList<Transaction> {
         try {
             val output = ArrayList<Transaction>()
+            val rpcURL = if (selectedNetwork.chainId == 1) "https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z" else "https://eth-goerli.g.alchemy.com/v2/wEno3MttLG5usiVg4xL5_dXrDy_QH95f"
 
-            val url = URL("https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z")
+            val url = URL(rpcURL)
             val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
             httpConn.setRequestMethod("POST")
 
