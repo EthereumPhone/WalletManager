@@ -39,7 +39,8 @@ class AddNetworkActivity : AppCompatActivity() {
             chainId = chainID,
             chainCurrency = ticker,
             chainRPC = chainRPC,
-            chainName = chainName
+            chainName = chainName,
+            chainExplorer = "https://etherscan.io"
         )
 
         val sharedPreferences = this.getSharedPreferences("NETWORKS", Context.MODE_PRIVATE)

@@ -33,7 +33,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import kotlin.collections.ArrayList
 
 
 fun Context.copyToClipboard(text: CharSequence) {
@@ -50,7 +49,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         chainId = 1,
         chainRPC = "https://rpc.flashbots.net/",
         chainCurrency = "eth",
-        chainName = "Mainnet"
+        chainName = "Mainnet",
+        chainExplorer = "https://etherscan.io"
     )
 
     // Create wallet connection
@@ -114,7 +114,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     chainName = "Goerli Testnet",
                     chainId = 5,
                     chainCurrency = "eth",
-                    chainRPC = "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
+                    chainRPC = "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+                    chainExplorer = "https://goerli.etherscan.io"
                 )
             )
             sharedPreferences.edit().putString("allNetworks", gson.toJson(allNetworks)).apply()
@@ -260,5 +261,10 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             .toString()
         val intent = Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(uri) }
         startActivity(intent)
+    }
+
+    fun openTxInEtherscan(txHash: String) {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("${selectedNetwork.chainExplorer}/tx/$txHash"))
+        startActivity(browserIntent)
     }
 }

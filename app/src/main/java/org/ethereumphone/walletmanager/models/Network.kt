@@ -6,5 +6,6 @@ data class Network(
     val chainId: Int,
     val chainRPC: String,
     val chainCurrency: String,
-    val chainName: String
+    val chainName: String,
+    val chainExplorer: String
 ) : Serializable
