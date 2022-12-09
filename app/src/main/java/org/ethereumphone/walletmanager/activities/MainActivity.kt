@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -247,7 +248,17 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 mainHandler.postDelayed(this, 60 * 1000)
             }
         })
+    }
 
-
+    fun buyCryptoClicked() {
+        val uri = Uri.Builder()
+            .scheme("https")
+            .authority("buy.ramp.network")
+            .appendQueryParameter("swapAsset", "ETH_ETH")
+            .appendQueryParameter("userAddress", walletSDK.getAddress())
+            .build()
+            .toString()
+        val intent = Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(uri) }
+        startActivity(intent)
     }
 }
