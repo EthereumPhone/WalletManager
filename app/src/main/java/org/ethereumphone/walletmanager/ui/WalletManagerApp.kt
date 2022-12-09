@@ -1,13 +1,17 @@
 package org.ethereumphone.walletmanager.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.navigation.WalletManagerNavHost
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.components.BottomNavBar
+import org.ethereumphone.walletmanager.ui.components.TransactionItem
 
 @Composable
 fun WalletManagerApp(
@@ -30,4 +34,10 @@ fun WalletManagerApp(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun PreviewApp() {
+    WalletManagerApp()
 }

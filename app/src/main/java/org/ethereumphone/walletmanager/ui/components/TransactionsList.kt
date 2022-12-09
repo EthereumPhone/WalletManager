@@ -119,16 +119,14 @@ fun PreviewTransactionList() {
         value = "0.5",
         hash =  "0x1231",
         toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth",
-        timestamp = 1670503574
+        fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
     )
     val t2 = Transaction(
         type = false,
         value = "0.5",
         hash =  "0x1231",
         toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth",
-        timestamp = 1670503574
+        fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
     )
     val transactionList = listOf(t1,t2)
     WalletManagerTheme {
@@ -148,16 +146,14 @@ fun PreviewTransactionItem() {
         value = "0.5",
         hash =  "0x1231",
         toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth",
-        timestamp = 1670503574
+        fromAddr = "mhaas.eth"
     )
     val t2 = Transaction(
         type = false,
         value = "0.5",
         hash =  "0x1231",
         toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth",
-        timestamp = 1670503574
+        fromAddr = "mhaas.eth"
     )
 
     WalletManagerTheme {
