@@ -48,6 +48,8 @@ val md_theme_dark_background = Color(0xFF232323)
 val md_theme_dark_onBackground = Color(0xFFFEFEFE)
 val md_theme_dark_surface = Color(0xFF1C1B1F)
 val md_theme_dark_onSurface = Color(0xFFA3A0FF)
+
 val BoxBackground = Color(0xFF303039)
+val ListBackground = Color(0xFF3F3F3F).copy(alpha = 0.2f)
 
 val seed = Color(0xFF5550F2)
