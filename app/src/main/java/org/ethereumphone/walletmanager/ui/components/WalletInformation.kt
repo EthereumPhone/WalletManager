@@ -1,7 +1,6 @@
 package org.ethereumphone.walletmanager.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.theme.BoxBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import org.ethereumphone.walletmanager.viewModel.ExchangeViewModel
 
 
 @Composable
