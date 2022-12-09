@@ -1,3 +1,19 @@
 <resources>
-    <string name="app_name">Wallet Manager</string>
+    <string name="app_name" translatable="false">Wallet Manager</string>
+
+    <!-- Top level destinations-->
+    <string name="home_screen">Home</string>
+    <string name="swap_screen">Swap</string>
+    <string name="asset_screen">Asset</string>
+
+    <!-- Home screen text-->
+    <string name="send_action">Send</string>
+    <string name="buy_action">Buy</string>
+    <string name="receive_action">Receive</string>
+
+    <!-- Transaction History-->
+    <string name="transactions">Transactions</string>
+    <string name="sent_to">Sent to</string>
+    <string name="recieved_from">recieved from</string>
+
 </resources>

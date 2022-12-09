@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Top level destinations-->
+    <string name="home_screen">Home</string>
+    <string name="swap_screen">Swap</string>
+    <string name="asset_screen">Vermögenswerte</string>
+
+    <!-- Home screen text-->
+    <string name="send_action">Senden</string>
+    <string name="buy_action">Kaufen</string>
+    <string name="receive_action">Erhalten</string>
+
+    <!-- Transaction History-->
+    <string name="transactions">Transaktionen</string>
+    <string name="sent_to">Gesendet an</string>
+    <string name="app_name" translatable="false">R</string>
+    <string name="recieved_from">Ricevuto da</string>
+
+</resources>
