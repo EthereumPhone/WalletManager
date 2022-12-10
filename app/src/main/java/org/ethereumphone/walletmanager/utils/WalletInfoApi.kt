@@ -21,6 +21,7 @@ import org.web3j.protocol.http.HttpService
 import java.io.InputStream
 import java.io.OutputStreamWriter
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
@@ -31,6 +32,7 @@ class WalletInfoApi(
     val sharedPreferences: SharedPreferences
 ) {
     val wallet = WalletSDK(context)
+    val walletAddress = wallet.getAddress()
 
     private fun loadNetworks(): ArrayList<Network> {
         val gson = Gson()
@@ -74,20 +76,17 @@ class WalletInfoApi(
         return allNetworks
     }
 
-    fun updateValues(selectedNetwork: Network): String {
+    fun getEthAmount(selectedNetwork: Network): Double {
         // Get web3j instance for the selected network
         val web3j = Web3j.build(HttpService(selectedNetwork.chainRPC))
         // Get the phone's address
-        val phoneAddress = wallet.getAddress()
-        // Get the balance of the phone's address
         val amountGet = BigDecimal(
-            web3j.ethGetBalance(phoneAddress, DefaultBlockParameterName.LATEST).sendAsync()
+            web3j.ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST).sendAsync()
                 .get().balance
         )
 
         // Return the balance in ETH, rounded to 6 decimal places
-        return amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN)
-            .toPlainString()
+        return amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
     }
 
     fun getHistoricTransactions(selectedNetwork: Network): ArrayList<Transaction> {
@@ -133,6 +132,30 @@ class WalletInfoApi(
             e.printStackTrace()
             return ArrayList<Transaction>()
         }
+    }
+
+    fun getEthAmountInUSD(ethAmount: Double): Double {
+        val url = URL("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
+        val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
+        httpConn.setRequestMethod("GET")
+
+        httpConn.setRequestProperty("Content-Type", "application/json")
+
+        httpConn.setDoOutput(true)
+        val writer = OutputStreamWriter(httpConn.getOutputStream())
+        writer.write("")
+        writer.flush()
+        writer.close()
+        httpConn.getOutputStream().close()
+
+        val responseStream: InputStream =
+            if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
+        val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
+        val response = if (s.hasNext()) s.next() else ""
+
+        val json = JSONObject(response).getJSONObject("ethereum") as JSONObject
+
+        return (json.getDouble("usd") * ethAmount)
     }
 
     
