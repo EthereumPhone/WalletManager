@@ -24,19 +24,18 @@ import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 private val iconButtons = listOf(
     Triple(
         Icons.Rounded.NorthEast,
-        "send",
-        {}
-    ),
+        "send"
+    ) {
+      
+    },
     Triple(
         Icons.Default.CreditCard,
-        "buy",
-        {}
-    ),
+        "buy"
+    ) {},
     Triple(
         Icons.Rounded.VerticalAlignBottom,
-        "Receive",
-        {}
-    )
+        "Receive"
+    ) {}
 )
 
 @Composable

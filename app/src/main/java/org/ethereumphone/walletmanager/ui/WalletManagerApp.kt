@@ -18,6 +18,8 @@ fun WalletManagerApp(
     appState: WalletManagerState = rememberWalletManagerAppState()
 ) {
     WalletManagerTheme {
+
+        /**
         Scaffold(
             bottomBar = {
                 BottomNavBar(
@@ -33,6 +35,7 @@ fun WalletManagerApp(
                 modifier = Modifier.padding(innerPadding)
             )
         }
+        */
     }
 }
 

@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 fun SwapRoute(
     modifier: Modifier = Modifier
 ) {
-    Swap()
+    SwapScreen()
 }
 
 @Composable
