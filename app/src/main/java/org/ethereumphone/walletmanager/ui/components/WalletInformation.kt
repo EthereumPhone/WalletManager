@@ -34,7 +34,7 @@ fun WalletInformation(
         Text(
             text = "$ethAmount ETH",
             fontWeight = FontWeight.Bold,
-            fontSize = 48.sp,
+            fontSize = 35.sp,
             color = Color.White,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
@@ -42,7 +42,7 @@ fun WalletInformation(
         Text(
             text = "$$fiatAmount",
             fontWeight = FontWeight.Medium,
-            fontSize = 24.sp,
+            fontSize = 16.sp,
             color = Color.White,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
