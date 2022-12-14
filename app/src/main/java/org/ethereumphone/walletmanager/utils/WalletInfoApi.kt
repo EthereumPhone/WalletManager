@@ -6,8 +6,13 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.models.Exchange
@@ -26,6 +31,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlin.collections.ArrayList
+
 
 class WalletInfoApi(
     val context: Context,
@@ -206,4 +213,37 @@ class WalletInfoApi(
         return Intent(Intent.ACTION_VIEW, Uri.parse("${selectedNetwork.chainExplorer}/tx/$txHash"))
     }
 
+}
+
+/**
+ * ViewModel class that works with the WalletInfoApi
+ */
+class WalletInfoViewModel(
+    private val walletInfoApi: WalletInfoApi,
+    private val network: Network
+) : ViewModel() {
+
+    private val _exchange = MutableLiveData<Exchange>(
+        Exchange(
+            price = "0.0",
+            symbol = "ETHUSDT"
+        )
+    )
+    val exchange: LiveData<Exchange> = _exchange
+
+    private val _historicTransactions = MutableLiveData<ArrayList<Transaction>>(listOf<Transaction>() as ArrayList<Transaction>)
+
+    init {
+        walletInfoApi.startPriceUpdater { exchange ->
+            _exchange.value = exchange
+        }
+
+        // Get historic transactions in the using the IO scope and feed them to the UI
+        GlobalScope.launch(Dispatchers.IO) {
+            val historicTransactions = walletInfoApi.getHistoricTransactions(network)
+            _historicTransactions.value = historicTransactions
+        }
+
+
+    }
 }
