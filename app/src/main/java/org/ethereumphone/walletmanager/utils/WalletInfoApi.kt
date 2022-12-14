@@ -9,6 +9,7 @@ import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
@@ -239,7 +240,7 @@ class WalletInfoViewModel(
         }
 
         // Get historic transactions in the using the IO scope and feed them to the UI
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             val historicTransactions = walletInfoApi.getHistoricTransactions(network)
             _historicTransactions.value = historicTransactions
         }
