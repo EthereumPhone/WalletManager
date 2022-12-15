@@ -53,6 +53,7 @@ class WalletManagerState(
                 TopLevelDestination.HOME -> navController.navigateToHome(topLevelNavOptions)
                 TopLevelDestination.SEND -> navController.navigateToSend(topLevelNavOptions)
                 TopLevelDestination.ASSET -> navController.navigateToAsset(topLevelNavOptions)
+                TopLevelDestination.RECEIVE -> navController.navigateToReceive(topLevelNavOptions)
             }
         }
     }

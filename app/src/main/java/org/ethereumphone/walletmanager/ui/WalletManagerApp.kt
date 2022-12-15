@@ -47,16 +47,7 @@ fun WalletManagerApp(
     )
     WalletManagerTheme {
         Scaffold(
-            topBar = {
-                HomeScreen(
-                    ethAmount = walletInfoViewModel.ethAmount.observeAsState(Double.MAX_VALUE).value,
-                    transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
-                    address = walletInfoApi.walletAddress,
-                    fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
-                    selectedNetwork = selectedNetwork,
-                    walletManagerState = appState
-                )
-                     }
+
         ) { innerPadding ->
             WalletManagerNavHost(
                 navController = appState.navController,

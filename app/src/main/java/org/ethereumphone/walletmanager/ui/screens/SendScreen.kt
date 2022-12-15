@@ -1,5 +1,6 @@
 package org.ethereumphone.walletmanager.ui.screens
 
+import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.magnifier
@@ -23,8 +24,18 @@ import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.activities.MainActivity
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.*
+import org.ethereumphone.walletmanager.ui.components.ENSInputField
 import org.ethereumphone.walletmanager.ui.components.InputField
 import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.EthereumRPC
+import org.kethereum.rpc.HttpEthereumRPC
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
+import java.math.BigDecimal
+import java.util.concurrent.CompletableFuture
 
 @Composable
 fun SendRoute(
@@ -64,14 +75,14 @@ fun SendScreen(
                 // Set color to be white
                 color = md_theme_dark_onPrimary
             )
-            InputField(
-                value = "",
-                label = "To",
+            ENSInputField(
+                value = address.value,
+                label = "To address/ENS",
                 readOnly = false,
                 singeLine = true,
                 maxLines = 1,
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
             ) {
                 address.value = it
             }
@@ -93,15 +104,27 @@ fun SendScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = amount.value.isNotEmpty() && address.value.isNotEmpty(),
                 onClick = {
-                    println("Click")
                     val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
+                    val ensName = ENSName(address.value)
+                    if (ensName.isPotentialENSDomain()) {
+                        val completableFuture = CompletableFuture<String>()
+                        CompletableFuture.runAsync {
+                            val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
+                            completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+                        }
+                        address.value = completableFuture.get()
+                    }
                     walletSDK.sendTransaction(
                         to = address.value,
-                        value = amount.value,
+                        value = BigDecimal(amount.value).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
                         data = "",
                         chainId = selectedNetwork.chainId
                     ).whenComplete { txHash, throwable ->
                         println("Send transaction result: $txHash")
+                        // Open tx in etherscan
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "tx/" + txHash)
+                        context.startActivity(intent)
                     }
                 }
             ) {
@@ -115,6 +138,7 @@ fun SendScreen(
         }
     }
 }
+
 
 @ExperimentalComposeUiApi
 @Composable

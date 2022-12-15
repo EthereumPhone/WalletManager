@@ -24,6 +24,11 @@ enum class TopLevelDestination(
         icon = Icon.ImageVectorIcon(WalletManagerIcons.Send),
         iconTextId = R.string.send_screen,
         titleTextId = R.string.send_screen
+    ),
+    RECEIVE(
+        icon = Icon.ImageVectorIcon(WalletManagerIcons.Receive),
+        iconTextId = R.string.receive_action,
+        titleTextId = R.string.receive_action
     )
 }
 
