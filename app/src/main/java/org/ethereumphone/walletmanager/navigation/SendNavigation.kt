@@ -1,4 +1,5 @@
 package org.ethereumphone.walletmanager.navigation
+import androidx.compose.runtime.State
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -15,7 +16,7 @@ fun NavController.navigateToSend(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.sendScreen(
-    selectedNetwork: Network
+    selectedNetwork: State<Network>
 ) {
     composable(route = sendRoute) {
         SendRoute(

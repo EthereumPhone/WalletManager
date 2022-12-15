@@ -4,6 +4,7 @@
     <!-- Top level destinations-->
     <string name="home_screen">Home</string>
     <string name="swap_screen">Swap</string>
+    <string name="send_screen">Send</string>
     <string name="asset_screen">Asset</string>
 
     <!-- Home screen text-->

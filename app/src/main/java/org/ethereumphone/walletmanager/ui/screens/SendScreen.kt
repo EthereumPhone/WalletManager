@@ -8,6 +8,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,11 +29,11 @@ import org.ethereumphone.walletmanager.utils.WalletSDK
 @Composable
 fun SendRoute(
     modifier: Modifier = Modifier,
-    selectedNetwork: Network
+    selectedNetwork: State<Network>
 ) {
     SendScreen(
         modifier = modifier,
-        selectedNetwork = selectedNetwork
+        selectedNetworkState = selectedNetwork
     )
 }
 
@@ -40,11 +41,12 @@ fun SendRoute(
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
-    selectedNetwork: Network,
+    selectedNetworkState: State<Network>,
 ) {
     val amount = remember { mutableStateOf("") }
     val address = remember { mutableStateOf("") }
     val context = LocalContext.current
+    val selectedNetwork = selectedNetworkState.value
     WalletManagerTheme {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -126,6 +128,11 @@ fun PreviewMintingScreen() {
             chainExplorer = "https://etherscan.io",
             chainCurrency = "ETH",
         )
-        SendScreen(selectedNetwork = mainnetNetwork)
+        // Create State<Network> object with mainnetNetwork
+        val selectedNetwork = object : State<Network> {
+            override val value: Network
+                get() = mainnetNetwork
+        }
+        SendScreen(selectedNetworkState = selectedNetwork)
     }
 }
