@@ -14,7 +14,6 @@
     <!-- Transaction History-->
     <string name="transactions">Transaktionen</string>
     <string name="sent_to">Gesendet an</string>
-    <string name="app_name" translatable="false">R</string>
     <string name="recieved_from">Ricevuto da</string>
 
 </resources>

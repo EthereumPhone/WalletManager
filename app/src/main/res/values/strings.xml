@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Wallet Manager</string>
+    <string name="app_name" translatable="false">Wallet</string>
 
     <!-- Top level destinations-->
     <string name="home_screen">Home</string>
@@ -14,6 +14,6 @@
     <!-- Transaction History-->
     <string name="transactions">Transactions</string>
     <string name="sent_to">Sent to</string>
-    <string name="recieved_from">recieved from</string>
+    <string name="recieved_from">received from</string>
 
 </resources>
