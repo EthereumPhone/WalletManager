@@ -122,9 +122,11 @@ fun SendScreen(
                     ).whenComplete { txHash, throwable ->
                         println("Send transaction result: $txHash")
                         // Open tx in etherscan
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "tx/" + txHash)
-                        context.startActivity(intent)
+                        if (txHash != "decline") {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "tx/" + txHash)
+                            context.startActivity(intent)
+                        }
                     }
                 }
             ) {
