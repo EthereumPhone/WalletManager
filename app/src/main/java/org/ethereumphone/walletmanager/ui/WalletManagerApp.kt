@@ -48,7 +48,7 @@ fun WalletManagerApp(
         Scaffold(
             topBar = {
                 HomeScreen(
-                    ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0).value,
+                    ethAmount = walletInfoViewModel.ethAmount.observeAsState(Double.MAX_VALUE).value,
                     transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
                     address = walletInfoApi.walletAddress,
                     fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,

@@ -38,29 +38,50 @@ fun WalletInformation(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Text(
-            text = "$ethAmount ETH",
-            fontWeight = FontWeight.Bold,
-            fontSize = 35.sp,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Text(
-            text = "$$fiatAmount",
-            fontWeight = FontWeight.Medium,
-            fontSize = 16.sp,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (ethAmount == Double.MAX_VALUE) {
+            Text(
+                text = getGreeting(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 55.sp,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            Text(
+                text = "$ethAmount ETH",
+                fontWeight = FontWeight.Bold,
+                fontSize = 35.sp,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "$$fiatAmount",
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
         MiddleEllipseText(address)
     }
 }
 
-
+/**
+ * Function to return GM if its in the morning, GA if its in the afternoon, GE if its in the evening, and GN if its at night
+ */
+fun getGreeting(): String {
+    return when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
+        in 0..11 -> "gm"
+        in 12..15 -> "ga"
+        in 16..19 -> "ge"
+        in 20..23 -> "gn"
+        else -> "gm"
+    }
+}
 @Composable
 fun MiddleEllipseText(
     address: String

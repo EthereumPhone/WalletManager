@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
@@ -225,7 +226,7 @@ class WalletInfoViewModel(
     private val _historicTransactions = MutableLiveData<ArrayList<Transaction>>(ArrayList<Transaction>())
     val historicTransactions: LiveData<ArrayList<Transaction>> = _historicTransactions
 
-    private val _ethAmount = MutableLiveData<Double>(0.0)
+    private val _ethAmount = MutableLiveData<Double>(Double.MAX_VALUE)
     val ethAmount: LiveData<Double> = _ethAmount
 
     private val _ethAmountInUSD = MutableLiveData<Double>(0.0)
@@ -240,13 +241,14 @@ class WalletInfoViewModel(
         }
         ethAmount.observeForever {
             val number = it
-            if (number == 0.0) {
+            if (number == Double.MAX_VALUE) {
                 _ethAmountInUSD.value = 0.0
                 return@observeForever
             }
             CompletableFuture.runAsync {
                 GlobalScope.launch {
                     val ethAmountInUSD = walletInfoApi.getEthAmountInUSD(number)
+                    // Wait till app has been open for at least 1 second
                     (walletInfoApi.context as Activity).runOnUiThread {
                         _ethAmountInUSD.postValue(ethAmountInUSD)
                     }
@@ -266,9 +268,12 @@ class WalletInfoViewModel(
         }
 
         CompletableFuture.runAsync {
-            val ethAmount = walletInfoApi.getEthAmount(network)
-            (walletInfoApi.context as Activity).runOnUiThread {
-                _ethAmount.postValue(ethAmount)
+            GlobalScope.launch {
+                val ethAmount = walletInfoApi.getEthAmount(network)
+                delay(1400)
+                (walletInfoApi.context as Activity).runOnUiThread {
+                    _ethAmount.postValue(ethAmount)
+                }
             }
         }
 
