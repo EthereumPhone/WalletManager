@@ -1,33 +1,34 @@
 package org.ethereumphone.walletmanager.utils
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import java.io.InputStream
 import java.io.OutputStreamWriter
+import java.lang.Double.parseDouble
 import java.math.BigDecimal
-import java.math.BigInteger
+import java.math.RoundingMode
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
@@ -97,38 +98,43 @@ class WalletInfoApi(
         return amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
     }
 
+    fun round(value: Double, places: Int): Double {
+        require(places >= 0)
+        var bd: BigDecimal = BigDecimal(value)
+        bd = bd.setScale(places, RoundingMode.HALF_UP)
+        return bd.toDouble()
+    }
+
     fun getHistoricTransactions(selectedNetwork: Network): ArrayList<Transaction> {
         val address = wallet.getAddress()
         try {
             val output = ArrayList<Transaction>()
-            val rpcURL = if (selectedNetwork.chainId == 1) "https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z" else "https://eth-goerli.g.alchemy.com/v2/wEno3MttLG5usiVg4xL5_dXrDy_QH95f"
+            val rpcURL = if (selectedNetwork.chainId == 1) "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=NXXTAQGMIT39T9R465P4564JDW1PRPD27J" else ""
+
+            if (rpcURL == "") {
+                return output
+            }
 
             val url = URL(rpcURL)
             val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
-            httpConn.setRequestMethod("POST")
+            httpConn.setRequestMethod("GET")
 
             httpConn.setRequestProperty("Content-Type", "application/json")
-
-            httpConn.setDoOutput(true)
-            val writer = OutputStreamWriter(httpConn.getOutputStream())
-            writer.write("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"alchemy_getAssetTransfers\",\"params\":[{\"fromBlock\":\"0x0\",\"fromAddress\":\"$address\", \"category\": [\"external\"]}]}")
-            writer.flush()
-            writer.close()
-            httpConn.getOutputStream().close()
 
             val responseStream: InputStream =
                 if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
             val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
             val response = if (s.hasNext()) s.next() else ""
 
-            val json = JSONObject(response).getJSONObject("result").getJSONArray("transfers") as JSONArray
+            val jsonArray = JSONObject(response).getJSONArray("result") as JSONArray
 
-            for (i in 0..json.length()-1) {
-                val transferData = json.get(i) as JSONObject
+
+            for (i in 0..jsonArray.length()-1) {
+                val transferData = jsonArray.get(i) as JSONObject
                 output.add(
                     Transaction(
-                        type = (transferData.getString("to") == address),
-                        value = transferData.getString("value"),
+                        type = (transferData.getString("to") != address),
+                        value = BigDecimal(transferData.getString("value")).divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toString(),
                         hash = transferData.getString("hash"),
                         fromAddr = transferData.getString("from"),
                         toAddr = transferData.getString("to")
@@ -142,28 +148,12 @@ class WalletInfoApi(
         }
     }
 
-    fun getEthAmountInUSD(ethAmount: Double): Double {
-        val url = URL("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
-        val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
-        httpConn.setRequestMethod("GET")
+    suspend fun getEthAmountInUSD(ethAmount: Double): Double {
+        val exchange = ExchangeApi.retrofitService.getExchange(
+            symbol = "ETHUSDT"
+        )
 
-        httpConn.setRequestProperty("Content-Type", "application/json")
-
-        httpConn.setDoOutput(true)
-        val writer = OutputStreamWriter(httpConn.getOutputStream())
-        writer.write("")
-        writer.flush()
-        writer.close()
-        httpConn.getOutputStream().close()
-
-        val responseStream: InputStream =
-            if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
-        val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
-        val response = if (s.hasNext()) s.next() else ""
-
-        val json = JSONObject(response).getJSONObject("ethereum") as JSONObject
-
-        return (json.getDouble("usd") * ethAmount)
+        return round(parseDouble(exchange.price) * ethAmount, 3)
     }
 
     
@@ -232,18 +222,60 @@ class WalletInfoViewModel(
     )
     val exchange: LiveData<Exchange> = _exchange
 
-    private val _historicTransactions = MutableLiveData<ArrayList<Transaction>>(listOf<Transaction>() as ArrayList<Transaction>)
+    private val _historicTransactions = MutableLiveData<ArrayList<Transaction>>(ArrayList<Transaction>())
+    val historicTransactions: LiveData<ArrayList<Transaction>> = _historicTransactions
+
+    private val _ethAmount = MutableLiveData<Double>(0.0)
+    val ethAmount: LiveData<Double> = _ethAmount
+
+    private val _ethAmountInUSD = MutableLiveData<Double>(0.0)
+    val ethAmountInUSD: LiveData<Double> = _ethAmountInUSD
+
 
     init {
         walletInfoApi.startPriceUpdater { exchange ->
-            _exchange.value = exchange
+            (walletInfoApi.context as Activity).runOnUiThread {
+                _exchange.value = exchange
+            }
+        }
+        ethAmount.observeForever {
+            val number = it
+            if (number == 0.0) {
+                _ethAmountInUSD.value = 0.0
+                return@observeForever
+            }
+            CompletableFuture.runAsync {
+                GlobalScope.launch {
+                    val ethAmountInUSD = walletInfoApi.getEthAmountInUSD(number)
+                    (walletInfoApi.context as Activity).runOnUiThread {
+                        _ethAmountInUSD.postValue(ethAmountInUSD)
+                    }
+                }
+            }
         }
 
+
+
         // Get historic transactions in the using the IO scope and feed them to the UI
-        viewModelScope.launch(Dispatchers.IO) {
+        CompletableFuture.runAsync {
             val historicTransactions = walletInfoApi.getHistoricTransactions(network)
-            _historicTransactions.value = historicTransactions
+
+            (walletInfoApi.context as Activity).runOnUiThread {
+                _historicTransactions.postValue(historicTransactions)
+            }
         }
+
+        CompletableFuture.runAsync {
+            val ethAmount = walletInfoApi.getEthAmount(network)
+            (walletInfoApi.context as Activity).runOnUiThread {
+                _ethAmount.postValue(ethAmount)
+            }
+        }
+
+
+
+
+
 
 
     }

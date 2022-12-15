@@ -1,26 +1,60 @@
 package org.ethereumphone.walletmanager.ui
 
+import android.content.Context.MODE_PRIVATE
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.navigation.WalletManagerNavHost
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.components.BottomNavBar
 import org.ethereumphone.walletmanager.ui.components.TransactionItem
+import org.ethereumphone.walletmanager.ui.screens.HomeScreen
+import org.ethereumphone.walletmanager.utils.SelectedNetworkViewModel
+import org.ethereumphone.walletmanager.utils.WalletInfoApi
+import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 
 @Composable
 fun WalletManagerApp(
     appState: WalletManagerState = rememberWalletManagerAppState()
 ) {
-    WalletManagerTheme {
+    val selectedNetworkViewModel = SelectedNetworkViewModel()
+    val selectedNetwork = selectedNetworkViewModel.selectedNetwork.observeAsState(
+        Network(
+        chainId = 1,
+        chainName = "Ethereum Mainnet",
+        chainCurrency = "ETH",
+        chainRPC = "https://cloudflare-eth.com",
+        chainExplorer = "https://etherscan.io"
+    ))
 
-        /**
+
+    val walletInfoApi = WalletInfoApi(
+        context = LocalContext.current,
+        sharedPreferences = LocalContext.current.getSharedPreferences("WalletInfo", MODE_PRIVATE)
+    )
+    val walletInfoViewModel = WalletInfoViewModel(
+        walletInfoApi = walletInfoApi,
+        network = selectedNetwork.value
+    )
+    WalletManagerTheme {
         Scaffold(
+            topBar = {
+                HomeScreen(
+                    ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0).value,
+                    transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
+                    address = walletInfoApi.walletAddress,
+                    fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
+                    selectedNetwork = selectedNetwork
+                )
+                     },
             bottomBar = {
                 BottomNavBar(
                     destinations = appState.topLevelDestinations,
@@ -32,10 +66,13 @@ fun WalletManagerApp(
             WalletManagerNavHost(
                 navController = appState.navController,
                 onBackClick = appState::onBackClick,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                walletInfoApi = walletInfoApi,
+                walletInfoViewModel = walletInfoViewModel,
+                selectedNetwork = selectedNetwork
             )
         }
-        */
+
     }
 }
 

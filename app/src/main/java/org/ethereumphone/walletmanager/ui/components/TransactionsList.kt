@@ -1,6 +1,10 @@
 package org.ethereumphone.walletmanager.ui.components
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,24 +17,30 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.VerticalAlignBottom
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.theme.ListBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
+import java.lang.Double.parseDouble
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 
 @Composable
 fun TransactionList(
     transactionList: List<Transaction>,
+    selectedNetwork: State<Network>,
     modifier: Modifier? = Modifier
 ) {
     Box(modifier = Modifier
@@ -53,7 +63,7 @@ fun TransactionList(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(transactionList) { item ->
-                    TransactionItem(transaction = item)
+                    TransactionItem(transaction = item, selectedNetwork = selectedNetwork)
                 }
             }
         }
@@ -63,12 +73,20 @@ fun TransactionList(
 
 @Composable
 fun TransactionItem(
-    transaction: Transaction
+    transaction: Transaction,
+    selectedNetwork: State<Network>
 ) {
     val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
     val text = if(transaction.type) "sent to ${transaction.toAddr}" else "received from ${transaction.fromAddr}"
+    val context = LocalContext.current
 
-    Row(Modifier.fillMaxWidth()) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable {
+                openTxInEtherscan(context, transaction.hash, selectedNetwork)
+            }
+    ) {
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -99,7 +117,7 @@ fun TransactionItem(
         }
         Column{
             Text(
-                text = transaction.value + " ETH",
+                text = round(transaction.value, 3) + " ETH",
                 textAlign = TextAlign.End,
                 color = Color.White
             )
@@ -109,6 +127,21 @@ fun TransactionItem(
             )
         }
     }
+}
+
+fun round(value: String, places: Int): String {
+    require(places >= 0)
+    var bd: BigDecimal = BigDecimal(value)
+    bd = bd.setScale(places, RoundingMode.HALF_UP)
+    return bd.toString()
+}
+
+
+fun openTxInEtherscan(context: Context, txHash: String, selectedNetwork: State<Network>) {
+    val url = "${selectedNetwork.value.chainExplorer}/tx/$txHash"
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = Uri.parse(url)
+    startActivity(context, intent, null)
 }
 
 @Preview
@@ -133,7 +166,12 @@ fun PreviewTransactionList() {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            TransactionList(transactionList)
+            // create a State<Network> object
+            val selectedNetwork = object : State<Network> {
+                override val value: Network
+                    get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
+            }
+            TransactionList(transactionList, selectedNetwork = selectedNetwork)
         }
     }
 }
@@ -156,10 +194,15 @@ fun PreviewTransactionItem() {
         fromAddr = "mhaas.eth"
     )
 
+    val selectedNetwork = object : State<Network> {
+        override val value: Network
+            get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
+    }
+
     WalletManagerTheme {
         Column {
-            TransactionItem(t1)
-            TransactionItem(t2)
+            TransactionItem(t1, selectedNetwork)
+            TransactionItem(t2, selectedNetwork)
         }
     }
 }
