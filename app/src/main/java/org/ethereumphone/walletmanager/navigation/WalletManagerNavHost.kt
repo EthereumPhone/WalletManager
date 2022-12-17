@@ -7,7 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.ui.WalletManagerState
+import org.ethereumphone.walletmanager.ui.screens.HomeRoute
+import org.ethereumphone.walletmanager.ui.screens.ReceiveScreen
+import org.ethereumphone.walletmanager.ui.screens.SendRoute
 import org.ethereumphone.walletmanager.utils.SelectedNetworkViewModel
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
@@ -21,7 +26,8 @@ fun WalletManagerNavHost(
     startDestination: String = homeRoute,
     walletInfoApi: WalletInfoApi,
     walletInfoViewModel: WalletInfoViewModel,
-    selectedNetwork: State<Network>
+    selectedNetwork: State<Network>,
+    walletManagerState: WalletManagerState
 ) {
 
     NavHost(
@@ -29,13 +35,25 @@ fun WalletManagerNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        homeScreen(
-            walletInfoApi = walletInfoApi,
-            walletInfoViewModel = walletInfoViewModel,
-            selectedNetwork = selectedNetwork
-        )
-        swapScreen()
-        assetScreen()
+        composable(homeRoute) {
+            HomeRoute(
+                walletInfoApi = walletInfoApi,
+                walletInfoViewModel = walletInfoViewModel,
+                selectedNetwork = selectedNetwork,
+                walletManagerState = walletManagerState
+            )
+        }
+        composable(sendRoute) {
+            SendRoute(
+                selectedNetwork = selectedNetwork
+            )
+        }
+        composable(receiveRoute) {
+            ReceiveScreen(
+                address = walletInfoApi.walletAddress
+            )
+        }
+
     }
 }
 

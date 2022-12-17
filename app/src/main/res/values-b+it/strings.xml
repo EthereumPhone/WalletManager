@@ -5,6 +5,8 @@
     <string name="home_screen">Home</string>
     <string name="swap_screen">Swap</string>
     <string name="asset_screen">Assetti</string>
+    <string name="send_screen">Inviare</string>
+
 
     <!-- Home screen text-->
     <string name="send_action">Manda</string>

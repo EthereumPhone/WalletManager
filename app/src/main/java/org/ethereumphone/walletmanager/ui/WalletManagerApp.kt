@@ -26,6 +26,7 @@ fun WalletManagerApp(
     appState: WalletManagerState = rememberWalletManagerAppState()
 ) {
     val selectedNetworkViewModel = SelectedNetworkViewModel()
+
     val selectedNetwork = selectedNetworkViewModel.selectedNetwork.observeAsState(
         Network(
         chainId = 1,
@@ -46,22 +47,7 @@ fun WalletManagerApp(
     )
     WalletManagerTheme {
         Scaffold(
-            topBar = {
-                HomeScreen(
-                    ethAmount = walletInfoViewModel.ethAmount.observeAsState(Double.MAX_VALUE).value,
-                    transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
-                    address = walletInfoApi.walletAddress,
-                    fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
-                    selectedNetwork = selectedNetwork
-                )
-                     },
-            bottomBar = {
-                BottomNavBar(
-                    destinations = appState.topLevelDestinations,
-                    onNavigateToDestination = appState::navigateToTopLevelDestination,
-                    currentDestination = appState.currentDestination
-                )
-            }
+
         ) { innerPadding ->
             WalletManagerNavHost(
                 navController = appState.navController,
@@ -69,7 +55,8 @@ fun WalletManagerApp(
                 modifier = Modifier.padding(innerPadding),
                 walletInfoApi = walletInfoApi,
                 walletInfoViewModel = walletInfoViewModel,
-                selectedNetwork = selectedNetwork
+                selectedNetwork = selectedNetwork,
+                walletManagerState = appState
             )
         }
 

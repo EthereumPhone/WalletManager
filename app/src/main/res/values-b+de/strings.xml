@@ -5,6 +5,7 @@
     <string name="home_screen">Home</string>
     <string name="swap_screen">Swap</string>
     <string name="asset_screen">Vermögenswerte</string>
+    <string name="send_screen">Senden</string>
 
     <!-- Home screen text-->
     <string name="send_action">Senden</string>

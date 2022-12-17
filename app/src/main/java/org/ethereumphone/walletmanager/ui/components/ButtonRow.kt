@@ -25,13 +25,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavOptions
+import androidx.navigation.get
+import org.ethereumphone.walletmanager.navigation.TopLevelDestination
+import org.ethereumphone.walletmanager.navigation.homeRoute
+import org.ethereumphone.walletmanager.navigation.navigateToSend
+import org.ethereumphone.walletmanager.navigation.sendRoute
+import org.ethereumphone.walletmanager.theme.WalletManagerIcons.Home
+import org.ethereumphone.walletmanager.theme.WalletManagerIcons.Send
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
+import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.utils.WalletSDK
 
 
 
 @Composable
-fun ButtonRow() {
+fun ButtonRow(
+    walletManagerState: WalletManagerState,
+) {
     val modifier = Modifier.fillMaxWidth()
     Row(
         modifier = modifier,
@@ -43,8 +54,9 @@ fun ButtonRow() {
                 Icons.Rounded.NorthEast,
                 "send"
             ) {
-
-            },
+                // Navigate to send screen
+                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
+              },
             Triple(
                 Icons.Default.CreditCard,
                 "buy"
@@ -62,7 +74,10 @@ fun ButtonRow() {
             Triple(
                 Icons.Rounded.VerticalAlignBottom,
                 "Receive"
-            ) {}
+            ) {
+                // Navigate to receive screen
+                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.RECEIVE)
+            }
         )
         for(item in iconButtons) {
             val (icon, text, onClick) = item
@@ -129,6 +144,6 @@ fun CircleButtonPreview() {
 @Composable
 fun PreviewButtonRow() {
     WalletManagerTheme {
-        ButtonRow()
+        //ButtonRow()
     }
 }

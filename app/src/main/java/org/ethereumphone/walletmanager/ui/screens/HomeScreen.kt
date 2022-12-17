@@ -20,6 +20,7 @@ import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.theme.md_theme_dark_background
+import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.ButtonRow
 import org.ethereumphone.walletmanager.ui.components.TransactionItem
 import org.ethereumphone.walletmanager.ui.components.TransactionList
@@ -32,14 +33,16 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     walletInfoViewModel: WalletInfoViewModel,
     walletInfoApi: WalletInfoApi,
-    selectedNetwork: State<Network>
+    selectedNetwork: State<Network>,
+    walletManagerState: WalletManagerState
 ) {
     HomeScreen(
         ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0).value,
         transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
         address = walletInfoApi.walletAddress,
         fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
-        selectedNetwork =  selectedNetwork
+        selectedNetwork =  selectedNetwork,
+        walletManagerState = walletManagerState
     )
 }
 
@@ -51,6 +54,7 @@ fun HomeScreen(
     address : String = "0x0000000000000000000000000000000000000000",
     transactionList: List<Transaction> = listOf(),
     selectedNetwork: State<Network>,
+    walletManagerState: WalletManagerState
 ) {
     Column {
         Spacer(modifier = Modifier
@@ -64,7 +68,9 @@ fun HomeScreen(
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
-        ButtonRow()
+        ButtonRow(
+            walletManagerState = walletManagerState,
+        )
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
@@ -74,6 +80,7 @@ fun HomeScreen(
 
 }
 
+/**
 @Preview
 @Composable
 fun PreviewHomeScreen() {
@@ -100,3 +107,4 @@ fun PreviewHomeScreen() {
     )
 
 }
+        */

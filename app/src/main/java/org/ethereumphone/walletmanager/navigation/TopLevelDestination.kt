@@ -20,10 +20,15 @@ enum class TopLevelDestination(
         iconTextId = R.string.asset_screen,
         titleTextId = R.string.asset_screen
     ),
-    SWAP(
-        icon = Icon.ImageVectorIcon(WalletManagerIcons.Swap),
-        iconTextId = R.string.swap_screen,
-        titleTextId = R.string.swap_screen
+    SEND(
+        icon = Icon.ImageVectorIcon(WalletManagerIcons.Send),
+        iconTextId = R.string.send_screen,
+        titleTextId = R.string.send_screen
+    ),
+    RECEIVE(
+        icon = Icon.ImageVectorIcon(WalletManagerIcons.Receive),
+        iconTextId = R.string.receive_action,
+        titleTextId = R.string.receive_action
     )
 }
 

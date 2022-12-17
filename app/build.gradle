@@ -80,4 +80,8 @@ dependencies {
 
     // Retrofit
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+
+    // QR Generation
+    implementation 'com.github.kenglxn.QRGen:android:3.0.1'
+
 }

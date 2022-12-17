@@ -6,21 +6,22 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.ui.screens.AssetRoute
+import org.ethereumphone.walletmanager.ui.screens.ReceiveScreen
 import org.ethereumphone.walletmanager.ui.screens.SwapRoute
 import org.ethereumphone.walletmanager.ui.screens.SendRoute
 
-const val sendRoute = "send_route"
+const val receiveRoute = "receive_route"
 
-fun NavController.navigateToSend(navOptions: NavOptions? = null) {
-    this.navigate(sendRoute, navOptions)
+fun NavController.navigateToReceive(navOptions: NavOptions? = null) {
+    this.navigate(receiveRoute, navOptions)
 }
 
-fun NavGraphBuilder.sendScreen(
-    selectedNetwork: State<Network>
+fun NavGraphBuilder.receiveScreen(
+    address: String
 ) {
     composable(route = sendRoute) {
-        SendRoute(
-            selectedNetwork = selectedNetwork
+        ReceiveScreen(
+            address = address
         )
     }
 }

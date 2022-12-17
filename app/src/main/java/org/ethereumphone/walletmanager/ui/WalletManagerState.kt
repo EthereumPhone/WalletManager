@@ -25,6 +25,7 @@ fun rememberWalletManagerAppState(
 class WalletManagerState(
     val navController: NavHostController
 ) {
+
     val currentDestination: NavDestination?
         @Composable get() = navController
             .currentBackStackEntryAsState().value?.destination
@@ -32,7 +33,7 @@ class WalletManagerState(
     val currentTopLevelDestination: TopLevelDestination?
         @Composable get() = when(currentDestination?.route) {
             homeRoute -> TopLevelDestination.HOME
-            swapRoute -> TopLevelDestination.SWAP
+            sendRoute -> TopLevelDestination.SEND
             assetRoute -> TopLevelDestination.ASSET
             else -> null
         }
@@ -50,8 +51,9 @@ class WalletManagerState(
             }
             when (topLevelDestination) {
                 TopLevelDestination.HOME -> navController.navigateToHome(topLevelNavOptions)
-                TopLevelDestination.SWAP -> navController.navigateToSwap(topLevelNavOptions)
+                TopLevelDestination.SEND -> navController.navigateToSend(topLevelNavOptions)
                 TopLevelDestination.ASSET -> navController.navigateToAsset(topLevelNavOptions)
+                TopLevelDestination.RECEIVE -> navController.navigateToReceive(topLevelNavOptions)
             }
         }
     }

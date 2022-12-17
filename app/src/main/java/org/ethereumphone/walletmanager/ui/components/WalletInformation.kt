@@ -76,8 +76,7 @@ fun WalletInformation(
 fun getGreeting(): String {
     return when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
         in 0..11 -> "gm"
-        in 12..15 -> "ga"
-        in 16..19 -> "ge"
+        in 12..19 -> "ga"
         in 20..23 -> "gn"
         else -> "gm"
     }

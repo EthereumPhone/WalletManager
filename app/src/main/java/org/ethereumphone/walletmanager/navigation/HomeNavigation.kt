@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.screens.HomeRoute
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
@@ -19,13 +20,15 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.homeScreen(
     walletInfoApi: WalletInfoApi,
     walletInfoViewModel: WalletInfoViewModel,
-    selectedNetwork: State<Network>
+    selectedNetwork: State<Network>,
+    walletManagerState: WalletManagerState
 ) {
     composable(route = homeRoute) {
         HomeRoute(
             walletInfoApi = walletInfoApi,
             walletInfoViewModel = walletInfoViewModel,
-            selectedNetwork = selectedNetwork
+            selectedNetwork = selectedNetwork,
+            walletManagerState = walletManagerState
         )
     }
 }
