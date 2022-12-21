@@ -39,7 +39,9 @@ class WalletSDK(
         } else {
             sysSession = createSession.invoke(proxy) as String
             val reqID = getAddress.invoke(proxy, sysSession) as String
-            Thread.sleep(100)
+            while ((hasBeenFulfilled.invoke(proxy, reqID) as String) == NOTFULFILLED) {
+                Thread.sleep(10)
+            }
             address = hasBeenFulfilled.invoke(proxy, reqID) as String
         }
         web3j = Web3j.build(HttpService(web3RPC))
