@@ -51,5 +51,7 @@ val md_theme_dark_onSurface = Color(0xFFA3A0FF)
 
 val BoxBackground = Color(0xFF303039)
 val ListBackground = Color(0xFF3F3F3F).copy(alpha = 0.2f)
+val network = Color(0xFF45BA4A)
+
 
 val seed = Color(0xFF5550F2)

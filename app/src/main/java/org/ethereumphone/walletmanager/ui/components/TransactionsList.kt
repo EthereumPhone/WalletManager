@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
@@ -54,8 +55,8 @@ fun TransactionList(
         ) {
             Text(
                 text = "Transactions",
-                style = MaterialTheme.typography.subtitle1,
-                color = Color.White.copy(alpha = .7f)
+                fontSize = 20.sp,
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(

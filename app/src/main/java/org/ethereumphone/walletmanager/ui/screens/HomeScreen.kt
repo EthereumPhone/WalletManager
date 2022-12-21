@@ -1,28 +1,25 @@
 package org.ethereumphone.walletmanager.ui.screens
 
-import android.content.Context.MODE_PRIVATE
-import android.os.NetworkOnMainThreadException
+import android.graphics.Color
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
-import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import org.ethereumphone.walletmanager.theme.md_theme_dark_background
+import org.ethereumphone.walletmanager.theme.network
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.ButtonRow
-import org.ethereumphone.walletmanager.ui.components.TransactionItem
 import org.ethereumphone.walletmanager.ui.components.TransactionList
 import org.ethereumphone.walletmanager.ui.components.WalletInformation
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
@@ -57,6 +54,28 @@ fun HomeScreen(
     walletManagerState: WalletManagerState
 ) {
     Column {
+        Text(
+            text = "Wallet Manager",
+            fontSize = 24.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 20.dp),
+            textAlign = TextAlign.Center,
+            fontStyle = FontStyle.Normal
+        )
+        Row(modifier = Modifier
+            .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(8.dp).clip(shape = CircleShape).background(network)
+            )
+            Text(
+                text = "  Ethereum Main Network",
+                fontSize = 12.sp,
+            )
+        }
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
@@ -67,7 +86,7 @@ fun HomeScreen(
         )
         Spacer(modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp))
+            .height(40.dp))
         ButtonRow(
             walletManagerState = walletManagerState,
         )
@@ -76,8 +95,6 @@ fun HomeScreen(
             .height(50.dp))
         TransactionList(transactionList, selectedNetwork = selectedNetwork)
     }
-
-
 }
 
 /**
