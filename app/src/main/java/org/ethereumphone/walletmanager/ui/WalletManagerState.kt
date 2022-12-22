@@ -11,6 +11,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import org.ethereumphone.walletmanager.navigation.*
+import org.ethereumphone.walletmanager.theme.TopLevelDestination
 
 @Composable
 fun rememberWalletManagerAppState(

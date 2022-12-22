@@ -1,12 +1,11 @@
 package org.ethereumphone.walletmanager.ui.screens
 
-import android.graphics.Color
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,11 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
-import org.ethereumphone.walletmanager.theme.network
+import org.ethereumphone.walletmanager.theme.NetworkStyle
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.ButtonRow
 import org.ethereumphone.walletmanager.ui.components.TransactionList
 import org.ethereumphone.walletmanager.ui.components.WalletInformation
+import org.ethereumphone.walletmanager.ui.components.networkDialog
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 
@@ -43,6 +43,8 @@ fun HomeRoute(
     )
 }
 
+private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
+
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -53,29 +55,52 @@ fun HomeScreen(
     selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
-    Column {
-        Text(
-            text = "Wallet Manager",
-            fontSize = 24.sp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
-            textAlign = TextAlign.Center,
-            fontStyle = FontStyle.Normal
+    var showDialog by remember {mutableStateOf(false)}
+
+    if(showDialog) {
+        networkDialog(
+            currentNetwork = selectedNetwork.value,
+            setShowDialog = { showDialog = it}
         )
-        Row(modifier = Modifier
-            .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.size(8.dp).clip(shape = CircleShape).background(network)
-            )
+    }
+
+    Column(
+
+    ) {
+        Column(Modifier.clickable {
+            showDialog = !showDialog
+        }) {
             Text(
-                text = "  "+selectedNetwork.value.chainName,
-                fontSize = 12.sp,
+                text = "Wallet Manager",
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                textAlign = TextAlign.Center,
+                fontStyle = FontStyle.Normal
             )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(shape = CircleShape)
+                        .background(
+                            networkStyles.first { it.networkName.equals(selectedNetwork.value.chainName) }.color
+                        )
+                )
+                Text(
+                    text = "  "+selectedNetwork.value.chainName,
+                    fontSize = 12.sp,
+                )
+            }
         }
+
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
