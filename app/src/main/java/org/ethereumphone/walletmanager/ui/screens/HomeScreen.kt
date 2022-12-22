@@ -72,7 +72,7 @@ fun HomeScreen(
                 modifier = Modifier.size(8.dp).clip(shape = CircleShape).background(network)
             )
             Text(
-                text = "  Ethereum Main Network",
+                text = "  "+selectedNetwork.value.chainName,
                 fontSize = 12.sp,
             )
         }
