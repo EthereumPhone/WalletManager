@@ -25,28 +25,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavOptions
-import androidx.navigation.get
 import org.ethereumphone.walletmanager.navigation.TopLevelDestination
-import org.ethereumphone.walletmanager.navigation.homeRoute
-import org.ethereumphone.walletmanager.navigation.navigateToSend
-import org.ethereumphone.walletmanager.navigation.sendRoute
-import org.ethereumphone.walletmanager.theme.WalletManagerIcons.Home
-import org.ethereumphone.walletmanager.theme.WalletManagerIcons.Send
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.utils.WalletSDK
-
-
 
 @Composable
 fun ButtonRow(
     walletManagerState: WalletManagerState,
 ) {
-    val modifier = Modifier.fillMaxWidth()
+    val modifier = Modifier
     Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
     ) {
         val context = LocalContext.current
         val iconButtons = listOf(
@@ -86,7 +77,7 @@ fun ButtonRow(
                 image = icon,
                 buttonText = text,
                 onClick = onClick,
-                modifier = modifier.weight(1f)
+                modifier = modifier.size(width = 80.dp, height = 80.dp)
             )
         }
     }
@@ -104,7 +95,7 @@ fun CircleButton(
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         IconButton(
             onClick = onClick,
@@ -122,7 +113,7 @@ fun CircleButton(
         }
         Text(
             text = buttonText,
-            fontSize = 20.sp,
+            fontSize = 12.sp,
             color = Color.White
         )
     }
