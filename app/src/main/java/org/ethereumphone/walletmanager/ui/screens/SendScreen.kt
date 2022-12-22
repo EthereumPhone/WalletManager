@@ -220,7 +220,7 @@ fun SendScreen(
                             // Open tx in etherscan
                             if (txHash != "decline") {
                                 val intent = Intent(Intent.ACTION_VIEW)
-                                intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "tx/" + txHash)
+                                intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
                                 context.startActivity(intent)
                             }
                         }

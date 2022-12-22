@@ -39,7 +39,6 @@ fun WalletManagerNavHost(
             HomeRoute(
                 walletInfoApi = walletInfoApi,
                 walletInfoViewModel = walletInfoViewModel,
-                selectedNetwork = selectedNetwork,
                 walletManagerState = walletManagerState
             )
         }

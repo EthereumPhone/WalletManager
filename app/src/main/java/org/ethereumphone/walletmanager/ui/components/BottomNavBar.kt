@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.TopLevelDestination
 import org.ethereumphone.walletmanager.theme.Icon
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
@@ -85,7 +86,17 @@ fun AnimatedIcon(
 @Preview
 @Composable
 fun PreviewBottomNavBar() {
-    val appState = rememberWalletManagerAppState()
+    val appState = rememberWalletManagerAppState(
+        network = mutableStateOf(
+            Network(
+                chainId = 1,
+                chainName = "Ethereum Mainnet",
+                chainCurrency = "ETH",
+                chainRPC = "https://cloudflare-eth.com",
+                chainExplorer = "https://etherscan.io"
+            )
+        )
+    )
     val destination = appState.currentTopLevelDestination
 
     WalletManagerTheme {

@@ -23,11 +23,50 @@ import org.ethereumphone.walletmanager.theme.NetworkStyle
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 
 
+val Ethereum = Network(
+    chainId = 1,
+    chainName = NetworkStyle.MAIN.networkName,
+    chainCurrency = "ETH",
+    chainRPC = "https://cloudflare-eth.com",
+    chainExplorer = "https://etherscan.io"
+)
+val Goerli = Network(
+    chainId = 5,
+    chainName = NetworkStyle.GOERLI.networkName,
+    chainCurrency = "ETH",
+    chainRPC = "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+    chainExplorer = "https://goerli.etherscan.io"
+)
+
+val Arbitrum = Network(
+    chainId = 42161,
+    chainName =NetworkStyle.ARBITRUM.networkName,
+    chainCurrency = "ETH",
+    chainRPC = "https://rpc.ankr.com/arbitrum",
+    chainExplorer = "https://arbiscan.io/"
+)
+
+val Optimism = Network(
+    chainId = 10,
+    chainName = NetworkStyle.OPTIMISM.networkName,
+    chainCurrency = "ETH",
+    chainRPC = "https://mainnet.optimism.io",
+    chainExplorer = "https://optimistic.etherscan.io/"
+)
+
+val Polygon = Network(
+    chainId = 137,
+    chainName = NetworkStyle.POLYGON.networkName,
+    chainCurrency = "MATIC",
+    chainRPC = "https://polygon-bor.publicnode.com",
+    chainExplorer = "https://polygonscan.com/"
+)
 
 @Composable
 fun networkDialog(
     currentNetwork: Network,
     setShowDialog: (Boolean) -> Unit,
+    networkChanged: (Network) -> Unit
 ) {
 
     Dialog(
@@ -51,7 +90,13 @@ fun networkDialog(
                     Spacer(Modifier.size(height = 10.dp, width = 0.dp))
                     networkList(currentNetwork.chainName) { networkName ->
                         setShowDialog(false)
-                        //TODO: Add logic to change network
+                        when(networkName) {
+                            NetworkStyle.MAIN.networkName -> networkChanged(Ethereum)
+                            NetworkStyle.ARBITRUM.networkName -> networkChanged(Arbitrum)
+                            NetworkStyle.GOERLI.networkName -> networkChanged(Goerli)
+                            NetworkStyle.OPTIMISM.networkName -> networkChanged(Optimism)
+                            NetworkStyle.POLYGON.networkName -> networkChanged(Polygon)
+                        }
                     }
                 }
             }
@@ -142,7 +187,9 @@ fun previewNetworkDialog() {
                 networkDialog(
                     setShowDialog = {selected = !selected},
                     currentNetwork = testNet
-                )
+                ) {
+                    println(it)
+                }
             }
         }
     }

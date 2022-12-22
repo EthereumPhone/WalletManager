@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,18 +25,22 @@ import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 
 @Composable
 fun WalletManagerApp(
-    appState: WalletManagerState = rememberWalletManagerAppState()
-) {
-    val selectedNetworkViewModel = SelectedNetworkViewModel()
-
-    val selectedNetwork = selectedNetworkViewModel.selectedNetwork.observeAsState(
+    selectedNetworkViewModel: SelectedNetworkViewModel = SelectedNetworkViewModel(),
+    selectedNetwork: MutableState<Network> = selectedNetworkViewModel.selectedNetwork.observeAsState(
         Network(
-        chainId = 1,
-        chainName = "Ethereum Mainnet",
-        chainCurrency = "ETH",
-        chainRPC = "https://cloudflare-eth.com",
-        chainExplorer = "https://etherscan.io"
-    ))
+            chainId = 1,
+            chainName = "Ethereum Mainnet",
+            chainCurrency = "ETH",
+            chainRPC = "https://cloudflare-eth.com",
+            chainExplorer = "https://etherscan.io"
+        )) as MutableState<Network>,
+    appState: WalletManagerState = rememberWalletManagerAppState(
+        network = selectedNetwork
+    )
+) {
+
+
+
 
 
     val walletInfoApi = WalletInfoApi(

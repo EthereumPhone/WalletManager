@@ -30,7 +30,6 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     walletInfoViewModel: WalletInfoViewModel,
     walletInfoApi: WalletInfoApi,
-    selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
     HomeScreen(
@@ -38,7 +37,6 @@ fun HomeRoute(
         transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
         address = walletInfoApi.walletAddress,
         fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
-        selectedNetwork =  selectedNetwork,
         walletManagerState = walletManagerState
     )
 }
@@ -52,16 +50,18 @@ fun HomeScreen(
     fiatAmount : Double = 0.0,
     address : String = "0x0000000000000000000000000000000000000000",
     transactionList: List<Transaction> = listOf(),
-    selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
     var showDialog by remember {mutableStateOf(false)}
 
     if(showDialog) {
         networkDialog(
-            currentNetwork = selectedNetwork.value,
+            currentNetwork = walletManagerState.network.value,
             setShowDialog = { showDialog = it}
-        )
+        ) {
+            println(it)
+            walletManagerState.changeNetwork(it)
+        }
     }
 
     Column(
@@ -91,11 +91,11 @@ fun HomeScreen(
                         .size(8.dp)
                         .clip(shape = CircleShape)
                         .background(
-                            networkStyles.first { it.networkName.equals(selectedNetwork.value.chainName) }.color
+                            networkStyles.first { it.networkName == walletManagerState.network.value.chainName }.color
                         )
                 )
                 Text(
-                    text = "  "+selectedNetwork.value.chainName,
+                    text = "  "+walletManagerState.network.value.chainName,
                     fontSize = 12.sp,
                 )
             }
@@ -118,7 +118,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
-        TransactionList(transactionList, selectedNetwork = selectedNetwork)
+        TransactionList(transactionList, selectedNetwork = walletManagerState.network)
     }
 }
 
