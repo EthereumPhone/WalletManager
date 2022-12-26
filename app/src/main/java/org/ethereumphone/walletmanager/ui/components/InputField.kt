@@ -1,7 +1,5 @@
 package org.ethereumphone.walletmanager.ui.components
 
-import android.app.Activity
-import android.widget.EditText
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,17 +13,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.theme.md_theme_dark_onSurface
 import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
-import org.kethereum.eip137.model.ENSName
-import org.kethereum.ens.ENS
-import org.kethereum.ens.isPotentialENSDomain
-import org.kethereum.rpc.HttpEthereumRPC
-import java.util.concurrent.CompletableFuture
 
 
 @Composable
@@ -37,24 +29,17 @@ fun InputField(
     singeLine: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     shape: Shape = RoundedCornerShape(50.dp),
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
     modifier: Modifier = Modifier,
     trailingIcon: @Composable (() -> Unit)? = null,
     onFocusChange: (() -> Unit)? = null,
-    onChange: ((value: String) -> Unit)? = null
+    onChange: (value: String) -> Unit,
 ) {
-    var text by remember { mutableStateOf(value) }
     TextField(
-        value = text,
-        keyboardOptions = if (onlyNumbers) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
-        onValueChange = {
-            text = it
-            if (onChange != null) {
-                onChange(it)
-            }
-        },
-        label = {
-            Text(text = label, color = md_theme_dark_onSurface)
-        },
+        value = value,
+        keyboardOptions = keyboardOptions,
+        onValueChange = onChange,
+        label = { Text(text = label, color = md_theme_dark_onSurface) },
         readOnly = readOnly,
         colors = InputFiledColors(),
         shape = shape,
@@ -65,7 +50,7 @@ fun InputField(
         },
         singleLine = singeLine,
         maxLines = maxLines,
-        trailingIcon = trailingIcon
+        trailingIcon = trailingIcon,
     )
 }
 
@@ -80,18 +65,12 @@ fun ENSInputField(
     shape: Shape = RoundedCornerShape(50.dp),
     modifier: Modifier = Modifier,
     trailingIcon: @Composable (() -> Unit)? = null,
-    onChange: ((value: String) -> Unit)? = null
+    onChange: (value: String) -> Unit
 ) {
-    var text by remember { mutableStateOf(value) }
     TextField(
-        value = text,
+        value = value,
         keyboardOptions = if (onlyNumbers) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
-        onValueChange = {
-            text = it
-            if (onChange != null) {
-                onChange(it)
-            }
-        },
+        onValueChange = onChange,
         label = {
             Text(text = label, color = md_theme_dark_onSurface)
         },
@@ -99,14 +78,16 @@ fun ENSInputField(
         colors = InputFiledColors(),
         shape = shape,
         modifier = modifier.onFocusChanged {
-            if(ENSName(text).isPotentialENSDomain()){
+            /*
+            if(ENSName(value).isPotentialENSDomain()){
                 // It is ENS
                 CompletableFuture.runAsync {
                     val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-                    val ensAddr = ens.getAddress(ENSName(text))
-                    text = ensAddr?.hex.toString()
+                    val ensAddr = ens.getAddress(ENSName(value))
+                    value = ensAddr?.hex.toString()
                 }
             }
+             */
         },
         singleLine = singeLine,
         maxLines = maxLines,
