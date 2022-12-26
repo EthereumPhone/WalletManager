@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.ethereumphone.walletmanager.navigation.sendRoute
 import org.ethereumphone.walletmanager.theme.TopLevelDestination
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.WalletManagerState
@@ -45,6 +46,7 @@ fun ButtonRow(
                 Icons.Rounded.NorthEast,
                 "send"
             ) {
+                walletManagerState.navController.navigate(sendRoute)
                 // Navigate to send screen
                 walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
               },
