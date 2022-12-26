@@ -64,9 +64,7 @@ fun HomeScreen(
         }
     }
 
-    Column(
-
-    ) {
+    Column {
         Column(Modifier.clickable {
             showDialog = !showDialog
         }) {
