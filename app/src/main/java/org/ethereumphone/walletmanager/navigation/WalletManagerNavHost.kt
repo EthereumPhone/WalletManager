@@ -29,7 +29,6 @@ fun WalletManagerNavHost(
     selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
-
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -44,12 +43,15 @@ fun WalletManagerNavHost(
         }
         composable(sendRoute) {
             SendRoute(
-                selectedNetwork = selectedNetwork
+                selectedNetwork = selectedNetwork,
+                onBackClick = onBackClick
             )
         }
         composable(receiveRoute) {
             ReceiveScreen(
-                address = walletInfoApi.walletAddress
+                address = walletInfoApi.walletAddress,
+                selectedNetwork = selectedNetwork,
+                onBackClick = onBackClick
             )
         }
 
