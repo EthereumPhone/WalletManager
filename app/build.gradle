@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.dagger.hilt.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -93,6 +95,13 @@ dependencies {
     implementation "androidx.camera:camera-view:1.1.0-beta02"
 
     // zxing
-    implementation 'com.google.zxing:core:3.3.3'
+    implementation('com.journeyapps:zxing-android-embedded:4.1.0')
+    implementation 'com.google.zxing:core:3.5.1'
+
+    // hilt
+    implementation("com.google.dagger:hilt-android:2.44")
+    kapt("com.google.dagger:hilt-android-compiler:2.44")
+
+    // Barcode Scanning
 
 }
