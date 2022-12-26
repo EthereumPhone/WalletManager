@@ -16,11 +16,13 @@ fun NavController.navigateToSend(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.sendScreen(
+    onBackClick: () -> Unit,
     selectedNetwork: State<Network>
 ) {
     composable(route = sendRoute) {
         SendRoute(
-            selectedNetwork = selectedNetwork
+            selectedNetwork = selectedNetwork,
+            onBackClick = onBackClick
         )
     }
 }
