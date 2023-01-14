@@ -21,6 +21,15 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
+        buildConfigField "String", "ETHSCAN_API", "\"${properties.getProperty("ETHSCAN_API")}\""
+        buildConfigField "String", "ARBISCAN_API", "\"${properties.getProperty("ARBISCAN_API")}\""
+        buildConfigField "String", "POLYSCAN_API", "\"${properties.getProperty("POLYSCAN_API")}\""
+        buildConfigField "String", "OPTISCAN_API", "\"${properties.getProperty("OPTISCAN_API")}\""
+
     }
 
     buildTypes {
