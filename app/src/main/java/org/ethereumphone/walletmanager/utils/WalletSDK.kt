@@ -50,7 +50,6 @@ class WalletSDK(
     /**
      * Sends transaction to
      */
-
     fun sendTransaction(to: String, value: String, data: String, gasPriceVAL: String? = null, gasAmount: String = "21000", chainId: Int = 1): CompletableFuture<String> {
         val completableFuture = CompletableFuture<String>()
         var gasPrice = gasPriceVAL
