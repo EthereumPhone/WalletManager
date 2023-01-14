@@ -39,7 +39,9 @@ class WalletSDK(
         } else {
             sysSession = createSession.invoke(proxy) as String
             val reqID = getAddress.invoke(proxy, sysSession) as String
-            Thread.sleep(100)
+            while ((hasBeenFulfilled.invoke(proxy, reqID) as String) == NOTFULFILLED) {
+                Thread.sleep(10)
+            }
             address = hasBeenFulfilled.invoke(proxy, reqID) as String
         }
         web3j = Web3j.build(HttpService(web3RPC))
@@ -48,7 +50,6 @@ class WalletSDK(
     /**
      * Sends transaction to
      */
-
     fun sendTransaction(to: String, value: String, data: String, gasPriceVAL: String? = null, gasAmount: String = "21000", chainId: Int = 1): CompletableFuture<String> {
         val completableFuture = CompletableFuture<String>()
         var gasPrice = gasPriceVAL

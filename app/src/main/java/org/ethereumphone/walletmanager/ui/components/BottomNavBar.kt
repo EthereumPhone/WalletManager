@@ -7,22 +7,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
-import org.ethereumphone.walletmanager.navigation.TopLevelDestination
+import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.theme.TopLevelDestination
 import org.ethereumphone.walletmanager.theme.Icon
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.rememberWalletManagerAppState
@@ -90,7 +86,17 @@ fun AnimatedIcon(
 @Preview
 @Composable
 fun PreviewBottomNavBar() {
-    val appState = rememberWalletManagerAppState()
+    val appState = rememberWalletManagerAppState(
+        network = mutableStateOf(
+            Network(
+                chainId = 1,
+                chainName = "Ethereum Mainnet",
+                chainCurrency = "ETH",
+                chainRPC = "https://cloudflare-eth.com",
+                chainExplorer = "https://etherscan.io"
+            )
+        )
+    )
     val destination = appState.currentTopLevelDestination
 
     WalletManagerTheme {

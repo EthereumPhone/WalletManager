@@ -20,14 +20,12 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.homeScreen(
     walletInfoApi: WalletInfoApi,
     walletInfoViewModel: WalletInfoViewModel,
-    selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
     composable(route = homeRoute) {
         HomeRoute(
             walletInfoApi = walletInfoApi,
             walletInfoViewModel = walletInfoViewModel,
-            selectedNetwork = selectedNetwork,
             walletManagerState = walletManagerState
         )
     }

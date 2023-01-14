@@ -9,3 +9,4 @@ data class Network(
     val chainName: String,
     val chainExplorer: String
 ) : Serializable
+

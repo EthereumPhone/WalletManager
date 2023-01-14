@@ -1,30 +1,27 @@
 package org.ethereumphone.walletmanager.ui.screens
 
-import android.content.Context.MODE_PRIVATE
-import android.os.NetworkOnMainThreadException
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
-import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import org.ethereumphone.walletmanager.theme.md_theme_dark_background
+import org.ethereumphone.walletmanager.theme.NetworkStyle
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.ButtonRow
-import org.ethereumphone.walletmanager.ui.components.TransactionItem
 import org.ethereumphone.walletmanager.ui.components.TransactionList
 import org.ethereumphone.walletmanager.ui.components.WalletInformation
+import org.ethereumphone.walletmanager.ui.components.networkDialog
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 
@@ -33,7 +30,6 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     walletInfoViewModel: WalletInfoViewModel,
     walletInfoApi: WalletInfoApi,
-    selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
     HomeScreen(
@@ -41,10 +37,11 @@ fun HomeRoute(
         transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
         address = walletInfoApi.walletAddress,
         fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
-        selectedNetwork =  selectedNetwork,
         walletManagerState = walletManagerState
     )
 }
+
+private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
 
 @Composable
 fun HomeScreen(
@@ -53,31 +50,77 @@ fun HomeScreen(
     fiatAmount : Double = 0.0,
     address : String = "0x0000000000000000000000000000000000000000",
     transactionList: List<Transaction> = listOf(),
-    selectedNetwork: State<Network>,
     walletManagerState: WalletManagerState
 ) {
+    var showDialog by remember {mutableStateOf(false)}
+
+    if(showDialog) {
+        networkDialog(
+            currentNetwork = walletManagerState.network.value,
+            setShowDialog = { showDialog = it}
+        ) {
+            println(it)
+            walletManagerState.changeNetwork(it)
+        }
+    }
+
     Column {
+        Column(Modifier.clickable {
+            showDialog = !showDialog
+        }) {
+            Text(
+                text = "Wallet Manager",
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                textAlign = TextAlign.Center,
+                fontStyle = FontStyle.Normal
+            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(shape = CircleShape)
+                        .background(
+                            networkStyles.first { it.networkName == walletManagerState.network.value.chainName }.color
+                        )
+                )
+                Text(
+                    text = "  "+walletManagerState.network.value.chainName,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
         WalletInformation(
             ethAmount = ethAmount,
             fiatAmount = fiatAmount,
-            address = address
+            address = address,
+            chainId = walletManagerState.network.value.chainId
         )
         Spacer(modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp))
+            .height(40.dp))
         ButtonRow(
             walletManagerState = walletManagerState,
         )
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
-        TransactionList(transactionList, selectedNetwork = selectedNetwork)
+        TransactionList(
+            transactionList,
+            selectedNetwork = walletManagerState.network)
     }
-
-
 }
 
 /**

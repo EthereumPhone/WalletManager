@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.navigation
+package org.ethereumphone.walletmanager.theme
 
 import org.ethereumphone.walletmanager.R
 import org.ethereumphone.walletmanager.theme.Icon

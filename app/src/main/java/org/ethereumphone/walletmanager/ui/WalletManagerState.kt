@@ -1,8 +1,6 @@
 package org.ethereumphone.walletmanager.ui
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.core.os.trace
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -10,21 +8,29 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.navigation.*
+import org.ethereumphone.walletmanager.theme.TopLevelDestination
 
 @Composable
 fun rememberWalletManagerAppState(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    network: MutableState<Network>
 ): WalletManagerState {
     return remember(navController) {
-        WalletManagerState(navController)
+        WalletManagerState(navController, network)
     }
 }
 
 @Stable
 class WalletManagerState(
-    val navController: NavHostController
+    val navController: NavHostController,
+    val network: MutableState<Network>
 ) {
+
+    fun changeNetwork(newNetwork: Network) {
+        network.value = newNetwork
+    }
 
     val currentDestination: NavDestination?
         @Composable get() = navController

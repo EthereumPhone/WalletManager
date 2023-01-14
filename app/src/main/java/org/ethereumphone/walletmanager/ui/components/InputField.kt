@@ -1,13 +1,12 @@
 package org.ethereumphone.walletmanager.ui.components
 
-import android.app.Activity
-import android.widget.EditText
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldColors
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -15,7 +14,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
@@ -31,32 +29,27 @@ import java.util.concurrent.CompletableFuture
 @Composable
 fun InputField(
     value: String,
-    label: String = "",
-    onlyNumbers : Boolean = false,
+    label: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
     readOnly: Boolean = false,
     singeLine: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     shape: Shape = RoundedCornerShape(50.dp),
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
     modifier: Modifier = Modifier,
     trailingIcon: @Composable (() -> Unit)? = null,
     onFocusChange: (() -> Unit)? = null,
-    onChange: ((value: String) -> Unit)? = null
+    colors: TextFieldColors = InputFiledColors(),
+    onChange: (value: String) -> Unit,
 ) {
-    var text by remember { mutableStateOf(value) }
     TextField(
-        value = text,
-        keyboardOptions = if (onlyNumbers) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
-        onValueChange = {
-            text = it
-            if (onChange != null) {
-                onChange(it)
-            }
-        },
-        label = {
-            Text(text = label, color = md_theme_dark_onSurface)
-        },
+        value = value,
+        keyboardOptions = keyboardOptions,
+        onValueChange = onChange,
+        label = label,
         readOnly = readOnly,
-        colors = InputFiledColors(),
+        isError = isError,
+        colors = colors,
         shape = shape,
         modifier = modifier.onFocusChanged {
             if (onFocusChange != null) {
@@ -65,8 +58,9 @@ fun InputField(
         },
         singleLine = singeLine,
         maxLines = maxLines,
-        trailingIcon = trailingIcon
-    )
+        trailingIcon = trailingIcon,
+
+        )
 }
 
 @Composable
@@ -162,7 +156,6 @@ fun PreviewNumberBox() {
             "",
             singeLine = false,
             maxLines = 1,
-            onlyNumbers = true
         ) {
             println(it)
         }

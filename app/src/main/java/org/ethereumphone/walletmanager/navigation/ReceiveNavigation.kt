@@ -17,11 +17,15 @@ fun NavController.navigateToReceive(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.receiveScreen(
-    address: String
+    address: String,
+    selectedNetwork: State<Network>,
+    onBackClick: () -> Unit,
 ) {
     composable(route = sendRoute) {
         ReceiveScreen(
-            address = address
+            address = address,
+            selectedNetwork = selectedNetwork,
+            onBackClick = onBackClick
         )
     }
 }

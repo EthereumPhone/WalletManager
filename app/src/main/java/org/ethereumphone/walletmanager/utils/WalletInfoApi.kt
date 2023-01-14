@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,17 +15,16 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.ethereumphone.walletmanager.BuildConfig
 import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import java.io.InputStream
-import java.io.OutputStreamWriter
 import java.lang.Double.parseDouble
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -110,7 +108,20 @@ class WalletInfoApi(
         val address = wallet.getAddress()
         try {
             val output = ArrayList<Transaction>()
-            val rpcURL = if (selectedNetwork.chainId == 1) "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=NXXTAQGMIT39T9R465P4564JDW1PRPD27J" else ""
+            //val rpcURL = if (selectedNetwork.chainId == 1) "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=NXXTAQGMIT39T9R465P4564JDW1PRPD27J" else ""
+            val rpcURL = when(selectedNetwork.chainId){
+                // Mainnet
+                1 -> "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
+                // Goerli
+                5 -> "https://api-goerli.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
+                // Optimism
+                10 -> "https://api-optimistic.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.OPTISCAN_API}"
+                // Polygon
+                137 -> "https://api.polygonscan.com/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.POLYSCAN_API}"
+                // Arbitrum
+                42161 -> "https://api.arbiscan.io/api?module=account&action=txlistinternal&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.ARBISCAN_API}"
+                else -> ""
+            }
 
             if (rpcURL == "") {
                 return output
@@ -134,7 +145,7 @@ class WalletInfoApi(
                 val transferData = jsonArray.get(i) as JSONObject
                 output.add(
                     Transaction(
-                        type = (transferData.getString("to") != address),
+                        type = !(transferData.getString("to").equals(address, true)),
                         value = BigDecimal(transferData.getString("value")).divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toString(),
                         hash = transferData.getString("hash"),
                         fromAddr = transferData.getString("from"),
@@ -149,9 +160,14 @@ class WalletInfoApi(
         }
     }
 
-    suspend fun getEthAmountInUSD(ethAmount: Double): Double {
+    suspend fun getEthAmountInUSD(ethAmount: Double, selectedNetwork: Network): Double {
+        var symbol = when(selectedNetwork.chainId) {
+            137 -> "MATICUSDT"
+            else -> "ETHUSDT"
+
+        }
         val exchange = ExchangeApi.retrofitService.getExchange(
-            symbol = "ETHUSDT"
+            symbol = symbol
         )
 
         return round(parseDouble(exchange.price) * ethAmount, 3)
@@ -247,10 +263,10 @@ class WalletInfoViewModel(
             }
             CompletableFuture.runAsync {
                 GlobalScope.launch {
-                    val ethAmountInUSD = walletInfoApi.getEthAmountInUSD(number)
+                    val cryptoToUSD = walletInfoApi.getEthAmountInUSD(number, network)
                     // Wait till app has been open for at least 1 second
                     (walletInfoApi.context as Activity).runOnUiThread {
-                        _ethAmountInUSD.postValue(ethAmountInUSD)
+                        _ethAmountInUSD.postValue(cryptoToUSD)
                     }
                 }
             }

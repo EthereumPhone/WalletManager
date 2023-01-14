@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NorthEast
@@ -27,12 +26,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.theme.ListBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import java.lang.Double.parseDouble
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -54,8 +53,8 @@ fun TransactionList(
         ) {
             Text(
                 text = "Transactions",
-                style = MaterialTheme.typography.subtitle1,
-                color = Color.White.copy(alpha = .7f)
+                fontSize = 20.sp,
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(
@@ -77,7 +76,8 @@ fun TransactionItem(
     selectedNetwork: State<Network>
 ) {
     val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
-    val text = if(transaction.type) "sent to ${transaction.toAddr}" else "received from ${transaction.fromAddr}"
+    val type = if(transaction.type) "sent Ether"  else "received Ether"
+    val address = if(transaction.type) "to: " + transaction.toAddr else "from: " + transaction.fromAddr
     val context = LocalContext.current
 
     Row(
@@ -103,39 +103,32 @@ fun TransactionItem(
                 )
 
         }
-        Column(Modifier.weight(1f)) {
-            Text(
-                modifier = Modifier.padding(horizontal = 18.dp),
-                text = text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = Color.White
-            )
-            Text(
-                text = ""
-            )
-        }
-        Column{
-            Text(
-                text = round(transaction.value, 3) + " ETH",
-                textAlign = TextAlign.End,
-                color = Color.White
-            )
-            Text(
-                text = "",
-                textAlign = TextAlign.End,
-            )
+        Column {
+            Row {
+                Text(
+                    text = type,
+                    modifier = Modifier.padding(horizontal = 18.dp)
+                )
+                Text(
+                    text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    textAlign = TextAlign.End,
+                    color = Color.White,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 18.dp)
+                )
+            }
+            Row {
+                Text(
+                    text = address,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 18.dp)
+                    )
+            }
         }
     }
 }
-
-fun round(value: String, places: Int): String {
-    require(places >= 0)
-    var bd: BigDecimal = BigDecimal(value)
-    bd = bd.setScale(places, RoundingMode.HALF_UP)
-    return bd.toString()
-}
-
 
 fun openTxInEtherscan(context: Context, txHash: String, selectedNetwork: State<Network>) {
     val url = "${selectedNetwork.value.chainExplorer}/tx/$txHash"
