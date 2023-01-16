@@ -105,7 +105,8 @@ fun HomeScreen(
         WalletInformation(
             ethAmount = ethAmount,
             fiatAmount = fiatAmount,
-            address = address
+            address = address,
+            chainId = walletManagerState.network.value.chainId
         )
         Spacer(modifier = Modifier
             .fillMaxWidth()
@@ -116,7 +117,9 @@ fun HomeScreen(
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
-        TransactionList(transactionList, selectedNetwork = walletManagerState.network)
+        TransactionList(
+            transactionList,
+            selectedNetwork = walletManagerState.network)
     }
 }
 

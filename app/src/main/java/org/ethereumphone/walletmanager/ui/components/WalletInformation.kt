@@ -29,7 +29,8 @@ import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 fun WalletInformation(
     ethAmount: Double,
     fiatAmount: Double,
-    address: String
+    address: String,
+    chainId: Int,
 ) {
 
     Column(
@@ -50,7 +51,7 @@ fun WalletInformation(
             )
         } else {
             Text(
-                text = "$ethAmount ETH",
+                text = "$ethAmount" + if(chainId == 137) " MATIC" else " ETH",
                 fontWeight = FontWeight.Bold,
                 fontSize = 36.sp,
                 color = Color.White,
@@ -122,7 +123,8 @@ fun PreviewWalletInformation() {
             WalletInformation(
                 ethAmount = 0.0719,
                 fiatAmount = 90.52,
-                address = "0x0000000000000123"
+                address = "0x0000000000000123",
+                chainId = 1
             )
         }
 

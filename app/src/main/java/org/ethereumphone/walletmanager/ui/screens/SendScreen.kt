@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -36,11 +35,13 @@ import com.journeyapps.barcodescanner.CompoundBarcodeView
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.components.InputField
+import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
 import org.ethereumphone.walletmanager.utils.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
+import org.web3j.crypto.WalletUtils.isValidAddress
 import java.math.BigDecimal
 import java.util.concurrent.CompletableFuture
 
@@ -63,9 +64,11 @@ fun SendScreen(
     onBackClick: () -> Unit
 ) {
     var address by remember { mutableStateOf("") }
-    var ensToAddress by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
+    var amountError by remember { mutableStateOf(false) }
+    var validSendAddress by remember { mutableStateOf(true) }
+
 
     val context = LocalContext.current
     val selectedNetwork = selectedNetworkState.value
@@ -160,8 +163,22 @@ fun SendScreen(
         ) {
             Row {
                 InputField(
-                    label = "To Address/ENS",
+                    label = {
+                        if(validSendAddress) Text("To Address/ENS", color = md_theme_dark_onSurface)
+                        else Text("To Address/ENS", color = Color.Yellow.copy(0.8f))
+                    },
                     value = address,
+                    colors = if(validSendAddress) InputFiledColors() else InputFiledColors(backgroundColor = Color.Yellow.copy(0.2f)),
+                    trailingIcon = {
+                        IconButton(onClick = { showDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.QrCode,
+                                contentDescription = "Address by QR",
+                                tint = if(validSendAddress) md_theme_dark_onSurface else Color.Yellow,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .onFocusChanged {
@@ -170,38 +187,44 @@ fun SendScreen(
                                 CompletableFuture.runAsync {
                                     val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
                                     val ensAddr = ens.getAddress(ENSName(address))
-
-                                    ensToAddress = ensAddr?.hex
-                                        .toString()
-                                        .replace("null", "")
-                                }
-                            } else {
-                                ensToAddress = ""
+                                    address = ensAddr?.hex.toString()
                             }
+                        } else {
+                            if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
+                            if(address.isEmpty()) validSendAddress = true
                         }
                 ) {
                     address = it
                 }
-                IconButton(onClick = { showDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.QrCode,
-                        contentDescription = "Address by QR",
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
             }
-            Text(
-                text = ensToAddress,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
         }
+        if(validSendAddress) Spacer(Modifier.height(20.dp))
+        else Text(
+            text = "potentially invalid address",
+            color = Color.Yellow,
+            modifier = Modifier.padding(horizontal = 10.dp)
+        )
+
+
         InputField(
-            label = "Amount",
+            label = {
+                if(amountError) Text("Amount", color = Color.Red.copy(0.8f))
+                else Text("Amount", color = md_theme_dark_onSurface)
+                    } ,
             modifier = Modifier.fillMaxWidth(),
             value = amount,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        ) { amount = it}
+            colors = if(amountError) InputFiledColors(backgroundColor = Color.Red.copy(0.2f)) else InputFiledColors(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+
+        ) {
+            amount = it
+            amountError = amount.contains(Regex("-| "))
+       }
+        if(amountError) Text(
+            text= "Illegal characters (-, _)",
+            color = Color.Red,
+            fontSize = 12.sp
+        )
 
         Spacer(Modifier.weight(1f))
         // Send
@@ -210,7 +233,7 @@ fun SendScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 10.dp),
-            enabled = amount.isNotEmpty() && address.isNotEmpty(),
+            enabled = amount.isNotEmpty() && address.isNotEmpty() && !amountError,
             colors = ButtonDefaults.buttonColors(disabledBackgroundColor = Color.Gray),
             onClick = {
                 val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
@@ -221,11 +244,11 @@ fun SendScreen(
                         val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
                         completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
                     }
-                    ensToAddress = completableFuture.get()
+                    address = completableFuture.get()
                 }
                 walletSDK.sendTransaction(
-                    to = ensToAddress,
-                    value = BigDecimal(amount.filterNot { it.isWhitespace() }).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
+                    to = address,
+                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
                     data = "",
                     chainId = selectedNetwork.chainId
                 ).whenComplete { txHash, throwable ->
@@ -233,7 +256,7 @@ fun SendScreen(
                     // Open tx in etherscan
                     if (txHash != "decline") {
                         val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
+                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
                         context.startActivity(intent)
                     }
                 }
