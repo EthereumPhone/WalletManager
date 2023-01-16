@@ -74,10 +74,10 @@ fun WalletInformation(
  */
 fun getGreeting(): String {
     return when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
-        in 0..11 -> "gm"
-        in 12..19 -> "ga"
-        in 20..23 -> "gn"
-        else -> "gm"
+        in 0..11 -> "gm ☀️"
+        in 12..19 -> "ga \uD83D\uDC4B"
+        in 20..23 -> "gn \uD83C\uDF19"
+        else -> "gm ☀️"
     }
 }
 @Composable
