@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NorthEast
@@ -22,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +42,7 @@ import java.math.RoundingMode
 @Composable
 fun TransactionList(
     transactionList: List<Transaction>,
-    selectedNetwork: State<Network>,
+    //selectedNetwork: State<Network>,
     modifier: Modifier? = Modifier
 ) {
     Box(modifier = Modifier
@@ -62,7 +65,7 @@ fun TransactionList(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(transactionList) { item ->
-                    TransactionItem(transaction = item, selectedNetwork = selectedNetwork)
+                    TransactionItem(transaction = item)//, selectedNetwork = selectedNetwork)
                 }
             }
         }
@@ -73,10 +76,10 @@ fun TransactionList(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
-    selectedNetwork: State<Network>
+    //selectedNetwork: State<Network>
 ) {
     val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
-    val type = if(transaction.type) "sent Ether"  else "received Ether"
+    val type = if(transaction.type) "Sent Ether"  else "Received Ether"
     val address = if(transaction.type) "to: " + transaction.toAddr else "from: " + transaction.fromAddr
     val context = LocalContext.current
 
@@ -84,7 +87,7 @@ fun TransactionItem(
         Modifier
             .fillMaxWidth()
             .clickable {
-                openTxInEtherscan(context, transaction.hash, selectedNetwork)
+                //openTxInEtherscan(context, transaction.hash, selectedNetwork)
             }
     ) {
         Box(
@@ -107,12 +110,17 @@ fun TransactionItem(
             Row {
                 Text(
                     text = type,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
                 )
                 Text(
                     text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
                     textAlign = TextAlign.End,
+                    fontSize = 15.sp,
                     color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 18.dp)
@@ -123,7 +131,8 @@ fun TransactionItem(
                     text = address,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp),
+                    color = Color.White.copy(alpha = 0.75f)
                     )
             }
         }
@@ -160,11 +169,11 @@ fun PreviewTransactionList() {
             modifier = Modifier.fillMaxSize()
         ) {
             // create a State<Network> object
-            val selectedNetwork = object : State<Network> {
+            /*val selectedNetwork = object : State<Network> {
                 override val value: Network
                     get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-            }
-            TransactionList(transactionList, selectedNetwork = selectedNetwork)
+            }*/
+            TransactionList(transactionList)//, selectedNetwork = selectedNetwork)
         }
     }
 }
@@ -187,15 +196,15 @@ fun PreviewTransactionItem() {
         fromAddr = "mhaas.eth"
     )
 
-    val selectedNetwork = object : State<Network> {
+    /*val selectedNetwork = object : State<Network> {
         override val value: Network
             get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-    }
+    }*/
 
     WalletManagerTheme {
         Column {
-            TransactionItem(t1, selectedNetwork)
-            TransactionItem(t2, selectedNetwork)
+            TransactionItem(t1)//, selectedNetwork)
+            TransactionItem(t2)//, selectedNetwork)
         }
     }
 }

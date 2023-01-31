@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getSystemService
 import org.ethereumphone.walletmanager.theme.BoxBackground
+import org.ethereumphone.walletmanager.theme.ListBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
+import org.ethereumphone.walletmanager.theme.dark_gray3
 
 
 @Composable
@@ -53,15 +56,15 @@ fun WalletInformation(
             Text(
                 text = "$ethAmount" + if(chainId == 137) " MATIC" else " ETH",
                 fontWeight = FontWeight.Bold,
-                fontSize = 36.sp,
+                style = MaterialTheme.typography.h4,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
                 text = "$$fiatAmount",
-                //fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
+                fontWeight = FontWeight.Light,
+                style = MaterialTheme.typography.button,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -90,8 +93,8 @@ fun MiddleEllipseText(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
-            .background(BoxBackground)
-            .padding(vertical = 3.dp, horizontal = 10.dp)
+            .background(dark_gray3)
+            .padding(vertical = 4.dp, horizontal = 12.dp)
             .clickable {
                 val clipboard: ClipboardManager? =
                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
@@ -105,8 +108,8 @@ fun MiddleEllipseText(
     ) {
         Text(
             text = text,
-            //fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
+            fontWeight = FontWeight.Normal,
+            style = MaterialTheme.typography.button,
             color = Color.White
         )
     }
