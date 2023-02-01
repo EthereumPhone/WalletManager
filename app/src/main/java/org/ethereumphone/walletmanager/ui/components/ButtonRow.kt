@@ -33,7 +33,7 @@ import org.ethereumphone.walletmanager.utils.WalletSDK
 
 @Composable
 fun ButtonRow(
-    walletManagerState: WalletManagerState,
+    //walletManagerState: WalletManagerState,
 ) {
     val modifier = Modifier
     Row(
@@ -44,32 +44,32 @@ fun ButtonRow(
         val iconButtons = listOf(
             Triple(
                 Icons.Rounded.NorthEast,
-                "send"
+                "Send"
             ) {
-                walletManagerState.navController.navigate(sendRoute)
+                //walletManagerState.navController.navigate(sendRoute)
                 // Navigate to send screen
-                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
+                //walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
               },
             Triple(
                 Icons.Default.CreditCard,
-                "buy"
+                "Buy"
             ) {
-                val userAddr = WalletSDK(context).getAddress()
+                //val userAddr = WalletSDK(context).getAddress()
                 // Copy address to clipboard
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clipboard.setPrimaryClip(ClipData.newPlainText("address", userAddr))
+                //val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                //clipboard.setPrimaryClip(ClipData.newPlainText("address", userAddr))
                 // Make toast that address has been copied
-                Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_LONG).show()
+                //Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_LONG).show()
                 // Open link in browser
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ramp.network/buy/?defaultAsset=ETH"))
-                context.startActivity(browserIntent)
+                //val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ramp.network/buy/?defaultAsset=ETH"))
+                //context.startActivity(browserIntent)
             },
             Triple(
                 Icons.Rounded.VerticalAlignBottom,
                 "Receive"
             ) {
                 // Navigate to receive screen
-                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.RECEIVE)
+                //walletManagerState.navigateToTopLevelDestination(TopLevelDestination.RECEIVE)
             }
         )
         for(item in iconButtons) {
@@ -110,9 +110,10 @@ fun CircleButton(
                 image,
                 contentDescription = "Arrow",
                 tint = Color.White,
-                modifier = Modifier.fillMaxSize(.70f)
+                modifier = Modifier.fillMaxSize(.60f)
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = buttonText,
             fontSize = 12.sp,
@@ -137,6 +138,6 @@ fun CircleButtonPreview() {
 @Composable
 fun PreviewButtonRow() {
     WalletManagerTheme {
-        //ButtonRow()
+        ButtonRow()
     }
 }

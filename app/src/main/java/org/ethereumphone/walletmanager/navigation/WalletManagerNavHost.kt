@@ -50,8 +50,8 @@ fun WalletManagerNavHost(
         composable(receiveRoute) {
             ReceiveScreen(
                 address = walletInfoApi.walletAddress,
-                selectedNetwork = selectedNetwork,
-                onBackClick = onBackClick
+                //selectedNetwork = selectedNetwork,
+                //onBackClick = onBackClick
             )
         }
 

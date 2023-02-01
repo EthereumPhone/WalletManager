@@ -121,9 +121,9 @@ fun HomeScreen(
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(40.dp))
-        ButtonRow(
+        /*ButtonRow(
             walletManagerState = walletManagerState,
-        )
+        )*/
         Spacer(modifier = Modifier
             .fillMaxWidth()
             .height(50.dp))
@@ -186,6 +186,7 @@ fun UIHomescreenPreview(){
                     Text(
                         text = "  "+"Ethereum Main Network",//walletManagerState.network.value.chainName,
                         style = MaterialTheme.typography.button,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = Color.White
                     )
@@ -196,10 +197,10 @@ fun UIHomescreenPreview(){
                 .fillMaxWidth()
                 .height(50.dp))
             WalletInformation(
-                ethAmount = 0.0,
-                fiatAmount = 0.0,
+                ethAmount = 0.0719,
+                fiatAmount = 90.52,
                 address = "0xefBABdeE59968641DC6E892e30C470c2b40157Cd",
-                chainId = 137//walletManagerState.network.value.chainId
+                chainId = 1//walletManagerState.network.value.chainId
             )
             Spacer(modifier = Modifier
                 .fillMaxWidth()
@@ -213,17 +214,17 @@ fun UIHomescreenPreview(){
             //State<Network> net =
             /*val appState: WalletManagerState = rememberWalletManagerAppState(
                 network =
-            )
+            )*/
             ButtonRow(
-                walletManagerState = null,
+                //walletManagerState = null,
             )
             Spacer(modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp))
 
             TransactionList(
-                transactionList,
-                selectedNetwork = networklist)*/
+                transactionList)//,
+                //selectedNetwork = networklist)
         }
     }
 }

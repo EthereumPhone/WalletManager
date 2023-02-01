@@ -46,8 +46,9 @@ fun WalletInformation(
         if (ethAmount == Double.MAX_VALUE) {
             Text(
                 text = getGreeting(),
-                fontWeight = FontWeight.Medium,
-                fontSize = 55.sp,
+                /*fontWeight = FontWeight.Medium,
+                fontSize = 55.sp,*/
+                style = MaterialTheme.typography.h4,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()

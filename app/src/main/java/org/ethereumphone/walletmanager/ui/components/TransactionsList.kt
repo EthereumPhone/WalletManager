@@ -56,8 +56,9 @@ fun TransactionList(
         ) {
             Text(
                 text = "Transactions",
-                fontSize = 20.sp,
-                color = Color.White
+                //fontSize = 20.sp,
+                color = Color.White,
+                style = MaterialTheme.typography.h5
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(
@@ -79,63 +80,97 @@ fun TransactionItem(
     //selectedNetwork: State<Network>
 ) {
     val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
-    val type = if(transaction.type) "Sent Ether"  else "Received Ether"
-    val address = if(transaction.type) "to: " + transaction.toAddr else "from: " + transaction.fromAddr
+    val type = if(transaction.type) "Sent"  else "Received"
+    val address = if(transaction.type) "" + transaction.toAddr else "" + transaction.fromAddr
     val context = LocalContext.current
 
     Row(
         Modifier
             .fillMaxWidth()
+            .height(48.dp)
             .clickable {
                 //openTxInEtherscan(context, transaction.hash, selectedNetwork)
-            }
+            } ,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+
+
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color.White)
-        ) {
-            Icon(
-                image,
-                contentDescription = "outgoing transaction",
-                tint = Color.Black,
+        Row (
+            verticalAlignment = Alignment.CenterVertically
+                ){
+            Box(
                 modifier = Modifier
-                    .fillMaxSize(.70f)
-                    .align(Alignment.Center)
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+            ) {
+                Icon(
+                    image,
+                    contentDescription = "outgoing transaction",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .fillMaxSize(.60f)
+                        .align(Alignment.Center)
                 )
 
-        }
-        Column {
-            Row {
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth(0.5f)
+            ) {
                 Text(
                     text = type,
                     modifier = Modifier.padding(horizontal = 18.dp),
+                    style = MaterialTheme.typography.body2,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
                 )
                 Text(
-                    text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
-                    textAlign = TextAlign.End,
-                    fontSize = 15.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 18.dp)
-                )
-            }
-            Row {
-                Text(
                     text = address,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 18.dp),
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
                     color = Color.White.copy(alpha = 0.75f)
-                    )
+                )
             }
         }
+        Box(
+
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+
+
+                        //.padding(horizontal = 18.dp)
+                )
+                Text(
+                    text = "$0.00",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    //modifier = Modifier.padding(horizontal = 18.dp),
+                    color = Color.White.copy(alpha = 0.75f)
+                )
+
+
+            }
+        }
+
     }
 }
 

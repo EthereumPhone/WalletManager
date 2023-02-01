@@ -24,8 +24,8 @@ fun NavGraphBuilder.receiveScreen(
     composable(route = sendRoute) {
         ReceiveScreen(
             address = address,
-            selectedNetwork = selectedNetwork,
-            onBackClick = onBackClick
+            //selectedNetwork = selectedNetwork,
+            //onBackClick = onBackClick
         )
     }
 }
