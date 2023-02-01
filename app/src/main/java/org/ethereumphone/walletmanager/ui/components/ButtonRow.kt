@@ -33,7 +33,7 @@ import org.ethereumphone.walletmanager.utils.WalletSDK
 
 @Composable
 fun ButtonRow(
-    //walletManagerState: WalletManagerState,
+    walletManagerState: WalletManagerState,
 ) {
     val modifier = Modifier
     Row(
@@ -46,30 +46,30 @@ fun ButtonRow(
                 Icons.Rounded.NorthEast,
                 "Send"
             ) {
-                //walletManagerState.navController.navigate(sendRoute)
+                walletManagerState.navController.navigate(sendRoute)
                 // Navigate to send screen
-                //walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
+                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.SEND)
               },
             Triple(
                 Icons.Default.CreditCard,
                 "Buy"
             ) {
-                //val userAddr = WalletSDK(context).getAddress()
+                val userAddr = WalletSDK(context).getAddress()
                 // Copy address to clipboard
-                //val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                //clipboard.setPrimaryClip(ClipData.newPlainText("address", userAddr))
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("address", userAddr))
                 // Make toast that address has been copied
-                //Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_LONG).show()
                 // Open link in browser
-                //val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ramp.network/buy/?defaultAsset=ETH"))
-                //context.startActivity(browserIntent)
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ramp.network/buy/?defaultAsset=ETH"))
+                context.startActivity(browserIntent)
             },
             Triple(
                 Icons.Rounded.VerticalAlignBottom,
                 "Receive"
             ) {
                 // Navigate to receive screen
-                //walletManagerState.navigateToTopLevelDestination(TopLevelDestination.RECEIVE)
+                walletManagerState.navigateToTopLevelDestination(TopLevelDestination.RECEIVE)
             }
         )
         for(item in iconButtons) {
@@ -134,10 +134,10 @@ fun CircleButtonPreview() {
     }
 }
 
-@Preview
+/*@Preview
 @Composable
 fun PreviewButtonRow() {
     WalletManagerTheme {
         ButtonRow()
     }
-}
+}*/

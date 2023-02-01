@@ -52,8 +52,8 @@ fun SendRoute(
     onBackClick: () -> Unit
 ) {
     SendScreen(
-        //selectedNetworkState = selectedNetwork,
-        //onBackClick = onBackClick
+        selectedNetworkState = selectedNetwork,
+        onBackClick = onBackClick
     )
 }
 
@@ -61,8 +61,8 @@ private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
 
 @Composable
 fun SendScreen(
-    //selectedNetworkState: State<Network>,
-    //onBackClick: () -> Unit
+    selectedNetworkState: State<Network>,
+    onBackClick: () -> Unit
 ) {
     var address by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -72,7 +72,7 @@ fun SendScreen(
 
 
     val context = LocalContext.current
-    //val selectedNetwork = selectedNetworkState.value
+    val selectedNetwork = selectedNetworkState.value
 
 
     var hasCameraPermission by remember {
@@ -118,7 +118,7 @@ fun SendScreen(
                 .fillMaxWidth()
             ) {
                 IconButton(
-                    onClick = { },//onBackClick() },
+                    onClick = { onBackClick() },
                     modifier = Modifier.align(Alignment.CenterStart)
                 ) {
                     Icon(
@@ -151,11 +151,11 @@ fun SendScreen(
                                 .size(8.dp)
                                 .clip(shape = CircleShape)
                                 .background(
-                                    Color.Green//networkStyles.first { it.networkName == selectedNetworkState.value.chainName }.color
+                                    networkStyles.first { it.networkName == selectedNetworkState.value.chainName }.color
                                 )
                         )
                         Text(
-                            text = "  "+"Mainnet",//selectedNetworkState.value.chainName,
+                            text = "  "+selectedNetworkState.value.chainName,
                             fontSize = 12.sp,
                             color = Color.White
                         )
@@ -258,7 +258,7 @@ fun SendScreen(
                     disabledBackgroundColor = Color.Gray,
                     backgroundColor = dark_primary
                 ),
-                /*onClick = {
+                onClick = {
                     val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
                     val ensName = ENSName(address)
                     if (ensName.isPotentialENSDomain()) {
@@ -283,8 +283,8 @@ fun SendScreen(
                             context.startActivity(intent)
                         }
                     }
-                }*/
-                onClick = {}
+                }
+                //onClick = {}
             ) {
                 Text(
                     text = "Send",
@@ -335,13 +335,13 @@ fun qrCodeDialog(
         )
     }
 }
-
-//@ExperimentalComposeUiApi
+/*
+@ExperimentalComposeUiApi
 @Composable
 @Preview
 fun PreviewMintingScreen() {
     WalletManagerTheme {
-        /*val mainnetNetwork = Network(
+        val mainnetNetwork = Network(
             chainName = "Mainnet",
             chainId = 1,
             chainRPC = "https://cloudflare-eth.com",
@@ -352,7 +352,7 @@ fun PreviewMintingScreen() {
         val selectedNetwork = object : State<Network> {
             override val value: Network
                 get() = mainnetNetwork
-        }*/
-        SendScreen()//selectedNetworkState = selectedNetwork)
+        }
+        SendScreen(selectedNetworkState = selectedNetwork)
     }
-}
+}*/

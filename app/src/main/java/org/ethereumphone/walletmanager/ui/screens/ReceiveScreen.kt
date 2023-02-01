@@ -52,8 +52,8 @@ fun ReceiveRoute(
 ) {
     ReceiveScreen(
         address = address,
-        //selectedNetwork = selectedNetworkState,
-        //onBackClick = onBackClick
+        selectedNetwork = selectedNetworkState,
+        onBackClick = onBackClick
     )
 }
 
@@ -62,8 +62,8 @@ private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
 @Composable
 fun ReceiveScreen(
     address: String,
-    //selectedNetwork: State<Network>,
-    //onBackClick: () -> Unit
+    selectedNetwork: State<Network>,
+    onBackClick: () -> Unit
 
 ) {
     val configuration = LocalConfiguration.current
@@ -78,7 +78,7 @@ fun ReceiveScreen(
                 .fillMaxWidth()
             ) {
                 IconButton(
-                    onClick = { },//onBackClick() },
+                    onClick = { onBackClick() },
                     modifier = Modifier.align(Alignment.CenterStart)
                 ) {
                     Icon(
@@ -112,11 +112,11 @@ fun ReceiveScreen(
                                 .size(8.dp)
                                 .clip(shape = CircleShape)
                                 .background(
-                                    Color.Green//networkStyles.first { it.networkName == selectedNetwork.value.chainName }.color
+                                    networkStyles.first { it.networkName == selectedNetwork.value.chainName }.color
                                 )
                         )
                         Text(
-                            text = "  "+"Mainnet",//+selectedNetwork.value.chainName,
+                            text = "  "+selectedNetwork.value.chainName,
                             fontSize = 12.sp,
                             color = Color.White
                         )
@@ -139,8 +139,8 @@ fun ReceiveScreen(
                     .fillMaxWidth()
                     .height(56.dp),
 
-                onClick = {}
-                /*onClick = {
+                //onClick = {}
+                onClick = {
                     // Copy address to clipboard
                     val clipboard: ClipboardManager? =
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
@@ -149,7 +149,7 @@ fun ReceiveScreen(
 
                     // Toast copy to clipboard
                     Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                }*/
+                }
             ) {
                 Text(
                     text = "Copy Address",
@@ -191,11 +191,11 @@ fun BitmapImage(bitmap: Bitmap) {
 
 
 
-@Preview
+/*@Preview
 @Composable
 fun ReceiveScreenPreview() {
     ethOSTheme{
         ReceiveScreen(address = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c")
     }
 
-}
+}*/

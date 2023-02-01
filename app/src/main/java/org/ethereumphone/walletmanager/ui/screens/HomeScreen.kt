@@ -71,70 +71,72 @@ fun HomeScreen(
             walletManagerState.changeNetwork(it)
         }
     }
-
-    Column (
+    Box(
         modifier = Modifier.background(black)
-            ){
-        Column(Modifier.clickable {
-            showDialog = !showDialog
-        }) {
-            Text(
-                text = "Wallet Manager",
-                fontSize = 24.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                textAlign = TextAlign.Center,
-                fontStyle = FontStyle.Normal
-            )
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(shape = CircleShape)
-                        .background(
-                            networkStyles.first { it.networkName == walletManagerState.network.value.chainName }.color
-                        )
-                )
+    ){
+        Column (){
+            Column(Modifier.clickable {
+                showDialog = !showDialog
+            }) {
                 Text(
-                    text = "  "+walletManagerState.network.value.chainName,
-                    fontSize = 12.sp,
+                    text = "Wallet Manager",
+                    fontSize = 24.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    textAlign = TextAlign.Center,
+                    fontStyle = FontStyle.Normal
                 )
-            }
-        }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
 
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp))
-        WalletInformation(
-            ethAmount = ethAmount,
-            fiatAmount = fiatAmount,
-            address = address,
-            chainId = walletManagerState.network.value.chainId
-        )
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp))
-        /*ButtonRow(
-            walletManagerState = walletManagerState,
-        )*/
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp))
-        TransactionList(
-            transactionList)
-        //,selectedNetwork = walletManagerState.network)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(shape = CircleShape)
+                            .background(
+                                networkStyles.first { it.networkName == walletManagerState.network.value.chainName }.color
+                            )
+                    )
+                    Text(
+                        text = "  "+walletManagerState.network.value.chainName,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp))
+            WalletInformation(
+                ethAmount = ethAmount,
+                fiatAmount = fiatAmount,
+                address = address,
+                chainId = walletManagerState.network.value.chainId
+            )
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp))
+            ButtonRow(
+                walletManagerState = walletManagerState,
+            )
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp))
+            TransactionList(
+                transactionList,
+                selectedNetwork = walletManagerState.network)
+        }
     }
+
 }
 
 
-@Preview
+/*@Preview
 @Composable
 fun UIHomescreenPreview(){
     WalletManagerTheme{
@@ -227,7 +229,7 @@ fun UIHomescreenPreview(){
                 //selectedNetwork = networklist)
         }
     }
-}
+}*/
 
 /*
 @Preview

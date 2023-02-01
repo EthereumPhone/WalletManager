@@ -42,7 +42,7 @@ import java.math.RoundingMode
 @Composable
 fun TransactionList(
     transactionList: List<Transaction>,
-    //selectedNetwork: State<Network>,
+    selectedNetwork: State<Network>,
     modifier: Modifier? = Modifier
 ) {
     Box(modifier = Modifier
@@ -66,7 +66,7 @@ fun TransactionList(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(transactionList) { item ->
-                    TransactionItem(transaction = item)//, selectedNetwork = selectedNetwork)
+                    TransactionItem(transaction = item, selectedNetwork = selectedNetwork)
                 }
             }
         }
@@ -77,7 +77,7 @@ fun TransactionList(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
-    //selectedNetwork: State<Network>
+    selectedNetwork: State<Network>
 ) {
     val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
     val type = if(transaction.type) "Sent"  else "Received"
@@ -89,7 +89,7 @@ fun TransactionItem(
             .fillMaxWidth()
             .height(48.dp)
             .clickable {
-                //openTxInEtherscan(context, transaction.hash, selectedNetwork)
+                openTxInEtherscan(context, transaction.hash, selectedNetwork)
             } ,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -144,8 +144,9 @@ fun TransactionItem(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
+                val sign = if(transaction.type) "-"  else "+"
                 Text(
-                    text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    text = sign+" "+BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
                     textAlign = TextAlign.End,
                     style = MaterialTheme.typography.body2,
                     fontSize = 15.sp,
@@ -155,6 +156,8 @@ fun TransactionItem(
 
                         //.padding(horizontal = 18.dp)
                 )
+                /*
+                Dollar-Amount
                 Text(
                     text = "$0.00",
                     maxLines = 1,
@@ -164,8 +167,8 @@ fun TransactionItem(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     //modifier = Modifier.padding(horizontal = 18.dp),
-                    color = Color.White.copy(alpha = 0.75f)
-                )
+                    color = ListBackground//Color.White.copy(alpha = 0.75f)
+                )*/
 
 
             }
@@ -181,7 +184,7 @@ fun openTxInEtherscan(context: Context, txHash: String, selectedNetwork: State<N
     startActivity(context, intent, null)
 }
 
-@Preview
+/*@Preview
 @Composable
 fun PreviewTransactionList() {
     val t1 = Transaction(
@@ -204,15 +207,16 @@ fun PreviewTransactionList() {
             modifier = Modifier.fillMaxSize()
         ) {
             // create a State<Network> object
-            /*val selectedNetwork = object : State<Network> {
+            val selectedNetwork = object : State<Network> {
                 override val value: Network
                     get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-            }*/
-            TransactionList(transactionList)//, selectedNetwork = selectedNetwork)
+            }
+            TransactionList(transactionList, selectedNetwork = selectedNetwork)
         }
     }
-}
+}*/
 
+/*
 @Preview
 @Composable
 fun PreviewTransactionItem() {
@@ -231,15 +235,15 @@ fun PreviewTransactionItem() {
         fromAddr = "mhaas.eth"
     )
 
-    /*val selectedNetwork = object : State<Network> {
+    val selectedNetwork = object : State<Network> {
         override val value: Network
             get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-    }*/
+    }
 
     WalletManagerTheme {
         Column {
-            TransactionItem(t1)//, selectedNetwork)
-            TransactionItem(t2)//, selectedNetwork)
+            TransactionItem(t1, selectedNetwork)
+            TransactionItem(t2, selectedNetwork)
         }
     }
-}
+}*/
