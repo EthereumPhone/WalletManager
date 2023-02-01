@@ -10,6 +10,7 @@ import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
@@ -248,7 +249,6 @@ class WalletInfoViewModel(
     private val _ethAmountInUSD = MutableLiveData<Double>(0.0)
     val ethAmountInUSD: LiveData<Double> = _ethAmountInUSD
 
-
     init {
         walletInfoApi.startPriceUpdater { exchange ->
             (walletInfoApi.context as Activity).runOnUiThread {
@@ -272,16 +272,25 @@ class WalletInfoViewModel(
             }
         }
 
+        viewModelScope.launch {
+            try {
+                val transactionsResult = walletInfoApi.getHistoricTransactions(network)
+                _historicTransactions.value = transactionsResult
+            } catch (e: Exception) {
+                _historicTransactions.value = ArrayList()
+            }
+        }
 
-
-        // Get historic transactions in the using the IO scope and feed them to the UI
+        /**
         CompletableFuture.runAsync {
             val historicTransactions = walletInfoApi.getHistoricTransactions(network)
 
             (walletInfoApi.context as Activity).runOnUiThread {
-                _historicTransactions.postValue(historicTransactions)
+            _historicTransactions.postValue(historicTransactions)
             }
         }
+         */
+
 
         CompletableFuture.runAsync {
             GlobalScope.launch {
@@ -292,12 +301,6 @@ class WalletInfoViewModel(
                 }
             }
         }
-
-
-
-
-
-
-
     }
 }
+
