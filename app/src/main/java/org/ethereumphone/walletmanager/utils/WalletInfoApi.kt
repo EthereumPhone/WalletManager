@@ -19,6 +19,7 @@ import org.ethereumphone.walletmanager.BuildConfig
 import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletsdk.WalletSDK
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
@@ -285,10 +286,17 @@ class WalletInfoViewModel(
 
         CompletableFuture.runAsync {
             GlobalScope.launch {
-                val ethAmount = walletInfoApi.getEthAmount(network)
-                delay(1400)
-                (walletInfoApi.context as Activity).runOnUiThread {
-                    _ethAmount.postValue(ethAmount)
+                try {
+                    val ethAmount = walletInfoApi.getEthAmount(network)
+                    (walletInfoApi.context as Activity).runOnUiThread {
+                        _ethAmount.postValue(ethAmount)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    delay(1400)
+                    (walletInfoApi.context as Activity).runOnUiThread {
+                        _ethAmount.postValue(0.0)
+                    }
                 }
             }
         }

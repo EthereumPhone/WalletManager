@@ -10,6 +10,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import org.ethereumphone.walletmanager.ui.components.WalletInformation
 import org.ethereumphone.walletmanager.ui.components.networkDialog
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletsdk.WalletSDK
 
 @Composable
 fun HomeRoute(
@@ -52,6 +54,7 @@ fun HomeScreen(
     transactionList: List<Transaction> = listOf(),
     walletManagerState: WalletManagerState
 ) {
+    val context = LocalContext.current
     var showDialog by remember {mutableStateOf(false)}
 
     if(showDialog) {
@@ -61,6 +64,10 @@ fun HomeScreen(
         ) {
             println(it)
             walletManagerState.changeNetwork(it)
+            val walletSDK = WalletSDK(context)
+            if (walletSDK.getChainId() != it.chainId) {
+                walletSDK.changeChainid(it.chainId)
+            }
         }
     }
 

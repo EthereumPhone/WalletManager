@@ -20,7 +20,7 @@ import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.utils.ExchangeApi
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.protocol.Web3j

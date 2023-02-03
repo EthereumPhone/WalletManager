@@ -36,7 +36,7 @@ import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.components.InputField
 import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -250,7 +250,8 @@ fun SendScreen(
                     to = address,
                     value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
                     data = "",
-                    chainId = selectedNetwork.chainId
+                    chainId = selectedNetwork.chainId,
+                    gasAmount = "21000"
                 ).whenComplete { txHash, throwable ->
                     println("Send transaction result: $txHash")
                     // Open tx in etherscan
