@@ -34,11 +34,16 @@ fun HomeRoute(
     walletInfoApi: WalletInfoApi,
     walletManagerState: WalletManagerState
 ) {
+
+    val ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0)
+    val historicTransactions = walletInfoViewModel.historicTransactions.observeAsState(listOf())
+    val fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0)
+
     HomeScreen(
-        ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0).value,
-        transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
+        ethAmount = ethAmount.value,
+        transactionList = historicTransactions.value,
         address = walletInfoApi.walletAddress,
-        fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
+        fiatAmount = fiatAmount.value,
         walletManagerState = walletManagerState
     )
 }
