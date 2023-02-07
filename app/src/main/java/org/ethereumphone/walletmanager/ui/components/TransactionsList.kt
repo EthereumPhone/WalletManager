@@ -40,7 +40,8 @@ import java.math.RoundingMode
 fun TransactionList(
     transactionList: List<Transaction>,
     selectedNetwork: State<Network>,
-    modifier: Modifier? = Modifier
+    modifier: Modifier? = Modifier,
+    address: String
 ) {
     Box(modifier = Modifier
         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
@@ -62,7 +63,11 @@ fun TransactionList(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(transactionList) { item ->
-                    TransactionItem(transaction = item, selectedNetwork = selectedNetwork)
+                    TransactionItem(
+                        transaction = item,
+                        selectedNetwork = selectedNetwork,
+                        address = address
+                    )
                 }
             }
         }
@@ -73,11 +78,13 @@ fun TransactionList(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
-    selectedNetwork: State<Network>
+    selectedNetwork: State<Network>,
+    address: String
 ) {
-    val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
-    val type = if(transaction.type) "sent Ether"  else "received Ether"
-    val address = if(transaction.type) "to: " + transaction.toAddr else "from: " + transaction.fromAddr
+    val sent = transaction.to.equals(address, true)
+    val image = if(sent) Icons.Rounded.VerticalAlignBottom else Icons.Rounded.NorthEast
+    val type = if(sent) "received Ether" else "sent Ether"
+    val details = if(sent) "from: " + transaction.from else "to: " + transaction.to
     val context = LocalContext.current
 
     Row(
@@ -109,8 +116,9 @@ fun TransactionItem(
                     text = type,
                     modifier = Modifier.padding(horizontal = 18.dp)
                 )
+
                 Text(
-                    text = BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    text = transaction.value + " ETH",
                     textAlign = TextAlign.End,
                     color = Color.White,
                     modifier = Modifier
@@ -120,7 +128,7 @@ fun TransactionItem(
             }
             Row {
                 Text(
-                    text = address,
+                    text = details,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 18.dp)
@@ -141,18 +149,49 @@ fun openTxInEtherscan(context: Context, txHash: String, selectedNetwork: State<N
 @Composable
 fun PreviewTransactionList() {
     val t1 = Transaction(
-        type = true,
+        blockNumber = "",
+        timeStamp = "",
+        hash = "0x1231",
+        nonce = "",
+        blockHash = "",
+        transactionIndex = "",
+        from = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c",
+        to = "nceornea.eth",
         value = "0.5",
-        hash =  "0x1231",
-        toAddr = "nceornea.eth",
-        fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
+        gas = "",
+        gasPrice = "",
+        isError = "",
+        txReceiptStatus = "",
+        input = "",
+        contractAddress = "",
+        cumulativeGasUsed = "",
+        gasUsed = "",
+        confirmations = "",
+        methodId = "",
+        functionName = ""
     )
+
     val t2 = Transaction(
-        type = false,
+        blockNumber = "",
+        timeStamp = "",
+        hash = "0x1231",
+        nonce = "",
+        blockHash = "",
+        transactionIndex = "",
+        from = "nceornea.eth",
+        to = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c",
         value = "0.5",
-        hash =  "0x1231",
-        toAddr = "nceornea.eth",
-        fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
+        gas = "",
+        gasPrice = "",
+        isError = "",
+        txReceiptStatus = "",
+        input = "",
+        contractAddress = "",
+        cumulativeGasUsed = "",
+        gasUsed = "",
+        confirmations = "",
+        methodId = "",
+        functionName = ""
     )
     val transactionList = listOf(t1,t2)
     WalletManagerTheme {
@@ -164,38 +203,7 @@ fun PreviewTransactionList() {
                 override val value: Network
                     get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
             }
-            TransactionList(transactionList, selectedNetwork = selectedNetwork)
-        }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewTransactionItem() {
-    val t1 = Transaction(
-        type = true,
-        value = "0.5",
-        hash =  "0x1231",
-        toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth"
-    )
-    val t2 = Transaction(
-        type = false,
-        value = "0.5",
-        hash =  "0x1231",
-        toAddr = "nceornea.eth",
-        fromAddr = "mhaas.eth"
-    )
-
-    val selectedNetwork = object : State<Network> {
-        override val value: Network
-            get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-    }
-
-    WalletManagerTheme {
-        Column {
-            TransactionItem(t1, selectedNetwork)
-            TransactionItem(t2, selectedNetwork)
+            TransactionList(transactionList, selectedNetwork = selectedNetwork, address = "nceornea.eth")
         }
     }
 }
