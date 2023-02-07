@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.theme.NetworkStyle
@@ -26,6 +27,8 @@ import org.ethereumphone.walletmanager.ui.components.networkDialog
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 import org.ethereumphone.walletsdk.WalletSDK
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @Composable
 fun HomeRoute(
@@ -35,15 +38,16 @@ fun HomeRoute(
     walletManagerState: WalletManagerState
 ) {
 
-    val ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0)
+    val ethAmount = walletInfoViewModel.networkAmount.observeAsState(0.0)
     val historicTransactions = walletInfoViewModel.historicTransactions.observeAsState(listOf())
-    val fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0)
+    val exchange = walletInfoViewModel.exchange.observeAsState(Exchange("ETHUSDT","0.0"))
+    val fiatAmount = ethAmount.value * exchange.value.price.toDouble()
 
     HomeScreen(
-        ethAmount = ethAmount.value,
+        ethAmount = BigDecimal(ethAmount.value).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toString(),
         transactionList = historicTransactions.value,
         address = walletInfoApi.walletAddress,
-        fiatAmount = fiatAmount.value,
+        fiatAmount = BigDecimal(fiatAmount).setScale(2,RoundingMode.HALF_EVEN).toPlainString(),
         walletManagerState = walletManagerState
     )
 }
@@ -53,8 +57,8 @@ private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    ethAmount : Double = 0.0,
-    fiatAmount : Double = 0.0,
+    ethAmount : String,
+    fiatAmount : String = "0.0",
     address : String = "0x0000000000000000000000000000000000000000",
     transactionList: List<Transaction> = listOf(),
     walletManagerState: WalletManagerState
@@ -70,9 +74,11 @@ fun HomeScreen(
             println(it)
             walletManagerState.changeNetwork(it)
             val walletSDK = WalletSDK(context)
+
             if (walletSDK.getChainId() != it.chainId) {
                 walletSDK.changeChainid(it.chainId)
             }
+
         }
     }
 
@@ -131,7 +137,9 @@ fun HomeScreen(
             .height(50.dp))
         TransactionList(
             transactionList,
-            selectedNetwork = walletManagerState.network)
+            selectedNetwork = walletManagerState.network,
+            address = address
+        )
     }
 }
 

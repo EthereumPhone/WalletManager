@@ -27,8 +27,8 @@ import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 
 @Composable
 fun WalletInformation(
-    ethAmount: Double,
-    fiatAmount: Double,
+    ethAmount: String,
+    fiatAmount: String,
     address: String,
     chainId: Int,
 ) {
@@ -40,33 +40,22 @@ fun WalletInformation(
     ) {
         MiddleEllipseText(address)
 
-        if (ethAmount == Double.MAX_VALUE) {
-            Text(
-                text = getGreeting(),
-                fontWeight = FontWeight.Medium,
-                fontSize = 55.sp,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            Text(
-                text = "$ethAmount" + if(chainId == 137) " MATIC" else " ETH",
-                fontWeight = FontWeight.Bold,
-                fontSize = 36.sp,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "$$fiatAmount",
-                //fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        Text(
+            text = "$ethAmount" + if(chainId == 137) " MATIC" else " ETH",
+            fontWeight = FontWeight.Bold,
+            fontSize = 36.sp,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = "$$fiatAmount",
+            //fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -121,8 +110,8 @@ fun PreviewWalletInformation() {
                 .background(Color(0xFF1D1D1F))
         ) {
             WalletInformation(
-                ethAmount = 0.0719,
-                fiatAmount = 90.52,
+                ethAmount = "0.0719",
+                fiatAmount = "90.52",
                 address = "0x0000000000000123",
                 chainId = 1
             )
