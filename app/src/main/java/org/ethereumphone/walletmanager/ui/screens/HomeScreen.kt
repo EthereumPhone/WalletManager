@@ -72,11 +72,14 @@ fun HomeScreen(
             setShowDialog = { showDialog = it}
         ) {
             println(it)
-            walletManagerState.changeNetwork(it)
             val walletSDK = WalletSDK(context)
 
             if (walletSDK.getChainId() != it.chainId) {
-                walletSDK.changeChainid(it.chainId)
+                walletSDK.changeChainid(it.chainId).whenComplete { s, throwable ->
+                    if (s != WalletSDK.DECLINE) {
+                        walletManagerState.changeNetwork(it)
+                    }
+                }
             }
 
         }
