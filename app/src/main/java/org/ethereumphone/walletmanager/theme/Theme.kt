@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
+import org.ethereumphone.walletmanager.ui.theme.ethOSTypography
 
 @SuppressLint("ConflictingOnColor")
 private val darkColors = darkColors(
@@ -14,7 +15,7 @@ private val darkColors = darkColors(
     onSecondary = md_theme_dark_onSecondary,
     error = md_theme_dark_error,
     onError = md_theme_dark_onError,
-    background = md_theme_dark_background,
+    background = black,
     onBackground = md_theme_dark_onBackground,
     surface = md_theme_dark_surface,
     onSurface = md_theme_dark_onSurface,
@@ -30,7 +31,8 @@ fun WalletManagerTheme(
 
     MaterialTheme(
         colors = colors,
-        content = content
+        content = content,
+        typography = ethOSTypography
     )
 
 }
