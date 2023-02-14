@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.theme.NetworkStyle
@@ -32,6 +33,9 @@ import org.ethereumphone.walletmanager.ui.components.networkDialog
 import org.ethereumphone.walletmanager.ui.rememberWalletManagerAppState
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletsdk.WalletSDK
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @Composable
 fun HomeRoute(
@@ -40,11 +44,17 @@ fun HomeRoute(
     walletInfoApi: WalletInfoApi,
     walletManagerState: WalletManagerState
 ) {
+
+    val ethAmount = walletInfoViewModel.networkAmount.observeAsState(0.0)
+    val historicTransactions = walletInfoViewModel.historicTransactions.observeAsState(listOf())
+    val exchange = walletInfoViewModel.exchange.observeAsState(Exchange("ETHUSDT","0.0"))
+    val fiatAmount = ethAmount.value * exchange.value.price.toDouble()
+
     HomeScreen(
-        ethAmount = walletInfoViewModel.ethAmount.observeAsState(0.0).value,
-        transactionList = walletInfoViewModel.historicTransactions.observeAsState(listOf()).value,
+        ethAmount = BigDecimal(ethAmount.value).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toString(),
+        transactionList = historicTransactions.value,
         address = walletInfoApi.walletAddress,
-        fiatAmount = walletInfoViewModel.ethAmountInUSD.observeAsState(0.0).value,
+        fiatAmount = BigDecimal(fiatAmount).setScale(2,RoundingMode.HALF_EVEN).toPlainString(),
         walletManagerState = walletManagerState
     )
 }
@@ -54,12 +64,13 @@ private val networkStyles: List<NetworkStyle> = NetworkStyle.values().asList()
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    ethAmount : Double = 0.0,
-    fiatAmount : Double = 0.0,
+    ethAmount : String,
+    fiatAmount : String = "0.0",
     address : String = "0x0000000000000000000000000000000000000000",
     transactionList: List<Transaction> = listOf(),
     walletManagerState: WalletManagerState
 ) {
+    val context = LocalContext.current
     var showDialog by remember {mutableStateOf(false)}
 
     if(showDialog) {
@@ -68,7 +79,16 @@ fun HomeScreen(
             setShowDialog = { showDialog = it}
         ) {
             println(it)
-            walletManagerState.changeNetwork(it)
+            val walletSDK = WalletSDK(context)
+
+            if (walletSDK.getChainId() != it.chainId) {
+                walletSDK.changeChainid(it.chainId).whenComplete { s, throwable ->
+                    if (s != WalletSDK.DECLINE) {
+                        walletManagerState.changeNetwork(it)
+                    }
+                }
+            }
+
         }
     }
     Box(
@@ -135,126 +155,3 @@ fun HomeScreen(
 
 }
 
-
-/*@Preview
-@Composable
-fun UIHomescreenPreview(){
-    WalletManagerTheme{
-        val t1 = Transaction(
-            type = true,
-            value = "0.5",
-            hash =  "0x1231",
-            toAddr = "nceornea.eth",
-            fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
-        )
-        val t2 = Transaction(
-            type = false,
-            value = "0.5",
-            hash =  "0x1231",
-            toAddr = "nceornea.eth",
-            fromAddr = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c"
-        )
-        val transactionList = listOf(t1,t2)
-
-        Column (
-            modifier = Modifier.background(black)
-                ){
-            Column() {
-                Text(
-                    text = "Wallet Manager",
-                    style = MaterialTheme.typography.h5,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.White
-                )
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(shape = CircleShape)
-                            .background(
-                                Color.Green
-                                //networkStyles.first { it.networkName == walletManagerState.network.value.chainName }.color
-                            )
-                    )
-                    Text(
-                        text = "  "+"Ethereum Main Network",//walletManagerState.network.value.chainName,
-                        style = MaterialTheme.typography.button,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp))
-            WalletInformation(
-                ethAmount = 0.0719,
-                fiatAmount = 90.52,
-                address = "0xefBABdeE59968641DC6E892e30C470c2b40157Cd",
-                chainId = 1//walletManagerState.network.value.chainId
-            )
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp))
-
-            var networklist by remember { mutableStateOf(Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-            ) }
-            //val networklist = MutableState<Network>()
-            //Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-
-            //State<Network> net =
-            /*val appState: WalletManagerState = rememberWalletManagerAppState(
-                network =
-            )*/
-            ButtonRow(
-                //walletManagerState = null,
-            )
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp))
-
-            TransactionList(
-                transactionList)//,
-                //selectedNetwork = networklist)
-        }
-    }
-}*/
-
-/*
-@Preview
-@Composable
-fun PreviewHomeScreen() {
-    val walletInfoApi = WalletInfoApi(
-        context = LocalContext.current,
-        sharedPreferences = LocalContext.current.getSharedPreferences("WalletInfo", MODE_PRIVATE)
-    )
-    val historicalTxs by WalletInfoViewModel(walletInfoApi, network = Network(
-        chainCurrency = "ETH",
-        chainId = 1,
-        chainName = "Ethereum",
-        chainRPC = "https://cloudflare-eth.com",
-        chainExplorer = "https://etherscan.io"
-    )).historicTransactions.observeAsState(listOf())
-
-    val selectedNetwork = object : State<Network> {
-        override val value: Network
-            get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-    }
-
-    HomeScreen(
-        transactionList = historicalTxs,
-        selectedNetwork = selectedNetwork
-    )
-
-}*/

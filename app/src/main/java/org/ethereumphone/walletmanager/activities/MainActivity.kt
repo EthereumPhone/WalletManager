@@ -20,7 +20,7 @@ import org.ethereumphone.walletmanager.models.Exchange
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.utils.ExchangeApi
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.protocol.Web3j
@@ -169,7 +169,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     }
 
-    fun getHistoricTransactions(address: String): ArrayList<Transaction> {
+    /*fun getHistoricTransactions(address: String): ArrayList<Transaction> {
         try {
             val output = ArrayList<Transaction>()
             val rpcURL = if (selectedNetwork.chainId == 1) "https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z" else "https://eth-goerli.g.alchemy.com/v2/wEno3MttLG5usiVg4xL5_dXrDy_QH95f"
@@ -211,8 +211,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             e.printStackTrace()
             return ArrayList<Transaction>()
         }
-
-    }
+    }*/
 
     override fun onItemSelected(parent: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
         allNetworks.forEach {

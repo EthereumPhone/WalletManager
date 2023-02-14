@@ -37,7 +37,7 @@ import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.components.InputField
 import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain

@@ -14,9 +14,7 @@ import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.navigation.WalletManagerNavHost
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import org.ethereumphone.walletmanager.ui.components.BottomNavBar
-import org.ethereumphone.walletmanager.ui.components.TransactionItem
-import org.ethereumphone.walletmanager.ui.components.networkDialog
+import org.ethereumphone.walletmanager.ui.components.*
 import org.ethereumphone.walletmanager.ui.screens.HomeScreen
 import org.ethereumphone.walletmanager.utils.SelectedNetworkViewModel
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
@@ -25,22 +23,26 @@ import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 @Composable
 fun WalletManagerApp(
     selectedNetworkViewModel: SelectedNetworkViewModel = SelectedNetworkViewModel(),
-    selectedNetwork: MutableState<Network> = selectedNetworkViewModel.selectedNetwork.observeAsState(
-        Network(
-            chainId = 1,
-            chainName = "Ethereum Mainnet",
-            chainCurrency = "ETH",
-            chainRPC = "https://cloudflare-eth.com",
-            chainExplorer = "https://etherscan.io"
-        )) as MutableState<Network>,
-    appState: WalletManagerState = rememberWalletManagerAppState(
-        network = selectedNetwork
-    )
 ) {
     val walletInfoApi = WalletInfoApi(
         context = LocalContext.current,
         sharedPreferences = LocalContext.current.getSharedPreferences("WalletInfo", MODE_PRIVATE)
     )
+
+    val selectedNetwork = selectedNetworkViewModel.selectedNetwork.observeAsState(
+        when(walletInfoApi.getCurrentNetwork()) {
+            1 -> Ethereum
+            5 -> Goerli
+            10 -> Optimism
+            137 -> Polygon
+            42161 -> Arbitrum
+            else -> Ethereum
+        }
+    ) as MutableState
+    val appState = rememberWalletManagerAppState(network = selectedNetwork)
+
+
+
     val walletInfoViewModel = WalletInfoViewModel(
         walletInfoApi = walletInfoApi,
         network = selectedNetwork.value

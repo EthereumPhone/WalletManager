@@ -17,8 +17,8 @@ android {
         applicationId "org.ethereumphone.walletmanager"
         minSdk 28
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
+        versionCode 7
+        versionName "1.0.7"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -64,6 +64,9 @@ dependencies {
 
     // Web3j
     implementation 'org.web3j:core:4.8.8-android'
+
+    // WalletSDK
+    implementation 'com.github.EthereumPhone:WalletSDK:0.0.8'
 
     // Gson
     implementation 'com.google.code.gson:gson:2.10'

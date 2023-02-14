@@ -29,7 +29,7 @@ import org.ethereumphone.walletmanager.navigation.sendRoute
 import org.ethereumphone.walletmanager.theme.TopLevelDestination
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.WalletManagerState
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 
 @Composable
 fun ButtonRow(
