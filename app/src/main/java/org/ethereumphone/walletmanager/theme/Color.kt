@@ -2,6 +2,16 @@ package org.ethereumphone.walletmanager.theme
 
 import androidx.compose.ui.graphics.Color
 
+
+//ethOS Color System
+val black = Color(0xFF1D1D1F)
+val dark_primary = Color(0xFF4166D9)
+val dark_secondary = Color(0xFF3731EB)
+val dark_tretiary = Color(0xFF7418F2)
+val dark_gray3 = Color(0xFF3F3F3F)//.copy(alpha = 0.2f)
+
+
+
 val Purple200 = Color(0xFFBB86FC)
 val Purple500 = Color(0xFF6200EE)
 val Purple700 = Color(0xFF3700B3)
