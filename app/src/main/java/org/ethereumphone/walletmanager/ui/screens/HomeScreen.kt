@@ -26,16 +26,14 @@ import org.ethereumphone.walletmanager.theme.NetworkStyle
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.theme.black
 import org.ethereumphone.walletmanager.ui.WalletManagerState
-import org.ethereumphone.walletmanager.ui.components.ButtonRow
-import org.ethereumphone.walletmanager.ui.components.TransactionList
-import org.ethereumphone.walletmanager.ui.components.WalletInformation
-import org.ethereumphone.walletmanager.ui.components.networkDialog
+import org.ethereumphone.walletmanager.ui.components.*
 import org.ethereumphone.walletmanager.ui.rememberWalletManagerAppState
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.concurrent.CompletableFuture
 
 @Composable
 fun HomeRoute(
@@ -72,6 +70,23 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     var showDialog by remember {mutableStateOf(false)}
+    val walletSDK = WalletSDK(context)
+
+    CompletableFuture.runAsync {
+        while(true) {
+            val newChainId = walletSDK.getChainId()
+            if (walletManagerState.network.value.chainId != newChainId) {
+                when(newChainId) {
+                    1 -> walletManagerState.changeNetwork(Ethereum)
+                    5 -> walletManagerState.changeNetwork(Goerli)
+                    42161 -> walletManagerState.changeNetwork(Arbitrum)
+                    10 -> walletManagerState.changeNetwork(Optimism)
+                    137 -> walletManagerState.changeNetwork(Polygon)
+                }
+            }
+            Thread.sleep(1000)
+        }
+    }
 
     if(showDialog) {
         networkDialog(
@@ -79,7 +94,6 @@ fun HomeScreen(
             setShowDialog = { showDialog = it}
         ) {
             println(it)
-            val walletSDK = WalletSDK(context)
 
             if (walletSDK.getChainId() != it.chainId) {
                 walletSDK.changeChainid(it.chainId).whenComplete { s, throwable ->
@@ -149,7 +163,8 @@ fun HomeScreen(
                 .height(50.dp))
             TransactionList(
                 transactionList,
-                selectedNetwork = walletManagerState.network)
+                selectedNetwork = walletManagerState.network,
+                address = walletSDK.getAddress())
         }
     }
 

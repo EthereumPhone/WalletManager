@@ -86,8 +86,8 @@ fun TransactionItem(
     address: String
 ) {
 
-    val image = if(transaction.type) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
-    val type = if(transaction.type) "Sent"  else "Received"
+    val image = if(transaction.from == address) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
+    val type = if(transaction.from == address) "Sent"  else "Received"
     val sent = transaction.to.equals(address, true)
     val details = if(sent) "from: " + transaction.from else "to: " + transaction.to
     val context = LocalContext.current
@@ -152,7 +152,7 @@ fun TransactionItem(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
-                val sign = if(transaction.type) "-"  else "+"
+                val sign = if(transaction.from == address) "-"  else "+"
                 Text(
                     text = sign+" "+BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
                     textAlign = TextAlign.End,

@@ -34,7 +34,6 @@ import net.glxn.qrgen.android.QRCode
 import org.ethereumphone.walletmanager.models.Network
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.theme.ethOSTheme
-import org.ethereumphone.walletmanager.utils.WalletSDK
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 

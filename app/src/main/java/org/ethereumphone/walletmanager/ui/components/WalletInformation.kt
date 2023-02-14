@@ -43,7 +43,7 @@ fun WalletInformation(
     ) {
         MiddleEllipseText(address)
 
-        if (ethAmount == Double.MAX_VALUE) {
+        if (ethAmount == Double.MAX_VALUE.toString()) {
             Text(
                 text = getGreeting(),
                 /*fontWeight = FontWeight.Medium,
@@ -55,7 +55,7 @@ fun WalletInformation(
             )
         } else {
             Text(
-                text = "$ethAmount" + if(chainId == 137) " MATIC" else " ETH",
+                text = ethAmount + if(chainId == 137) " MATIC" else " ETH",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.h4,
                 color = Color.White,
