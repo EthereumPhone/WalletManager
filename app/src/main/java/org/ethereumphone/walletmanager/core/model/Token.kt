@@ -1,4 +1,6 @@
-package org.ethereumphone.walletmanager.models
+package org.ethereumphone.walletmanager.core.model
+
+import org.ethereumphone.walletmanager.core.model.Network
 
 data class Token(
     val address: String,

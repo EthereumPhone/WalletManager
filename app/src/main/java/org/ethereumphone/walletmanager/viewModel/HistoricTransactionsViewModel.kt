@@ -4,8 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import org.ethereumphone.walletmanager.BuildConfig
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.Transaction
 
 const val MAINNET = "https://api.etherscan.io/api?module=account&action=txlist&address=<replace>&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
 const val GOERLI = "https://api-goerli.etherscan.io/api?module=account&action=txlist&address=<replace>&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"

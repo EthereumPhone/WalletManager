@@ -1,6 +1,10 @@
-package org.ethereumphone.walletmanager.theme
+package org.ethereumphone.walletmanager.core.model
 
 import androidx.compose.ui.graphics.Color
+import org.ethereumphone.walletmanager.theme.goerliNetwork
+import org.ethereumphone.walletmanager.theme.mainNetwork
+import org.ethereumphone.walletmanager.theme.optimismNetwork
+import org.ethereumphone.walletmanager.theme.polygonNetwork
 
 enum class NetworkStyle(
     val color: Color,

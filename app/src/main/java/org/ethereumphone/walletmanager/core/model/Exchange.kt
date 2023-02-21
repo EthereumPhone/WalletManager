@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.models
+package org.ethereumphone.walletmanager.core.model
 
 data class Exchange(
     var symbol: String,

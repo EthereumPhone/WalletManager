@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,14 +24,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.glxn.qrgen.android.QRCode
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.theme.*
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 

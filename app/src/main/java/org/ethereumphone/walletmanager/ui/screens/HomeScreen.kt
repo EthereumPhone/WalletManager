@@ -15,10 +15,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.ethereumphone.walletmanager.models.Exchange
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
-import org.ethereumphone.walletmanager.theme.NetworkStyle
+import org.ethereumphone.walletmanager.core.model.Exchange
+import org.ethereumphone.walletmanager.core.model.Transaction
+import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.ButtonRow
 import org.ethereumphone.walletmanager.ui.components.TransactionList
@@ -65,6 +64,10 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     var showDialog by remember {mutableStateOf(false)}
+
+
+
+
 
     if(showDialog) {
         networkDialog(

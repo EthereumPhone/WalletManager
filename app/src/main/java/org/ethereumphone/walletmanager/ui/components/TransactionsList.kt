@@ -28,12 +28,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.Transaction
 import org.ethereumphone.walletmanager.theme.ListBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 
 @Composable
@@ -79,7 +77,7 @@ fun TransactionList(
 fun TransactionItem(
     transaction: Transaction,
     selectedNetwork: State<Network>,
-    address: String
+    address: String,
 ) {
     val sent = transaction.to.equals(address, true)
     val image = if(sent) Icons.Rounded.VerticalAlignBottom else Icons.Rounded.NorthEast

@@ -1,7 +1,6 @@
 package org.ethereumphone.walletmanager.ui
 
 import android.content.Context.MODE_PRIVATE
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
@@ -9,13 +8,9 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
 import org.ethereumphone.walletmanager.navigation.WalletManagerNavHost
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.components.*
-import org.ethereumphone.walletmanager.ui.screens.HomeScreen
 import org.ethereumphone.walletmanager.utils.SelectedNetworkViewModel
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel

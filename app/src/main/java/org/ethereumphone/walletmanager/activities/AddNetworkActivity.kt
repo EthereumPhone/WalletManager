@@ -10,7 +10,7 @@ import android.widget.EditText
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.ethereumphone.walletmanager.R
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
 
 class AddNetworkActivity : AppCompatActivity() {
     lateinit var sharedPreferences: SharedPreferences

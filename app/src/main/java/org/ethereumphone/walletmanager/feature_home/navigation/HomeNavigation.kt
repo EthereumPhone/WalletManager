@@ -1,13 +1,12 @@
-package org.ethereumphone.walletmanager.navigation
+package org.ethereumphone.walletmanager.feature_home.navigation
 
-import androidx.compose.runtime.State
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.feature_home.ui.HomeRoute
 import org.ethereumphone.walletmanager.ui.WalletManagerState
-import org.ethereumphone.walletmanager.ui.screens.HomeRoute
+
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 

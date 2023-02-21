@@ -1,6 +1,5 @@
 package org.ethereumphone.walletmanager.utils
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -17,9 +16,9 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.BuildConfig
-import org.ethereumphone.walletmanager.models.Exchange
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletmanager.core.model.Exchange
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.Transaction
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
@@ -27,7 +26,6 @@ import org.web3j.protocol.http.HttpService
 import java.lang.Double.parseDouble
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.ArrayList
 
@@ -62,13 +60,15 @@ class WalletInfoApi(
 
     private fun getDefaultNetworks(): ArrayList<Network> {
         val allNetworks = ArrayList<Network>()
-        allNetworks.add(Network(
+        allNetworks.add(
+            Network(
             chainId = 1,
             chainCurrency = "ETH",
             chainRPC = "https://mainnet.infura.io/v3/8a3d95b3bc4840f88a3d95b3bcf840f8",
             chainName = "Ethereum",
             chainExplorer = "https://etherscan.io"
-        ))
+        )
+        )
         allNetworks.add(
             Network(
                 chainName = "Goerli Testnet",

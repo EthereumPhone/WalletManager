@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.models
+package org.ethereumphone.walletmanager.core.model
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

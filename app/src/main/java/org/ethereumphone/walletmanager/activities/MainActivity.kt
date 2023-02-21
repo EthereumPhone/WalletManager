@@ -16,21 +16,14 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.R
-import org.ethereumphone.walletmanager.models.Exchange
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
+import org.ethereumphone.walletmanager.core.model.Exchange
+import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.utils.ExchangeApi
 import org.ethereumphone.walletsdk.WalletSDK
-import org.json.JSONArray
-import org.json.JSONObject
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
-import java.io.InputStream
-import java.io.OutputStreamWriter
 import java.math.BigDecimal
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.*
 import java.util.concurrent.CompletableFuture
 

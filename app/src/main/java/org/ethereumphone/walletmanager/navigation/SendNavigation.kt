@@ -4,9 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.ui.screens.AssetRoute
-import org.ethereumphone.walletmanager.ui.screens.SwapRoute
+import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.ui.screens.SendRoute
 
 const val sendRoute = "send_route"

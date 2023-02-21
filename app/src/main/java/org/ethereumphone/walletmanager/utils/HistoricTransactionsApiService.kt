@@ -2,7 +2,7 @@ package org.ethereumphone.walletmanager.utils
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import org.ethereumphone.walletmanager.models.TransactionList
+import org.ethereumphone.walletmanager.core.model.TransactionList
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET

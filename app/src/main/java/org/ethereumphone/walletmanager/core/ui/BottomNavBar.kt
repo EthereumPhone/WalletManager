@@ -1,5 +1,6 @@
-package org.ethereumphone.walletmanager.ui.components
+package org.ethereumphone.walletmanager.core.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,8 +18,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.theme.TopLevelDestination
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.navigation.TopLevelDestination
 import org.ethereumphone.walletmanager.theme.Icon
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.rememberWalletManagerAppState
@@ -83,6 +84,7 @@ fun AnimatedIcon(
     )
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview
 @Composable
 fun PreviewBottomNavBar() {

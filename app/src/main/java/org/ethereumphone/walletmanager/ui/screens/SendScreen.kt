@@ -32,7 +32,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.components.InputField
 import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
