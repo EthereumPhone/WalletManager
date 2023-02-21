@@ -44,7 +44,7 @@ fun ButtonRow(
         val iconButtons = listOf(
             Triple(
                 Icons.Rounded.NorthEast,
-                "send"
+                "Send"
             ) {
                 walletManagerState.navController.navigate(sendRoute)
                 // Navigate to send screen
@@ -52,7 +52,7 @@ fun ButtonRow(
               },
             Triple(
                 Icons.Default.CreditCard,
-                "buy"
+                "Buy"
             ) {
                 val userAddr = WalletSDK(context).getAddress()
                 // Copy address to clipboard
@@ -110,9 +110,10 @@ fun CircleButton(
                 image,
                 contentDescription = "Arrow",
                 tint = Color.White,
-                modifier = Modifier.fillMaxSize(.70f)
+                modifier = Modifier.fillMaxSize(.60f)
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = buttonText,
             fontSize = 12.sp,
@@ -133,10 +134,10 @@ fun CircleButtonPreview() {
     }
 }
 
-@Preview
+/*@Preview
 @Composable
 fun PreviewButtonRow() {
     WalletManagerTheme {
-        //ButtonRow()
+        ButtonRow()
     }
-}
+}*/

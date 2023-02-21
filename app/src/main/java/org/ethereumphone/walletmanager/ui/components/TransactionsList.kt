@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NorthEast
@@ -22,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,8 +55,9 @@ fun TransactionList(
         ) {
             Text(
                 text = "Transactions",
-                fontSize = 20.sp,
-                color = Color.White
+                //fontSize = 20.sp,
+                color = Color.White,
+                style = MaterialTheme.typography.h5
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(
@@ -79,60 +83,103 @@ fun TransactionItem(
     selectedNetwork: State<Network>,
     address: String,
 ) {
+
+    val image = if(transaction.from == address) Icons.Rounded.NorthEast else Icons.Rounded.VerticalAlignBottom
+    val type = if(transaction.from == address) "Sent"  else "Received"
     val sent = transaction.to.equals(address, true)
-    val image = if(sent) Icons.Rounded.VerticalAlignBottom else Icons.Rounded.NorthEast
-    val type = if(sent) "received Ether" else "sent Ether"
     val details = if(sent) "from: " + transaction.from else "to: " + transaction.to
     val context = LocalContext.current
 
     Row(
         Modifier
             .fillMaxWidth()
+            .height(48.dp)
             .clickable {
                 openTxInEtherscan(context, transaction.hash, selectedNetwork)
-            }
+            } ,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+
+
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color.White)
-        ) {
-            Icon(
-                image,
-                contentDescription = "outgoing transaction",
-                tint = Color.Black,
+        Row (
+            verticalAlignment = Alignment.CenterVertically
+                ){
+            Box(
                 modifier = Modifier
-                    .fillMaxSize(.70f)
-                    .align(Alignment.Center)
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+            ) {
+                Icon(
+                    image,
+                    contentDescription = "outgoing transaction",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .fillMaxSize(.60f)
+                        .align(Alignment.Center)
                 )
 
-        }
-        Column {
-            Row {
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth(0.5f)
+            ) {
                 Text(
                     text = type,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp),
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
                 )
-
                 Text(
-                    text = transaction.value + " ETH",
-                    textAlign = TextAlign.End,
-                    color = Color.White,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 18.dp)
+                    text = address,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 18.dp),
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.75f)
                 )
             }
-            Row {
+        }
+        Box(
+
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                val sign = if(transaction.from == address) "-"  else "+"
+                Text(
+                    text = sign+" "+BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+
+
+                        //.padding(horizontal = 18.dp)
+                )
+                /*
+                Dollar-Amount
                 Text(
                     text = details,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 18.dp)
-                    )
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.body2,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    //modifier = Modifier.padding(horizontal = 18.dp),
+                    color = ListBackground//Color.White.copy(alpha = 0.75f)
+                )*/
+
+
             }
         }
+
     }
 }
 
@@ -141,67 +188,4 @@ fun openTxInEtherscan(context: Context, txHash: String, selectedNetwork: State<N
     val intent = Intent(Intent.ACTION_VIEW)
     intent.data = Uri.parse(url)
     startActivity(context, intent, null)
-}
-
-@Preview
-@Composable
-fun PreviewTransactionList() {
-    val t1 = Transaction(
-        blockNumber = "",
-        timeStamp = "",
-        hash = "0x1231",
-        nonce = "",
-        blockHash = "",
-        transactionIndex = "",
-        from = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c",
-        to = "nceornea.eth",
-        value = "0.5",
-        gas = "",
-        gasPrice = "",
-        isError = "",
-        txReceiptStatus = "",
-        input = "",
-        contractAddress = "",
-        cumulativeGasUsed = "",
-        gasUsed = "",
-        confirmations = "",
-        methodId = "",
-        functionName = ""
-    )
-
-    val t2 = Transaction(
-        blockNumber = "",
-        timeStamp = "",
-        hash = "0x1231",
-        nonce = "",
-        blockHash = "",
-        transactionIndex = "",
-        from = "nceornea.eth",
-        to = "0x3a4e6ed8b0f02bfbfaa3c6506af2db939ea5798c",
-        value = "0.5",
-        gas = "",
-        gasPrice = "",
-        isError = "",
-        txReceiptStatus = "",
-        input = "",
-        contractAddress = "",
-        cumulativeGasUsed = "",
-        gasUsed = "",
-        confirmations = "",
-        methodId = "",
-        functionName = ""
-    )
-    val transactionList = listOf(t1,t2)
-    WalletManagerTheme {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // create a State<Network> object
-            val selectedNetwork = object : State<Network> {
-                override val value: Network
-                    get() = Network(1, "https://cloudflare-eth.com", "ETH", chainName = "Ethereum", chainExplorer = "https://etherscan.io")
-            }
-            TransactionList(transactionList, selectedNetwork = selectedNetwork, address = "nceornea.eth")
-        }
-    }
 }
