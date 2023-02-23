@@ -81,7 +81,7 @@ fun WmListItem(
                 contentDescription = "expand Item",
                 modifier = Modifier
                     .size(WmListDefaults.expandIconSize)
-                    .clickable { onClick },
+                    .clickable { onClick() },
                 tint = WmListDefaults.wmDarkRoundedButton().container
             )
         }
