@@ -5,26 +5,36 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.core.designsystem.background
 import org.ethereumphone.walletmanager.core.model.Exchange
 import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.core.model.Transaction
+import org.ethereumphone.walletmanager.feature_home.model.ButtonClicked
 import org.ethereumphone.walletmanager.feature_home.model.WalletAmount
+import org.ethereumphone.walletmanager.feature_receive.ui.ReceiveDialog
+import org.ethereumphone.walletmanager.feature_send.ui.SendDialog
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.Ethereum
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import java.math.RoundingMode
 
 @Composable
 fun HomeRoute(
@@ -39,7 +49,7 @@ fun HomeRoute(
 
     val walletAmount = WalletAmount(
         ethAmount = ethAmount.value,
-        fiatAmount = ethAmount.value * exchange.value.price.toDouble()
+        fiatAmount = (ethAmount.value * exchange.value.price.toDouble()).toBigDecimal().setScale(2, RoundingMode.HALF_EVEN).toDouble()
     )
 
     val network = walletManagerState.network.value
@@ -70,6 +80,30 @@ fun Home(
     transactionList: List<Transaction> = listOf()
 
 ) {
+    var showSend by remember { mutableStateOf(false) }
+    var showReceive by remember { mutableStateOf(false) }
+
+    if (showSend) {
+        SendDialog(
+            walletAmount = walletAmount,
+            setShowDialog = {showSend = false},
+            modifier = Modifier.size(325.dp,450.dp)
+        ) {
+
+        }
+    }
+
+    if (showReceive) {
+        ReceiveDialog(
+            address = address,
+            modifier = Modifier
+                .size(325.dp,400.dp)
+        ) {
+                showReceive = false
+        }
+    }
+
+
     Scaffold(
         containerColor = background
     ) { padding ->
@@ -86,7 +120,12 @@ fun Home(
             Spacer(Modifier.height(35.dp))
             WalletInfo(walletAmount)
             Spacer(Modifier.height(55.dp))
-            ButtonsColumn() {
+            ButtonsColumn() { clicked ->
+                when(clicked) {
+                    ButtonClicked.SEND -> showSend = true
+                    ButtonClicked.RECEIVE -> showReceive = true
+                    ButtonClicked.BUY -> ""
+                }
 
             }
             Spacer(Modifier.height(50.dp))
