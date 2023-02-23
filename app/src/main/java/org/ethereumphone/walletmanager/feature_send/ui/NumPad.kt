@@ -53,7 +53,7 @@ fun NumPad(
         columns = GridCells.Fixed(3),
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         itemsIndexed(numPadButtons) { index, button ->
             val fixedIndex = (index+1).mod(11)
@@ -80,7 +80,7 @@ fun NumPad(
                     ) {
                         IconAsText(
                             icon = input,
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.BottomCenter)
                         )
                     }
                 }
