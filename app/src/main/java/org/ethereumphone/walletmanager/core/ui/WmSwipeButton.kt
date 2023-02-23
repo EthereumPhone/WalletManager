@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -80,7 +81,7 @@ fun WmSwipeButton(
             modifier = modifier
                 .clip(CircleShape)
                 .background(colors.container)
-                .padding(if(swipeComplete) PaddingValues(WmSwipeButtonDefaults.verticalPadding) else WmSwipeButtonDefaults.paddingValues)
+                .padding(if (swipeComplete) PaddingValues(WmSwipeButtonDefaults.verticalPadding) else WmSwipeButtonDefaults.paddingValues)
                 .animateContentSize()
                 .then(
                     if (swipeComplete) {
@@ -120,9 +121,10 @@ fun WmSwipeButton(
             text = text,
             color = colors.content,
             textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .align(Alignment.Center)
-                .alpha(if(swipeComplete) 0f else alpha)
+                .alpha(if (swipeComplete) 0f else alpha)
         )
         AnimatedVisibility(
             visible = swipeComplete,
@@ -173,27 +175,31 @@ object WmSwipeButtonDefaults {
 @Preview
 @Composable
 private fun PreviewSwipeButton() {
-    val coroutineScope = rememberCoroutineScope()
-    val (isComplete, setIsComplete) = remember {
-        mutableStateOf(false)
-    }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-        ,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Surface(
+        color = Color.Black
     ) {
-        WmSwipeButton(
-            modifier = Modifier,
-            icon = Icons.Filled.ArrowUpward,
-            completeIcon = Icons.Filled.Check,
-            text = "Swipe",
-        ) { coroutineScope.launch {
-                setIsComplete(true)
-            }
+        val coroutineScope = rememberCoroutineScope()
+        val (isComplete, setIsComplete) = remember {
+            mutableStateOf(false)
         }
-        Text(text=isComplete.toString(), color = Color.Red)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+            ,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            WmSwipeButton(
+                modifier = Modifier,
+                icon = Icons.Filled.ArrowUpward,
+                completeIcon = Icons.Filled.Check,
+                text = "Swipe",
+            ) { coroutineScope.launch {
+                    setIsComplete(true)
+                }
+            }
+            Text(text=isComplete.toString(), color = Color.Red)
+        }
     }
 }
