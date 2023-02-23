@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowRightAlt
+import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.outlined.ArrowRightAlt
 import androidx.compose.material.icons.outlined.ExpandCircleDown
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Icon
@@ -77,12 +80,12 @@ fun WmListItem(
             modifier = Modifier.size(WmListDefaults.iconSize)
         ) {
             Icon(
-                imageVector = Icons.Outlined.ExpandCircleDown,
+                imageVector = Icons.Default.OpenInFull,
                 contentDescription = "expand Item",
                 modifier = Modifier
                     .size(WmListDefaults.expandIconSize)
                     .clickable { onClick() },
-                tint = WmListDefaults.wmDarkRoundedButton().container
+                tint = WmListDefaults.wmLightRoundedButton().neutral
             )
         }
     }
