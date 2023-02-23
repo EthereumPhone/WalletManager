@@ -38,7 +38,10 @@ import org.ethereumphone.walletmanager.feature_home.model.WalletAmount
 import org.ethereumphone.walletmanager.feature_receive.ui.ReceiveDialog
 import org.ethereumphone.walletmanager.feature_send.ui.SendDialog
 import org.ethereumphone.walletmanager.ui.WalletManagerState
+import org.ethereumphone.walletmanager.ui.components.Arbitrum
 import org.ethereumphone.walletmanager.ui.components.Ethereum
+import org.ethereumphone.walletmanager.ui.components.Goerli
+import org.ethereumphone.walletmanager.ui.components.Optimism
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
 import org.ethereumphone.walletsdk.WalletSDK
@@ -79,11 +82,27 @@ fun HomeRoute(
     }
 
     val context = LocalContext.current
+    val walletSDK = WalletSDK(context)
+
+    CompletableFuture.runAsync {
+        while (true) {
+            val newChainId = walletSDK.getChainId()
+            if (newChainId != walletManagerState.network.value.chainId) {
+                when (newChainId) {
+                    1 -> walletManagerState.changeNetwork(Ethereum)
+                    5 -> walletManagerState.changeNetwork(Goerli)
+                    10 -> walletManagerState.changeNetwork(Optimism)
+                    42161 -> walletManagerState.changeNetwork(Arbitrum)
+                }
+            }
+            Thread.sleep(1000)
+        }
+    }
 
     Home(
         address = walletInfoApi.walletAddress,
         walletAmount = walletAmount,
-        network = network,
+        network = walletManagerState.network,
         transactionList = historicTransactions.value,
         onSendConfirmed = { sendData ->
             val amount = sendData.amount.toString()
@@ -96,12 +115,12 @@ fun HomeRoute(
             val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
             
             if(hasInternet) {
-                val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
+                val walletSDK = WalletSDK(context, web3RPC = walletManagerState.network.value.chainRPC)
                 val ensName = ENSName(address)
                 if (ensName.isPotentialENSDomain()) {
                     val completableFuture = CompletableFuture<String>()
                     CompletableFuture.runAsync {
-                        val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
+                        val ens = ENS(HttpEthereumRPC(walletManagerState.network.value.chainRPC))
                         completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
                     }
                     address = completableFuture.get()
@@ -110,13 +129,13 @@ fun HomeRoute(
                     to = address,
                     value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
                     data = "",
-                    chainId = selectedNetwork.chainId
+                    chainId = walletManagerState.network.value.chainId
                 ).whenComplete { txHash, throwable ->
                     println("Send transaction result: $txHash")
                     // Open tx in etherscan
                     if (txHash != "decline") {
                         val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
+                        intent.data = android.net.Uri.parse(walletManagerState.network.value.chainExplorer + "/tx/" + txHash)
                         context.startActivity(intent)
                     }
                 }
@@ -136,7 +155,7 @@ fun HomeRoute(
 fun Home(
     address : String = "0x0000000000000000000000000000000000000000",
     walletAmount: WalletAmount = WalletAmount(),
-    network: Network,
+    network: State<Network>,
     transactionList: List<Transaction> = listOf(),
     onSendConfirmed: (SendData) -> Unit,
 ) {
@@ -176,7 +195,7 @@ fun Home(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             NetworkPill(
-                currentNetwork = network,
+                currentNetwork = network.value,
                 address = address
             )
             Spacer(Modifier.height(35.dp))
@@ -193,13 +212,13 @@ fun Home(
             Spacer(Modifier.height(50.dp))
             TransactionList(
                 address = address,
-                network = network,
+                network = network.value,
                 transactionList = transactionList
             )
         }
     }
 }
-
+/*
 @Preview
 @Composable
 fun PreviewHome() {
@@ -281,6 +300,8 @@ fun PreviewHome() {
         onSendConfirmed = {}
     )
 }
+
+ */
 
 
 
