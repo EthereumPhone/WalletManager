@@ -321,7 +321,7 @@ fun qrCodeDialog(
                     //Do something and when you finish this something
                     //put scanFlag = false to scan another item
                     onDecoded(barCodeOrQr)
-                    scanFlag = true
+                        scanFlag = true
                 }
                 //If you don't put this scanFlag = false, it will never work again.
                 //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning

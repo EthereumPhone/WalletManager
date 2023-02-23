@@ -28,7 +28,6 @@ fun IconAsText(
         Pair(
             myId,
             InlineTextContent(
-
                 Placeholder(
                     width = NumPadDefaults.fontSize,
                     height = NumPadDefaults.fontSize,
