@@ -22,6 +22,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.DismissValue
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
@@ -99,7 +100,7 @@ fun ReceiveDialog(
                 Spacer(Modifier.weight(1f))
                 WmSwipeButton(
                     text = "Dismiss",
-                    icon = Icons.Rounded.Close,
+                    icon = Icons.Rounded.ArrowForward,
                     completeIcon = Icons.Rounded.Close
                 ) {
                     setShowDialog()
