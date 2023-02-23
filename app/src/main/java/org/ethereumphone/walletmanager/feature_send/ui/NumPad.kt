@@ -63,7 +63,11 @@ fun NumPad(
                         when(button) {
                             NumPadButtons.COMMA -> {
                                 if (!value.contains(".")) {
-                                    onValueChange("$value.")
+                                    if (value == "") {
+                                        onValueChange("0.")
+                                    } else {
+                                        onValueChange("$value.")
+                                    }
                                 }
                             }
                             NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
