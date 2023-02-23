@@ -16,7 +16,8 @@ fun WmTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        content = content
+        content = content,
+        typography = WmTypography
     )
 
 }
