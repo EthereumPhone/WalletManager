@@ -161,6 +161,7 @@ fun Home(
 ) {
     var showSend by remember { mutableStateOf(false) }
     var showReceive by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (showSend) {
         SendDialog(
@@ -205,7 +206,7 @@ fun Home(
                 when(clicked) {
                     ButtonClicked.SEND -> showSend = true
                     ButtonClicked.RECEIVE -> showReceive = true
-                    ButtonClicked.BUY -> ""
+                    ButtonClicked.BUY -> openRampNetwork(context)
                 }
 
             }
@@ -218,7 +219,15 @@ fun Home(
         }
     }
 }
-/*
+
+
+fun openRampNetwork(context: Context) {
+    // Open the website https://ramp.network
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = android.net.Uri.parse("https://ramp.network")
+    context.startActivity(intent)
+}
+
 @Preview
 @Composable
 fun PreviewHome() {
@@ -291,9 +300,9 @@ fun PreviewHome() {
         )
     )
 
-
-    var network = Ethereum
-    network.color = Color.Green
+    // Create a State object to hold the current network
+    val network = mutableStateOf(Ethereum)
+    //network.color = Color.Green
     Home(address = "nceornea.eth",
         network = network,
         transactionList = items,
@@ -301,7 +310,6 @@ fun PreviewHome() {
     )
 }
 
- */
 
 
 
