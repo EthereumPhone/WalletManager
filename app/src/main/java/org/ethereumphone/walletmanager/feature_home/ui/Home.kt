@@ -1,8 +1,10 @@
 package org.ethereumphone.walletmanager.feature_home.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -87,30 +89,44 @@ fun HomeRoute(
             val amount = sendData.amount.toString()
             var address = sendData.address
 
-            val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
-            val ensName = ENSName(address)
-            if (ensName.isPotentialENSDomain()) {
-                val completableFuture = CompletableFuture<String>()
-                CompletableFuture.runAsync {
-                    val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
-                    completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+            // Check if phone is connected to internet using NetworkManager
+            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
+            val activeNetwork = connectivityManager?.activeNetwork
+            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            
+            if(hasInternet) {
+                val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
+                val ensName = ENSName(address)
+                if (ensName.isPotentialENSDomain()) {
+                    val completableFuture = CompletableFuture<String>()
+                    CompletableFuture.runAsync {
+                        val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
+                        completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+                    }
+                    address = completableFuture.get()
                 }
-                address = completableFuture.get()
-            }
-            walletSDK.sendTransaction(
-                to = address,
-                value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
-                data = "",
-                chainId = selectedNetwork.chainId
-            ).whenComplete { txHash, throwable ->
-                println("Send transaction result: $txHash")
-                // Open tx in etherscan
-                if (txHash != "decline") {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
-                    context.startActivity(intent)
+                walletSDK.sendTransaction(
+                    to = address,
+                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
+                    data = "",
+                    chainId = selectedNetwork.chainId
+                ).whenComplete { txHash, throwable ->
+                    println("Send transaction result: $txHash")
+                    // Open tx in etherscan
+                    if (txHash != "decline") {
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
+                        context.startActivity(intent)
+                    }
+                }
+            } else {
+                (context as Activity).runOnUiThread {
+                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
                 }
             }
+
+
         },
     )
 }
@@ -134,6 +150,7 @@ fun Home(
             modifier = Modifier.size(325.dp,450.dp),
             onConfirm = { sendData ->
                 onSendConfirmed(sendData)
+                showSend = false
             }
         )
     }
