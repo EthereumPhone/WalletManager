@@ -36,7 +36,8 @@ fun WalletManagerNavHost(
             HomeRoute(
                 walletInfoApi = walletInfoApi,
                 walletInfoViewModel = walletInfoViewModel,
-                walletManagerState = walletManagerState
+                walletManagerState = walletManagerState,
+                selectedNetwork = selectedNetwork.value
             )
         }
         composable(sendRoute) {

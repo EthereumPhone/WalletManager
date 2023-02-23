@@ -1,5 +1,8 @@
 package org.ethereumphone.walletmanager.feature_home.ui
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,22 +12,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.core.content.ContextCompat
 import org.ethereumphone.walletmanager.core.designsystem.background
 import org.ethereumphone.walletmanager.core.model.Exchange
 import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.core.model.NetworkStyle
+import org.ethereumphone.walletmanager.core.model.SendData
 import org.ethereumphone.walletmanager.core.model.Transaction
 import org.ethereumphone.walletmanager.feature_home.model.ButtonClicked
 import org.ethereumphone.walletmanager.feature_home.model.WalletAmount
@@ -34,13 +39,21 @@ import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.Ethereum
 import org.ethereumphone.walletmanager.utils.WalletInfoApi
 import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletsdk.WalletSDK
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.HttpEthereumRPC
+import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.concurrent.CompletableFuture
 
 @Composable
 fun HomeRoute(
     modifier: Modifier = Modifier,
     walletInfoViewModel: WalletInfoViewModel,
     walletInfoApi: WalletInfoApi,
+    selectedNetwork: Network,
     walletManagerState: WalletManagerState
 ) {
     val ethAmount = walletInfoViewModel.networkAmount.observeAsState(0.0)
@@ -63,11 +76,42 @@ fun HomeRoute(
         else -> network.color = NetworkStyle.MAIN.color
     }
 
+    val context = LocalContext.current
+
     Home(
         address = walletInfoApi.walletAddress,
         walletAmount = walletAmount,
         network = network,
-        transactionList = historicTransactions.value
+        transactionList = historicTransactions.value,
+        onSendConfirmed = { sendData ->
+            val amount = sendData.amount.toString()
+            var address = sendData.address
+
+            val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
+            val ensName = ENSName(address)
+            if (ensName.isPotentialENSDomain()) {
+                val completableFuture = CompletableFuture<String>()
+                CompletableFuture.runAsync {
+                    val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
+                    completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+                }
+                address = completableFuture.get()
+            }
+            walletSDK.sendTransaction(
+                to = address,
+                value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
+                data = "",
+                chainId = selectedNetwork.chainId
+            ).whenComplete { txHash, throwable ->
+                println("Send transaction result: $txHash")
+                // Open tx in etherscan
+                if (txHash != "decline") {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
+                    context.startActivity(intent)
+                }
+            }
+        },
     )
 }
 
@@ -77,8 +121,8 @@ fun Home(
     address : String = "0x0000000000000000000000000000000000000000",
     walletAmount: WalletAmount = WalletAmount(),
     network: Network,
-    transactionList: List<Transaction> = listOf()
-
+    transactionList: List<Transaction> = listOf(),
+    onSendConfirmed: (SendData) -> Unit,
 ) {
     var showSend by remember { mutableStateOf(false) }
     var showReceive by remember { mutableStateOf(false) }
@@ -87,10 +131,11 @@ fun Home(
         SendDialog(
             walletAmount = walletAmount,
             setShowDialog = {showSend = false},
-            modifier = Modifier.size(325.dp,450.dp)
-        ) {
-
-        }
+            modifier = Modifier.size(325.dp,450.dp),
+            onConfirm = { sendData ->
+                onSendConfirmed(sendData)
+            }
+        )
     }
 
     if (showReceive) {
@@ -215,7 +260,8 @@ fun PreviewHome() {
     network.color = Color.Green
     Home(address = "nceornea.eth",
         network = network,
-        transactionList = items
+        transactionList = items,
+        onSendConfirmed = {}
     )
 }
 
