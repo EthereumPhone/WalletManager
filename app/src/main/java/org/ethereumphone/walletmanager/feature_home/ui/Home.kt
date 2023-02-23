@@ -66,7 +66,7 @@ fun HomeRoute(
     val exchange = walletInfoViewModel.exchange.observeAsState(Exchange("ETHUSDT","0.0"))
 
     val walletAmount = WalletAmount(
-        ethAmount = ethAmount.value,
+        ethAmount = (ethAmount.value).toBigDecimal().setScale(6,RoundingMode.HALF_EVEN).stripTrailingZeros().toDouble(),
         fiatAmount = (ethAmount.value * exchange.value.price.toDouble()).toBigDecimal().setScale(2, RoundingMode.HALF_EVEN).toDouble()
     )
 
