@@ -61,7 +61,11 @@ fun NumPad(
                 modifier = Modifier
                     .clickable {
                         when(button) {
-                            NumPadButtons.COMMA -> onValueChange("$value.")
+                            NumPadButtons.COMMA -> {
+                                if (!value.contains(".")) {
+                                    onValueChange("$value.")
+                                }
+                            }
                             NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
                             else -> onValueChange(value + fixedIndex.toString())
                         }
