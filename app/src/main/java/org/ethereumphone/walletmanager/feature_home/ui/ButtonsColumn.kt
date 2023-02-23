@@ -29,7 +29,7 @@ fun ButtonsColumn(
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             WmButton(
-                value = "Send",
+                value = "  Send",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.ArrowUpward,
 
@@ -38,7 +38,7 @@ fun ButtonsColumn(
                 onClick(ButtonClicked.SEND)
             }
             WmButton(
-                value = "Receive",
+                value = "    Receive",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.ArrowDownward,
                 colors = WmButtonDefaults.wmLightRoundedButton()
