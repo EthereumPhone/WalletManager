@@ -36,6 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import org.ethereumphone.walletmanager.core.designsystem.WmTheme
 import org.ethereumphone.walletmanager.core.designsystem.onPrimary
+import org.ethereumphone.walletmanager.core.model.SendData
 import org.ethereumphone.walletmanager.core.ui.WmSwipeButton
 import org.ethereumphone.walletmanager.core.ui.WmTextField
 import org.ethereumphone.walletmanager.feature_home.model.WalletAmount
@@ -53,7 +54,7 @@ fun SendDialog(
     modifier: Modifier = Modifier,
     walletAmount: WalletAmount = WalletAmount(),
     setShowDialog: () -> Unit,
-    onConfirm: (Float) -> Unit
+    onConfirm: (SendData) -> Unit
 ) {
     var address by remember { mutableStateOf("") }
     var validSendAddress by remember { mutableStateOf(true) }
@@ -155,9 +156,19 @@ fun SendDialog(
                 ) {
 
                     if (value == "") {
-                        onConfirm("0.0".toFloat())
+                        onConfirm(
+                            SendData(
+                                amount = "0.0".toFloat(),
+                                address = address
+                            )
+                        )
                     } else {
-                        onConfirm(value.toFloat())
+                        onConfirm(
+                            SendData(
+                                amount = value.toFloat(),
+                                address = address
+                            )
+                        )
                     }
                 }
             }
