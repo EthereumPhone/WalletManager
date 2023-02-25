@@ -20,8 +20,8 @@ import org.ethereumphone.walletmanager.feature_home.model.WalletAmount
 fun WalletInfo(
     walletAmount: WalletAmount
 ) {
-    val ethAmount = walletAmount.ethAmount.toString()
-    val fiatAmount = walletAmount.fiatAmount.toString()
+    val ethAmount = walletAmount.ethAmount.toBigDecimal().toPlainString()
+    val fiatAmount = walletAmount.fiatAmount.toBigDecimal().toPlainString()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -47,7 +47,10 @@ fun WalletInfo(
 fun PreviewWalletInfo() {
     WmTheme {
         WalletInfo(
-            WalletAmount()
+            WalletAmount(
+                ethAmount = 4.3E-6
+
+            )
         )
     }
 }
