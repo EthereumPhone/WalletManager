@@ -35,6 +35,7 @@ import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.core.model.Transaction
 import org.ethereumphone.walletmanager.theme.ListBackground
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
+import java.math.BigDecimal
 
 
 @Composable
@@ -152,7 +153,7 @@ fun TransactionItem(
             ) {
                 val sign = if(transaction.from == address) "-"  else "+"
                 Text(
-                    text = sign+" "+BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
+                    text = sign+" "+ BigDecimal(transaction.value).stripTrailingZeros().toString() + " ETH",
                     textAlign = TextAlign.End,
                     style = MaterialTheme.typography.body2,
                     fontSize = 15.sp,

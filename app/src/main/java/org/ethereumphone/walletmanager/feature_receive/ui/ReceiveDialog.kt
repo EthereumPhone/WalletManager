@@ -99,9 +99,12 @@ fun ReceiveDialog(
                 }
                 Spacer(Modifier.weight(1f))
                 WmSwipeButton(
-                    text = "Swipe to Dismiss",
+                    text = "Dismiss",
                     icon = Icons.Rounded.ArrowForward,
-                    completeIcon = Icons.Rounded.Close
+                    completeIcon = Icons.Rounded.Close,
+                    modifier = Modifier.clickable {
+                        setShowDialog()
+                    }
                 ) {
                     setShowDialog()
                 }

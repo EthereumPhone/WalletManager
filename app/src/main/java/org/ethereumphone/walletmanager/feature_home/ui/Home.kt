@@ -5,12 +5,22 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.PullRefreshState
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -19,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +38,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.core.designsystem.background
 import org.ethereumphone.walletmanager.core.model.Exchange
 import org.ethereumphone.walletmanager.core.model.Network
@@ -53,6 +69,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.concurrent.CompletableFuture
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeRoute(
     modifier: Modifier = Modifier,
@@ -81,8 +98,11 @@ fun HomeRoute(
         else -> network.color = NetworkStyle.MAIN.color
     }
 
+
     val context = LocalContext.current
     val walletSDK = WalletSDK(context)
+
+
 
     CompletableFuture.runAsync {
         while (true) {
@@ -104,6 +124,7 @@ fun HomeRoute(
         walletAmount = walletAmount,
         network = walletManagerState.network,
         transactionList = historicTransactions.value,
+        walletInfoViewModel = walletInfoViewModel,
         onSendConfirmed = { sendData ->
             val amount = sendData.amount.toString()
             var address = sendData.address
@@ -150,24 +171,36 @@ fun HomeRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun Home(
-    address : String = "0x0000000000000000000000000000000000000000",
+    address: String = "0x0000000000000000000000000000000000000000",
     walletAmount: WalletAmount = WalletAmount(),
     network: State<Network>,
     transactionList: List<Transaction> = listOf(),
+    walletInfoViewModel: WalletInfoViewModel,
     onSendConfirmed: (SendData) -> Unit,
 ) {
     var showSend by remember { mutableStateOf(false) }
     var showReceive by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
+
+    val onRefresh: () -> Unit = {
+        coroutineScope.launch {
+            swipeRefreshState.isRefreshing = true
+            delay(1500)
+            walletInfoViewModel.refreshInfo()
+            swipeRefreshState.isRefreshing = false
+        }
+    }
 
     if (showSend) {
         SendDialog(
             walletAmount = walletAmount,
-            setShowDialog = {showSend = false},
-            modifier = Modifier.size(325.dp,450.dp),
+            setShowDialog = { showSend = false },
+            modifier = Modifier.size(325.dp, 450.dp),
             onConfirm = { sendData ->
                 onSendConfirmed(sendData)
                 showSend = false
@@ -179,46 +212,72 @@ fun Home(
         ReceiveDialog(
             address = address,
             modifier = Modifier
-                .size(325.dp,400.dp)
+                .size(325.dp, 400.dp)
         ) {
-                showReceive = false
+            showReceive = false
         }
     }
 
+    val scrollState = rememberScrollState()
 
-    Scaffold(
-        containerColor = background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(50.dp, 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = onRefresh
+    ) {
+        Box(
+            Modifier.verticalScroll(scrollState)
         ) {
-            NetworkPill(
-                currentNetwork = network.value,
-                address = address
-            )
-            Spacer(Modifier.height(35.dp))
-            WalletInfo(walletAmount)
-            Spacer(Modifier.height(55.dp))
-            ButtonsColumn() { clicked ->
-                when(clicked) {
-                    ButtonClicked.SEND -> showSend = true
-                    ButtonClicked.RECEIVE -> showReceive = true
-                    ButtonClicked.BUY -> openRampNetwork(context)
+            Scaffold(
+                containerColor = background,
+            ) { padding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(50.dp, 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    NetworkPill(
+                        currentNetwork = network.value,
+                        address = address
+                    )
+                    Spacer(Modifier.height(35.dp))
+                    WalletInfo(walletAmount)
+                    Spacer(Modifier.height(55.dp))
+                    ButtonsColumn() { clicked ->
+                        when (clicked) {
+                            ButtonClicked.SEND -> showSend = true
+                            ButtonClicked.RECEIVE -> showReceive = true
+                            ButtonClicked.BUY -> openRampNetwork(context)
+                        }
+                    }
+                    Spacer(Modifier.height(50.dp))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                    ) {
+                        TransactionList(
+                            address = address,
+                            network = network.value,
+                            transactionList = transactionList
+                        )
+                    }
                 }
-
             }
-            Spacer(Modifier.height(50.dp))
-            TransactionList(
-                address = address,
-                network = network.value,
-                transactionList = transactionList
-            )
+            if (swipeRefreshState.isRefreshing) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent)
+                        .align(Alignment.TopCenter)
+                ) {
+                    CircularProgressIndicator(LocalContext.current)
+                }
+            }
         }
     }
 }
+
 
 
 fun openRampNetwork(context: Context) {
@@ -228,6 +287,8 @@ fun openRampNetwork(context: Context) {
     context.startActivity(intent)
 }
 
+/*
+@OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
 fun PreviewHome() {
@@ -300,6 +361,10 @@ fun PreviewHome() {
         )
     )
 
+    var refreshing by remember { mutableStateOf(false) }
+
+    val pullRefreshState = rememberPullRefreshState(refreshing, { println("Refreshing") })
+
     // Create a State object to hold the current network
     val network = mutableStateOf(Ethereum)
     //network.color = Color.Green
@@ -309,6 +374,8 @@ fun PreviewHome() {
         onSendConfirmed = {}
     )
 }
+
+ */
 
 
 
