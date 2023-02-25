@@ -242,6 +242,11 @@ class WalletInfoViewModel(
     }
 
     init {
+        refreshInfo()
+    }
+
+    fun refreshInfo() {
+        println("WalletInfoApi: Refreshing state")
         getHistoricalTransactions()
         getNetworkBalance()
         getExchangeRate()
