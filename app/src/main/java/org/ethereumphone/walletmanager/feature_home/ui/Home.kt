@@ -34,11 +34,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshState
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.delay
@@ -118,13 +120,23 @@ fun HomeRoute(
             Thread.sleep(1000)
         }
     }
+    val coroutineScope = rememberCoroutineScope()
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
 
     Home(
         address = walletInfoApi.walletAddress,
         walletAmount = walletAmount,
         network = walletManagerState.network,
         transactionList = historicTransactions.value,
-        walletInfoViewModel = walletInfoViewModel,
+        swipeRefreshState = swipeRefreshState,
+        onRefresh = {
+            coroutineScope.launch {
+                swipeRefreshState.isRefreshing = true
+                delay(1000)
+                walletInfoViewModel.refreshInfo()
+                swipeRefreshState.isRefreshing = false
+            }
+        },
         onSendConfirmed = { sendData ->
             val amount = sendData.amount.toString()
             var address = sendData.address
@@ -165,8 +177,6 @@ fun HomeRoute(
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
                 }
             }
-
-
         },
     )
 }
@@ -178,23 +188,16 @@ fun Home(
     walletAmount: WalletAmount = WalletAmount(),
     network: State<Network>,
     transactionList: List<Transaction> = listOf(),
-    walletInfoViewModel: WalletInfoViewModel,
+    swipeRefreshState: SwipeRefreshState,
+    onRefresh: () -> Unit,
     onSendConfirmed: (SendData) -> Unit,
 ) {
     var showSend by remember { mutableStateOf(false) }
     var showReceive by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
 
-    val onRefresh: () -> Unit = {
-        coroutineScope.launch {
-            swipeRefreshState.isRefreshing = true
-            delay(1500)
-            walletInfoViewModel.refreshInfo()
-            swipeRefreshState.isRefreshing = false
-        }
-    }
+
+
 
     if (showSend) {
         SendDialog(
@@ -220,12 +223,14 @@ fun Home(
 
     val scrollState = rememberScrollState()
 
+    val boxHeight = LocalConfiguration.current.screenHeightDp.dp
+
     SwipeRefresh(
         state = swipeRefreshState,
         onRefresh = onRefresh
     ) {
         Box(
-            Modifier.verticalScroll(scrollState)
+            Modifier.verticalScroll(scrollState).height(boxHeight)
         ) {
             Scaffold(
                 containerColor = background,
@@ -248,6 +253,7 @@ fun Home(
                             ButtonClicked.SEND -> showSend = true
                             ButtonClicked.RECEIVE -> showReceive = true
                             ButtonClicked.BUY -> openRampNetwork(context)
+                            ButtonClicked.MANAGE_TOKENS -> openMyCrypto(context)
                         }
                     }
                     Spacer(Modifier.height(50.dp))
@@ -278,7 +284,11 @@ fun Home(
     }
 }
 
-
+fun openMyCrypto(context: Context) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = android.net.Uri.parse("https://app.mycrypto.com")
+    context.startActivity(intent)
+}
 
 fun openRampNetwork(context: Context) {
     // Open the website https://ramp.network
@@ -287,7 +297,7 @@ fun openRampNetwork(context: Context) {
     context.startActivity(intent)
 }
 
-/*
+
 @OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
@@ -371,11 +381,12 @@ fun PreviewHome() {
     Home(address = "nceornea.eth",
         network = network,
         transactionList = items,
+        swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false),
+        onRefresh = {},
         onSendConfirmed = {}
     )
 }
 
- */
 
 
 

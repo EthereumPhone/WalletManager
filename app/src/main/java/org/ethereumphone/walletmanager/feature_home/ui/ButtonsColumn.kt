@@ -8,6 +8,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.AttachMoney
+import androidx.compose.material.icons.rounded.ManageAccounts
+import androidx.compose.material.icons.rounded.Money
+import androidx.compose.material.icons.rounded.Token
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,6 +57,14 @@ fun ButtonsColumn(
             colors = WmButtonDefaults.wmDarkRoundedButton()
         ) {
             onClick(ButtonClicked.BUY)
+        }
+        WmButton(
+            value = "Manage Tokens",
+            modifier = Modifier.fillMaxWidth(),
+            icon = Icons.Rounded.AttachMoney,
+            colors = WmButtonDefaults.wmDarkRoundedButton()
+        ) {
+            onClick(ButtonClicked.MANAGE_TOKENS)
         }
     }
 }

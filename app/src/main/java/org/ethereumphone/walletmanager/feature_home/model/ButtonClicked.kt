@@ -3,5 +3,6 @@ package org.ethereumphone.walletmanager.feature_home.model
 enum class ButtonClicked {
     SEND,
     RECEIVE,
-    BUY
+    BUY,
+    MANAGE_TOKENS
 }
