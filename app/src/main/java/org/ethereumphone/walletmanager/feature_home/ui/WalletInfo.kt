@@ -25,22 +25,41 @@ fun WalletInfo(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Text(
-            text = "Wallet",
-            fontSize = 40.sp,
-            color = primary,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(18.dp))
-        Text(
-            text = "$ethAmount ETH · $$fiatAmount",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            color = primary
+        if (walletAmount.ethAmount == Double.MAX_VALUE) {
+            Text(
+                text = getCorrectGreeting(),
+                fontSize = 40.sp,
+                color = primary,
+                fontWeight = FontWeight.Bold
             )
+        } else {
+            Text(
+                text = "Wallet",
+                fontSize = 40.sp,
+                color = primary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = "$ethAmount ETH · $$fiatAmount",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = primary
+            )
+        }
     }
 }
+
+fun getCorrectGreeting(): String {
+    // Return gm if its the morning and gn if its the evening, and ga if its the afternoon
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return when {
+        hour in 0..11 -> "gm ☀"
+        hour in 12..18 -> "ga \uD83D\uDC4B"
+        else -> "gn \uD83C\uDF19"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable

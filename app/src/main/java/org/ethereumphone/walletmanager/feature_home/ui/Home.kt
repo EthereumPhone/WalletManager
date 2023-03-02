@@ -80,7 +80,7 @@ fun HomeRoute(
     selectedNetwork: Network,
     walletManagerState: WalletManagerState
 ) {
-    val ethAmount = walletInfoViewModel.networkAmount.observeAsState(0.0)
+    val ethAmount = walletInfoViewModel.networkAmount.observeAsState(Double.MAX_VALUE)
     val historicTransactions = walletInfoViewModel.historicTransactions.observeAsState(listOf())
     val exchange = walletInfoViewModel.exchange.observeAsState(Exchange("ETHUSDT","0.0"))
 

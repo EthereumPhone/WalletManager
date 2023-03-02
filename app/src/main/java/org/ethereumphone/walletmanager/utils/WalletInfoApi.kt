@@ -95,7 +95,8 @@ class WalletInfoApi(
         )
 
         // Return the balance in ETH, rounded to 6 decimal places
-        return amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
+        val resultBalance = amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
+        return resultBalance
     }
 
     fun round(value: Double, places: Int): Double {
@@ -204,7 +205,7 @@ class WalletInfoViewModel(
     private val _historicTransactions = MutableLiveData(ArrayList<Transaction>())
     val historicTransactions: LiveData<ArrayList<Transaction>> = _historicTransactions
 
-    private val _networkAmount = MutableLiveData(0.0)
+    private val _networkAmount = MutableLiveData(Double.MAX_VALUE)
     val networkAmount: LiveData<Double> = _networkAmount
 
     fun getHistoricalTransactions() {
