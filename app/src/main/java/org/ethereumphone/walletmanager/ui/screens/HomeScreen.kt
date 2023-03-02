@@ -107,7 +107,7 @@ fun HomeScreen(
         }
     }
     Box(
-        modifier = Modifier.background(black)
+        modifier = Modifier.background(Color.Black)
     ){
         Column (){
             Column(Modifier.clickable {
