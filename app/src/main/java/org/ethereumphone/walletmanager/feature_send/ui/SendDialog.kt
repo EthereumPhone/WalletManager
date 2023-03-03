@@ -162,7 +162,11 @@ fun SendDialog(
                                 showDialog = false
                             },
                             onDecoded = {
-                                address = it.replace("ethereum:", "")
+                                address = if (it.contains("@")) {
+                                    it.replace("ethereum:", "").split("@")[0]
+                                } else {
+                                    it.replace("ethereum:", "")
+                                }
                                 showDialog = false
                             },
                         )
