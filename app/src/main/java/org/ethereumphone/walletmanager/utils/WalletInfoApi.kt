@@ -25,6 +25,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import java.lang.Double.parseDouble
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.ArrayList
@@ -225,6 +226,7 @@ class WalletInfoViewModel(
             }
         }
     }
+
 
     fun getNetworkBalance() {
         viewModelScope.launch{

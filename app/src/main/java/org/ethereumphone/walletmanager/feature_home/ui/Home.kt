@@ -162,6 +162,7 @@ fun HomeRoute(
                     to = address,
                     value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
                     data = "",
+                    gasPrice = if (sendData.gasPrice == null) null else sendData.gasPrice.toString(),
                     chainId = walletManagerState.network.value.chainId
                 ).whenComplete { txHash, throwable ->
                     println("Send transaction result: $txHash")
