@@ -8,7 +8,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import org.ethereumphone.walletmanager.core.model.Network
+import kotlinx.coroutines.CoroutineScope
+import org.ethereumphone.walletmanager.core.domain.model.Network
 import org.ethereumphone.walletmanager.navigation.*
 import org.ethereumphone.walletmanager.core.navigation.TopLevelDestination
 import org.ethereumphone.walletmanager.feature_asset.navigation.assetRoute
@@ -19,6 +20,7 @@ import org.ethereumphone.walletmanager.feature_home.navigation.navigateToHome
 @Composable
 fun rememberWalletManagerAppState(
     navController: NavHostController = rememberNavController(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     network: MutableState<Network>
 ): WalletManagerState {
     return remember(navController) {
@@ -47,6 +49,10 @@ class WalletManagerState(
             assetRoute -> TopLevelDestination.ASSET
             else -> null
         }
+
+
+
+
 
     val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
 

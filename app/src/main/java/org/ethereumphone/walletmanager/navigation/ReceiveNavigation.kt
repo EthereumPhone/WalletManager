@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.domain.model.Network
 import org.ethereumphone.walletmanager.ui.screens.ReceiveScreen
 
 const val receiveRoute = "receive_route"

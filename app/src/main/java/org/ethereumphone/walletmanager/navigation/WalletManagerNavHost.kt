@@ -7,13 +7,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import org.ethereumphone.walletmanager.feature_home.navigation.homeRoute
-import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.domain.model.Network
 import org.ethereumphone.walletmanager.feature_home.ui.HomeRoute
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.screens.ReceiveScreen
 import org.ethereumphone.walletmanager.ui.screens.SendRoute
-import org.ethereumphone.walletmanager.utils.WalletInfoApi
-import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoApi
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoViewModel
 
 
 @Composable

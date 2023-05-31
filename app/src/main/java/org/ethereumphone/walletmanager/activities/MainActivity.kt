@@ -16,9 +16,9 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.R
-import org.ethereumphone.walletmanager.core.model.Exchange
-import org.ethereumphone.walletmanager.core.model.Network
-import org.ethereumphone.walletmanager.utils.ExchangeApi
+import org.ethereumphone.walletmanager.core.domain.model.TokenExchange
+import org.ethereumphone.walletmanager.core.domain.model.Network
+import org.ethereumphone.walletmanager.core.data.remote.ExchangeApi
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
@@ -162,50 +162,6 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     }
 
-    /*fun getHistoricTransactions(address: String): ArrayList<Transaction> {
-        try {
-            val output = ArrayList<Transaction>()
-            val rpcURL = if (selectedNetwork.chainId == 1) "https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z" else "https://eth-goerli.g.alchemy.com/v2/wEno3MttLG5usiVg4xL5_dXrDy_QH95f"
-
-            val url = URL(rpcURL)
-            val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
-            httpConn.setRequestMethod("POST")
-
-            httpConn.setRequestProperty("Content-Type", "application/json")
-
-            httpConn.setDoOutput(true)
-            val writer = OutputStreamWriter(httpConn.getOutputStream())
-            writer.write("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"alchemy_getAssetTransfers\",\"params\":[{\"fromBlock\":\"0x0\",\"fromAddress\":\"$address\", \"category\": [\"external\"]}]}")
-            writer.flush()
-            writer.close()
-            httpConn.getOutputStream().close()
-
-            val responseStream: InputStream =
-                if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
-            val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
-            val response = if (s.hasNext()) s.next() else ""
-
-            val json = JSONObject(response).getJSONObject("result").getJSONArray("transfers") as JSONArray
-
-            for (i in 0..json.length()-1) {
-                val transferData = json.get(i) as JSONObject
-                output.add(
-                    Transaction(
-                        type = (transferData.getString("to") == address),
-                        value = transferData.getString("value"),
-                        hash = transferData.getString("hash"),
-                        fromAddr = transferData.getString("from"),
-                        toAddr = transferData.getString("to")
-                    )
-                )
-            }
-            return output
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return ArrayList<Transaction>()
-        }
-    }*/
-
     override fun onItemSelected(parent: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
         allNetworks.forEach {
             if (it.chainName == parent?.getItemAtPosition(pos).toString()) {
@@ -224,7 +180,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         mainHandler.post(object : Runnable {
             override fun run() {
-                val completableFuture = CompletableFuture<Exchange>()
+                val completableFuture = CompletableFuture<TokenExchange>()
                 CompletableFuture.runAsync {
                     GlobalScope.launch {
                         val output = ExchangeApi.retrofitService.getExchange(

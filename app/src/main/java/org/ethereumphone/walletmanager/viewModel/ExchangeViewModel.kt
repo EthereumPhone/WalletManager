@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import org.ethereumphone.walletmanager.utils.ExchangeApi
+import org.ethereumphone.walletmanager.core.data.remote.ExchangeApi
 
 class ExchangeViewModel: ViewModel() {
     private val _exchange = MutableLiveData<String>()

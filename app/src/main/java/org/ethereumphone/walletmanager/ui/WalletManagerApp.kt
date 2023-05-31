@@ -12,8 +12,8 @@ import org.ethereumphone.walletmanager.navigation.WalletManagerNavHost
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 import org.ethereumphone.walletmanager.ui.components.*
 import org.ethereumphone.walletmanager.utils.SelectedNetworkViewModel
-import org.ethereumphone.walletmanager.utils.WalletInfoApi
-import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoApi
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoViewModel
 
 @Composable
 fun WalletManagerApp(

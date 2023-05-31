@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
-import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.domain.model.Network
 import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.theme.*
 import java.util.Hashtable

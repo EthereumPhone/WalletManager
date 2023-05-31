@@ -16,5 +16,7 @@
     <string name="transactions">Transaktionen</string>
     <string name="sent_to">Gesendet an</string>
     <string name="recieved_from">Ricevuto da</string>
+    <string name="select_swap_token">Wähle ein Token</string>
+    <string name="donate_prompt">ethOS unterstützen</string>
 
 </resources>

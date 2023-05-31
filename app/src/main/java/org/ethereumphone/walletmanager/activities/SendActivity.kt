@@ -9,7 +9,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import org.ethereumphone.walletmanager.R
-import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.domain.model.Network
 import org.ethereumphone.walletsdk.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.web3j.protocol.Web3j

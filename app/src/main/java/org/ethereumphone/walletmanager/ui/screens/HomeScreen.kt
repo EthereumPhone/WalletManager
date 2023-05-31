@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -14,19 +13,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.ethereumphone.walletmanager.core.model.Exchange
+import org.ethereumphone.walletmanager.core.domain.model.TokenExchange
 import org.ethereumphone.walletmanager.core.model.Transaction
 import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.ui.WalletManagerState
 import org.ethereumphone.walletmanager.ui.components.*
-import org.ethereumphone.walletmanager.ui.rememberWalletManagerAppState
-import org.ethereumphone.walletmanager.utils.WalletInfoApi
-import org.ethereumphone.walletmanager.utils.WalletInfoViewModel
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoApi
+import org.ethereumphone.walletmanager.core.data.remote.WalletInfoViewModel
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -42,8 +38,8 @@ fun HomeRoute(
 
     val ethAmount = walletInfoViewModel.networkAmount.observeAsState(0.0)
     val historicTransactions = walletInfoViewModel.historicTransactions.observeAsState(listOf())
-    val exchange = walletInfoViewModel.exchange.observeAsState(Exchange("ETHUSDT","0.0"))
-    val fiatAmount = ethAmount.value * exchange.value.price.toDouble()
+    val tokenExchange = walletInfoViewModel.tokenExchange.observeAsState(TokenExchange("ETHUSDT","0.0"))
+    val fiatAmount = ethAmount.value * tokenExchange.value.price
 
     HomeScreen(
         ethAmount = BigDecimal(ethAmount.value).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toString(),

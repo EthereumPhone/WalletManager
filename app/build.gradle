@@ -47,7 +47,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "1.8"
     }
 
     composeOptions {
@@ -85,7 +85,7 @@ dependencies {
     //Accompanist statusbar & permission
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
     implementation "com.google.accompanist:accompanist-permissions:0.21.1-beta"
-
+    implementation 'com.google.accompanist:accompanist-swiperefresh:0.28.0'
 
     // Web3j
     implementation 'org.web3j:core:4.8.8-android'
@@ -101,15 +101,9 @@ dependencies {
     implementation 'com.github.komputing.kethereum:rpc:0.85.7'
     implementation 'com.github.komputing.kethereum:model:0.85.7'
 
-
-
-
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
-
-    // Permission handling
-    implementation "com.google.accompanist:accompanist-permissions:0.21.1-beta"
 
     // Retrofit
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
@@ -142,5 +136,9 @@ dependencies {
 
     // Splash screen
     implementation 'androidx.core:core-splashscreen:1.0.0'
+
+    // WorkerManager
+    implementation "androidx.work:work-runtime-ktx:2.8.1"
+    implementation "androidx.hilt:hilt-work:1.0.0"
 
 }
