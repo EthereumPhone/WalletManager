@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.core.database.model
+package org.ethereumphone.walletmanager.core.database.model.erc20Token
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -9,9 +9,11 @@ data class TokenExchangeEntity(
     @PrimaryKey
     val symbol: String,
     val price: Double
-)
-
-fun TokenExchangeEntity.asExternalModel() = TokenExchange(
-    symbol = symbol,
-    price = price
-)
+) {
+    fun toTokenExchange(): TokenExchange {
+        return TokenExchange(
+            symbol = symbol,
+            price = price
+        )
+    }
+}

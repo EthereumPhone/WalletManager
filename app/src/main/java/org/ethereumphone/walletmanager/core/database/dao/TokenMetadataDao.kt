@@ -3,34 +3,32 @@ package org.ethereumphone.walletmanager.core.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
-import org.ethereumphone.walletmanager.core.domain.model.TokenMetadata
-import java.math.BigDecimal
+import org.ethereumphone.walletmanager.core.database.model.erc20Token.TokenMetadataEntity
 
 @Dao
 interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata")
-    fun getTokensMetadata(): List<TokenMetadata>
+    fun getTokensMetadata(): List<TokenMetadataEntity>
 
     @Query("""
         SELECT * FROM token_metadata
         WHERE symbol == :symbol
         """)
-    fun getTokenMetadataBySymbol(symbol: String): TokenMetadata
+    fun getTokenMetadataBySymbol(symbol: String): TokenMetadataEntity
 
     @Query("""
         SELECT * FROM token_metadata
         WHERE decimals == :decimals
         """)
-    fun getTokenMetadataByDecimals(decimals: Int): TokenMetadata
+    fun getTokenMetadataByDecimals(decimals: Int): TokenMetadataEntity
 
     @Query("""
         SELECT * FROM token_metadata
         WHERE name == :name
         """)
-    fun getTokenMetadataByName(name: String): TokenMetadata
+    fun getTokenMetadataByName(name: String): TokenMetadataEntity
 
     @Insert
-    fun insertAllTokens(entities: List<TokenMetadata>)
+    fun insertAllTokens(entities: List<TokenMetadataEntity>)
 
 }

@@ -3,7 +3,7 @@ package org.ethereumphone.walletmanager.core.database.dao
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import org.ethereumphone.walletmanager.core.domain.model.TokenExchange
+import org.ethereumphone.walletmanager.core.database.model.erc20Token.TokenExchangeEntity
 
 @Dao
 interface TokenExchangeDao {
@@ -12,16 +12,16 @@ interface TokenExchangeDao {
         SELECT * FROM token_exchange
         ORDER BY price DESC
     """)
-    fun getAllTokenExchanges(): List<TokenExchange>
+    fun getAllTokenExchanges(): List<TokenExchangeEntity>
 
     @Query("""
         SELECT * FROM token_exchange
         WHERE symbol == :symbol
     """)
-    fun getTokenExchange(symbol: String): TokenExchange
+    fun getTokenExchange(symbol: String): TokenExchangeEntity
 
 
     @Upsert
-    fun upsertTokenExchange(tokenExchange: TokenExchange)
+    fun upsertTokenExchange(tokenExchange: TokenExchangeEntity)
 
 }

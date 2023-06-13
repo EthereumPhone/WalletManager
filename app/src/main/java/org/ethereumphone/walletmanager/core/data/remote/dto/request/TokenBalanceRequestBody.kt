@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.core.data.remote.dto
+package org.ethereumphone.walletmanager.core.data.remote.dto.request
 
 data class TokenBalanceRequestBody(
     val id: Int = 1,

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.R
 import org.ethereumphone.walletmanager.core.domain.model.TokenExchange
 import org.ethereumphone.walletmanager.core.domain.model.Network
-import org.ethereumphone.walletmanager.core.data.remote.ExchangeApi
+import org.ethereumphone.walletmanager.core.data.remote.OldExchangeApi
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 val completableFuture = CompletableFuture<TokenExchange>()
                 CompletableFuture.runAsync {
                     GlobalScope.launch {
-                        val output = ExchangeApi.retrofitService.getExchange(
+                        val output = OldExchangeApi.retrofitService.getExchange(
                             symbol = "ETHUSDT"
                         )
                         completableFuture.complete(output)

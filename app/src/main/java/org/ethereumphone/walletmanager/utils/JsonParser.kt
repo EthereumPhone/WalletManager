@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.core.workers.util
+package org.ethereumphone.walletmanager.utils
 
 import java.lang.reflect.Type
 

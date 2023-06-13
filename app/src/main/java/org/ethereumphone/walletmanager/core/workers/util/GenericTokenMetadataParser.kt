@@ -2,6 +2,7 @@ package org.ethereumphone.walletmanager.core.workers.util
 
 import com.google.gson.reflect.TypeToken
 import org.ethereumphone.walletmanager.core.domain.model.TokenMetadata
+import org.ethereumphone.walletmanager.utils.JsonParser
 import java.io.File
 import java.io.FileNotFoundException
 

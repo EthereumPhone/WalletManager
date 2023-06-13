@@ -1,7 +1,4 @@
-package org.ethereumphone.walletmanager.core.data.remote.dto
-
-import org.ethereumphone.walletmanager.core.data.remote.WalletInfoApi
-import org.ethereumphone.walletsdk.WalletSDK
+package org.ethereumphone.walletmanager.core.data.remote.dto.request
 
 data class NetworkTransferRequestBody(
     val id: Int = 1,

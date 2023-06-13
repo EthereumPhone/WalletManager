@@ -29,10 +29,10 @@ android {
         Properties properties = new Properties()
         properties.load(project.rootProject.file("local.properties").newDataInputStream())
 
-        buildConfigField "String", "ETHSCAN_API", "\"${properties.getProperty("ETHSCAN_API")}\""
-        buildConfigField "String", "ARBISCAN_API", "\"${properties.getProperty("ARBISCAN_API")}\""
-        buildConfigField "String", "POLYSCAN_API", "\"${properties.getProperty("POLYSCAN_API")}\""
-        buildConfigField "String", "OPTISCAN_API", "\"${properties.getProperty("OPTISCAN_API")}\""
+        buildConfigField "String", "ETHEREUM_API", "\"${properties.getProperty("ETHEREUM_API")}\""
+        buildConfigField "String", "ARBITRUM_API", "\"${properties.getProperty("ARBITRUM_API")}\""
+        buildConfigField "String", "OPTIMISM_API", "\"${properties.getProperty("OPTIMISM_API")}\""
+        buildConfigField "String", "POLYGON_API", "\"${properties.getProperty("POLYGON_API")}\""
 
     }
 
@@ -91,7 +91,7 @@ dependencies {
     implementation 'org.web3j:core:4.8.8-android'
 
     // WalletSDK
-    implementation 'com.github.EthereumPhone:WalletSDK:0.0.8'
+    implementation 'com.github.EthereumPhone:WalletSDK:0.0.10'
 
     // Gson
     implementation 'com.google.code.gson:gson:2.10'

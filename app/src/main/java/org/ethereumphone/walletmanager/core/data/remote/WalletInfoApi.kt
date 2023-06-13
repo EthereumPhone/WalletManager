@@ -34,14 +34,13 @@ import kotlin.collections.ArrayList
 
 class WalletInfoApi @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val web3jInstance: Web3j,
     val sharedPreferences: SharedPreferences
 ) {
     private val wallet = WalletSDK(context)
     val walletAddress = wallet.getAddress()
 
-    fun getCurrentNetwork(): Int {
-        return wallet.getChainId()
-    }
+
 
     fun getEthAmount(selectedNetwork: Network): Double {
         // Get web3j instance for the selected network
@@ -82,25 +81,30 @@ class WalletInfoApi @Inject constructor(
         }
     }
 
+    /*
     fun getNetworkCurrency(): String  {
         return if(getCurrentNetwork() == 137) "MATICUSDT" else "ETHUSDT"
     }
 
+     */
+
+    /*
     suspend fun getEthAmountInUSD(ethAmount: Double, selectedNetwork: Network): Double {
         var symbol = when(selectedNetwork.chainId) {
             137 -> "MATICUSDT"
             else -> "ETHUSDT"
 
         }
-        val exchange = ExchangeApi.retrofitService.getExchange(
+        //val exchange = ExchangeApi.retrofitService.getExchange(
             symbol = symbol
-        )
+       // )
 
-        return round(parseDouble(exchange.price) * ethAmount, 3)
+        //return round(parseDouble(exchange.price) * ethAmount, 3)
     }
 
-    
-    // This should accept a callback in the parameters
+    */
+
+    /*
     fun startPriceUpdater(priceUpdated: (TokenExchange) -> Unit) {
         val mainHandler = Handler(Looper.getMainLooper())
 
@@ -124,6 +128,8 @@ class WalletInfoApi @Inject constructor(
             }
         })
     }
+
+     */
 
     fun buyCryptoClicked(): Intent {
         val userAddress = wallet.getAddress()
@@ -194,6 +200,7 @@ class WalletInfoViewModel(
         }
     }
 
+    /*
     fun getExchangeRate() {
         viewModelScope.launch{
             try {
@@ -201,13 +208,13 @@ class WalletInfoViewModel(
             } catch (e: Exception) {}
         }
     }
-
+*/
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
             getHistoricalTransactions()
             getNetworkBalance()
-            getExchangeRate()
+            //getExchangeRate()
             _isRefreshing.value = false
         }
     }
@@ -220,7 +227,7 @@ class WalletInfoViewModel(
         println("WalletInfoApi: Refreshing state")
         getHistoricalTransactions()
         getNetworkBalance()
-        getExchangeRate()
+        //getExchangeRate()
     }
 }
 

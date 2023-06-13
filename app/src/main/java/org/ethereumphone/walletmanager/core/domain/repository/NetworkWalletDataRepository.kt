@@ -6,5 +6,6 @@ import org.ethereumphone.walletmanager.core.util.Resource
 interface NetworkWalletDataRepository {
     fun getWalletChainId(): Flow<Resource<Int>>
     fun getWalletAddress(): Flow<Resource<String>>
-    fun getNetworkAmount(): Flow<Resource<Double>>
+    fun getNetworkAmount(chainId: Int): Flow<Resource<Double>>
+    fun changeChain(chainId: Int): Flow<Resource<Boolean>>
 }

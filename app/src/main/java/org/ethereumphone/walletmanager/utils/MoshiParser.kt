@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.core.workers.util
+package org.ethereumphone.walletmanager.utils
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi

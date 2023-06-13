@@ -7,6 +7,8 @@ import dagger.hilt.components.SingletonComponent
 import org.ethereumphone.walletmanager.core.database.WmDatabase
 import org.ethereumphone.walletmanager.core.database.dao.TokenExchangeDao
 import org.ethereumphone.walletmanager.core.database.dao.TokenMetadataDao
+import org.ethereumphone.walletmanager.core.database.dao.TransferDao
+import org.ethereumphone.walletmanager.core.database.dao.WalletDataDao
 import javax.inject.Singleton
 
 @Module
@@ -24,4 +26,16 @@ object DaosModule {
     fun provideMetadataDao(
         database: WmDatabase
     ): TokenMetadataDao = database.tokenMetadataDao()
+
+    @Provides
+    @Singleton
+    fun provideWalletDataDao(
+        database: WmDatabase
+    ): WalletDataDao = database.walletDataDao()
+
+    @Provides
+    @Singleton
+    fun provideTransferDao(
+        database: WmDatabase
+    ): TransferDao = database.transferDao()
 }

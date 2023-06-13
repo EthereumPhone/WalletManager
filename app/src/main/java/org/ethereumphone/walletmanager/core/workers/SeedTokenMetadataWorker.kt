@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.core.domain.model.TokenMetadata
 import org.ethereumphone.walletmanager.core.domain.repository.TokenMetadataRepository
-import org.ethereumphone.walletmanager.core.workers.util.JsonParser
+import org.ethereumphone.walletmanager.utils.JsonParser
 import java.lang.Exception
 
 @HiltWorker

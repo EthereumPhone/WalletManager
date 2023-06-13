@@ -5,9 +5,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import org.ethereumphone.walletmanager.core.workers.util.GenericTokenMetadataParser
-import org.ethereumphone.walletmanager.core.workers.util.JsonParser
-import org.ethereumphone.walletmanager.core.workers.util.MoshiParser
+import org.ethereumphone.walletmanager.utils.JsonParser
+import org.ethereumphone.walletmanager.utils.MoshiParser
 import javax.inject.Singleton
 
 @Module

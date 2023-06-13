@@ -1,56 +1,36 @@
 package org.ethereumphone.walletmanager.core.data.util
 
 import com.squareup.moshi.FromJson
-import com.squareup.moshi.ToJson
-import org.ethereumphone.walletmanager.core.data.remote.dto.NetworkTransferDto
+import org.ethereumphone.walletmanager.core.data.remote.dto.TokenBalanceJsonResponse
 import org.ethereumphone.walletmanager.core.data.remote.dto.TokenExchangeDto
-import org.ethereumphone.walletmanager.core.domain.model.NetworkTransfer
-import org.ethereumphone.walletmanager.core.domain.model.TokenExchange
+import org.ethereumphone.walletmanager.core.data.remote.dto.TransferDto
+import org.ethereumphone.walletmanager.core.data.remote.dto.TransferJsonResponse
+import org.ethereumphone.walletmanager.core.database.model.erc20Token.TokenExchangeEntity
+import java.time.Instant
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
-class ExchangeAdapter {
+class MoshiAdapters {
     @FromJson
-    fun ExchangeFromJson(tokenExchangeJson: TokenExchangeDto): TokenExchange {
-        return TokenExchange(
-            symbol = tokenExchangeJson.symbol,
-            price = tokenExchangeJson.symbol.toDouble()
+    fun tokenExchangeEntity(tokenExchangeDto: TokenExchangeDto): TokenExchangeEntity {
+        return TokenExchangeEntity(
+            symbol = tokenExchangeDto.symbol,
+            price = tokenExchangeDto.price.toDouble()
         )
     }
 
-    @ToJson
-    fun ExchangeToJson(tokenExchange: TokenExchange): TokenExchangeDto {
-        return TokenExchangeDto(
-            symbol = tokenExchange.symbol,
-            price = tokenExchange.toString()
-        )
-    }
-}
-
-class TransferAdapter {
     @FromJson
-    fun TransferFromJson(networkTransferJson: NetworkTransferDto): List<NetworkTransfer> {
-        val res = networkTransferJson.result.transfers
+    fun toTransferEntity(transferJsonResponse: TransferJsonResponse): List<TransferDto> {
+        val res = transferJsonResponse.result.transfers
         val deviceZoneId = ZoneId.systemDefault()
 
         return res.map {
-            NetworkTransfer(
-                asset = it.asset,
-                blockNum = it.blockNum,
-                category = it.category,
-                erc1155Metadata = it.erc1155Metadata,
-                erc721TokenId = it.erc721TokenId,
-                from = it.from,
-                hash = it.hash,
-                rawContract =it.rawContract ,
-                to = it.to,
-                tokenId = it.tokenId,
-                value = it.value.toDouble(),
-                blockTimestamp = run {
-                    val zonedDateTime = ZonedDateTime.parse(res[0].metadata.blockTimestamp)
-                    zonedDateTime.withZoneSameInstant(deviceZoneId).toLocalDateTime()
-                }
+            val zonedTime = Instant.parse(it.metadata.blockTimestamp).atZone(deviceZoneId).toString()
+            it.copy(
+                metadata = TransferDto.TransferMetadata(zonedTime)
             )
         }
     }
+
+    @FromJson
+    //fun toTokenBalaceEntity(tokenBalanceJsonResponse: TokenBalanceJsonResponse): List<TokenBala>
 }

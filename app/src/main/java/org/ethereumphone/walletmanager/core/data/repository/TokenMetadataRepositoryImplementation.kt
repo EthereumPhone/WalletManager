@@ -14,31 +14,31 @@ class TokenMetadataRepositoryImplementation @Inject constructor(
 
     override fun getTokens(): Flow<Resource<List<TokenMetadata>>> = flow {
         emit(Resource.Loading())
-        val result = dao.getTokensMetadata()
+        val result = dao.getTokensMetadata().map { it.toTokenMetadata() }
         emit(Resource.Success(result))
 
     }
 
     override fun insertAllToken(tokens: List<TokenMetadata>) {
-        dao.insertAllTokens(tokens)
+        dao.insertAllTokens(tokens.map { it.toTokenMetadataEntity() })
     }
 
     override fun getTokenMetadataBySymbol(symbol: String): Flow<Resource<TokenMetadata>> = flow {
         emit(Resource.Loading())
-        val result = dao.getTokenMetadataBySymbol(symbol)
+        val result = dao.getTokenMetadataBySymbol(symbol).toTokenMetadata()
         emit(Resource.Success(result))
 
     }
 
     override fun getTokenMetadataByDecimals(decimals: Int): Flow<Resource<TokenMetadata>> = flow {
         emit(Resource.Loading())
-        val result = dao.getTokenMetadataByDecimals(decimals)
+        val result = dao.getTokenMetadataByDecimals(decimals).toTokenMetadata()
         emit(Resource.Success(result))
     }
 
     override fun getTokenMetadataByName(name: String): Flow<Resource<TokenMetadata>> = flow {
         emit(Resource.Loading())
-        val result = dao.getTokenMetadataByName(name)
+        val result = dao.getTokenMetadataByName(name).toTokenMetadata()
         emit(Resource.Success(result))
     }
 }

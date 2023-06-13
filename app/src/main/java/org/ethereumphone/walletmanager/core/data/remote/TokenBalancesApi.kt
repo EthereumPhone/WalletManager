@@ -1,8 +1,7 @@
 package org.ethereumphone.walletmanager.core.data.remote
 
-import org.ethereumphone.walletmanager.core.data.remote.dto.NetworkTransferRequestBody
-import org.ethereumphone.walletmanager.core.data.remote.dto.TokenBalanceRequestBody
-import org.ethereumphone.walletmanager.core.domain.model.NetworkTransfer
+import org.ethereumphone.walletmanager.core.data.remote.dto.TokenBalanceJsonResponse
+import org.ethereumphone.walletmanager.core.data.remote.dto.request.TokenBalanceRequestBody
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
@@ -19,7 +18,7 @@ interface TokenBalancesApi {
         @Path("network") network: String,
         @Path("apiKey") apiKey: String,
         @Body requestBody: TokenBalanceRequestBody
-    ): List<NetworkTransfer>
+    ): List<TokenBalanceJsonResponse>
 
     companion object {
         const val BASE_URL = "https://"
