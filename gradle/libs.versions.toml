@@ -1,0 +1,8 @@
+[versions]
+ktx = "1.7.0"
+compose = "1.7.0"
+
+[libraries]
+androidx-ktx = {group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+
+
