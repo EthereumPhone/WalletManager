@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace 'com.core.database'
+    namespace 'com.workers.work'
     compileSdk 33
 
     defaultConfig {
@@ -36,20 +36,15 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
-    implementation project(path: ':core:model')
-    implementation project(path: ':core:model')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    implementation libs.androidx.room.runtime
-    kapt libs.androidx.room.compiler
-
-    // Kotlin Extensions and Coroutines support for Room
-    implementation libs.androidx.room.ktx
-
     implementation libs.hilt.android
     kapt libs.hilt.compiler
+
+    implementation libs.androidx.work.runtime.ktx
+    implementation libs.androidx.hilt.work
 
 
 }
