@@ -17,9 +17,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.theme.ListBackground
-import org.ethereumphone.walletmanager.theme.NetworkStyle
+import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.theme.WalletManagerTheme
 
 
@@ -40,7 +40,7 @@ val Goerli = Network(
 
 val Arbitrum = Network(
     chainId = 42161,
-    chainName =NetworkStyle.ARBITRUM.networkName,
+    chainName = NetworkStyle.ARBITRUM.networkName,
     chainCurrency = "ETH",
     chainRPC = "https://rpc.ankr.com/arbitrum",
     chainExplorer = "https://arbiscan.io/"

@@ -3,7 +3,7 @@ package org.ethereumphone.walletmanager.utils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
 
 class SelectedNetworkViewModel: ViewModel() {
     private val _selectedNetwork = MutableLiveData<Network>()

@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,11 +33,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.theme.*
 import org.ethereumphone.walletmanager.ui.components.InputField
 import org.ethereumphone.walletmanager.ui.theme.InputFiledColors
-import org.ethereumphone.walletmanager.utils.WalletSDK
+import org.ethereumphone.walletsdk.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -105,170 +107,195 @@ fun SendScreen(
             },
         )
     }
-
-    Column(
-        Modifier
-            .padding(horizontal = 20.dp)
-            .padding(top = 20.dp)
-    ) {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-        ) {
-            IconButton(
-                onClick = { onBackClick() },
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "return to home screen",
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .size(32.dp)
-                )
-            }
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Send To",
-                    fontSize = 24.sp,
-                    modifier = Modifier
-                        .padding(top = 20.dp),
-                    fontStyle = FontStyle.Normal
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(shape = CircleShape)
-                            .background(
-                                networkStyles.first { it.networkName == selectedNetworkState.value.chainName }.color
-                            )
-                    )
-                    Text(
-                        text = "  "+selectedNetworkState.value.chainName,
-                        fontSize = 12.sp,
-                    )
-                }
-            }
-        }
+    Box(
+        modifier = Modifier.background(black)
+    ){
         Column(
             Modifier
-                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
                 .padding(top = 20.dp)
         ) {
-            Row {
-                InputField(
-                    label = {
-                        if(validSendAddress) Text("To Address/ENS", color = md_theme_dark_onSurface)
-                        else Text("To Address/ENS", color = Color.Yellow.copy(0.8f))
-                    },
-                    value = address,
-                    colors = if(validSendAddress) InputFiledColors() else InputFiledColors(backgroundColor = Color.Yellow.copy(0.2f)),
-                    trailingIcon = {
-                        IconButton(onClick = { showDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.QrCode,
-                                contentDescription = "Address by QR",
-                                tint = if(validSendAddress) md_theme_dark_onSurface else Color.Yellow,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .onFocusChanged {
-                            if (ENSName(address).isPotentialENSDomain()) {
-                                // It is ENS
-                                CompletableFuture.runAsync {
-                                    val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-                                    val ensAddr = ens.getAddress(ENSName(address))
-                                    address = ensAddr?.hex.toString()
-                            }
-                        } else {
-                            if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
-                            if(address.isEmpty()) validSendAddress = true
-                        }
-                ) {
-                    address = it
-                }
-            }
-        }
-        if(validSendAddress) Spacer(Modifier.height(20.dp))
-        else Text(
-            text = "potentially invalid address",
-            color = Color.Yellow,
-            modifier = Modifier.padding(horizontal = 10.dp)
-        )
-
-
-        InputField(
-            label = {
-                if(amountError) Text("Amount", color = Color.Red.copy(0.8f))
-                else Text("Amount", color = md_theme_dark_onSurface)
-                    } ,
-            modifier = Modifier.fillMaxWidth(),
-            value = amount,
-            colors = if(amountError) InputFiledColors(backgroundColor = Color.Red.copy(0.2f)) else InputFiledColors(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-
-        ) {
-            amount = it
-            amountError = amount.contains(Regex("-| "))
-       }
-        if(amountError) Text(
-            text= "Illegal characters (-, _)",
-            color = Color.Red,
-            fontSize = 12.sp
-        )
-
-        Spacer(Modifier.weight(1f))
-        // Send
-        Button(
-            shape = RoundedCornerShape(30.dp),
-            modifier = Modifier
+            Box(modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 10.dp),
-            enabled = amount.isNotEmpty() && address.isNotEmpty() && !amountError,
-            colors = ButtonDefaults.buttonColors(disabledBackgroundColor = Color.Gray),
-            onClick = {
-                val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
-                val ensName = ENSName(address)
-                if (ensName.isPotentialENSDomain()) {
-                    val completableFuture = CompletableFuture<String>()
-                    CompletableFuture.runAsync {
-                        val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
-                        completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
-                    }
-                    address = completableFuture.get()
+            ) {
+                IconButton(
+                    onClick = { onBackClick() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "return to home screen",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .size(32.dp),
+                        tint = Color.White
+                    )
                 }
-                walletSDK.sendTransaction(
-                    to = address,
-                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
-                    data = "",
-                    chainId = selectedNetwork.chainId
-                ).whenComplete { txHash, throwable ->
-                    println("Send transaction result: $txHash")
-                    // Open tx in etherscan
-                    if (txHash != "decline") {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
-                        context.startActivity(intent)
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Send To",
+                        fontSize = 24.sp,
+                        modifier = Modifier
+                            .padding(top = 20.dp),
+                        fontStyle = FontStyle.Normal,
+                        color = Color.White
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(shape = CircleShape)
+                                .background(
+                                    networkStyles.first { it.networkName == selectedNetworkState.value.chainName }.color
+                                )
+                        )
+                        Text(
+                            text = "  "+selectedNetworkState.value.chainName,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
                     }
                 }
             }
-        ) {
-            Text(
-                text = "SEND",
-                fontSize = 20.sp,
-                color = Color.White
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+            ) {
+                Row {
+                    InputField(
+                        label = {
+                            if(validSendAddress) Text("To Address/ENS",
+                                style = MaterialTheme.typography.body2,
+                                color = md_theme_dark_onSurface)
+                            else Text("To Address/ENS",
+                                style = MaterialTheme.typography.body2,
+                                color = Color.Yellow.copy(0.8f))
+                        },
+                        value = address,
+                        colors = if(validSendAddress) InputFiledColors() else InputFiledColors(backgroundColor = Color.Yellow.copy(0.2f)),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showDialog = true },
+                                modifier = Modifier.padding(end=16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "Address by QR",
+                                    tint = if(validSendAddress) md_theme_dark_onSurface else Color.Yellow,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        },
+
+                        modifier = Modifier
+                            .weight(1f)
+                            .onFocusChanged {
+                                if (ENSName(address).isPotentialENSDomain()) {
+                                    // It is ENS
+                                    CompletableFuture.runAsync {
+                                        val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+                                        val ensAddr = ens.getAddress(ENSName(address))
+                                        address = ensAddr?.hex.toString()
+                                    }
+                                } else {
+                                    if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
+                                if(address.isEmpty()) validSendAddress = true
+                            }
+                    ) {
+                        address = it
+                    }
+                }
+            }
+            if(validSendAddress) Spacer(Modifier.height(20.dp))
+            else Text(
+                text = "potentially invalid address",
+                color = Color.Yellow,
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
+
+
+            InputField(
+                label = {
+                    if(amountError) Text("Amount",
+                        color = Color.Red.copy(0.8f),
+                        style = MaterialTheme.typography.body2
+                    )
+                    else Text("Amount",
+                        color = md_theme_dark_onSurface,
+                        style = MaterialTheme.typography.body2)
+                } ,
+                modifier = Modifier.fillMaxWidth(),
+                value = amount,
+                colors = if(amountError) InputFiledColors(backgroundColor = Color.Red.copy(0.2f)) else InputFiledColors(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+
+                ) {
+                amount = it
+                amountError = amount.contains(Regex("-| "))
+            }
+            if(amountError) Text(
+                text= "Illegal characters (-, _)",
+                color = Color.Red,
+                fontSize = 12.sp
+            )
+
+            Spacer(Modifier.weight(1f))
+            // Send
+            Button(
+                shape = RoundedCornerShape(30.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
+                    .height(56.dp),
+                enabled = amount.isNotEmpty() && address.isNotEmpty() && !amountError,
+                colors = ButtonDefaults.buttonColors(
+                    disabledBackgroundColor = Color.Gray,
+                    backgroundColor = dark_primary
+                ),
+                onClick = {
+                    val walletSDK = WalletSDK(context, web3RPC = selectedNetwork.chainRPC)
+                    val ensName = ENSName(address)
+                    if (ensName.isPotentialENSDomain()) {
+                        val completableFuture = CompletableFuture<String>()
+                        CompletableFuture.runAsync {
+                            val ens = ENS(HttpEthereumRPC(selectedNetwork.chainRPC))
+                            completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+                        }
+                        address = completableFuture.get()
+                    }
+                    walletSDK.sendTransaction(
+                        to = address,
+                        value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
+                        data = "",
+                        chainId = selectedNetwork.chainId
+                    ).whenComplete { txHash, throwable ->
+                        println("Send transaction result: $txHash")
+                        // Open tx in etherscan
+                        if (txHash != "decline") {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = android.net.Uri.parse(selectedNetwork.chainExplorer + "/tx/" + txHash)
+                            context.startActivity(intent)
+                        }
+                    }
+                }
+                //onClick = {}
+            ) {
+                Text(
+                    text = "Send",
+                    style = MaterialTheme.typography.body1,
+                    color = Color.White
+                )
+            }
         }
     }
+
 }
 
 @Composable
@@ -294,7 +321,7 @@ fun qrCodeDialog(
                     //Do something and when you finish this something
                     //put scanFlag = false to scan another item
                     onDecoded(barCodeOrQr)
-                    scanFlag = true
+                        scanFlag = true
                 }
                 //If you don't put this scanFlag = false, it will never work again.
                 //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning
@@ -309,7 +336,7 @@ fun qrCodeDialog(
         )
     }
 }
-/**
+/*
 @ExperimentalComposeUiApi
 @Composable
 @Preview
@@ -329,5 +356,4 @@ fun PreviewMintingScreen() {
         }
         SendScreen(selectedNetworkState = selectedNetwork)
     }
-}
-        */
+}*/

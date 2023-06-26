@@ -8,9 +8,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import org.ethereumphone.walletmanager.models.Network
+import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.navigation.*
-import org.ethereumphone.walletmanager.theme.TopLevelDestination
+import org.ethereumphone.walletmanager.core.navigation.TopLevelDestination
+import org.ethereumphone.walletmanager.feature_asset.navigation.assetRoute
+import org.ethereumphone.walletmanager.feature_asset.navigation.navigateToAsset
+import org.ethereumphone.walletmanager.feature_home.navigation.homeRoute
+import org.ethereumphone.walletmanager.feature_home.navigation.navigateToHome
 
 @Composable
 fun rememberWalletManagerAppState(

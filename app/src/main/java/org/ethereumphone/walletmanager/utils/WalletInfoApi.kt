@@ -1,12 +1,12 @@
 package org.ethereumphone.walletmanager.utils
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,24 +14,19 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.BuildConfig
-import org.ethereumphone.walletmanager.models.Exchange
-import org.ethereumphone.walletmanager.models.Network
-import org.ethereumphone.walletmanager.models.Transaction
-import org.json.JSONArray
-import org.json.JSONObject
+import org.ethereumphone.walletmanager.core.model.Exchange
+import org.ethereumphone.walletmanager.core.model.Network
+import org.ethereumphone.walletmanager.core.model.Transaction
+import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
-import java.io.InputStream
 import java.lang.Double.parseDouble
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.ArrayList
 
@@ -66,13 +61,15 @@ class WalletInfoApi(
 
     private fun getDefaultNetworks(): ArrayList<Network> {
         val allNetworks = ArrayList<Network>()
-        allNetworks.add(Network(
+        allNetworks.add(
+            Network(
             chainId = 1,
             chainCurrency = "ETH",
             chainRPC = "https://mainnet.infura.io/v3/8a3d95b3bc4840f88a3d95b3bcf840f8",
             chainName = "Ethereum",
             chainExplorer = "https://etherscan.io"
-        ))
+        )
+        )
         allNetworks.add(
             Network(
                 chainName = "Goerli Testnet",
@@ -85,6 +82,10 @@ class WalletInfoApi(
         return allNetworks
     }
 
+    fun getCurrentNetwork(): Int {
+        return wallet.getChainId()
+    }
+
     fun getEthAmount(selectedNetwork: Network): Double {
         // Get web3j instance for the selected network
         val web3j = Web3j.build(HttpService(selectedNetwork.chainRPC))
@@ -95,7 +96,8 @@ class WalletInfoApi(
         )
 
         // Return the balance in ETH, rounded to 6 decimal places
-        return amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
+        val resultBalance = amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
+        return resultBalance
     }
 
     fun round(value: Double, places: Int): Double {
@@ -105,60 +107,26 @@ class WalletInfoApi(
         return bd.toDouble()
     }
 
-    fun getHistoricTransactions(selectedNetwork: Network): ArrayList<Transaction> {
+    fun getRpcUrl(selectedNetwork: Network): String {
         val address = wallet.getAddress()
-        try {
-            val output = ArrayList<Transaction>()
-            //val rpcURL = if (selectedNetwork.chainId == 1) "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=NXXTAQGMIT39T9R465P4564JDW1PRPD27J" else ""
-            val rpcURL = when(selectedNetwork.chainId){
-                // Mainnet
-                1 -> "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
-                // Goerli
-                5 -> "https://api-goerli.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
-                // Optimism
-                10 -> "https://api-optimistic.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.OPTISCAN_API}"
-                // Polygon
-                137 -> "https://api.polygonscan.com/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.POLYSCAN_API}"
-                // Arbitrum
-                42161 -> "https://api.arbiscan.io/api?module=account&action=txlistinternal&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.ARBISCAN_API}"
-                else -> ""
-            }
 
-            if (rpcURL == "") {
-                return output
-            }
-
-            val url = URL(rpcURL)
-            val httpConn: HttpURLConnection = url.openConnection() as HttpURLConnection
-            httpConn.setRequestMethod("GET")
-
-            httpConn.setRequestProperty("Content-Type", "application/json")
-
-            val responseStream: InputStream =
-                if (httpConn.responseCode/ 100 === 2) httpConn.getInputStream() else httpConn.getErrorStream()
-            val s: Scanner = Scanner(responseStream).useDelimiter("\\A")
-            val response = if (s.hasNext()) s.next() else ""
-
-            val jsonArray = JSONObject(response).getJSONArray("result") as JSONArray
-
-
-            for (i in 0..jsonArray.length()-1) {
-                val transferData = jsonArray.get(i) as JSONObject
-                output.add(
-                    Transaction(
-                        type = !(transferData.getString("to").equals(address, true)),
-                        value = BigDecimal(transferData.getString("value")).divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toString(),
-                        hash = transferData.getString("hash"),
-                        fromAddr = transferData.getString("from"),
-                        toAddr = transferData.getString("to")
-                    )
-                )
-            }
-            return output
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return ArrayList<Transaction>()
+        return when(selectedNetwork.chainId){
+            // Mainnet
+            1 -> "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
+            // Goerli
+            5 -> "https://api-goerli.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
+            // Optimism
+            10 -> "https://api-optimistic.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.OPTISCAN_API}"
+            // Polygon
+            137 -> "https://api.polygonscan.com/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.POLYSCAN_API}"
+            // Arbitrum
+            42161 -> "https://api.arbiscan.io/api?module=account&action=txlistinternal&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.ARBISCAN_API}"
+            else -> ""
         }
+    }
+
+    fun getNetworkCurrency(): String  {
+        return if(getCurrentNetwork() == 137) "MATICUSDT" else "ETHUSDT"
     }
 
     suspend fun getEthAmountInUSD(ethAmount: Double, selectedNetwork: Network): Double {
@@ -232,75 +200,59 @@ class WalletInfoViewModel(
     private val network: Network
 ) : ViewModel() {
 
-    private val _exchange = MutableLiveData<Exchange>(
-        Exchange(
-            price = "0.0",
-            symbol = "ETHUSDT"
-        )
-    )
+    private val _exchange = MutableLiveData<Exchange>()
     val exchange: LiveData<Exchange> = _exchange
 
-    private val _historicTransactions = MutableLiveData<ArrayList<Transaction>>(ArrayList<Transaction>())
+    private val _historicTransactions = MutableLiveData(ArrayList<Transaction>())
     val historicTransactions: LiveData<ArrayList<Transaction>> = _historicTransactions
 
-    private val _ethAmount = MutableLiveData<Double>(Double.MAX_VALUE)
-    val ethAmount: LiveData<Double> = _ethAmount
+    private val _networkAmount = MutableLiveData(Double.MAX_VALUE)
+    val networkAmount: LiveData<Double> = _networkAmount
 
-    private val _ethAmountInUSD = MutableLiveData<Double>(0.0)
-    val ethAmountInUSD: LiveData<Double> = _ethAmountInUSD
-
-    init {
-        walletInfoApi.startPriceUpdater { exchange ->
-            (walletInfoApi.context as Activity).runOnUiThread {
-                _exchange.value = exchange
-            }
-        }
-        ethAmount.observeForever {
-            val number = it
-            if (number == Double.MAX_VALUE) {
-                _ethAmountInUSD.value = 0.0
-                return@observeForever
-            }
-            CompletableFuture.runAsync {
-                GlobalScope.launch {
-                    val cryptoToUSD = walletInfoApi.getEthAmountInUSD(number, network)
-                    // Wait till app has been open for at least 1 second
-                    (walletInfoApi.context as Activity).runOnUiThread {
-                        _ethAmountInUSD.postValue(cryptoToUSD)
-                    }
-                }
-            }
-        }
-
+    fun getHistoricalTransactions() {
         viewModelScope.launch {
             try {
-                val transactionsResult = walletInfoApi.getHistoricTransactions(network)
-                _historicTransactions.value = transactionsResult
+                val url = walletInfoApi.getRpcUrl(network)
+                var transactionsResult = HistoricTransactionsApi.retrofitService.getHistoricTransactions(url).result
+                // amountGet.divide(BigDecimal.TEN.pow(18)).setScale(6, BigDecimal.ROUND_HALF_EVEN).toDouble()
+                for(i in transactionsResult) {
+                    var toRound = BigDecimal(i.value)
+                    i.value = toRound.divide(BigDecimal.TEN.pow(18)).setScale(6,RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString()
+                }
+                _historicTransactions.value = ArrayList(transactionsResult)
             } catch (e: Exception) {
+                e.message?.let { Log.d("histResp", it) }
                 _historicTransactions.value = ArrayList()
             }
         }
+    }
 
-        /**
-        CompletableFuture.runAsync {
-            val historicTransactions = walletInfoApi.getHistoricTransactions(network)
 
-            (walletInfoApi.context as Activity).runOnUiThread {
-            _historicTransactions.postValue(historicTransactions)
-            }
+    fun getNetworkBalance() {
+        viewModelScope.launch{
+            try {
+                _networkAmount.value = walletInfoApi.getEthAmount(network)
+            } catch (e: Exception) {}
         }
-         */
+    }
 
-
-        CompletableFuture.runAsync {
-            GlobalScope.launch {
-                val ethAmount = walletInfoApi.getEthAmount(network)
-                delay(1400)
-                (walletInfoApi.context as Activity).runOnUiThread {
-                    _ethAmount.postValue(ethAmount)
-                }
-            }
+    fun getExchangeRate() {
+        viewModelScope.launch{
+            try {
+                _exchange.value = ExchangeApi.retrofitService.getExchange(walletInfoApi.getNetworkCurrency())
+            } catch (e: Exception) {}
         }
+    }
+
+    init {
+        refreshInfo()
+    }
+
+    fun refreshInfo() {
+        println("WalletInfoApi: Refreshing state")
+        getHistoricalTransactions()
+        getNetworkBalance()
+        getExchangeRate()
     }
 }
 
