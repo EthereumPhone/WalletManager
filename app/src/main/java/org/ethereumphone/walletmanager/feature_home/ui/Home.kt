@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -231,7 +232,7 @@ fun Home(
         onRefresh = onRefresh
     ) {
         Box(
-            Modifier.verticalScroll(scrollState).height(boxHeight)
+            modifier = Modifier.verticalScroll(scrollState).fillMaxHeight()//.height(boxHeight)
         ) {
             Scaffold(
                 containerColor = background,
