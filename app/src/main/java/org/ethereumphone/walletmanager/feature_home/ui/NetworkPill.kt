@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,12 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.ethereumphone.walletmanager.core.designsystem.WmButtonColors
 import org.ethereumphone.walletmanager.core.designsystem.primary
 import org.ethereumphone.walletmanager.core.designsystem.primaryVariant
 import org.ethereumphone.walletmanager.core.model.Network
 import org.ethereumphone.walletmanager.core.model.NetworkStyle
 import org.ethereumphone.walletmanager.ui.components.Ethereum
+import org.ethereumphone.walletmanager.ui.theme.ethOSTheme
 import org.ethereumphone.walletmanager.viewModel.MAINNET
 
 @Composable
@@ -39,6 +42,8 @@ fun NetworkPill(
     colors: WmButtonColors = NetworkPillDefaults.wmDarkRoundedButton(),
     modifier: Modifier = Modifier,
     ) {
+
+    val text = "Mainnet"+" " + address.take(5) + "..."
     val context = LocalContext.current
     Surface(
         shape = CircleShape,
@@ -68,12 +73,14 @@ fun NetworkPill(
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = currentNetwork.chainName.replace(Regex(" Mainnet| Testnet| Network"), ""),
-                color = colors.content
+                //color = colors.content,
+                color = Color(0xFF9FA2A5)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text= address.take(6),
-                color = colors.content
+                text= address.take(5)+"...",
+                //color = colors.content,
+                color = Color(0xFF9FA2A5)
             )
         }
     }
@@ -81,7 +88,7 @@ fun NetworkPill(
 
 object NetworkPillDefaults {
     var textSize = 16.dp
-    var textColor = Color.LightGray
+    var textColor = Color(0xFF9FA2A5)
 
     val paddingValues = PaddingValues(
         horizontal = 10.dp,
@@ -101,8 +108,10 @@ object NetworkPillDefaults {
 @Preview
 @Composable
 fun NetworkPillPreview() {
-    NetworkPill(
-        currentNetwork = Ethereum,
-        "0x123123123"
-    )
+    //ethOSTheme() {
+        NetworkPill(
+            currentNetwork = Ethereum,
+            "0x123123123"
+        )
+    //}
 }
