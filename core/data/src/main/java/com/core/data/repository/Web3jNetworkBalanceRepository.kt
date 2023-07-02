@@ -1,121 +1,72 @@
 package com.core.data.repository
 
-import com.core.Resource.Resource
 import com.core.data.remote.NetworkBalanceApi
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenBalance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import retrofit2.HttpException
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class Web3jNetworkBalanceRepository(
+/**
+ * I intend to reuse the Token Balance entity for the Network currency,
+ * to distinguish them from the erc20 tokens, The address of the token will the same as the chainID,
+ * For instance; USDC-mainnet address: "<some hex sequence>", mainnet eth address = "1"
+ */
+class Web3jNetworkBalanceRepository @Inject constructor(
     private val networkBalanceApi: NetworkBalanceApi,
     private val tokenBalanceDao: TokenBalanceDao
 ): NetworkBalanceRepository {
+    override fun getNetworksBalance(): Flow<List<TokenBalance>> =
+        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains()
+            .map { it.chainId.toString() }
+        ).map { it.map(TokenBalanceEntity::asExternalModule) }
 
-    /**
-     * I intend to reuse the Token Balance entity for the Network currency,
-     * to distinguish them from the erc20 tokens, The address of the token will the same as the chainID,
-     * For instance; USDC-mainnet address: "<some hex sequence>", mainnet eth address = "1"
-     */
-    override fun getNetworkBalanceByChainId(
-        fetchRemote: Boolean,
+    override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
+        tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))
+            .map { it.first().asExternalModule() }
+
+    override suspend fun refreshNetworkBalance(
         toAddress: String,
-        chainId: Int
-    ): Flow<Resource<TokenBalance>> = flow {
-        emit(Resource.Loading(true))
-
-        val localNetworkBalance = tokenBalanceDao.getBalanceByContractAddress(chainId.toString())
-
-        localNetworkBalance?.let {
-            emit(Resource.Success(
-                data = it.asExternalModule()
-            ))
+        chainIds: List<Int>
+    ) {
+        val networks = chainIds.mapNotNull {
+            NetworkChain.getNetworkByChainId(it)
         }
+        val balancesToUpdate = tokenBalanceDao.getTokenBalances(chainIds.map{ it.toString() })
 
-        val isDbEmpty = localNetworkBalance == null
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        val network = NetworkChain.getNetworkByChainId(chainId) ?: return@flow
-
-        val remoteNetworkBalance = try {
-            networkBalanceApi.getNetworkCurrency(
-                toAddress,
-                network.rpc)
-        } catch (e: HttpException) {
-            e.printStackTrace()
-            emit(Resource.Error("Couldn't finalize request for network: ${network.chainName}"))
-            null
-        }
-
-        remoteNetworkBalance?.let {
-            tokenBalanceDao.upsertTokenBalances(
-                listOf(TokenBalanceEntity(
-                    contractAddress = network.chainId.toString(),
-                    chainId = network.chainId,
-                    tokenBalance = remoteNetworkBalance.toDouble()
-                ))
-            )
-            emit(Resource.Success(
-                data = tokenBalanceDao.getBalanceByContractAddress(chainId.toString())?.asExternalModule()
-            ))
-        }
-        emit(Resource.Loading(false))
-    }
-
-    override fun getAllNetworkBalance(
-        fetchRemote: Boolean,
-        toAddress: String,
-    ): Flow<Resource<List<TokenBalance>>> = flow {
-        emit(Resource.Loading(true))
-
-        val networks = NetworkChain.getAllNetworkChains()
-
-        val localNetworkBalances = tokenBalanceDao.getBalancesByContractAddresses(networks.map { it.chainId.toString() })
-        emit(Resource.Success(
-            data = localNetworkBalances.map { it.asExternalModule() }
-        ))
-
-        val isDbEmpty = localNetworkBalances.isEmpty()
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        networks.forEach { networkChain ->
-            val remoteNetworkBalance = try {
-                networkBalanceApi.getNetworkCurrency(
-                    networkChain.chainName,
-                    networkChain.rpc
-                )
-            } catch (e: HttpException) {
-                e.printStackTrace()
-                emit(Resource.Error("Couldn't finalize request for network: ${networkChain.chainName}"))
-                null
-            }
-            remoteNetworkBalance?.let {
-                tokenBalanceDao.upsertTokenBalances(
-                    listOf(TokenBalanceEntity(
-                        contractAddress = networkChain.chainId.toString(),
-                        chainId = networkChain.chainId,
-                        tokenBalance = remoteNetworkBalance.toDouble()
-                    ))
-                )
+        withContext(Dispatchers.IO) {
+            balancesToUpdate.map { tokenBalances ->
+                tokenBalances.map { tokenBalance ->
+                    val rpcToUse = networks.find { it.chainId == tokenBalance.chainId }?.rpc
+                    rpcToUse?.let {
+                        async {
+                            val newNetworkBalance = networkBalanceApi
+                                .getNetworkCurrency(
+                                    tokenBalance.contractAddress,
+                                    rpcToUse
+                                )
+                            tokenBalanceDao.upsertTokenBalances(
+                                listOf(
+                                    tokenBalance.copy(
+                                        tokenBalance = newNetworkBalance.toDouble()
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
-        val newNetworkBalances = tokenBalanceDao.getBalancesByContractAddresses(networks.map { it.chainId.toString() })
-
-        emit(Resource.Success(
-            data = newNetworkBalances.map { it.asExternalModule() }
-        ))
-        emit(Resource.Loading(false))
     }
 }

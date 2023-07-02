@@ -1,17 +1,14 @@
 package com.core.data.repository
 
-import com.core.Resource.Resource
+import com.core.model.NetworkChain
 import com.core.model.TokenBalance
 import kotlinx.coroutines.flow.Flow
 
 interface NetworkBalanceRepository {
-    fun getNetworkBalanceByChainId(
-        fetchRemote: Boolean,
+    fun getNetworksBalance(): Flow<List<TokenBalance>>
+    fun getNetworkBalance(chainId: Int): Flow<TokenBalance>
+    suspend fun refreshNetworkBalance(
         toAddress: String,
-        chainId: Int
-    ): Flow<Resource<TokenBalance>>
-    fun getAllNetworkBalance(
-        fetchRemote: Boolean,
-        toAddress: String
-    ): Flow<Resource<List<TokenBalance>>>
+        chainIds: List<Int> = NetworkChain.getAllNetworkChains().map { it.chainId }
+    )
 }

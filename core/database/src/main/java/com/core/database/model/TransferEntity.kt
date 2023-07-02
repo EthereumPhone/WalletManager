@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.core.model.EntryCategory
 import com.core.model.Transfer
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 @Entity("transfer")
 data class TransferEntity(
@@ -23,18 +23,18 @@ data class TransferEntity(
     val tokenId: String,
     val value: Double,
     val blockTimestamp: Instant
-) {
-    data class Erc1155MetadataObject(
-        val tokenId: String,
-        val value: String
-    )
+)
 
-    data class RawContract(
-        val address: String?,
-        val decimal: String?,
-        val value: String?
-    )
-}
+data class Erc1155MetadataObject(
+    val tokenId: String,
+    val value: String
+)
+
+data class RawContract(
+    val address: String?,
+    val decimal: String?,
+    val value: String?
+)
 
 fun TransferEntity.asExternalModel() = Transfer(
     asset,

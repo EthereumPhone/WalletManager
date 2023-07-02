@@ -1,7 +1,7 @@
 package com.core.data.model.dto
 
 import com.core.database.model.TransferEntity
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 data class TransferJsonResponse(
     val id: Int,
@@ -50,7 +50,7 @@ data class TransferDto(
             category = category,
             chainId = chainId,
             erc1155Metadata = erc1155Metadata?.map { metadata ->
-                TransferEntity.Erc1155MetadataObject(
+                com.core.database.model.Erc1155MetadataObject(
                     tokenId = metadata.tokenId,
                     value = metadata.value
                 )
@@ -59,7 +59,7 @@ data class TransferDto(
             from = from,
             hash = hash,
             rawContract = rawContract.run {
-                TransferEntity.RawContract(
+                com.core.database.model.RawContract(
                     address = address.orEmpty(),
                     decimal = decimal.orEmpty(),
                     value = value.orEmpty()

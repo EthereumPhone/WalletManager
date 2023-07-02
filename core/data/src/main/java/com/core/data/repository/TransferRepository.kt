@@ -1,21 +1,16 @@
 package com.core.data.repository
 
-import com.core.Resource.Resource
-import com.core.model.EntryCategory
 import com.core.model.Transfer
 import kotlinx.coroutines.flow.Flow
 
 interface TransferRepository {
-    fun getAllNetworksTransfers(fetchRemote: Boolean): Flow<Resource<List<Transfer>>>
-    fun getAllTransfersByChainId(
-        fetchRemote: Boolean,
-        chainId: Int
-    ): Flow<Resource<List<Transfer>>>
-    fun getAllTransfersByCategories(
-        fetchRemote: Boolean,
-        categories: List<EntryCategory>): Flow<Resource<List<Transfer>>>
-    fun getAllTransfersByChainAndCategories(
-        fetchRemote: Boolean,
+    fun getTransfers(): Flow<List<Transfer>>
+    fun getTransfers(chainId: Int): Flow<List<Transfer>>
+    fun getTransfers(categories: List<String>): Flow<List<Transfer>>
+    fun getTransfers(
         chainId: Int,
-        categories: List<EntryCategory>): Flow<Resource<List<Transfer>>>
+        categories: List<String>
+    ): Flow<List<Transfer>>
+
+    suspend fun refreshTransfers(toAddress: String)
 }

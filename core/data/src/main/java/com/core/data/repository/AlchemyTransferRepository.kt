@@ -1,240 +1,64 @@
 package com.core.data.repository
 
-import com.core.Resource.Resource
-import com.core.data.BuildConfig
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import com.core.data.remote.TransfersApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TransferDao
+import com.core.database.model.TransferEntity
 import com.core.database.model.asExternalModel
 import com.core.model.NetworkChain
-import com.core.model.EntryCategory
 import com.core.model.Transfer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import org.ethereumphone.walletsdk.WalletSDK
-import retrofit2.HttpException
-import java.io.IOException
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class AlchemyTransferRepository(
-    private val walletSDK: WalletSDK,
+class AlchemyTransferRepository @Inject constructor(
     private val transferDao: TransferDao,
     private val transfersApi: TransfersApi
 ): TransferRepository {
-    override fun getAllNetworksTransfers(fetchRemote: Boolean): Flow<Resource<List<Transfer>>> = flow {
-        emit(Resource.Loading(true))
-        val localTransfers = transferDao.getAllTransfers()
-        emit(Resource.Success(
-            data = localTransfers.map { it.asExternalModel() }
-        ))
+    override fun getTransfers(): Flow<List<Transfer>> =
+        transferDao.getTransfers()
+            .map { it.map(TransferEntity::asExternalModel) }
 
-        val isDbEmpty = localTransfers.isEmpty()
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
+    override fun getTransfers(chainId: Int): Flow<List<Transfer>> =
+        transferDao.getTransfers(chainId)
+            .map { it.map(TransferEntity::asExternalModel) }
 
-        val networks = NetworkChain.getAllNetworkChains()
+    override fun getTransfers(categories: List<String>): Flow<List<Transfer>> =
+        transferDao.getTransfers(categories)
+            .map { it.map(TransferEntity::asExternalModel) }
 
-        networks.forEach { networkChain ->
-            val apiKey = chainToApiKey(networkChain.chainName)
-            if(apiKey.isEmpty()) {
-                return@forEach
-            }
-            val remoteTransfers = try {
-                transfersApi.getTransfers(
-                    network = networkChain.chainName,
-                    apiKey = apiKey,
-                    requestBody = NetworkTransferRequestBody(params = listOf(
-                        NetworkTransferRequestBody.NetworkTransferRequestParams(
-                            toAddress = walletSDK.getAddress()
-                        ))
-                    )
-                )
-            } catch (e: IOException) {
-                e.printStackTrace()
-                emit(Resource.Error("parse error"))
-                null
-            } catch (e: HttpException) {
-                e.printStackTrace()
-                emit(Resource.Error("Couldn't finalize request for network: ${networkChain.chainName}"))
-                null
-            }
-            remoteTransfers?.let { transfers ->
-                transferDao.insertTransfers(transfers.map { it.asEntity(networkChain.chainId) })
-            }
-        }
-        emit(Resource.Success(
-            transferDao.getAllTransfers().map { it.asExternalModel() }
-        ))
 
-        emit(Resource.Loading(false))
-    }
-
-    override fun getAllTransfersByChainId(
-        fetchRemote: Boolean,
-        chainId: Int
-    ): Flow<Resource<List<Transfer>>> = flow {
-        emit(Resource.Loading(true))
-        val localTransfers = transferDao.getAllTransfersByChain(chainId)
-        emit(Resource.Success(
-            data = localTransfers.map { it.asExternalModel() }
-        ))
-
-        val isDbEmpty = localTransfers.isEmpty()
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        val network = NetworkChain.getNetworkByChainId(chainId)
-        val apiKey = chainToApiKey(network?.chainName.orEmpty())
-
-        if (network == null || apiKey.isEmpty()) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        val remoteTransfers = try {
-            transfersApi.getTransfers(
-                network = network.chainName,
-                apiKey = apiKey,
-                requestBody = NetworkTransferRequestBody(params = listOf(
-                    NetworkTransferRequestBody.NetworkTransferRequestParams(
-                        toAddress = walletSDK.getAddress()
-                    ))
-                )
-            )
-        } catch (e: IOException) {
-            e.printStackTrace()
-            emit(Resource.Error("parse error"))
-            null
-        } catch (e: HttpException) {
-            e.printStackTrace()
-            emit(Resource.Error("network error"))
-            null
-        }
-
-        remoteTransfers?.let { transfers ->
-            transferDao.insertTransfers(transfers.map { it.asEntity(network.chainId) })
-            emit(Resource.Success(
-                data = transferDao.getAllTransfersByChain(chainId).map { it.asExternalModel() }
-            ))
-        }
-        emit(Resource.Loading(false))
-    }
-
-    override fun getAllTransfersByCategories(
-        fetchRemote: Boolean,
-        categories: List<EntryCategory>
-    ): Flow<Resource<List<Transfer>>> = flow {
-        emit(Resource.Loading(true))
-        val localTransfers = transferDao.getAllTransfersByCategories(categories.map { it.toString() })
-        emit(Resource.Success(
-            data = localTransfers.map { it.asExternalModel() }
-        ))
-
-        val isDbEmpty = localTransfers.isEmpty()
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        val networks = NetworkChain.getAllNetworkChains()
-
-        networks.forEach { networkChain ->
-            val apiKey = chainToApiKey(networkChain.chainName)
-            if(apiKey.isEmpty()) {
-                return@forEach
-            }
-            val remoteTransfers = try {
-                transfersApi.getTransfers(
-                    network = networkChain.chainName,
-                    apiKey = apiKey,
-                    requestBody = NetworkTransferRequestBody(params = listOf(
-                        NetworkTransferRequestBody.NetworkTransferRequestParams(
-                            toAddress = walletSDK.getAddress(),
-                            category = categories.map { it.toString() }
-                        ))
-                    )
-                )
-            } catch (e: IOException) {
-                e.printStackTrace()
-                emit(Resource.Error("parse error"))
-                null
-            } catch (e: HttpException) {
-                e.printStackTrace()
-                emit(Resource.Error("Couldn't finalize request for network: ${networkChain.chainName}"))
-                null
-            }
-            remoteTransfers?.let { transfers ->
-                transferDao.insertTransfers(transfers.map { it.asEntity(networkChain.chainId) })
-            }
-        }
-        emit(Resource.Success(
-            transferDao.getAllTransfersByCategories(categories.map { it.toString() }).map { it.asExternalModel() }
-        ))
-
-        emit(Resource.Loading(false))
-    }
-
-    override fun getAllTransfersByChainAndCategories(
-        fetchRemote: Boolean,
+    override fun getTransfers(
         chainId: Int,
-        categories: List<EntryCategory>
-    ): Flow<Resource<List<Transfer>>> = flow {
-        emit(Resource.Loading(true))
-        val localTransfers = transferDao.getAllTransfersByChainAndCategories(chainId, categories.map { it.toString() })
-        emit(Resource.Success(
-            data = localTransfers.map { it.asExternalModel() }
-        ))
+        categories: List<String>
+    ): Flow<List<Transfer>> =
+        transferDao.getTransfers(chainId, categories)
+            .map { it.map(TransferEntity::asExternalModel) }
 
-        val isDbEmpty = localTransfers.isEmpty()
-        val shouldJustLoadFromCache = !isDbEmpty && !fetchRemote
-        if (shouldJustLoadFromCache) {
-            emit(Resource.Loading(false))
-            return@flow
+    override suspend fun refreshTransfers(toAddress: String) {
+        withContext(Dispatchers.IO) {
+            val networks = NetworkChain.getAllNetworkChains()
+            val deferredResults = networks.map { network ->
+                val apiKey = chainToApiKey(network.chainName)
+                async {
+                    val transfers = transfersApi.getTransfers(
+                        network = network.chainName,
+                        apiKey = apiKey,
+                        requestBody = NetworkTransferRequestBody(
+                            params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                                toAddress = toAddress
+                            ))
+                        )
+                    ).map { it.asEntity(network.chainId) }
+                    transferDao.insertTransfers(transfers)
+
+                }
+            }
         }
-
-        val network = NetworkChain.getNetworkByChainId(chainId)
-        val apiKey = chainToApiKey(network?.chainName.orEmpty())
-
-        if (network == null || apiKey.isEmpty()) {
-            emit(Resource.Loading(false))
-            return@flow
-        }
-
-        val remoteTransfers = try {
-            transfersApi.getTransfers(
-                network = network.chainName,
-                apiKey = apiKey,
-                requestBody = NetworkTransferRequestBody(params = listOf(
-                    NetworkTransferRequestBody.NetworkTransferRequestParams(
-                        toAddress = walletSDK.getAddress(),
-                        category = categories.map { it.toString() }
-                    ))
-                )
-            )
-        } catch (e: IOException) {
-            e.printStackTrace()
-            emit(Resource.Error("parse error"))
-            null
-        } catch (e: HttpException) {
-            e.printStackTrace()
-            emit(Resource.Error("network error"))
-            null
-        }
-
-        remoteTransfers?.let { transfers ->
-            transferDao.insertTransfers(transfers.map { it.asEntity(network.chainId) })
-            emit(Resource.Success(
-                data = transferDao.getAllTransfersByChainAndCategories(chainId, categories.map { it.toString() })
-                    .map { it.asExternalModel() }
-            ))
-        }
-        emit(Resource.Loading(false))
     }
 }

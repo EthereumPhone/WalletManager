@@ -11,16 +11,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TransferDao {
     @Query("SELECT * FROM transfer")
-    fun getAllTransfers(): List<TransferEntity>
+    fun getTransfers(): Flow<List<TransferEntity>>
 
     @Query("SELECT * FROM transfer WHERE chainId == :chainId")
-    fun getAllTransfersByChain(chainId: Int): List<TransferEntity>
+    fun getTransfers(chainId: Int): Flow<List<TransferEntity>>
 
     @Query("SELECT * FROM transfer WHERE category IN (:categories)")
-    fun getAllTransfersByCategories(categories: List<String>): List<TransferEntity>
+    fun getTransfers(categories: List<String>): Flow<List<TransferEntity>>
 
     @Query("SELECT * FROM transfer WHERE chainID == :chainId AND category IN (:categories)")
-    fun getAllTransfersByChainAndCategories(chainId: Int, categories: List<String>): List<TransferEntity>
+    fun getTransfers(chainId: Int, categories: List<String>): Flow<List<TransferEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertTransfers(transfers: List<TransferEntity>)

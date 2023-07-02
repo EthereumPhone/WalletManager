@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WalletManager"
         android:fitsSystemWindows="true"
-        tools:targetApi="31">
+        tools:targetApi="33">
 
         <activity
             android:name=".WalletManagerActivity"

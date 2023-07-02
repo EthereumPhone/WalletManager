@@ -1,17 +1,23 @@
 [versions]
 androidGradlePlugin = "7.3.1"
-kotlin = "1.7.20"
+kotlin = "1.8.0"
 hilt = "2.44"
+protobufPlugin = "0.8.19"
+
 
 ktx = "1.7.0"
 compose = "1.7.0"
 roomdb = "2.5.0"
 work = "2.8.1"
-hilt-work = "1.0.0"
-
+hilt-jetpack = "1.0.0"
+datastore = "1.0.0"
+retrofit2 = "2.9.0"
+compose-lifecycle = "2.6.0-beta01"
+moshi = "1.13.0"
+datetime = "0.4.0"
+protobuf = "3.21.9"
 walletsdk = "0.0.10"
 web3j = "4.8.8-android"
-
 
 
 
@@ -22,10 +28,17 @@ kotlin-android = {id = "org.jetbrains.kotlin.android", version.ref = "kotlin"}
 kotlin-jvm = {id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
 hilt-android = {id = "com.google.dagger.hilt.android", version.ref = "hilt"}
 kotlin-kapt = {id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin"}
+google-protobuf = {id = "com.google.protobuf", version.ref = "protobufPlugin"}
+
 
 
 [libraries]
 androidx-ktx = {group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+
+
+#compose
+androidx-lifecycle-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "compose-lifecycle" }
+
 
 # room
 androidx-room-runtime = {group = "androidx.room", name = "room-runtime", version.ref = "roomdb"}
@@ -35,16 +48,36 @@ androidx-room-compiler = {group = "androidx.room", name = "room-compiler", versi
 # hilt
 hilt-android = {group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
 hilt-compiler = {group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt"}
+hilt-navigation-compose = {group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-jetpack"}
 
 # coroutine worker
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
-androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-work" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-jetpack" }
 
 # system wallet
-ethos-wallet = {group = "com.github.EthereumPhone", name = "WalletSDK", version.ref = "walletsdk"}
+ethos-wallet = { group = "com.github.EthereumPhone", name = "WalletSDK", version.ref = "walletsdk" }
 
-#web3j
-web3j-android =  {group = "org.web3j", name = "core", version.ref = "web3j"}
+# web3j
+web3j-android = { group = "org.web3j", name = "core", version.ref = "web3j" }
+
+# datastore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-datastore-proto = {group = "androidx.datastore", name = "datastore", version.ref = "datastore"}
+
+# retrofit
+retrofit2-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit2" }
+
+# moshi
+moshi = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
+
+# protobuf
+protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
+protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobuf" }
+
+# kotlin date time
+kotlinx-datetime = {group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime"}
+
+
 
 
 

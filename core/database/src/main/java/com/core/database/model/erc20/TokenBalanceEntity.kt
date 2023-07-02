@@ -2,6 +2,7 @@ package com.core.database.model.erc20
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.core.model.TokenBalance
 
@@ -13,8 +14,11 @@ import com.core.model.TokenBalance
             childColumns = ["contractAddress"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["contractAddress"])
     ]
-    )
+)
 data class TokenBalanceEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

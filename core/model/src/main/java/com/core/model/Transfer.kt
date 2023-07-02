@@ -1,6 +1,7 @@
 package com.core.model
 
-import java.time.Instant
+import kotlinx.datetime.Instant
+
 
 data class Transfer(
     val asset: String,

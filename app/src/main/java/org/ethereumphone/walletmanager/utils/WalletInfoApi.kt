@@ -111,16 +111,6 @@ class WalletInfoApi(
             val output = ArrayList<Transaction>()
             //val rpcURL = if (selectedNetwork.chainId == 1) "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=NXXTAQGMIT39T9R465P4564JDW1PRPD27J" else ""
             val rpcURL = when(selectedNetwork.chainId){
-                // Mainnet
-                1 -> "https://api.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
-                // Goerli
-                5 -> "https://api-goerli.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=7&sort=desc&apikey=${BuildConfig.ETHSCAN_API}"
-                // Optimism
-                10 -> "https://api-optimistic.etherscan.io/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.OPTISCAN_API}"
-                // Polygon
-                137 -> "https://api.polygonscan.com/api?module=account&action=txlist&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.POLYSCAN_API}"
-                // Arbitrum
-                42161 -> "https://api.arbiscan.io/api?module=account&action=txlistinternal&address=$address&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${BuildConfig.ARBISCAN_API}"
                 else -> ""
             }
 

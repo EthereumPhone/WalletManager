@@ -2,7 +2,11 @@ package com.core.database.di
 
 import android.content.Context
 import androidx.room.Room
-import com.core.WmDatabase
+import com.core.database.WmDatabase
+import com.core.database.util.Erc1155MetadataConverter
+import com.core.database.util.MoshiJsonConverter
+import com.core.database.util.RawContractConverter
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,15 +16,19 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface DatabaseModule {
+object DatabaseModule {
 
     @Provides
     @Singleton
     fun provideWmDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        moshi: Moshi
     ): WmDatabase = Room.databaseBuilder(
         context,
         WmDatabase::class.java,
         "wm-database"
-    ).build()
+    )
+        .addTypeConverter(Erc1155MetadataConverter(MoshiJsonConverter(moshi)))
+        .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
+        .build()
 }

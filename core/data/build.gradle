@@ -10,6 +10,7 @@ android {
 
     defaultConfig {
         minSdk 33
+        targetSdk 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -47,7 +48,7 @@ dependencies {
     implementation project(path: ':core:database')
     implementation project(path: ':core:model')
     implementation project(path: ':core:common')
-    implementation project(path: ':app')
+    implementation project(path: ':core:datastore')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -57,5 +58,11 @@ dependencies {
 
     implementation libs.ethos.wallet
     implementation libs.web3j.android
+    implementation libs.hilt.android
+    kapt libs.hilt.compiler
+
+    implementation libs.moshi
+    implementation libs.kotlinx.datetime
+
 
 }
