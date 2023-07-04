@@ -26,9 +26,12 @@ class UniSwapRepository @Inject constructor(
     private val web3j: Web3j,
     private val uniswapRouterSDK: UniswapRoutingSDK
 ): SwapRepository {
-    // Goerli atm
-    val UNISWAP_V3_ADDRESS = "0x4648a43B2C14Da09FdF82B161150d3F634f40491"
-    val UNISWAP_PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3"
+
+
+    companion object {
+        val UNISWAP_V3_ADDRESS = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+        val UNISWAP_PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3"
+    }
 
     // Fee amount
     val FEE_SIZE = 5
