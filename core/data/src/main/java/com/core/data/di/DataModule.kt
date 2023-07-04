@@ -6,14 +6,18 @@ import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.util.MoshiAdapters
+import com.core.model.NetworkChain
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.ethereumphone.walletsdk.WalletSDK
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
@@ -30,6 +34,32 @@ object DataModule {
             .add(KotlinJsonAdapterFactory())
             //.add(MoshiAdapters())
             .build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
+        return UniswapRoutingSDK(
+            context = context,
+            web3RPC = NetworkChain.MAIN.rpc
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideWalletSDK(@ApplicationContext context: Context): WalletSDK {
+        return WalletSDK(
+            context = context,
+            web3jInstance = provideWeb3j()
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideWeb3j(): Web3j {
+        return Web3j.build(
+            HttpService(NetworkChain.MAIN.rpc)
+        )
     }
 
     @Singleton

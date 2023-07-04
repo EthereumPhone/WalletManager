@@ -51,6 +51,7 @@ dependencies {
     implementation project(path: ':core:model')
     implementation project(path: ':core:common')
     implementation project(path: ':core:datastore')
+    implementation project(path: ':uniswap-routing-sdk')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -65,6 +66,9 @@ dependencies {
 
     implementation libs.moshi
     implementation libs.kotlinx.datetime
+
+    implementation libs.fasterxml
+    implementation libs.headlong
 
 
 }
