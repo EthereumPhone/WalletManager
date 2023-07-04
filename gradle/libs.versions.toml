@@ -18,6 +18,8 @@ datetime = "0.4.0"
 protobuf = "3.21.9"
 walletsdk = "0.0.10"
 web3j = "4.8.8-android"
+headlong = "9.2.0"
+fasterxml = "2.12.5"
 
 
 
@@ -76,6 +78,12 @@ protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-
 
 # kotlin date time
 kotlinx-datetime = {group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime"}
+
+# headlong
+headlong = {group = "com.esaulpaugh", name = "headlong", version.ref = "headlong"}
+
+# fasterxml
+fasterxml = {group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "fasterxml"}
 
 
 
