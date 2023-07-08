@@ -87,6 +87,26 @@ class RealEncoder {
         return "0"
     }
 
+    fun encodeWEthCommand(address: String, amount: BigInteger): String {
+        try {
+            val f = Function("(address,uint256)")
+            val args = Tuple.of(
+                com.esaulpaugh.headlong.abi.Address.wrap(address),
+                amount
+            )
+            val result = f.encodeCall(args)
+            if (result.hasArray()) {
+                return Numeric.toHexString(result.array())
+            }
+            val buffer = ByteBuffer.allocate(result.remaining())
+            result.get(buffer.array())
+            return Numeric.toHexString(buffer.array())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return "0"
+    }
+
     fun getNonceData(user: String, token: String, spender: String): String {
         try {
             val f = Function("allowance(address,address,address)", "(uint160,uint48,uint48)")
@@ -125,7 +145,7 @@ class RealEncoder {
     /**
      * Function to set first 8 Bits to 0
      */
-    private fun setFirstFourBitsToZero(bytes: ByteArray): ByteArray {
+    fun setFirstFourBitsToZero(bytes: ByteArray): ByteArray {
         bytes[0] = 0
         bytes[1] = 0
         bytes[2] = 0
