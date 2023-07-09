@@ -43,7 +43,7 @@ class AlchemyTransferRepository @Inject constructor(
     override suspend fun refreshTransfers(toAddress: String) {
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
-            val deferredResults = networks.map { network ->
+            networks.map { network ->
                 val apiKey = chainToApiKey(network.chainName)
                 async {
                     val transfers = transfersApi.getTransfers(
@@ -54,9 +54,11 @@ class AlchemyTransferRepository @Inject constructor(
                                 toAddress = toAddress
                             ))
                         )
-                    ).map { it.asEntity(network.chainId) }
+                    ).map { it.asEntity(
+                        chainId = network.chainId,
+                        userIsSender = toAddress == it.from
+                    ) }
                     transferDao.insertTransfers(transfers)
-
                 }
             }
         }

@@ -1,7 +1,10 @@
 [versions]
 androidGradlePlugin = "7.3.1"
+hiltAndroid = "2.30.1-alpha"
+hiltWork = "1.0.0-alpha02"
 kotlin = "1.8.0"
 hilt = "2.44"
+material3 = "1.1.1"
 protobufPlugin = "0.8.19"
 
 
@@ -18,6 +21,7 @@ datetime = "0.4.0"
 protobuf = "3.21.9"
 walletsdk = "0.0.10"
 web3j = "4.8.8-android"
+workRuntimeKtx = "2.5.0"
 
 
 
@@ -33,6 +37,7 @@ google-protobuf = {id = "com.google.protobuf", version.ref = "protobufPlugin"}
 
 
 [libraries]
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltWork" }
 androidx-ktx = {group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
 
 
@@ -41,11 +46,13 @@ androidx-lifecycle-compose = { group = "androidx.lifecycle", name = "lifecycle-r
 
 
 # room
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-room-runtime = {group = "androidx.room", name = "room-runtime", version.ref = "roomdb"}
 androidx-room-ktx = {group = "androidx.room", name = "room-ktx", version.ref = "roomdb"}
 androidx-room-compiler = {group = "androidx.room", name = "room-compiler", version.ref = "roomdb"}
 
 # hilt
+google-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 hilt-android = {group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
 hilt-compiler = {group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt"}
 hilt-navigation-compose = {group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-jetpack"}

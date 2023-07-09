@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 class SystemWalletAddressUpdater @Inject constructor(

@@ -2,13 +2,12 @@ package com.core.model
 
 enum class NetworkChain(
     val chainId: Int,
-    val chainName: String,
-    val rpc: String
-) {
+    val chainName: String, // used for alchemy APIs
+    val rpc: String) {
     MAIN(
         chainId = 1,
         chainName = "eth-mainnet",
-        rpc = "https://rpc.ankr.com/eth"
+        rpc = "https://rpc.ankr.com/eth",
     ),
     GOERLI(
         chainId = 5,

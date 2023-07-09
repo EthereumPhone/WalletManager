@@ -45,14 +45,19 @@ android {
 dependencies {
     implementation project(path: ':core:model')
     implementation project(path: ':core:data')
-
-
+    implementation project(path: ':workers:work')
+    implementation project(path: ':feature:home')
+    implementation project(path: ':feature:swap')
+    implementation project(path: ':feature:send')
+    implementation project(path: ':feature:receive')
 
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.7.0'
+    implementation libs.androidx.material3
+
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.camera:camera-view:1.1.0-beta02'
+    implementation project(path: ':core:domain')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
@@ -102,10 +107,15 @@ dependencies {
     implementation('com.journeyapps:zxing-android-embedded:4.1.0')
     implementation 'com.google.zxing:core:3.5.1'
 
-    // hilt
-    implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-android-compiler:2.44")
-
     // Barcode Scanning
 
+    implementation libs.hilt.android
+    kapt libs.google.hilt.android.compiler
+    implementation libs.androidx.hilt.work
+    kapt libs.androidx.hilt.compiler
+    implementation libs.androidx.work.runtime.ktx
+
+
+
+    implementation libs.ethos.wallet
 }

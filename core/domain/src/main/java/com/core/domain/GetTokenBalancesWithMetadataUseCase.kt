@@ -29,6 +29,7 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
             pairedList.map { (tokenBalance, tokenMetadata) ->
                 TokenAsset(
                     address = tokenBalance.contractAddress,
+                    chainId = tokenBalance.chainId,
                     symbol = tokenMetadata.symbol,
                     name = tokenMetadata.name,
                     balance = tokenBalance.tokenBalance.div(tokenMetadata.decimals)

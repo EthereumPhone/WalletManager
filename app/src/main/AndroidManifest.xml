@@ -9,6 +9,7 @@
 
 
     <application
+        android:name=".WmApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,7 +22,7 @@
         tools:targetApi="33">
 
         <activity
-            android:name=".WalletManagerActivity"
+            android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
@@ -31,10 +32,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
         </activity>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove"
+            />
     </application>
 
 </manifest>

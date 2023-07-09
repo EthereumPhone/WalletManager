@@ -1,5 +1,6 @@
 package com.core.data.di
 
+import android.content.Context
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
@@ -10,7 +11,9 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import org.ethereumphone.walletsdk.WalletSDK
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
@@ -67,4 +70,13 @@ object DataModule {
             .build()
             .create(TransfersApi::class.java)
     }
+
+    @Singleton
+    @Provides
+    fun providesWalletSdk(
+        @ApplicationContext appContext: Context
+    ): WalletSDK {
+        return WalletSDK(appContext)
+    }
+
 }

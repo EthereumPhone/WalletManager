@@ -22,7 +22,8 @@ data class TransferEntity(
     val to: String,
     val tokenId: String,
     val value: Double,
-    val blockTimestamp: Instant
+    val blockTimestamp: Instant,
+    val userIsSender: Boolean
 )
 
 data class Erc1155MetadataObject(
@@ -58,5 +59,6 @@ fun TransferEntity.asExternalModel() = Transfer(
     to,
     tokenId,
     value,
-    blockTimestamp
+    blockTimestamp,
+    userIsSender
 )

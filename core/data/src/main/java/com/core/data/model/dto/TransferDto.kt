@@ -43,7 +43,10 @@ data class TransferDto(
         val value: String
     )
 
-    fun asEntity(chainId: Int): TransferEntity {
+    fun asEntity(
+        chainId: Int,
+        userIsSender: Boolean
+    ): TransferEntity {
         return TransferEntity(
             asset = asset.orEmpty(),
             blockNum = blockNum,
@@ -69,7 +72,8 @@ data class TransferDto(
             tokenId = tokenId,
             uniqueId = uniqueId,
             value = value?.toDoubleOrNull() ?: 0.0,
-            blockTimestamp = Instant.parse(metadata.blockTimestamp)
+            blockTimestamp = Instant.parse(metadata.blockTimestamp),
+            userIsSender = userIsSender
         )
     }
 }

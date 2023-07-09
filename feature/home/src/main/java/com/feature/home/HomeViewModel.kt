@@ -1,5 +1,8 @@
 package com.feature.home
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
@@ -13,8 +16,10 @@ import com.core.model.Transfer
 import com.core.result.Result
 import com.core.result.asResult
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -58,6 +63,16 @@ class HomeViewModel(
                 initialValue = TransfersUiState.Loading
         )
 
+    private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
+
+
+    fun refreshData() {
+        _refreshState.value = true
+        updateTransfers()
+        updateTokenBalances()
+        _refreshState.value = false
+    }
 
     fun updateTransfers() {
         viewModelScope.launch {
@@ -74,6 +89,13 @@ class HomeViewModel(
             }
         }
     }
+
+    fun userAddressToClipBoard() {
+        viewModelScope.launch {
+            userAddress.collect {
+            }
+        }
+    }
 }
 
 
@@ -85,7 +107,6 @@ private fun assetUiState(
     val erc20Tokens: Flow<List<TokenAsset>> =
         getTokenBalancesWithMetadataUseCase()
 
-
     // observe network currency
     val networkToken: Flow<List<TokenAsset>> =
         networkBalanceRepository.getNetworksBalance()
@@ -94,6 +115,7 @@ private fun assetUiState(
                     val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
                     TokenAsset(
                         address = it.contractAddress,
+                        chainId = it.chainId,
                         symbol = name,
                         name = name,
                         balance = it.tokenBalance
@@ -122,7 +144,6 @@ private fun assetUiState(
             }
         }
 }
-
 
 sealed interface AssetUiState {
     object Loading: AssetUiState
