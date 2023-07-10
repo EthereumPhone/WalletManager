@@ -80,15 +80,12 @@ class UniSwapRepository @Inject constructor(
         val fullAmountToSwap =
             BigDecimal(amount).multiply(BigDecimal(10).pow(fromToken.decimals)).toBigInteger()
 
-        // Calculate the fee amount in percent
-        val feePercentage =
-            BigDecimal(10000 - 9975).divide(BigDecimal(10000), MathContext.DECIMAL128)
 
         // Calculate the fee amount
-        val feeAmount = fullAmountToSwap.multiply(feePercentage.toBigInteger())
+        val feeAmount = fullAmountToSwap.divide(BigInteger.valueOf(200))
 
         // Calculate the amount to swap without fee
-        val amountToSwapWithoutFee = fullAmountToSwap - feeAmount
+        val amountToSwapWithoutFee = fullAmountToSwap.subtract(feeAmount)
 
         // Create Permit2 contract
         val permit2contract =
@@ -207,15 +204,11 @@ class UniSwapRepository @Inject constructor(
         val fullAmountToSwap =
             BigDecimal(amount).multiply(BigDecimal(10).pow(fromToken.decimals)).toBigInteger()
 
-        // Calculate the fee amount in percent
-        val feePercentage =
-            BigDecimal(10000 - 9975).divide(BigDecimal(10000), MathContext.DECIMAL128)
-
         // Calculate the fee amount
-        val feeAmount = fullAmountToSwap.multiply(feePercentage.toBigInteger())
+        val feeAmount = fullAmountToSwap.divide(BigInteger.valueOf(200))
 
         // Calculate the amount to swap without fee
-        val amountToSwapWithoutFee = fullAmountToSwap - feeAmount
+        val amountToSwapWithoutFee = fullAmountToSwap.subtract(feeAmount)
 
         // Create Permit2 contract
         val permit2contract =
@@ -280,7 +273,7 @@ class UniSwapRepository @Inject constructor(
             signature = Numeric.hexStringToByteArray(signature)
         )
         val swapData = realEncoder.encodeSwap(
-            receipient = walletSDK.getAddress(),
+            receipient = UNISWAP_V3_ADDRESS,
             amountIn = amountToSwapWithoutFee,
             minOut = BigInteger.ZERO,
             path = encodedPath,
@@ -290,21 +283,20 @@ class UniSwapRepository @Inject constructor(
             token = fromToken.address,
             fee = feeAmount
         )
-
-        val wrapEthData = realEncoder.encodeWEthCommand(
+        val unwrapEthData = realEncoder.encodeWEthCommand(
             address = walletSDK.getAddress(),
-            amount = fullAmountToSwap
+            amount = BigInteger.ZERO
         )
 
 
         val universalData = universalRouter.execute(
-            byteArrayOf(wrapEthCommand, permit2PermitCommand, permitTransferCommand, exactInSwapCommand),
+            byteArrayOf(permit2PermitCommand, permitTransferCommand, exactInSwapCommand, unwrapWethCommand),
             mutableListOf<ByteArray>(
-                Numeric.hexStringToByteArray(wrapEthData),
-                realEncoder.setFirstFourBitsToZero(Numeric.hexStringToByteArray(permitData)),
+                Numeric.hexStringToByteArray(permitData),
                 Numeric.hexStringToByteArray(permit2TransferData),
-                Numeric.hexStringToByteArray(swapData)
-            ),
+                Numeric.hexStringToByteArray(swapData),
+                realEncoder.setFirstFourBitsToZero(Numeric.hexStringToByteArray(unwrapEthData)),
+                ),
             BigInteger.ZERO
         ).encodeFunctionCall()
         return walletSDK.sendTransaction(
