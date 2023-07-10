@@ -47,8 +47,7 @@ class AlchemyTransferRepository @Inject constructor(
                 val apiKey = chainToApiKey(network.chainName)
                 async {
                     val transfers = transfersApi.getTransfers(
-                        network = network.chainName,
-                        apiKey = apiKey,
+                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         requestBody = NetworkTransferRequestBody(
                             params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
                                 toAddress = toAddress

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.internal.wait
 import javax.inject.Inject
 
 class AlchemyTokenBalanceRepository @Inject constructor(
@@ -42,10 +43,11 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                 val apiKey = chainToApiKey(network.chainName)
                 async {
                     val results = tokenBalanceApi.getTokenBalances(
-                        network.chainName,
-                        apiKey,
+                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         TokenBalanceRequestBody.allErc20Tokens(toAddress)
                     ).map { it.asEntity(network.chainId) }
+
+                    val test = results.wait()
                     tokenBalanceDao.upsertTokenBalances(results)
                 }
             }

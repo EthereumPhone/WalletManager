@@ -7,20 +7,16 @@ import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Url
 
 interface TokenMetadataApi {
     @Headers(
         "accept: application/json",
         "Content-Type: application/json"
     )
-    @POST("{network}.g.alchemy.com/v2/{apiKey}")
+    @POST
     suspend fun getTokenMetadata(
-        @Path("network") network: String,
-        @Path("apiKey") apiKey: String,
+        @Url url: String,
         @Body requestBody: TokenMetadataRequestBody
     ): List<TokenMetadataDto>
-
-    companion object {
-        const val BASE_URL = "https://"
-    }
 }

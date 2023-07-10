@@ -35,10 +35,10 @@ class AlchemyTokenMetadataRepository @Inject constructor(
     ) {
         val network = NetworkChain.getNetworkByChainId(network)?: return
         val apiKey = chainToApiKey(network.chainName)
+
         val metadataList = tokenMetadataApi
             .getTokenMetadata(
-                network.chainName,
-                apiKey,
+                "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                 TokenMetadataRequestBody(params = contractAddresses)
             )
 

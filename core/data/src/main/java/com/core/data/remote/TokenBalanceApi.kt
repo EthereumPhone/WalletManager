@@ -8,20 +8,16 @@ import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Url
 
 interface TokenBalanceApi {
     @Headers(
         "accept: application/json",
         "Content-Type: application/json"
     )
-    @POST("{network}.g.alchemy.com/v2/{apiKey}")
+    @POST
     suspend fun getTokenBalances(
-        @Path("network") network: String,
-        @Path("apiKey") apiKey: String,
+        @Url url: String,
         @Body requestBody: TokenBalanceRequestBody
     ): List<TokenBalanceDto>
-
-    companion object {
-        const val BASE_URL = "https://"
-    }
 }

@@ -39,7 +39,7 @@ object DataModule {
     ): TokenBalanceApi {
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .baseUrl(TokenBalanceApi.BASE_URL)
+            .baseUrl("http://localhost/")
             .build()
             .create(TokenBalanceApi::class.java)
     }
@@ -52,9 +52,12 @@ object DataModule {
 
     @Singleton
     @Provides
-    fun provideTokenMetadataApi(): TokenMetadataApi {
+    fun provideTokenMetadataApi(
+        moshi: Moshi
+    ): TokenMetadataApi {
         return Retrofit.Builder()
-            .baseUrl(TokenBalanceApi.BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("http://localhost/")
             .build()
             .create(TokenMetadataApi::class.java)
     }
@@ -66,7 +69,7 @@ object DataModule {
     ): TransfersApi {
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .baseUrl(TransfersApi.BASE_URL)
+            .baseUrl("http://localhost/")
             .build()
             .create(TransfersApi::class.java)
     }

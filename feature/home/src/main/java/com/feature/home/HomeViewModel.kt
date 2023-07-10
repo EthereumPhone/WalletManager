@@ -15,6 +15,7 @@ import com.core.model.TokenAsset
 import com.core.model.Transfer
 import com.core.result.Result
 import com.core.result.asResult
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,9 +25,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-
-class HomeViewModel(
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val updateTokensUseCase: UpdateTokensUseCase,
     userDataRepository: UserDataRepository,

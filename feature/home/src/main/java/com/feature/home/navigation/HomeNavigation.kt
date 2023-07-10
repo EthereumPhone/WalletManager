@@ -7,7 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.feature.home.HomeRoute
 
-private const val homeGraphRoutePattern = "home_graph"
+const val homeGraphRoutePattern = "home_graph"
 const val homeRoute = "home_route"
 
 fun NavController.navigateToHome(navOptions: NavOptions? = null) {

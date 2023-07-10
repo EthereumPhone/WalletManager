@@ -31,8 +31,8 @@ class WmApplication: Application(), Configuration.Provider {
 }
 
 class SeedWorkerFactory @Inject constructor(
-    val walletSDK: WalletSDK,
-    val updateTokensUseCase: UpdateTokensUseCase
+    private val walletSDK: WalletSDK,
+    private val updateTokensUseCase: UpdateTokensUseCase
 ): WorkerFactory() {
     override fun createWorker(
         appContext: Context,

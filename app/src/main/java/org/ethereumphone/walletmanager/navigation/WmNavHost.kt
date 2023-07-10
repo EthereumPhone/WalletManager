@@ -4,7 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.feature.home.navigation.homeGraph
+import com.feature.home.navigation.homeGraphRoutePattern
+import com.feature.home.navigation.homeRoute
 import com.feature.receive.navigation.navigateToReceive
 import com.feature.receive.navigation.receiveScreen
 import com.feature.send.navigation.navigateToSend
@@ -17,7 +20,7 @@ import org.ethereumphone.walletmanager.ui.WmAppState
 fun WmNavHost(
     appState: WmAppState,
     modifier: Modifier = Modifier,
-    startDestination: String = ""
+    startDestination: String = homeGraphRoutePattern
 ) {
     val navController = appState.navController
     NavHost(

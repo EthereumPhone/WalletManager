@@ -1,6 +1,7 @@
 package com.workers.work
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
@@ -25,9 +26,14 @@ class SeedTokensWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        updateTokenUseCase(walletSDK.getAddress())
+        try {
+            updateTokenUseCase(walletSDK.getAddress())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         Result.success()
     }
+
 
     companion object {
 
