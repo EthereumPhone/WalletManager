@@ -43,6 +43,7 @@ class UniSwapRepository @Inject constructor(
     val permitTransferCommand: Byte = 0x02.toByte()
     val wrapEthCommand: Byte = 0x0b.toByte()
     val unwrapWethCommand: Byte = 0x0c.toByte()
+    val payPortionCommand: Byte = 0x06.toByte()
 
     // Random credentials to make web3j happy
     val credentials = Credentials.create("0x0ec8bb8d1aebf3b6e9e838dba065501c06a6ffa4cc12794abfd385eb24accfc1")
@@ -339,102 +340,43 @@ class UniSwapRepository @Inject constructor(
         val fullAmountToSwap =
             BigDecimal(amount).multiply(BigDecimal(10).pow(fromToken.decimals)).toBigInteger()
 
-        // Calculate the fee amount in percent
-        val feePercentage =
-            BigDecimal(10000 - 9975).divide(BigDecimal(10000), MathContext.DECIMAL128)
-
         // Calculate the fee amount
-        val feeAmount = fullAmountToSwap.multiply(feePercentage.toBigInteger())
+        val feeAmount = fullAmountToSwap.divide(BigInteger.valueOf(200))
 
         // Calculate the amount to swap without fee
         val amountToSwapWithoutFee = fullAmountToSwap - feeAmount
 
-        // Create Permit2 contract
-        val permit2contract =
-            Permit2Contract.load(UNISWAP_PERMIT2, web3j, credentials, DefaultGasProvider())
-
-        // Get permit2 nonce
-        val nonce = (permit2contract.allowance(
-            walletSDK.getAddress(),
-            fromToken.address,
-            UNISWAP_V3_ADDRESS
-        ).get(2) as org.web3j.abi.datatypes.generated.Uint48).value
-
         // Encode path
         val encodedPath = Numeric.hexStringToByteArray(encodePathExactInput(route))
 
-        // Check if input token is allowed to be spent
-        val inputAllowance =
-            inputTokenContract.allowance(walletSDK.getAddress(), UNISWAP_PERMIT2).sendAsync().get()
-        if (inputAllowance < fullAmountToSwap) {
-            // Approve input token
-            val approveTokenData =
-                inputTokenContract.approve(UNISWAP_PERMIT2, fullAmountToSwap).encodeFunctionCall()
-            val approveTxId = walletSDK.sendTransaction(
-                to = fromToken.address,
-                value = "0x0",
-                data = approveTokenData,
-                gasAmount = estimateGas(
-                    to = fromToken.address,
-                    data = approveTokenData,
-                    walletSDK = walletSDK,
-                    web3j = web3j
-                ).toString()
-            )
-            waitForTxToBeValidated(
-                txHash = approveTxId,
-                web3j = web3j
-            ).get()
-        }
-        val sigDeadlineAndExpiration =
-            BigInteger.valueOf((System.currentTimeMillis() / 1000) + 1500)
-        val permit2string = generatePermit2Json(
-            Token = fromToken.address,
-            Amount = fullAmountToSwap,
-            Expiration = sigDeadlineAndExpiration,
-            Nonce = nonce,
-            Spender = UNISWAP_V3_ADDRESS,
-            SigDeadline = sigDeadlineAndExpiration,
-            walletSDK = walletSDK
-        )
-        val signature = walletSDK.signMessage(
-            message = permit2string,
-            type = "eth_signTypedData"
-        )
+
         val realEncoder = RealEncoder()
-        val permitData = realEncoder.encodePermit(
-            tokenIn = fromToken.address,
-            amount = fullAmountToSwap,
-            expiration = sigDeadlineAndExpiration,
-            nonce = nonce,
-            spender = UNISWAP_V3_ADDRESS,
-            sigDeadline = sigDeadlineAndExpiration,
-            signature = Numeric.hexStringToByteArray(signature)
-        )
         val swapData = realEncoder.encodeSwap(
-            receipient = UNISWAP_V3_ADDRESS,
+            receipient = walletSDK.getAddress(),
             amountIn = amountToSwapWithoutFee,
             minOut = BigInteger.ZERO,
             path = encodedPath,
-            flag = true
-        )
-        val permit2TransferData = realEncoder.encodePermitTransfer(
-            token = fromToken.address,
-            fee = feeAmount
+            flag = false
         )
 
-        val unwrapEthData = realEncoder.encodeWEthCommand(
-            address = walletSDK.getAddress(),
-            amount = BigInteger.ZERO
+        val wrapData = realEncoder.encodeWEthCommand(
+            address = UNISWAP_V3_ADDRESS,
+            amount = fullAmountToSwap
         )
+
+        // Using permit transfer as pay portion because its the same abi
+        val transferData = realEncoder.encodePermitTransfer(
+            token = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            fee = BigInteger("50")
+        )
+
 
         val universalData = universalRouter.execute(
-            byteArrayOf(permit2PermitCommand, permitTransferCommand, exactInSwapCommand, unwrapWethCommand),
+            byteArrayOf(wrapEthCommand, payPortionCommand, exactInSwapCommand),
             mutableListOf<ByteArray>(
-                Numeric.hexStringToByteArray(permitData),
-                Numeric.hexStringToByteArray(permit2TransferData),
+                realEncoder.setFirstFourBitsToZero(Numeric.hexStringToByteArray(wrapData)),
+                Numeric.hexStringToByteArray(transferData),
                 Numeric.hexStringToByteArray(swapData),
-                realEncoder.setFirstFourBitsToZero(Numeric.hexStringToByteArray(unwrapEthData))
             ),
             BigInteger.ZERO
         ).encodeFunctionCall()
@@ -446,7 +388,8 @@ class UniSwapRepository @Inject constructor(
                 to = UNISWAP_V3_ADDRESS,
                 data = universalData,
                 walletSDK = walletSDK,
-                web3j = web3j
+                web3j = web3j,
+                value = fullAmountToSwap.toString()
             ).toString()
         )
     }
