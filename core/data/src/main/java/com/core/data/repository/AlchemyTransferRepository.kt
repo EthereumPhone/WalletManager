@@ -53,7 +53,7 @@ class AlchemyTransferRepository @Inject constructor(
                                 toAddress = toAddress
                             ))
                         )
-                    ).map { it.asEntity(
+                    ).result.transfers.map { it.asEntity(
                         chainId = network.chainId,
                         userIsSender = toAddress == it.from
                     ) }

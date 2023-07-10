@@ -36,11 +36,13 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         val network = NetworkChain.getNetworkByChainId(network)?: return
         val apiKey = chainToApiKey(network.chainName)
 
-        val metadataList = tokenMetadataApi
-            .getTokenMetadata(
-                "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
-                TokenMetadataRequestBody(params = contractAddresses)
-            )
+        val metadataList = contractAddresses.map { address ->
+            tokenMetadataApi
+                .getTokenMetadata(
+                    "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
+                    TokenMetadataRequestBody(params = listOf(address))
+                ).result
+        }
 
         // TODO(Check if address is mapped to right contract)
         val filledMetadata = contractAddresses.zip(metadataList).map { (address, tokenMetadata) ->

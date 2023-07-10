@@ -19,5 +19,5 @@ interface TokenBalanceApi {
     suspend fun getTokenBalances(
         @Url url: String,
         @Body requestBody: TokenBalanceRequestBody
-    ): List<TokenBalanceDto>
+    ): TokenBalanceJsonResponse
 }

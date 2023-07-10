@@ -12,6 +12,7 @@ import com.core.domain.UpdateTokensUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 
@@ -26,8 +27,13 @@ class SeedTokensWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        while (walletSDK.getAddress() == "") {
+            delay(500L)
+        }
+        val walletAddress = walletSDK.getAddress()
+
         try {
-            updateTokenUseCase(walletSDK.getAddress())
+            updateTokenUseCase(walletAddress)
         } catch (e: Exception) {
             e.printStackTrace()
         }

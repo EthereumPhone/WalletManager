@@ -1,6 +1,7 @@
 package com.core.data.remote
 
 import com.core.data.model.dto.TransferDto
+import com.core.data.model.dto.TransferJsonResponse
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import retrofit2.http.Body
 import retrofit2.http.Headers
@@ -17,5 +18,5 @@ interface TransfersApi {
     suspend fun getTransfers(
         @Url url: String,
         @Body requestBody: NetworkTransferRequestBody
-    ): List<TransferDto>
+    ): TransferJsonResponse
 }

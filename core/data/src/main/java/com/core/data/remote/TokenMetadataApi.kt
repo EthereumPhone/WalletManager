@@ -1,6 +1,7 @@
 package com.core.data.remote
 
 import com.core.data.model.dto.TokenMetadataDto
+import com.core.data.model.dto.TokenMetadataJsonResponse
 import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.database.model.erc20.TokenMetadataEntity
 import retrofit2.http.Body
@@ -18,5 +19,5 @@ interface TokenMetadataApi {
     suspend fun getTokenMetadata(
         @Url url: String,
         @Body requestBody: TokenMetadataRequestBody
-    ): List<TokenMetadataDto>
+    ): TokenMetadataJsonResponse
 }

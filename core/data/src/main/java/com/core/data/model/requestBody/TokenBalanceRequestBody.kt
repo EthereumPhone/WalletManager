@@ -1,7 +1,9 @@
 package com.core.data.model.requestBody
 
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class TokenBalanceRequestBody(
     val id: Int = 1,
     val jsonrpc: String = "2.0",
