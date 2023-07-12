@@ -32,5 +32,4 @@ object DataStoreModule {
         ) {
             context.dataStoreFile("user_preferences.pb")
         }
-
 }

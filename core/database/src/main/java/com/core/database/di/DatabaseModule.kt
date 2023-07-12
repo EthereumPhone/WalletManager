@@ -3,6 +3,7 @@ package com.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.core.database.WmDatabase
+import com.core.database.util.BigDecimalTypeConverter
 import com.core.database.util.Erc1155MetadataConverter
 import com.core.database.util.MoshiJsonConverter
 import com.core.database.util.RawContractConverter
@@ -30,5 +31,6 @@ object DatabaseModule {
     )
         .addTypeConverter(Erc1155MetadataConverter(MoshiJsonConverter(moshi)))
         .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
+        .addTypeConverter(BigDecimalTypeConverter())
         .build()
 }

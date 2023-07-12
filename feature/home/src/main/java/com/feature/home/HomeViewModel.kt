@@ -120,7 +120,7 @@ private fun assetUiState(
                         chainId = it.chainId,
                         symbol = name,
                         name = name,
-                        balance = it.tokenBalance
+                        balance = it.tokenBalance.toDouble()
                     )
                 }
             }

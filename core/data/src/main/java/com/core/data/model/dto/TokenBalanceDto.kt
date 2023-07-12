@@ -24,7 +24,6 @@ fun TokenBalanceDto.asEntity(chainId: Int): TokenBalanceEntity {
     return TokenBalanceEntity(
         contractAddress = contractAddress,
         chainId = chainId,
-        tokenBalance = tokenBalance.toDouble()
-
+        tokenBalance = tokenBalance.substring(2).toBigDecimal()
     )
 }

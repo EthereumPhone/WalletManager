@@ -9,6 +9,7 @@ import com.core.database.dao.TransferDao
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenMetadataEntity
+import com.core.database.util.BigDecimalTypeConverter
 import com.core.database.util.Erc1155MetadataConverter
 import com.core.database.util.InstantConverter
 import com.core.database.util.RawContractConverter
@@ -25,7 +26,8 @@ import com.core.database.util.RawContractConverter
 @TypeConverters(
     InstantConverter::class,
     Erc1155MetadataConverter::class,
-    RawContractConverter::class
+    RawContractConverter::class,
+    BigDecimalTypeConverter::class
 )
 abstract class WmDatabase: RoomDatabase() {
     abstract val transferDao: TransferDao

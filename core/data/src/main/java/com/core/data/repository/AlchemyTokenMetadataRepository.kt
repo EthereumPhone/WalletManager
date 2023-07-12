@@ -31,26 +31,21 @@ class AlchemyTokenMetadataRepository @Inject constructor(
 
     override suspend fun refreshTokensMetadata(
         contractAddresses: List<String>,
-        network: Int
+        chainId: Int
     ) {
-        val network = NetworkChain.getNetworkByChainId(network)?: return
+        val network = NetworkChain.getNetworkByChainId(chainId)?: return
         val apiKey = chainToApiKey(network.chainName)
-
+        
         val metadataList = contractAddresses.map { address ->
             tokenMetadataApi
                 .getTokenMetadata(
                     "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                     TokenMetadataRequestBody(params = listOf(address))
-                ).result
+                ).result.asEntity(
+                    contractAddress = address,
+                    chainId = chainId
+                )
         }
-
-        // TODO(Check if address is mapped to right contract)
-        val filledMetadata = contractAddresses.zip(metadataList).map { (address, tokenMetadata) ->
-            tokenMetadata.asEntity(
-                contractAddress = address,
-                chainId = network.chainId
-            )
-        }
-        tokenMetadataDao.upsertTokensMetadata(filledMetadata)
+        tokenMetadataDao.upsertTokensMetadata(metadataList)
     }
 }

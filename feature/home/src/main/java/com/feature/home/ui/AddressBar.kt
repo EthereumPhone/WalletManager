@@ -13,6 +13,7 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import java.time.LocalTime
@@ -42,7 +43,8 @@ internal fun AddressBar(
             Text(
                 text = truncateText(userAddress),
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Red
             )
             Icon(
                 imageVector = Icons.Rounded.ContentCopy,

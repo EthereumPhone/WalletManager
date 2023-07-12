@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletsdk.WalletSDK
@@ -24,11 +25,10 @@ class SystemWalletAddressUpdater @Inject constructor(
             isUpdating = true
             coroutineScope.launch {
                 while (isUpdating) {
-                    userDataRepository.userData.map {
-                        val addressCheck = walletSDK.getAddress()
-                        if (addressCheck != it.walletAddress) {
-                            userDataRepository.setWalletAddress(addressCheck)
-                        }
+                    val addressCheck = walletSDK.getAddress()
+                    val oldAddress = userDataRepository.userData.first().walletAddress
+                    if (oldAddress == "" || oldAddress != addressCheck) {
+                        userDataRepository.setWalletAddress(addressCheck)
                     }
                     delay(500)
                 }

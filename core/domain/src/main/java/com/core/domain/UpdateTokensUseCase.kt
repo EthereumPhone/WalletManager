@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ class UpdateTokensUseCase @Inject constructor(
     suspend operator fun invoke(
         toAddress: String
     ) {
+        Log.d("UpdateUseCase", toAddress)
         tokenBalanceRepository.refreshTokensBalances(toAddress)
 
         val balancesAddresses = tokenBalanceRepository.getTokensBalances()

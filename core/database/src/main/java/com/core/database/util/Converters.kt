@@ -6,6 +6,7 @@ import com.core.database.model.Erc1155MetadataObject
 import com.core.database.model.RawContract
 import com.squareup.moshi.Types
 import kotlinx.datetime.Instant
+import java.math.BigDecimal
 
 class InstantConverter {
     @TypeConverter
@@ -70,3 +71,15 @@ class RawContractConverter(
         }
 }
 
+@ProvidedTypeConverter
+class BigDecimalTypeConverter {
+    @TypeConverter
+    fun fromBigDecimal(value: BigDecimal?): String? {
+        return value?.toString()
+    }
+
+    @TypeConverter
+    fun toBigDecimal(value: String?): BigDecimal? {
+        return value?.let { BigDecimal(it) }
+    }
+}

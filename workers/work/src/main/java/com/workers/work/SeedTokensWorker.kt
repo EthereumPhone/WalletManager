@@ -8,11 +8,15 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 
@@ -21,26 +25,27 @@ class SeedTokensWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val updateTokenUseCase: UpdateTokensUseCase,
-    private val walletSDK: WalletSDK
+    private val userDataRepository: UserDataRepository
 
 
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        while (walletSDK.getAddress() == "") {
-            delay(500L)
+        while (userDataRepository.userData.first().walletAddress == "") {
+            // just wait
         }
-        val walletAddress = walletSDK.getAddress()
+
+        val address = userDataRepository.userData.first()
+        Log.d("Worker Debug", address.walletAddress)
 
         try {
-            updateTokenUseCase(walletAddress)
+            updateTokenUseCase(address.walletAddress)
         } catch (e: Exception) {
             e.printStackTrace()
+            Result.failure()
         }
         Result.success()
     }
-
-
     companion object {
 
         fun startSeedNetworkBalanceWork() =

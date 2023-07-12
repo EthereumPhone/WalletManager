@@ -8,7 +8,7 @@ interface TokenMetadataRepository {
     fun getTokensMetadata(contractAddresses: List<String>): Flow<List<TokenMetadata>>
     suspend fun refreshTokensMetadata(
         contractAddresses: List<String>,
-        network: Int
+        chainId: Int
     )
 
 }

@@ -44,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.UserData
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.WalletTabRow

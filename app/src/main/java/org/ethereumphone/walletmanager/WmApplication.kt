@@ -7,6 +7,7 @@ import androidx.work.Configuration
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
 import com.workers.work.SeedTokensWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -31,8 +32,8 @@ class WmApplication: Application(), Configuration.Provider {
 }
 
 class SeedWorkerFactory @Inject constructor(
-    private val walletSDK: WalletSDK,
-    private val updateTokensUseCase: UpdateTokensUseCase
+    private val updateTokensUseCase: UpdateTokensUseCase,
+    private val userDataRepository: UserDataRepository
 ): WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -42,6 +43,6 @@ class SeedWorkerFactory @Inject constructor(
         appContext,
         workerParameters,
         updateTokensUseCase,
-        walletSDK
+        userDataRepository
     )
 }

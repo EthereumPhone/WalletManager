@@ -5,26 +5,14 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.core.model.TokenBalance
+import java.math.BigDecimal
 
-@Entity("token_balance",
-    foreignKeys = [
-        ForeignKey(
-            entity = TokenMetadataEntity::class,
-            parentColumns = ["contractAddress"],
-            childColumns = ["contractAddress"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [
-        Index(value = ["contractAddress"])
-    ]
-)
+@Entity("token_balance")
 data class TokenBalanceEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
     val contractAddress: String,
     val chainId: Int,
-    val tokenBalance: Double,
+    val tokenBalance: BigDecimal,
 )
 
 

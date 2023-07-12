@@ -59,7 +59,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                             tokenBalanceDao.upsertTokenBalances(
                                 listOf(
                                     tokenBalance.copy(
-                                        tokenBalance = newNetworkBalance.toDouble()
+                                        tokenBalance = newNetworkBalance
                                     )
                                 )
                             )
