@@ -132,10 +132,14 @@ private fun assetUiState(
         .map { tokenToTokeResult ->
             when(tokenToTokeResult) {
                 is Result.Success -> {
-                    val (tokens, networks) = tokenToTokeResult.data
-                    AssetUiState.Success(
-                        networks + tokens
-                    )
+                    val (tokens, networkTokens) = tokenToTokeResult.data
+                    if(tokens.isEmpty() && networkTokens.isEmpty()) {
+                        AssetUiState.Empty
+                    } else {
+                        AssetUiState.Success(
+                            networkTokens + tokens
+                        )
+                    }
                 }
                 is Result.Loading -> {
                     AssetUiState.Loading
@@ -150,6 +154,7 @@ private fun assetUiState(
 sealed interface AssetUiState {
     object Loading: AssetUiState
     object Error: AssetUiState
+    object Empty: AssetUiState
     data class Success(val assets: List<TokenAsset>): AssetUiState
 }
 

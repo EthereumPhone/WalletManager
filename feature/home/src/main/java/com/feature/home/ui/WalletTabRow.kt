@@ -26,7 +26,11 @@ import androidx.compose.material.Tab
 import androidx.compose.material.TabPosition
 import androidx.compose.material.TabRow
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,10 +40,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.core.designsystem.theme.placeHolder
+import com.core.designsystem.theme.primary
+import com.core.designsystem.theme.primaryVariant
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
@@ -61,6 +70,10 @@ internal fun WalletTabRow(
     )
 
     TabRow(
+        modifier = Modifier
+            .clip(RoundedCornerShape(30.dp))
+            .background(primaryVariant),
+        backgroundColor = primaryVariant,
         selectedTabIndex = pagerState.currentPage,
         indicator = { tabPositions ->
             wmTabIndicator(tabPositions, pagerState)
@@ -69,7 +82,7 @@ internal fun WalletTabRow(
         tabItems.forEachIndexed { index, title ->
             TabRowItem(
                 index = index,
-                tabName = title.name.lowercase(),
+                tabName = title.name,
                 pagerState = pagerState
             )
         }
@@ -77,17 +90,25 @@ internal fun WalletTabRow(
 
     HorizontalPager(
         pageCount = tabItems.size,
-        state = pagerState
+        state = pagerState,
+        modifier = Modifier.pullRefresh(pullRefreshState)
     ) { page ->
-        LazyColumn {
-            when(tabItems[page]) {
-                TabItems.TRANSFERS -> assetList(assetsUiState)
-                TabItems.ASSETS -> transferList(transfersUiState)
+        Box {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when(tabItems[page]) {
+                    TabItems.TRANSFERS -> assetList(assetsUiState)
+                    TabItems.ASSETS -> transferList(transfersUiState)
+                }
             }
+            PullRefreshIndicator(
+                refreshing = refreshState,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
-
-    PullRefreshIndicator(refreshing = refreshState, state = pullRefreshState)
 }
 
 
@@ -97,6 +118,22 @@ private fun LazyListScope.assetList(
     when(assetsUiState) {
         is AssetUiState.Loading -> {}
         is AssetUiState.Error -> {}
+        is AssetUiState.Empty -> {
+            item {
+                Box(
+                    modifier = Modifier
+                        .background(primaryVariant)
+                        .fillParentMaxSize()
+                ) {
+                    Text(
+                        text = "No assets found",
+                        color = placeHolder,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+        }
         is AssetUiState.Success -> {
             val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
             for ((assetName, assetList) in groupedAssets) {
@@ -120,7 +157,6 @@ private fun LazyListScope.transferList(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -134,13 +170,15 @@ private fun TabRowItem(
 
     val isSelected = index == pagerState.currentPage
     val color by animateColorAsState(
-        targetValue = if(isSelected) Color.Black else Color.White,
+        targetValue = if(isSelected) primaryVariant else primary,
         animationSpec = tween(durationMillis = 300),
         label = ""
     )
 
     Tab(
-        modifier = Modifier.zIndex(2f),
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .zIndex(2f),
         text = {
             Text(
                 text = tabName,
@@ -187,11 +225,26 @@ enum class TabItems {
 
 @Composable
 @Preview
-fun previewWalletTabRow() {
+fun PreviewWalletTabRow() {
     Column {
         WalletTabRow(
             TransfersUiState.Loading,
             AssetUiState.Loading,
+            false,
+            {}
+        )
+    }
+}
+
+@Composable
+@Preview
+fun PreviewEmptyWalletTabRow() {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        WalletTabRow(
+            TransfersUiState.Loading,
+            AssetUiState.Empty,
             false,
             {}
         )

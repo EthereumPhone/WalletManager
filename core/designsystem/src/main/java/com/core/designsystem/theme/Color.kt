@@ -1,4 +1,4 @@
-package org.ethereumphone.walletmanager.theme
+package com.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
