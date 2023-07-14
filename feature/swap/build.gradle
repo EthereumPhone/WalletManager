@@ -38,6 +38,8 @@ android {
 }
 
 dependencies {
+    implementation project(path: ':core:designsystem')
+
 
     implementation libs.androidx.core
     implementation libs.androidx.appcompat

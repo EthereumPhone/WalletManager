@@ -46,6 +46,7 @@ dependencies {
     implementation project(path: ':core:model')
     implementation project(path: ':core:domain')
     implementation project(path: ':core:data')
+    implementation project(path: ':core:designsystem')
     implementation project(path: ':workers:work')
     implementation project(path: ':feature:home')
     implementation project(path: ':feature:swap')
@@ -62,6 +63,9 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit
     androidTestImplementation libs.androidx.espresso.core
+
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
+
 
     // Web3j
     implementation 'org.web3j:core:4.8.8-android'

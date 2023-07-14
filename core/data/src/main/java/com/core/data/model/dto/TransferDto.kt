@@ -1,11 +1,13 @@
 package com.core.data.model.dto
 
 import com.core.database.model.TransferEntity
+import com.squareup.moshi.Json
 import kotlinx.datetime.Instant
 
 data class TransferJsonResponse(
     val id: Int,
     val jsonrpc: String,
+    @Json(name = "result")
     val result: Result
 ) {
     data class Result(
@@ -23,7 +25,7 @@ data class TransferDto(
     val hash: String,
     val rawContract: RawContract,
     val to: String,
-    val tokenId: String,
+    val tokenId: String?,
     val uniqueId: String,
     val value: String?,
     val metadata: TransferMetadata
@@ -69,7 +71,7 @@ data class TransferDto(
                 )
             },
             to = to,
-            tokenId = tokenId,
+            tokenId = tokenId?: "",
             uniqueId = uniqueId,
             value = value?.toDoubleOrNull() ?: 0.0,
             blockTimestamp = Instant.parse(metadata.blockTimestamp),

@@ -40,7 +40,15 @@ data class RawContract(
 fun TransferEntity.asExternalModel() = Transfer(
     asset,
     chainId,
-    EntryCategory.valueOf(category),
+    when(category) {
+        "external" -> EntryCategory.EXTERNAL
+        "internal" -> EntryCategory.INTERNAL
+        "erc20" -> EntryCategory.ERC20
+        "erc721" -> EntryCategory.ERC721
+        "erc1155" -> EntryCategory.ERC1155
+        "special_nft" -> EntryCategory.SPECIAL_NFT
+        else -> EntryCategory.EXTERNAL
+                   },
     erc1155Metadata.map { metadata ->
         Transfer.Erc1155MetadataObject(
             tokenId = metadata.tokenId,
