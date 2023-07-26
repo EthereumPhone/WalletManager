@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.core.data.repository.UserDataRepository
+import com.core.designsystem.theme.background
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.withContext
@@ -41,6 +43,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             // theme
+            val systemUiController = rememberSystemUiController()
+            systemUiController.setStatusBarColor(
+                color = background
+            )
 
 
 

@@ -50,7 +50,8 @@ class AlchemyTransferRepository @Inject constructor(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         requestBody = NetworkTransferRequestBody(
                             params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
-                                toAddress = toAddress
+                                toAddress = toAddress,
+                                category = listOf("external")
                             ))
                         )
                     ).result.transfers.map { it.asEntity(
