@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
+import com.core.domain.GetTransfersUseCase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.Transfer
+import com.core.model.TransferItem
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,6 +34,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
+    getTransfersUseCase: GetTransfersUseCase,
+    getGroupedTokenAssets: GetGroupedTokenAssets,
     private val updateTokensUseCase: UpdateTokensUseCase,
     userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
@@ -57,9 +63,9 @@ class HomeViewModel @Inject constructor(
         )
 
     val transferState: StateFlow<TransfersUiState> =
-        transferRepository.getTransfers().map(
-            TransfersUiState::Success
-        ).stateIn(
+        getTransfersUseCase()
+            .map(TransfersUiState::Success)
+            .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = TransfersUiState.Loading
@@ -76,7 +82,7 @@ class HomeViewModel @Inject constructor(
         _refreshState.value = false
     }
 
-    fun updateTransfers() {
+    private fun updateTransfers() {
         viewModelScope.launch {
             userAddress.collect {
                 transferRepository.refreshTransfers(it)
@@ -84,7 +90,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun updateTokenBalances() {
+    private fun updateTokenBalances() {
         viewModelScope.launch {
             userAddress.collect {
                 updateTokensUseCase(it)
@@ -136,8 +142,10 @@ private fun assetUiState(
                     if(tokens.isEmpty() && networkTokens.isEmpty()) {
                         AssetUiState.Empty
                     } else {
+                        //val groupedTokens = tokens.groupBy { it.symbol }
+
                         AssetUiState.Success(
-                            networkTokens + tokens
+                            networkTokens.sortedBy { it.chainId } + tokens.sortedBy { it.chainId }
                         )
                     }
                 }
@@ -155,11 +163,13 @@ sealed interface AssetUiState {
     object Loading: AssetUiState
     object Error: AssetUiState
     object Empty: AssetUiState
-    data class Success(val assets: List<TokenAsset>): AssetUiState
+    data class Success(
+        val assets: List<TokenAsset>
+    ): AssetUiState
 }
 
 sealed interface TransfersUiState {
     object Loading: TransfersUiState
-    data class Success(val transfers: List<Transfer>): TransfersUiState
+    data class Success(val transfers: List<TransferItem>): TransfersUiState
 
 }

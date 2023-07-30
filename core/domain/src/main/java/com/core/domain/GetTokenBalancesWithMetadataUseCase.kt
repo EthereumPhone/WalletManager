@@ -13,7 +13,6 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
 ) {
 
     operator fun invoke(): Flow<List<TokenAsset>> =
-
         combine(
             tokenBalanceRepository.getTokensBalances(),
             tokenMetadataRepository.getTokensMetadata()
@@ -25,7 +24,6 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                     Pair(tokenBalance, tokenMetadata)
                 }
             }
-
             pairedList.map { (tokenBalance, tokenMetadata) ->
                 TokenAsset(
                     address = tokenBalance.contractAddress,

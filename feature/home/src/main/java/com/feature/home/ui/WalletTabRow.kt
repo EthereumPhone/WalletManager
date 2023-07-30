@@ -2,6 +2,7 @@ package com.feature.home.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -42,8 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.core.designsystem.theme.placeHolder
@@ -52,6 +56,8 @@ import com.core.designsystem.theme.primaryVariant
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import kotlin.random.Random
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -61,7 +67,7 @@ internal fun WalletTabRow(
     refreshState: Boolean,
     onRefresh: () -> Unit
 ) {
-    val tabItems = TabItems.values().toList()
+    val tabItems = remember { TabItems.values().toList() }
     val pagerState = rememberPagerState()
 
     val pullRefreshState = rememberPullRefreshState(
@@ -76,7 +82,7 @@ internal fun WalletTabRow(
         backgroundColor = primaryVariant,
         selectedTabIndex = pagerState.currentPage,
         indicator = { tabPositions ->
-            wmTabIndicator(tabPositions, pagerState)
+            WmTabIndicator(tabPositions, pagerState)
         }
     ) {
         tabItems.forEachIndexed { index, title ->
@@ -88,74 +94,78 @@ internal fun WalletTabRow(
         }
     }
 
-    HorizontalPager(
-        pageCount = tabItems.size,
-        state = pagerState,
-        modifier = Modifier.pullRefresh(pullRefreshState)
-    ) { page ->
-        Box {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when(tabItems[page]) {
-                    TabItems.TRANSFERS -> assetList(assetsUiState)
-                    TabItems.ASSETS -> transferList(transfersUiState)
-                }
+    Box(
+        //Modifier.pullRefresh(pullRefreshState)
+    ) {
+        HorizontalPager(
+            pageCount = tabItems.size,
+            state = pagerState,
+            modifier = Modifier.pullRefresh(pullRefreshState)
+        ) { page ->
+            when(tabItems[pagerState.currentPage]) {
+                TabItems.TRANSFERS -> TransferList(transfersUiState)
+                TabItems.ASSETS -> AssetList(assetsUiState)
             }
-            PullRefreshIndicator(
-                refreshing = refreshState,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
+
+        PullRefreshIndicator(
+            refreshing = refreshState,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
 
-private fun LazyListScope.assetList(
-    assetsUiState: AssetUiState
-) {
-    when(assetsUiState) {
-        is AssetUiState.Loading -> {}
-        is AssetUiState.Error -> {}
+@Composable
+private fun AssetList(assetsUiState: AssetUiState) {
+    when (assetsUiState) {
+        is AssetUiState.Loading -> {  }
+        is AssetUiState.Error -> {  }
         is AssetUiState.Empty -> {
-            item {
-                Box(
-                    modifier = Modifier
-                        .background(primaryVariant)
-                        .fillParentMaxSize()
-                ) {
-                    Text(
-                        text = "No assets found",
-                        color = placeHolder,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .background(primaryVariant)
+                    .fillMaxSize()
+            ) {
+                Text(
+                    text = "No assets found",
+                    color = placeHolder,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
         is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
-            for ((assetName, assetList) in groupedAssets) {
-                item {
-                    AssetExpandableItem(title = assetName, assets = assetList)
+            val groupedAssets = remember { assetsUiState.assets.groupBy { it.symbol } }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                groupedAssets.forEach { (assetName, assetList) ->
+                    item(key = assetName) {
+                        AssetExpandableItem(title = assetName, assets = assetList)
+                    }
                 }
             }
         }
     }
 }
 
-private fun LazyListScope.transferList(
-    transfersUiState: TransfersUiState
-) {
+@Composable
+private fun TransferList(transfersUiState: TransfersUiState) {
     when (transfersUiState) {
-        is TransfersUiState.Loading -> {}
         is TransfersUiState.Success -> {
-            val transfers = transfersUiState.transfers.sortedBy { it.blockTimestamp }
-            items(transfers) { transfer ->
-                TransferItem(transfer = transfer)
+            LazyColumn {
+                items(
+                    items = transfersUiState.transfers,
+                    key = { transfer -> transfer.timeStamp }
+                ) {
+                    TransferItem(transfer = it)
+                }
+
             }
         }
+        is TransfersUiState.Loading -> {  }
     }
 }
 
@@ -169,11 +179,13 @@ private fun TabRowItem(
     val coroutineScope = rememberCoroutineScope()
 
     val isSelected = index == pagerState.currentPage
+
     val color by animateColorAsState(
         targetValue = if(isSelected) primaryVariant else primary,
         animationSpec = tween(durationMillis = 300),
         label = ""
     )
+
 
     Tab(
         modifier = Modifier
@@ -196,18 +208,23 @@ private fun TabRowItem(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun wmTabIndicator(
+private fun WmTabIndicator(
     tabPositions: List<TabPosition>,
     pagerState: PagerState
 ) {
+
+
     val offsetTransition by animateDpAsState(
         targetValue = tabPositions[pagerState.currentPage].left,
         label = ""
     )
+    val offsetPx = with(LocalDensity.current) { offsetTransition.toPx() }
 
     Box(
         Modifier
-            .offset(offsetTransition)
+            .offset {
+                IntOffset(offsetPx.roundToInt(), 0)
+            }
             .wrapContentSize(align = Alignment.BottomStart)
             .width(tabPositions[pagerState.currentPage].width)
             .padding(2.dp)

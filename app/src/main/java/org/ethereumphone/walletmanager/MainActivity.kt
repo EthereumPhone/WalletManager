@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.core.data.repository.UserDataRepository
@@ -32,7 +33,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         WorkManager.getInstance(applicationContext)
-            .enqueue(SeedTokensWorker.startSeedNetworkBalanceWork())
+            .enqueueUniqueWork(
+                "data updater",
+                ExistingWorkPolicy.REPLACE,
+                SeedTokensWorker.startSeedNetworkBalanceWork()
+            )
 
         // checks periodically the address of the system wallet
         walletAddressUpdater.startPeriodicUpdate()

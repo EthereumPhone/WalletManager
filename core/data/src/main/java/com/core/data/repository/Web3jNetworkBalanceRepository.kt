@@ -43,28 +43,24 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         val networks = chainIds.mapNotNull {
             NetworkChain.getNetworkByChainId(it)
         }
-        val balancesToUpdate = tokenBalanceDao.getTokenBalances(chainIds.map{ it.toString() })
 
         withContext(Dispatchers.IO) {
-            balancesToUpdate.map { tokenBalances ->
-                tokenBalances.map { tokenBalance ->
-                    val rpcToUse = networks.find { it.chainId == tokenBalance.chainId }?.rpc
-                    rpcToUse?.let {
-                        async {
-                            val newNetworkBalance = networkBalanceApi
-                                .getNetworkCurrency(
-                                    tokenBalance.contractAddress,
-                                    rpcToUse
-                                )
-                            tokenBalanceDao.upsertTokenBalances(
-                                listOf(
-                                    tokenBalance.copy(
-                                        tokenBalance = newNetworkBalance
-                                    )
-                                )
+            networks.map {
+                async {
+                    val newNetworkBalance = networkBalanceApi
+                        .getNetworkCurrency(
+                            toAddress,
+                            it.rpc
+                        )
+                    tokenBalanceDao.upsertTokenBalances(
+                        listOf(
+                            TokenBalanceEntity(
+                                contractAddress = it.chainId.toString(),
+                                chainId = it.chainId,
+                                tokenBalance = newNetworkBalance
                             )
-                        }
-                    }
+                        )
+                    )
                 }
             }
         }
