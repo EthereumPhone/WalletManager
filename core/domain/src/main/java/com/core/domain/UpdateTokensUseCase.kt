@@ -1,6 +1,7 @@
 package com.core.domain
 
 import android.util.Log
+import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import kotlinx.coroutines.CoroutineScope
@@ -18,13 +19,15 @@ import javax.inject.Inject
 
 class UpdateTokensUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
-    private val tokenBalanceRepository: TokenBalanceRepository
+    private val tokenBalanceRepository: TokenBalanceRepository,
+    private val networkBalanceRepository: NetworkBalanceRepository
 ) {
     suspend operator fun invoke(
         toAddress: String
     ) {
         Log.d("UpdateUseCase", toAddress)
         tokenBalanceRepository.refreshTokensBalances(toAddress)
+        networkBalanceRepository.refreshNetworkBalance(toAddress)
 
         val balancesAddresses = tokenBalanceRepository.getTokensBalances()
         val metadataAddresses = tokenMetadataRepository.getTokensMetadata()
@@ -45,7 +48,7 @@ class UpdateTokensUseCase @Inject constructor(
         /*
          The Alchemy metadata api has different endpoints for each network.
          If one tries to pass an erc20 address to the wrong endpoint,
-         it will return empty tokenMetadata DAO.
+         it will return empty tokenMetadata DAOs.
          For this reason, I need to group the addresses to the right chainID first,
          so that the repository can map them to the right alchemy endpoint.
         */

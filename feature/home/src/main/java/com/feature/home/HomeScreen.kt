@@ -46,9 +46,7 @@ internal fun HomeRoute(
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
-        onRefresh = {
-            viewModel.refreshData()
-        },
+        onRefresh = viewModel::refreshData,
 
         modifier = modifier
     )

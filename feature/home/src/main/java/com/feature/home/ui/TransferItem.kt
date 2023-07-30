@@ -4,41 +4,41 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.core.model.EntryCategory
-import com.core.model.Transfer
+import com.core.model.TransferItem
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+
 
 @Composable
 internal fun TransferItem(
-    transfer: Transfer
+    transfer: TransferItem
 ) {
-
-    val time = transfer.blockTimestamp.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-    val prepend = (if (transfer.userIsSender) "sent " else "received ")
-    val append = (if (transfer.userIsSender) " to ${truncateAddress(transfer.to)}" else " from ${truncateAddress(transfer.from)}")
-
-    val transactionText = prepend + when (transfer.category) {
-        EntryCategory.EXTERNAL -> "${transfer.value} ${transfer.asset}"
-        else -> ""
-    } + append
+    val headlineText = remember {
+        buildString {
+            append(if (transfer.userSent) "sent" else "received")
+            append(transfer.value)
+            append(transfer.asset)
+            append(if (transfer.userSent) "to" else "from")
+            append(transfer.address)
+        }
+    }
+    val networkName = remember { chainToNetworkName(transfer.chainId) }
 
     ListItem(
         headlineContent = {
             Text(
-                text = transactionText,
+                text = headlineText,
             )
        },
         supportingContent = {
             Row {
                 Text(
-                    text = chainToNetworkName(transfer.chainId),
+                    text = networkName,
                     modifier = Modifier.weight(1f)
                 )
-                Text(text = time)
+                Text(text = transfer.timeStamp)
             }
         }
    )
@@ -53,25 +53,15 @@ private fun chainToNetworkName(chainId: Int): String = when(chainId) {
         else -> ""
     }
 
-private fun truncateAddress(address: String): String = address.substring(0,5) + "..." + address.takeLast(3)
-
 @Preview
 @Composable
 fun TransferItemPreview() {
     TransferItem(
-        Transfer(
-            "ether",
-            5,
-            EntryCategory.EXTERNAL,
-            emptyList(),
-            "",
-            "nicola",
-            Transfer.RawContract("","",""),
-            "0x123123123",
-            "123",
-            12.3,
-            Clock.System.now(),
-            true
-        )
+        chainId = 5,
+        asset = "ether",
+        address = "0x123123",
+        value = "2.24",
+        timeStamp = Clock.System.now().toString(),
+        userSent = true
     )
 }

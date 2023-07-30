@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,13 +36,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.core.designsystem.theme.onPrimaryVariant
 
 @Composable
 fun ExpandableListItem(
     modifier: Modifier = Modifier,
+    colors: ListItemColors = ListItemDefaults.colors(),
     headline: @Composable () -> Unit,
     support: @Composable () -> Unit,
     expandedContent: @Composable () -> Unit,
@@ -55,8 +58,8 @@ fun ExpandableListItem(
             supportingContent = {
                 AnimatedVisibility(
                     visible = !expanded,
-                    enter =  fadeIn() + expandVertically(expandFrom = Alignment.Top) ,
-                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+                    enter =  expandVertically(expandFrom = Alignment.Top) ,
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top)
                 ) {
                     support()
                 }
@@ -70,7 +73,7 @@ fun ExpandableListItem(
                     )
                 }
             },
-            //colors = ListItemDefaults.colors(containerColor = Color.DarkGray)
+            colors = colors
         )
 
         AnimatedVisibility(visible = expanded) {
@@ -81,7 +84,7 @@ fun ExpandableListItem(
 
 
 @Composable
-@Preview
+//@Preview
 fun ExpandableListItemPreview() {
     ExpandableListItem(
         modifier = Modifier.fillMaxWidth(),

@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +28,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.core.designsystem.theme.primary
+import com.core.designsystem.theme.primaryVariant
 import com.core.model.TokenAsset
 import com.core.ui.ExpandableListItem
 import com.feature.home.R
@@ -35,26 +40,28 @@ fun AssetExpandableItem(
     title: String,
     assets: List<TokenAsset>
 ) {
-    var assetsSortedByChain = assets.sortedBy { it.chainId }
     ExpandableListItem(
         modifier = modifier,
+        colors = ListItemDefaults.colors(primaryVariant),
         headline = {
             Row {
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 20.sp,
+                    color = Color.White
                 )
                 Text(
-                    text = ": ${assetsSortedByChain.sumOf { it.balance }}",
-                    fontSize = 20.sp
+                    text = ": ${assets.sumOf { it.balance }}",
+                    fontSize = 20.sp,
+                    color = Color.White
                 )
             }
         },
         support = {
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                assetsSortedByChain.forEach {
-                    chainToIconMapper(chainId = it.chainId, size = 20.dp)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                items(assets) { asset ->
+                    chainToIconMapper(chainId = asset.chainId, size = 20.dp)
                 }
             }
 
@@ -62,12 +69,12 @@ fun AssetExpandableItem(
         expandedContent = {
             Column(
                 Modifier
-                    .clip(RoundedCornerShape(0,0,5,5))
-                    .background(Color.White)
+                    .clip(RoundedCornerShape(0, 0, 5, 5))
+                    .background(primaryVariant)
                 ,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                assetsSortedByChain.forEach {
+                assets.forEach {
                     IndividualAssetItem(it)
                 }
             }
@@ -86,10 +93,12 @@ private fun IndividualAssetItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        chainToIconMapper(tokenAsset.chainId, 30.dp)
+        chainToIconMapper(tokenAsset.chainId, 25.dp)
         Text(
             text = tokenAsset.balance.toString(),
-            fontWeight = FontWeight.Medium
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = primary
         )
     }
 }
