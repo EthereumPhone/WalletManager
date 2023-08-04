@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.core.designsystem.theme.background
 import com.core.designsystem.theme.placeHolder
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
@@ -94,9 +95,7 @@ internal fun WalletTabRow(
         }
     }
 
-    Box(
-        //Modifier.pullRefresh(pullRefreshState)
-    ) {
+    Box {
         HorizontalPager(
             pageCount = tabItems.size,
             state = pagerState,
@@ -154,7 +153,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
 @Composable
 private fun TransferList(transfersUiState: TransfersUiState) {
     when (transfersUiState) {
-        is TransfersUiState.Success -> {
+        is TransfersUiState.Success -> if(transfersUiState.transfers.isNotEmpty()){
             LazyColumn {
                 items(
                     items = transfersUiState.transfers,
@@ -163,6 +162,18 @@ private fun TransferList(transfersUiState: TransfersUiState) {
                     TransferItem(transfer = it)
                 }
 
+            }
+        } else {
+            LazyColumn {
+                item { Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "No Transfers found",
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                } }
             }
         }
         is TransfersUiState.Loading -> {  }
@@ -260,7 +271,7 @@ fun PreviewEmptyWalletTabRow() {
         modifier = Modifier.fillMaxSize()
     ) {
         WalletTabRow(
-            TransfersUiState.Loading,
+            TransfersUiState.Success(emptyList()),
             AssetUiState.Empty,
             false,
             {}

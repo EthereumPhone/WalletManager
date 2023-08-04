@@ -9,7 +9,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.TokenMetadataRepository
+import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
 import dagger.assisted.Assisted
@@ -29,7 +31,7 @@ class SeedTokensWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val updateTokenUseCase: UpdateTokensUseCase,
-    private val tokenMetadataRepository: TokenMetadataRepository,
+    private val transferRepository: TransferRepository,
     private val userDataRepository: UserDataRepository
 
 
@@ -38,13 +40,13 @@ class SeedTokensWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         while (userDataRepository.userData.first().walletAddress == "") {
             // just wait
-            Log.d("worker-TEst", "asdasdasd")
         }
 
         val address = userDataRepository.userData.first()
         Log.d("Worker Debug", address.walletAddress)
 
         try {
+            //transferRepository.refreshTransfers(address.walletAddress)
             updateTokenUseCase(address.walletAddress)
         } catch (e: Exception) {
             e.printStackTrace()

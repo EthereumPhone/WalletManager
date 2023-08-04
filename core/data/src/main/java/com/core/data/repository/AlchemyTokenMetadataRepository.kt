@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.util.Log
 import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.data.remote.TokenMetadataApi
@@ -33,6 +34,9 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         contractAddresses: List<String>,
         chainId: Int
     ) {
+        Log.d("TokenMetadata API", "update started")
+
+
         val network = NetworkChain.getNetworkByChainId(chainId)?: return
         val apiKey = chainToApiKey(network.chainName)
         

@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 
+import android.util.Log
 import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenBalanceRequestBody
 import com.core.data.remote.TokenBalanceApi
@@ -32,6 +33,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
             .map { it.map(TokenBalanceEntity::asExternalModule) }
 
     override suspend fun refreshTokensBalances(toAddress: String) {
+        Log.d("TonkenBalance API", "update started")
+
+
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
             networks.map { network ->

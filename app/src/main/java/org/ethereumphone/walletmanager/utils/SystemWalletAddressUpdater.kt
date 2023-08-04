@@ -27,9 +27,8 @@ class SystemWalletAddressUpdater @Inject constructor(
             coroutineScope.launch {
                 while (isUpdating) {
                     val addressCheck = walletSDK.getAddress()
-                    val oldAddress = userDataRepository.userData.single().walletAddress
 
-                    if (addressCheck.isNotEmpty() && oldAddress != addressCheck) {
+                    if (addressCheck.isNotEmpty()) {
                         userDataRepository.setWalletAddress(addressCheck)
                     }
 

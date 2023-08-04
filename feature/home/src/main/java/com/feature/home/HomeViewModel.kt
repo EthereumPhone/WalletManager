@@ -1,5 +1,6 @@
 package com.feature.home
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,7 @@ import com.core.model.TransferItem
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -76,32 +78,19 @@ class HomeViewModel @Inject constructor(
 
 
     fun refreshData() {
-        _refreshState.value = true
-        updateTransfers()
-        updateTokenBalances()
-        _refreshState.value = false
-    }
+        Log.d("refresh Started", "update started")
 
-    private fun updateTransfers() {
         viewModelScope.launch {
-            userAddress.collect {
-                transferRepository.refreshTransfers(it)
-            }
-        }
-    }
+            _refreshState.value = true
 
-    private fun updateTokenBalances() {
-        viewModelScope.launch {
-            userAddress.collect {
-                updateTokensUseCase(it)
+            try {
+                val address = userAddress.first()
+                transferRepository.refreshTransfers(address)
+                updateTokensUseCase(address)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        }
-    }
-
-    fun userAddressToClipBoard() {
-        viewModelScope.launch {
-            userAddress.collect {
-            }
+            _refreshState.value = false
         }
     }
 }

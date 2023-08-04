@@ -8,6 +8,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.core.data.repository.TokenMetadataRepository
+import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
 import com.workers.work.SeedTokensWorker
@@ -35,7 +36,7 @@ class WmApplication: Application(), Configuration.Provider {
 class SeedWorkerFactory @Inject constructor(
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
-    private val tokenMetadataRepository: TokenMetadataRepository
+    private val transferRepository: TransferRepository
 ): WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -45,7 +46,7 @@ class SeedWorkerFactory @Inject constructor(
         appContext,
         workerParameters,
         updateTokensUseCase,
-        tokenMetadataRepository,
+        transferRepository,
         userDataRepository
     )
 }

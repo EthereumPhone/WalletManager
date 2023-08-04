@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.util.Log
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import com.core.data.remote.TransfersApi
 import com.core.data.util.chainToApiKey
@@ -41,6 +42,8 @@ class AlchemyTransferRepository @Inject constructor(
             .map { it.map(TransferEntity::asExternalModel) }
 
     override suspend fun refreshTransfers(toAddress: String) {
+        Log.d("Transfer API", "update started")
+
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
             networks.map { network ->
