@@ -2,7 +2,6 @@ package com.feature.home.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -30,15 +28,12 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.Surface
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.core.designsystem.theme.background
 import com.core.designsystem.theme.placeHolder
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
@@ -58,7 +51,6 @@ import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -137,15 +129,19 @@ private fun AssetList(assetsUiState: AssetUiState) {
         }
         is AssetUiState.Success -> {
             val groupedAssets = remember { assetsUiState.assets.groupBy { it.symbol } }
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = primaryVariant)
             ) {
-                groupedAssets.forEach { (assetName, assetList) ->
-                    item(key = assetName) {
-                        AssetExpandableItem(title = assetName, assets = assetList)
+                LazyColumn {
+                    groupedAssets.forEach { (assetName, assetList) ->
+                        item(key = assetName) {
+                            AssetExpandableItem(title = assetName, assets = assetList)
+                        }
                     }
                 }
             }
+
         }
     }
 }
@@ -154,19 +150,25 @@ private fun AssetList(assetsUiState: AssetUiState) {
 private fun TransferList(transfersUiState: TransfersUiState) {
     when (transfersUiState) {
         is TransfersUiState.Success -> if(transfersUiState.transfers.isNotEmpty()){
-            LazyColumn {
-                items(
-                    items = transfersUiState.transfers,
-                    key = { transfer -> transfer.timeStamp }
-                ) {
-                    TransferItem(transfer = it)
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = primaryVariant
+                ),
+            ) {
+                LazyColumn {
+                    items(
+                        items = transfersUiState.transfers,
+                        key = { transfer -> transfer.timeStamp }
+                    ) {
+                        TransferItem(transfer = it)
+                    }
                 }
-
             }
         } else {
             LazyColumn {
                 item { Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillParentMaxSize()
                 ) {
                     Text(
                         text = "No Transfers found",

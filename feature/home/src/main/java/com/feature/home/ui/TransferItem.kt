@@ -2,11 +2,17 @@ package com.feature.home.ui
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import com.core.designsystem.theme.background
+import com.core.designsystem.theme.primary
+import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
 import kotlinx.datetime.Clock
 
@@ -17,10 +23,10 @@ internal fun TransferItem(
 ) {
     val headlineText = remember {
         buildString {
-            append(if (transfer.userSent) "sent" else "received")
+            append(if (transfer.userSent) "sent" else "received ")
             append(transfer.value)
             append(transfer.asset)
-            append(if (transfer.userSent) "to" else "from")
+            append(if (transfer.userSent) " to " else " from ")
             append(transfer.address)
         }
     }
@@ -28,9 +34,7 @@ internal fun TransferItem(
 
     ListItem(
         headlineContent = {
-            Text(
-                text = headlineText,
-            )
+            Text(text = headlineText)
        },
         supportingContent = {
             Row {
@@ -40,7 +44,12 @@ internal fun TransferItem(
                 )
                 Text(text = transfer.timeStamp)
             }
-        }
+        },
+        colors = ListItemDefaults.colors(
+            headlineColor = primary,
+            supportingColor = primary,
+            containerColor = Color.Transparent
+        )
    )
 }
 

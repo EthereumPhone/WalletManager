@@ -58,7 +58,7 @@ fun ExpandableListItem(
             supportingContent = {
                 AnimatedVisibility(
                     visible = !expanded,
-                    enter =  expandVertically(expandFrom = Alignment.Top) ,
+                    enter =  expandVertically(expandFrom = Alignment.Top),
                     exit = shrinkVertically(shrinkTowards = Alignment.Top)
                 ) {
                     support()
@@ -69,7 +69,8 @@ fun ExpandableListItem(
                     onClick = { expanded = !expanded }) {
                     Icon(
                         imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = null
+                        contentDescription = null,
+                        tint = Color.White
                     )
                 }
             },

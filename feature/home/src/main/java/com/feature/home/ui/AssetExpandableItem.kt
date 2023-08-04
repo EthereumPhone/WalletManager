@@ -42,7 +42,7 @@ fun AssetExpandableItem(
 ) {
     ExpandableListItem(
         modifier = modifier,
-        colors = ListItemDefaults.colors(primaryVariant),
+        colors = ListItemDefaults.colors(Color.Transparent),
         headline = {
             Row {
                 Text(
