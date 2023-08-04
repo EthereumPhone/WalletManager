@@ -31,7 +31,7 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                     symbol = tokenMetadata.symbol,
                     name = tokenMetadata.name,
                     balance = tokenBalance.tokenBalance.divide(
-                        tokenMetadata.decimals.toBigDecimal()).toDouble()
+                        (tokenMetadata.decimals*10).toBigDecimal()).toDouble()
                 )
             }
         }
