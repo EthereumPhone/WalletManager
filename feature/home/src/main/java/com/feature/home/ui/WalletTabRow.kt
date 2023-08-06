@@ -31,9 +31,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,9 +50,12 @@ import androidx.compose.ui.zIndex
 import com.core.designsystem.theme.placeHolder
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
+import com.core.model.TokenAsset
+import com.core.model.TransferItem
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
+import java.lang.reflect.Type
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -61,7 +67,12 @@ internal fun WalletTabRow(
     onRefresh: () -> Unit
 ) {
     val tabItems = remember { TabItems.values().toList() }
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        initialPageOffsetFraction = 0f
+    ) {
+        tabItems.size
+    }
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
@@ -89,11 +100,10 @@ internal fun WalletTabRow(
 
     Box {
         HorizontalPager(
-            pageCount = tabItems.size,
             state = pagerState,
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
-            when(tabItems[pagerState.currentPage]) {
+            when (tabItems[page]) {
                 TabItems.TRANSFERS -> TransferList(transfersUiState)
                 TabItems.ASSETS -> AssetList(assetsUiState)
             }
@@ -106,7 +116,6 @@ internal fun WalletTabRow(
         )
     }
 }
-
 
 @Composable
 private fun AssetList(assetsUiState: AssetUiState) {
@@ -130,13 +139,18 @@ private fun AssetList(assetsUiState: AssetUiState) {
         is AssetUiState.Success -> {
             val groupedAssets = remember { assetsUiState.assets.groupBy { it.symbol } }
 
-            Card(
-                colors = CardDefaults.cardColors(containerColor = primaryVariant)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
-                LazyColumn {
-                    groupedAssets.forEach { (assetName, assetList) ->
-                        item(key = assetName) {
-                            AssetExpandableItem(title = assetName, assets = assetList)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
+                ) {
+                    LazyColumn {
+                        groupedAssets.forEach { (assetName, assetList) ->
+                            item(key = assetName) {
+                                AssetExpandableItem(title = assetName, assets = assetList)
+                            }
                         }
                     }
                 }
