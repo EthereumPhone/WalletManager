@@ -6,7 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,9 +22,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,13 +44,19 @@ fun NumPad(
 ) {
     val numPadButtons = NumPadButtons.values().asList()
 
-    LazyVerticalGrid(columns = GridCells.Fixed(3)){
+    LazyVerticalGrid(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF1E2730))//Color(0xFF24303D))
+            .padding(12.dp),
+        columns = GridCells.Fixed(3)){
         itemsIndexed(numPadButtons) { index, button ->
             val fixedIndex = (index+1).mod(11)
             Box(
                 modifier = Modifier
+                    .padding(12.dp)
                     .clickable {
-                        when(button) {
+                        when (button) {
                             NumPadButtons.COMMA -> {
                                 if (!value.contains(".")) {
                                     if (value == "") {
@@ -54,6 +66,7 @@ fun NumPad(
                                     }
                                 }
                             }
+
                             NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
                             else -> onValueChange(value + fixedIndex.toString())
                         }
@@ -68,7 +81,12 @@ fun NumPad(
 
                 if(input is ImageVector) {
                     Box(
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier
+
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3C4958)),
+                            //.padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -79,12 +97,23 @@ fun NumPad(
                     }
                 }
                 if(input is String) {
-                    Text(
-                        text = input,
-                        fontSize = NumPadDefaults.fontSize,
-                        fontWeight = FontWeight.Bold,
-                        color = contentColor,
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+
+                        .clip(CircleShape)
+                        .background(Color(0xFF24303D))//Color(0xFF1E2730))
+                            ,
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(
+                            text = input,
+                            fontSize = NumPadDefaults.fontSize,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor,
+                        )
+                    }
+
                 }
             }
         }

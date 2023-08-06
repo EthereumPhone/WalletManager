@@ -61,7 +61,7 @@ fun ethOSTextField(
         cursorBrush = SolidColor(Color.White),
         modifier = modifier
             .clip(RoundedCornerShape(5))
-            .background(Color(0xFF1E2730))
+            .background(Color(0xFF24303D))
             .padding(
                 horizontal = 16.dp,
                 vertical = 8.dp
