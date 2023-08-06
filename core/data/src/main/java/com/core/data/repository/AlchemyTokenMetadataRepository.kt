@@ -52,4 +52,7 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         }
         tokenMetadataDao.upsertTokensMetadata(metadataList)
     }
+
+    override suspend fun insertTokenMetadata(tokensMetadata: List<TokenMetadataEntity>) = tokenMetadataDao.upsertTokensMetadata(tokensMetadata)
+
 }

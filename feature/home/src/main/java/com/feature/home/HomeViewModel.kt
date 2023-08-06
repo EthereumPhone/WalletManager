@@ -96,7 +96,7 @@ class HomeViewModel @Inject constructor(
 }
 
 
-private fun assetUiState(
+fun assetUiState(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     networkBalanceRepository: NetworkBalanceRepository
 ): Flow<AssetUiState> {

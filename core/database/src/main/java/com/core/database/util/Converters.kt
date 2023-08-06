@@ -75,7 +75,7 @@ class RawContractConverter(
 class BigDecimalTypeConverter {
     @TypeConverter
     fun fromBigDecimal(value: BigDecimal?): String? {
-        return value?.toString()
+        return value?.toPlainString()
     }
 
     @TypeConverter

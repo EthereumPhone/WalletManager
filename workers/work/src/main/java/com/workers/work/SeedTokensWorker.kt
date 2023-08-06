@@ -24,7 +24,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
+import java.io.File
 import java.util.concurrent.TimeUnit
+
 
 @HiltWorker
 class SeedTokensWorker @AssistedInject constructor(
@@ -33,8 +35,6 @@ class SeedTokensWorker @AssistedInject constructor(
     private val updateTokenUseCase: UpdateTokensUseCase,
     private val transferRepository: TransferRepository,
     private val userDataRepository: UserDataRepository
-
-
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -46,12 +46,13 @@ class SeedTokensWorker @AssistedInject constructor(
         Log.d("Worker Debug", address.walletAddress)
 
         try {
-            //transferRepository.refreshTransfers(address.walletAddress)
+            transferRepository.refreshTransfers(address.walletAddress)
             updateTokenUseCase(address.walletAddress)
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure()
         }
+
         Result.success()
     }
     companion object {

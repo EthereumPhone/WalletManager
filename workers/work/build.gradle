@@ -24,7 +24,7 @@ android {
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8 
     }
     kotlinOptions {
         jvmTarget = '1.8'
@@ -35,6 +35,7 @@ dependencies {
     implementation project(path: ':core:domain')
     implementation project(path: ':core:model')
     implementation project(path: ':core:data')
+    implementation project(path: ':core:database')
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -47,9 +48,12 @@ dependencies {
     implementation libs.hilt.android
     kapt libs.hilt.compiler
 
+    kapt( libs.androidx.hilt.compiler )
+
     implementation libs.androidx.work.runtime.ktx
     implementation libs.androidx.hilt.work
     implementation libs.ethos.wallet
 
+    implementation libs.moshi
 
 }

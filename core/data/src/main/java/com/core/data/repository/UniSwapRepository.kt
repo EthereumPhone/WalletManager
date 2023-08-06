@@ -495,7 +495,7 @@ class UniSwapRepository @Inject constructor(
         // encode the final token
         encoded += path.last().substring(2)
 
-        return encoded.toLowerCase()
+        return encoded.lowercase()
     }
 
     enum class FeeAmount(val value: Int) {

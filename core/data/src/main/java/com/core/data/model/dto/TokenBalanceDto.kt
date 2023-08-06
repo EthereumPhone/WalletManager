@@ -2,6 +2,8 @@ package com.core.data.model.dto
 
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
+import java.math.BigInteger
 
 data class TokenBalanceJsonResponse(
     val id: Int,
@@ -21,9 +23,11 @@ data class TokenBalanceDto(
 )
 
 fun TokenBalanceDto.asEntity(chainId: Int): TokenBalanceEntity {
+
+
     return TokenBalanceEntity(
         contractAddress = contractAddress,
         chainId = chainId,
-        tokenBalance = tokenBalance.substring(2).toBigDecimal()
+        tokenBalance = BigDecimal(BigInteger(tokenBalance.removePrefix("0x").uppercase(), 16))
     )
 }

@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.model.TokenMetadata
 import kotlinx.coroutines.flow.Flow
 
@@ -10,5 +11,6 @@ interface TokenMetadataRepository {
         contractAddresses: List<String>,
         chainId: Int
     )
+    suspend fun insertTokenMetadata(tokensMetadata: List<TokenMetadataEntity>)
 
 }

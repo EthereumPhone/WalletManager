@@ -3,8 +3,10 @@ package org.ethereumphone.walletmanager
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.core.data.repository.TokenMetadataRepository
@@ -19,20 +21,16 @@ import javax.inject.Inject
 @HiltAndroidApp
 class WmApplication: Application(), Configuration.Provider {
     @Inject
-    lateinit var workerFactory: SeedWorkerFactory
+    lateinit var workerFactory: HiltWorkerFactory
 
-    override fun onCreate() {
-        super.onCreate()
-
-    }
-
-    override fun getWorkManagerConfiguration() =
+    override fun getWorkManagerConfiguration(): Configuration =
         Configuration.Builder()
             .setMinimumLoggingLevel(Log.VERBOSE)
             .setWorkerFactory(workerFactory)
             .build()
 }
 
+/*
 class SeedWorkerFactory @Inject constructor(
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
@@ -50,3 +48,5 @@ class SeedWorkerFactory @Inject constructor(
         userDataRepository
     )
 }
+
+ */

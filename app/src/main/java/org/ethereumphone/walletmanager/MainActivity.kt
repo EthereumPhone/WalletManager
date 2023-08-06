@@ -14,6 +14,7 @@ import com.core.data.repository.UserDataRepository
 import com.core.designsystem.theme.background
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
+import com.workers.work.SeedUniswapTokensWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
@@ -26,11 +27,15 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var walletAddressUpdater: SystemWalletAddressUpdater
 
-    @Inject
-    lateinit var test: UserDataRepository
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                "seed UniswapTokens",
+                ExistingWorkPolicy.REPLACE,
+                SeedUniswapTokensWorker.startSeedUniswapTokensWork()
+            )
 
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork(
@@ -39,12 +44,9 @@ class MainActivity : ComponentActivity() {
                 SeedTokensWorker.startSeedNetworkBalanceWork()
             )
 
+
         // checks periodically the address of the system wallet
         walletAddressUpdater.startPeriodicUpdate()
-
-
-
-
 
         setContent {
             // theme
@@ -52,10 +54,6 @@ class MainActivity : ComponentActivity() {
             systemUiController.setStatusBarColor(
                 color = background
             )
-
-
-
-
             WmApp()
         }
     }

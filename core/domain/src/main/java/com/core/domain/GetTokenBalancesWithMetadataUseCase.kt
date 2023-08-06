@@ -6,6 +6,7 @@ import com.core.model.TokenAsset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
+import kotlin.math.pow
 
 class GetTokenBalancesWithMetadataUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
@@ -19,7 +20,7 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
         ) { balance, metadata ->
             val pairedList = balance.mapNotNull { tokenBalance ->
                 metadata.find {
-                    it.contractAddress == tokenBalance.contractAddress
+                    it.contractAddress.lowercase() == tokenBalance.contractAddress.lowercase()
                 }?.let { tokenMetadata ->
                     Pair(tokenBalance, tokenMetadata)
                 }
@@ -31,7 +32,7 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                     symbol = tokenMetadata.symbol,
                     name = tokenMetadata.name,
                     balance = tokenBalance.tokenBalance.divide(
-                        (tokenMetadata.decimals*10).toBigDecimal()).toDouble()
+                        (10.0.pow(tokenMetadata.decimals)).toBigDecimal()).toDouble()
                 )
             }
         }

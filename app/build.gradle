@@ -115,10 +115,11 @@ dependencies {
     // Barcode Scanning
 
     implementation libs.hilt.android
-    kapt libs.hilt.compiler
+    kapt (libs.hilt.compiler)
+
+    kapt( libs.androidx.hilt.compiler )
 
     implementation libs.androidx.hilt.work
-    kapt libs.androidx.hilt.compiler
     implementation libs.androidx.work.runtime.ktx
 
 

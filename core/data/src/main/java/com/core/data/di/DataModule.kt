@@ -38,28 +38,18 @@ object DataModule {
 
     @Singleton
     @Provides
-    fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
-        return UniswapRoutingSDK(
-            context = context,
-            web3RPC = NetworkChain.MAIN.rpc
-        )
-    }
-
-    @Singleton
-    @Provides
-    fun provideWalletSDK(@ApplicationContext context: Context): WalletSDK {
-        return WalletSDK(
-            context = context,
-            web3jInstance = provideWeb3j()
-        )
-    }
-
-    @Singleton
-    @Provides
     fun provideWeb3j(): Web3j {
         return Web3j.build(
             HttpService(NetworkChain.MAIN.rpc)
         )
+    }
+
+    @Singleton
+    @Provides
+    fun providesWalletSdk(
+        @ApplicationContext appContext: Context
+    ): WalletSDK {
+        return WalletSDK(appContext)
     }
 
     @Singleton
@@ -106,10 +96,11 @@ object DataModule {
 
     @Singleton
     @Provides
-    fun providesWalletSdk(
-        @ApplicationContext appContext: Context
-    ): WalletSDK {
-        return WalletSDK(appContext)
+    fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
+        return UniswapRoutingSDK(
+            context = context,
+            web3RPC = NetworkChain.MAIN.rpc
+        )
     }
 
 }
