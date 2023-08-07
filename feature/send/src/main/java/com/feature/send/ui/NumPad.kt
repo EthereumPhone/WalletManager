@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
@@ -54,7 +55,7 @@ fun NumPad(
             val fixedIndex = (index+1).mod(11)
             Box(
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(8.dp)
                     .clickable {
                         when (button) {
                             NumPadButtons.COMMA -> {
@@ -74,7 +75,7 @@ fun NumPad(
                 contentAlignment = Alignment.Center
             ) {
                 var input = when(button) {
-                    NumPadButtons.UNDO -> Icons.Rounded.ArrowBack
+                    NumPadButtons.UNDO -> Icons.Rounded.Backspace
                     NumPadButtons.COMMA -> "·"
                     else -> fixedIndex.toString()
                 }
@@ -91,7 +92,7 @@ fun NumPad(
                     ) {
                         Icon(
                             tint= Color.White,
-                            painter = painterResource(id = R.drawable.baseline_backspace_24),
+                            imageVector = Icons.Rounded.Backspace,
                             contentDescription = null // decorative element
                         )
                     }
