@@ -1,5 +1,6 @@
 package com.feature.send
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
@@ -44,9 +45,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -73,7 +76,10 @@ import com.feature.send.ui.ethOSTextField
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
 import java.util.concurrent.CompletableFuture
-import java.util.jar.Manifest
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -85,7 +91,14 @@ fun SendRoute(
 ) {
 
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
-    val localContext = LocalContext.current
+//    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
+//    val composableScope = rememberCoroutineScope()
+//    composableScope.launch {
+//        neworkBalanceRepository. { value ->
+//            // Do something with the collected value
+//            println("Collected value: $value")
+//        }
+//    }
 
     SendScreen(
         modifier = Modifier,
@@ -103,12 +116,12 @@ fun SendRoute(
 fun SendScreen(
     modifier: Modifier = Modifier,
     //userAddress: String,
-    //walletAmount: WalletAmount = WalletAmount(),
+
     //onAddressClick: () -> Unit,
 ) {
 
     var address by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
+    var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
     var validSendAddress by remember { mutableStateOf(true) }
@@ -118,24 +131,24 @@ fun SendScreen(
     //val selectedNetwork = selectedNetworkState.value
 
 
-//    var hasCameraPermission by remember {
-//        mutableStateOf(
-//            ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.CAMERA
-//            ) == PackageManager.PERMISSION_GRANTED
-//        )
-//    }
-//    val launcher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.RequestPermission(),
-//        onResult = { granted ->
-//            hasCameraPermission = granted
-//        }
-//    )
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+        }
+    )
 
-//    LaunchedEffect(key1 = true) {
-//        launcher.launch(Manifest.permission.CAMERA)
-//    }
+    LaunchedEffect(key1 = true) {
+        launcher.launch(Manifest.permission.CAMERA)
+    }
 
     val showDialog =  remember { mutableStateOf(false) }
 
@@ -148,22 +161,9 @@ fun SendScreen(
             Log.i("HomePage","HomePage : $it")
         }
 
-//    if(showDialog) {
-//        qrCodeDialog(
-//            context = context,
-//            setShowDialog = {
-//                showDialog = false
-//            },
-//            onDecoded = {
-//                address = it.replace("ethereum:", "")
-//                showDialog = false
-//            },
-//        )
-//    }
-
 
     Column (
-        verticalArrangement = Arrangement.Center,
+
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
 //            .fillMaxSize()
@@ -174,11 +174,11 @@ fun SendScreen(
     ){
 
         Column (
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
-           //AddressBar(userAddress,onclick={}, network = "Mainnet")//Addressclick
-            Spacer(modifier = Modifier.height(4.dp))
+           AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
+
             ethOSTextField(
                 text = address,
                 label = "Address or ENS",
@@ -203,7 +203,7 @@ fun SendScreen(
                 trailingIcon = {
                     IconButton(
                         onClick = { showDialog.value = true },
-                        modifier = Modifier.padding(end=16.dp)
+
                     ) {
                         Icon(
                             imageVector = Icons.Default.QrCode,
@@ -215,7 +215,9 @@ fun SendScreen(
 
                 },
 
-                modifier = Modifier.fillMaxWidth().onFocusChanged {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged {
 
 //                    if (ENSName(address).isPotentialENSDomain()) {
 //                        // It is ENS
@@ -228,34 +230,65 @@ fun SendScreen(
 //                        if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
 //                    if(address.isEmpty()) validSendAddress = true
 
-                }
+                    }
             )
 
             Column (
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                Text(
-                    text = "0.00 ETH",//"${walletAmount.ethAmount} ETH",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 42.sp,
-                    color = Color.White
-                )
-                val maxed = remember { mutableStateOf(false) }
-                TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                    maxed.value = !maxed.value
-                })
-            }
-            NumPad(
-                value = "",
-                modifier = Modifier
-            ) {}
-            SwipeButton(
-                text = "Swipe to send",
-                icon = Icons.Rounded.ArrowForward,
-                completeIcon = Icons.Rounded.Check,
+                ){
+                Column (
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ){
+                    Text(
+                        text = //"0.0 ETH",
+                        if (value == "") {
+                            "0.0 ETH"
+                        } else {
+                            // If value has more than 7 decimals, show the string with less decimals
+                            if (value.contains(".")) {
+                                val decimals = value.split(".")[1]
+                                if (decimals.length > 5) {
+                                    value.split(".")[0] + "." + decimals.substring(0, 5)
+                                } else {
+                                    value
+                                }
+                            } else {
+                                value
+                            } + " ETH"
+                        },
 
-            ) {
-
+                        color = if (value == "") {
+                            Color.White
+                        } else {
+                            Color.White
+                            //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
+                        },//"${walletAmount.ethAmount} ETH",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 48.sp
+                    )
+                    Text(
+                        text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = Color(0xFF9FA2A5)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val maxed = remember { mutableStateOf(false) }
+                    TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
+                        maxed.value = !maxed.value
+                    })
+                }
+                NumPad(
+                    value = value,
+                    modifier = Modifier
+                ) {}
+                Spacer(modifier = Modifier.height(8.dp))
+                SwipeButton(
+                    text = "Swipe to send",
+                    icon = Icons.Rounded.ArrowForward,
+                    completeIcon = Icons.Rounded.Check,
+                ){}
             }
         }
 
@@ -277,38 +310,32 @@ fun qrCodeDialog(
     setShowDialog: () -> Unit,
     onDecoded: (String) -> Unit
 ) {
-//    var scanFlag by remember { mutableStateOf(false) }
-//    val compoundBarcodeView = remember {
-//        CompoundBarcodeView(context).apply {
-//            val capture = CaptureManager(context as Activity, this)
-//            capture.initializeFromIntent(context.intent, null)
-//            this.setStatusText("")
-//            this.resume()
-//            capture.decode()
-//            this.decodeContinuous { result ->
-//                if(scanFlag){
-//                    return@decodeContinuous
-//                }
-//                scanFlag = true
-//                result.text?.let { barCodeOrQr->
-//                    //Do something and when you finish this something
-//                    //put scanFlag = false to scan another item
-//                    onDecoded(barCodeOrQr)
-//                    scanFlag = true
-//                }
-//                //If you don't put this scanFlag = false, it will never work again.
-//                //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning
-//
-//            }
-//        }
-//    }
+    var scanFlag by remember { mutableStateOf(false) }
+    val compoundBarcodeView = remember {
+        CompoundBarcodeView(context).apply {
+            val capture = CaptureManager(context as Activity, this)
+            capture.initializeFromIntent(context.intent, null)
+            this.setStatusText("")
+            this.resume()
+            capture.decode()
+            this.decodeContinuous { result ->
+                if(scanFlag){
+                    return@decodeContinuous
+                }
+                scanFlag = true
+                result.text?.let { barCodeOrQr->
+                    //Do something and when you finish this something
+                    //put scanFlag = false to scan another item
+                    onDecoded(barCodeOrQr)
+                    scanFlag = true
+                }
+                //If you don't put this scanFlag = false, it will never work again.
+                //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning
 
-    //Dialog(onDismissRequest = { setShowDialog() }) {
-//        AndroidView(
-//            modifier = Modifier,
-//            factory = { compoundBarcodeView },
-//        )
-    //}
+            }
+        }
+    }
+
 
     Dialog(onDismissRequest = { setShowDialog() }) {
         Surface(
@@ -320,7 +347,12 @@ fun qrCodeDialog(
             Box(
                 contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+
+                    horizontalAlignment = Alignment.CenterHorizontally
+
+                ) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -345,12 +377,22 @@ fun qrCodeDialog(
                                 .clickable { setShowDialog() }
                         )
                     }
+                    Spacer(modifier = Modifier.height(36.dp))
 
                     //TODO: QRCode
-//                    AndroidView(
-//                        modifier = Modifier,
-//                        factory = { compoundBarcodeView },
-//                    )
+                    Box (
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .height(400.dp)
+                            .width(300.dp),
+                        contentAlignment = Alignment.Center
+                    ){
+                        AndroidView(
+                            modifier = Modifier,
+                            factory = { compoundBarcodeView },
+                        )
+                    }
+
                 }
             }
         }

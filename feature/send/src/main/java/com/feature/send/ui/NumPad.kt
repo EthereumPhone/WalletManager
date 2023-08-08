@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backspace
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -45,34 +50,21 @@ fun NumPad(
     onValueChange: (String) -> Unit
 ) {
     val numPadButtons = NumPadButtons.values().asList()
+    val buttonSize = 64.dp
 
     LazyVerticalGrid(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF1E2730))//Color(0xFF24303D))
-            .padding(12.dp),
+            ,
         columns = GridCells.Fixed(3)){
         itemsIndexed(numPadButtons) { index, button ->
             val fixedIndex = (index+1).mod(11)
+
             Box(
                 modifier = Modifier
-                    .padding(8.dp)
-                    .clickable {
-                        when (button) {
-                            NumPadButtons.COMMA -> {
-                                if (!value.contains(".")) {
-                                    if (value == "") {
-                                        onValueChange("0.")
-                                    } else {
-                                        onValueChange("$value.")
-                                    }
-                                }
-                            }
-
-                            NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
-                            else -> onValueChange(value + fixedIndex.toString())
-                        }
-                    },
+                    .padding(vertical = 8.dp)
+                    ,
                 contentAlignment = Alignment.Center
             ) {
                 var input = when(button) {
@@ -84,10 +76,25 @@ fun NumPad(
                 if(input is ImageVector) {
                     Box(
                         modifier = Modifier
-
-                            .size(64.dp)
+                            .size(buttonSize)
                             .clip(CircleShape)
-                            .background(Color(0xFF3C4958)),
+                            .background(Color(0xFF3C4958))
+                            .clickable {
+                                when (button) {
+                                    NumPadButtons.COMMA -> {
+                                        if (!value.contains(".")) {
+                                            if (value == "") {
+                                                onValueChange("0.")
+                                            } else {
+                                                onValueChange("$value.")
+                                            }
+                                        }
+                                    }
+
+                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+                                    else -> onValueChange(value + fixedIndex.toString())
+                                }
+                            },
                             //.padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -101,11 +108,26 @@ fun NumPad(
                 if(input is String) {
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
-
+                            .size(buttonSize)
                             .clip(CircleShape)
                             .background(Color(0xFF24303D))//Color(0xFF1E2730))
-                            ,
+                            .clickable {
+                                when (button) {
+                                    NumPadButtons.COMMA -> {
+                                        if (!value.contains(".")) {
+                                            if (value == "") {
+                                                onValueChange("0.")
+                                            } else {
+                                                onValueChange("$value.")
+                                            }
+                                        }
+                                    }
+
+                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+                                    else -> onValueChange(value + fixedIndex.toString())
+                                }
+                            }
+                        ,
                         contentAlignment = Alignment.Center
                     ){
                         Text(

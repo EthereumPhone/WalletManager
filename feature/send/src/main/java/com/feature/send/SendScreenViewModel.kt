@@ -36,6 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SendViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
+    private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
     val userAddress: StateFlow<String> =
@@ -46,6 +47,9 @@ class SendViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ""
         )
+
+    val networkBalanceInfo = networkBalanceRepository
+
 
 
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,7 +61,7 @@ fun ethOSTextField(
         ),
         cursorBrush = SolidColor(Color.White),
         modifier = modifier
-            .clip(RoundedCornerShape(5))
+            .clip(RoundedCornerShape(10))
             .background(Color(0xFF24303D))
             .padding(
                 horizontal = 16.dp,
@@ -68,7 +69,8 @@ fun ethOSTextField(
             )
     ) { innerTextField ->
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier.weight(1f)
@@ -77,6 +79,8 @@ fun ethOSTextField(
                     Text(
                         label,
                         color = Color.LightGray,
+                        fontSize = 18.sp,
+                        fontWeight= FontWeight.Medium,
                         modifier = Modifier.align(Alignment.CenterStart)
                     )
                 }
