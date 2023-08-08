@@ -131,7 +131,7 @@ fun SwipeButton(
                 completeIcon,
                 contentDescription = "",
                 modifier = Modifier.padding(2.dp),
-                tint = Color.White
+                tint = Color(0xFF24303D)
             )
         }
     }

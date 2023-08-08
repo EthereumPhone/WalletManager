@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -29,7 +30,7 @@ fun TextToggleButton(
         onClick = onClickChange,
         contentPadding = PaddingValues(0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF24303D),
+            containerColor = if (selected.value) Color.White else Color(0xFF24303D),
             contentColor = Color.White
         ),
         shape = CircleShape,
@@ -42,6 +43,7 @@ fun TextToggleButton(
         ) {
             Text(
                 text = text,
+                fontWeight = FontWeight.SemiBold,
                 color = if (selected.value) Color(0xFF24303D) else Color.White,
                 modifier = Modifier.padding(0.dp),
             )

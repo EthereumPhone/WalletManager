@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +36,7 @@ import java.util.Calendar
 @Composable
 internal fun AddressBar(
     userAddress: String,
+    network: String,
     onclick: () -> Unit
 ) {
     val greeting = when(LocalTime.now().hour) {
@@ -53,38 +55,57 @@ internal fun AddressBar(
 //            color = Color.White
 //        )
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF3C4958))
-        ){
-            Image(modifier = Modifier
-                .background(Color(0xFF3C4958))
-                .clip(CircleShape),
-                colorFilter = ColorFilter.tint(Color(0xFF3C4958)),
-                painter = painterResource(id = R.drawable.baseline_qr_code_24), contentDescription = "")
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier
-                .clickable { onclick() },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+//        Box(
+//            contentAlignment = Alignment.Center,
+//            modifier = Modifier
+//                .size(48.dp)
+//                .clip(CircleShape)
+//                .background(Color(0xFF3C4958))
+//        ){
+//            Image(modifier = Modifier
+//                .background(Color(0xFF3C4958))
+//                .clip(CircleShape),
+//                colorFilter = ColorFilter.tint(Color(0xFF3C4958)),
+//                painter = painterResource(id = R.drawable.baseline_qr_code_24), contentDescription = "")
+//        }
+//        Spacer(modifier = Modifier.height(12.dp))
+        Column (
+            horizontalAlignment = Alignment.CenterHorizontally,
+            ){
+            Row(
+                modifier = Modifier
+                    .clickable { onclick() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = truncateText(userAddress),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
             Text(
-                text = truncateText(userAddress),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
-            )
-            Icon(
-                imageVector = Icons.Rounded.ContentCopy,
-                contentDescription = null,
-                tint = Color.White
-            )
+                        text = network,
+                        textAlign = TextAlign.Center,
+                        color=Color(0xFF9FA2A5),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+//            Text(
+//                text = "Mainnet",
+//                fontSize="12.sp",
+//                fontWeight = FontWeight.Medium,
+//                color=Color(0xFF9FA2A5)
+//            )
         }
+
+
+
     }
 }
 
@@ -100,6 +121,7 @@ private fun truncateText(text: String): String {
 fun previewAddressBar() {
     AddressBar(
         "0x123123123123123123",
-        { }
-    )
+        network = "network",
+
+    ){}
 }

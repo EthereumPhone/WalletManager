@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backspace
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
@@ -102,8 +103,8 @@ fun NumPad(
                         modifier = Modifier
                             .size(64.dp)
 
-                        .clip(CircleShape)
-                        .background(Color(0xFF24303D))//Color(0xFF1E2730))
+                            .clip(CircleShape)
+                            .background(Color(0xFF24303D))//Color(0xFF1E2730))
                             ,
                         contentAlignment = Alignment.Center
                     ){
