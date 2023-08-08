@@ -25,6 +25,67 @@ class UniswapRoutingSDK(private val context: Context, private val web3RPC: Strin
     }
 
     @SuppressLint("SetJavaScriptEnabled")
+    fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String, context: Context): CompletableFuture<Double> {
+        val wv = WebView(context)
+        wv.settings.javaScriptEnabled = true
+        wv.settings.allowFileAccess = true
+        wv.settings.domStorageEnabled = true // Turn on DOM storage
+        wv.settings.databaseEnabled = true
+
+        val completableFuture: CompletableFuture<Double> = CompletableFuture()
+
+
+        val bundleJs = getAssetContent(context.assets.open("getquote.js"))
+
+        wv.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                println(consoleMessage.message())
+                if (consoleMessage.message().contains("OUT_CALLDATA")) {
+                    val callData = consoleMessage.message().split("OUT_CALLDATA:")[1]
+                    completableFuture.complete(callData.toDouble())
+                }
+                return true
+            }
+        }
+
+        val output = StringBuilder()
+        output.append("<script type='text/javascript'>\n")
+        output.append(bundleJs)
+        output.append("</script>\n")
+        var realJs = output.toString()
+            .replace("CHAINID_INPUT_TOKEN", inputToken.chainId.toString())
+            .replace("TOKEN_INPUT_ADDRESS", inputToken.address)
+            .replace("DECIMALS_INPUT_TOKEN", inputToken.decimals.toString())
+            .replace("SYMBOL_INPUT_TOKEN", inputToken.symbol)
+            .replace("NAME_INPUT_TOKEN", inputToken.name)
+            .replace("CHAINID_OUTPUT_TOKEN", outputToken.chainId.toString())
+            .replace("TOKEN_OUTPUT_ADDRESS", outputToken.address)
+            .replace("DECIMALS_OUTPUT_TOKEN", outputToken.decimals.toString())
+            .replace("SYMBOL_OUTPUT_TOKEN", outputToken.symbol)
+            .replace("NAME_OUTPUT_TOKEN", outputToken.name)
+            .replace("CHOSEN_IN_AMOUNT", amountIn.toString())
+            .replace("RECEIVER_ADDRESS", receiverAddress)
+            .replace("RPC_PROVIDER_URL", "https://eth-mainnet.g.alchemy.com/v2/lZSeyaiKTV9fKK3kcYYt9CxDZDobSv_Z")
+
+        realJs = if (inputToken == ETH_MAINNET) {
+            realJs.replace("CHOSEN_IN_TOKEN", "ETH")
+        } else {
+            realJs.replace("CHOSEN_IN_TOKEN", "USDC_TOKEN")
+        }
+
+        realJs = if (outputToken == ETH_MAINNET) {
+            realJs.replace("CHOSEN_OUT_TOKEN", "ETH")
+        } else {
+            realJs.replace("CHOSEN_OUT_TOKEN", "DAI_TOKEN")
+        }
+
+        wv.loadDataWithBaseURL("file:///android_asset/index.html", realJs, "text/html", "utf-8", null)
+
+
+        return completableFuture
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
     fun getCalldata(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String): CompletableFuture<String> {
         val wv = WebView(context)
         wv.settings.javaScriptEnabled = true
