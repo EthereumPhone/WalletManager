@@ -7,6 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.SendRepository
+import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.GetGroupedTokenAssets
@@ -15,6 +17,7 @@ import com.core.domain.GetTransfersUseCase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
+import com.core.model.TokenBalance
 import com.core.model.Transfer
 import com.core.model.TransferItem
 import com.core.result.Result
@@ -37,6 +40,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SendViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
+    private val sendRepository: SendRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
@@ -49,10 +53,72 @@ class SendViewModel @Inject constructor(
             initialValue = ""
         )
 
-    val networkBalanceInfo = networkBalanceRepository
+
+    val networkBalanceState: StateFlow<AssetUiState> =
+        networkBalanceRepository.getNetworksBalance()
+            .map { balances  ->
+
+                val assets = balances.map {
+
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    TokenAsset(it.contractAddress,it.chainId,name,name,it.tokenBalance.toDouble())
+                }
+                AssetUiState.Success(assets)
+            }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AssetUiState.Loading
+        )
+
+    private val _maxAmount = MutableStateFlow("")
+    val maxAmount: Flow<String> = _maxAmount .asStateFlow()
+
+    private val _amount = MutableStateFlow("")
+    val amount: Flow<String> = _amount .asStateFlow()
+
+    private val _toAddress = MutableStateFlow("")
+    val toAddress: Flow<String> = _toAddress .asStateFlow()
+
+    private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
+    private val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
+
+    fun send(){
+        viewModelScope.launch {
+
+            sendRepository.sendTo(
+                chainId = selectedAsset.value.,
+                toAddress = toAddress.toString(),
+                data = "",
+                value = amount.toString()
+            )
+        }
+    }
+
+    fun changeSelectedAsset(tokenAsset: TokenAsset) {
+        when(_selectedAsset.value) {
+            is SelectedTokenUiState.Selected -> {
+                _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+            }
+            is SelectedTokenUiState.Unselected -> {
+                _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+            }
+        }
+    }
+}
 
 
+sealed interface SelectedTokenUiState {
+    object Unselected: SelectedTokenUiState
+    data class Selected(val tokenAsset: TokenAsset): SelectedTokenUiState
+}
 
+sealed interface AssetUiState {
+    object Loading: AssetUiState
+    object Error: AssetUiState
+    object Empty: AssetUiState
+    data class Success(
+        val assets: List<TokenAsset>
+    ): AssetUiState
 }
 
 

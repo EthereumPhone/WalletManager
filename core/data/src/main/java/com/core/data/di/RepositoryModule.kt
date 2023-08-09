@@ -5,6 +5,8 @@ import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.ProtoUserDataRepository
+import com.core.data.repository.SendRepository
+import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
@@ -43,5 +45,10 @@ interface RepositoryModule {
     fun bindsProtoUserDataRepository(
         userDataRepository: ProtoUserDataRepository
     ): UserDataRepository
+
+    @Binds
+    fun bindsSendRepository(
+        sendRepository: SendRepositoryWalletSDK
+    ):SendRepository
 
 }

@@ -91,6 +91,9 @@ fun SendRoute(
 ) {
 
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
+    val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
+    val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
+
 //    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
 //    val composableScope = rememberCoroutineScope()
 //    composableScope.launch {

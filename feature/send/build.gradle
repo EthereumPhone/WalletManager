@@ -82,6 +82,10 @@ dependencies {
     implementation 'com.github.komputing.kethereum:rpc:0.85.7'
     implementation 'com.github.komputing.kethereum:model:0.85.7'
 
+    // Web3j needed for the WalletSDK
+    implementation 'org.web3j:core:4.8.8-android'
+    implementation 'com.github.EthereumPhone:WalletSDK:0.0.10'
+
 
 
 
