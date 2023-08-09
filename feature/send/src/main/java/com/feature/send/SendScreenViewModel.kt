@@ -20,6 +20,7 @@ import com.core.model.TransferItem
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

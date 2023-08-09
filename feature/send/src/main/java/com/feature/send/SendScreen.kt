@@ -281,8 +281,11 @@ fun SendScreen(
                 }
                 NumPad(
                     value = value,
-                    modifier = Modifier
-                ) {}
+                    modifier = Modifier,
+                    onValueChange = {
+                        value = it
+                    }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 SwipeButton(
                     text = "Swipe to send",
