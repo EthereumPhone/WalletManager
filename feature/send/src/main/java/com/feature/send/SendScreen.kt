@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Network
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -26,6 +27,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.BottomSheetState
+import androidx.compose.material.BottomSheetValue
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.QrCode
@@ -33,6 +38,7 @@ import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -70,6 +76,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
+import com.feature.send.ui.BottomSheet
+import com.feature.send.ui.SelectedNetworkButton
 import com.feature.send.ui.SwipeButton
 import com.feature.send.ui.TextToggleButton
 import com.feature.send.ui.ethOSTextField
@@ -115,6 +123,7 @@ fun SendRoute(
 
 
 }
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
@@ -149,6 +158,9 @@ fun SendScreen(
         }
     )
 
+
+
+
     LaunchedEffect(key1 = true) {
         launcher.launch(Manifest.permission.CAMERA)
     }
@@ -164,28 +176,62 @@ fun SendScreen(
             Log.i("HomePage","HomePage : $it")
         }
 
+    // Declaring Coroutine scope
+    val coroutineScope = rememberCoroutineScope()
+    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
+    )
+    val amountOfNetwork = 3
+    val sheetheight = 64*amountOfNetwork
 
-    Column (
+    var id by remember {mutableStateOf(1) }
 
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-//            .fillMaxSize()
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .background(Color(0xFF1E2730))
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+    BottomSheetScaffold(
+        scaffoldState = bottomSheetScaffoldState,
+        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        sheetElevation =  8.dp,
+        sheetBackgroundColor = Color(0xFF24303D),
+        sheetContentColor =  Color.White,
+        sheetPeekHeight=  0.dp,
+        sheetContent =  {
+            BottomSheet(
+                value = id,
+            )
+        },
+
     ){
-
         Column (
-            verticalArrangement = Arrangement.spacedBy(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF1E2730))
+                .padding(horizontal = 24.dp, vertical = 32.dp)
         ){
-           AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
 
-            ethOSTextField(
-                text = address,
-                label = "Address or ENS",
-                onTextChanged = {
+            Column (
+                modifier = Modifier
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                //AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
+
+                //Input Section
+                Column (
+
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ){
+
+                        ethOSTextField(
+                            text = address,
+                            label = "Address or ENS",
+                            onTextChanged = {
+
 //                    address = it.lowercase()
 //                    if (address.endsWith(".eth")) {
 //                        if (ENSName(address).isPotentialENSDomain()) {
@@ -202,25 +248,25 @@ fun SendScreen(
 //                            validSendAddress = true
 //                        }
 //                    }
-                },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { showDialog.value = true },
+                            },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { showDialog.value = true },
 
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCode,
-                            contentDescription = "Address by QR",
-                            tint = if(validSendAddress) Color.White else Color.Red,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                                    ) {
 
-                },
+                                    Icon(
+                                        imageVector = Icons.Default.QrCode,
+                                        contentDescription = "Address by QR",
+                                        tint = if(validSendAddress) Color.White else Color.Red,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
 
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged {
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .onFocusChanged {
 
 //                    if (ENSName(address).isPotentialENSDomain()) {
 //                        // It is ENS
@@ -233,74 +279,116 @@ fun SendScreen(
 //                        if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
 //                    if(address.isEmpty()) validSendAddress = true
 
-                    }
-            )
-
-            Column (
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                ){
-                Column (
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ){
-                    Text(
-                        text = //"0.0 ETH",
-                        if (value == "") {
-                            "0.0 ETH"
-                        } else {
-                            // If value has more than 7 decimals, show the string with less decimals
-                            if (value.contains(".")) {
-                                val decimals = value.split(".")[1]
-                                if (decimals.length > 5) {
-                                    value.split(".")[0] + "." + decimals.substring(0, 5)
-                                } else {
-                                    value
                                 }
-                            } else {
-                                value
-                            } + " ETH"
-                        },
-
-                        color = if (value == "") {
-                            Color.White
-                        } else {
-                            Color.White
-                            //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
-                        },//"${walletAmount.ethAmount} ETH",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 48.sp
-                    )
-                    Text(
-                        text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        color = Color(0xFF9FA2A5)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val maxed = remember { mutableStateOf(false) }
-                    TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                        maxed.value = !maxed.value
-                    })
-                }
-                NumPad(
-                    value = value,
-                    modifier = Modifier,
-                    onValueChange = {
-                        value = it
+                        )
                     }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SwipeButton(
-                    text = "Swipe to send",
-                    icon = Icons.Rounded.ArrowForward,
-                    completeIcon = Icons.Rounded.Check,
-                ){}
+
+                }
+
+                //Amount Sectio
+
+                        //Max Amount Section
+                        Column (
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            val maxed = remember { mutableStateOf(false) }
+                            TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
+                                maxed.value = !maxed.value
+                            })
+                            Text(
+                                text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5)
+                            )
+                        }
+
+                        //Currency Section
+                         Column (
+                             horizontalAlignment = Alignment.CenterHorizontally
+                         ){
+                             Text(
+                                 text = //"0.0 ETH",
+                                 if (value == "") {
+                                     "0.0 ETH"
+                                 } else {
+                                     // If value has more than 7 decimals, show the string with less decimals
+                                     if (value.contains(".")) {
+                                         val decimals = value.split(".")[1]
+                                         if (decimals.length > 5) {
+                                             value.split(".")[0] + "." + decimals.substring(0, 5)
+                                         } else {
+                                             value
+                                         }
+                                     } else {
+                                         value
+                                     } //+ " ETH"
+                                 },
+
+                                 color = if (value == "") {
+                                     Color.White
+                                 } else {
+                                     Color.White
+                                     //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
+                                 },//"${walletAmount.ethAmount} ETH",
+                                 fontWeight = FontWeight.SemiBold,
+                                 fontSize = 72.sp,
+
+                             )
+                             Text(
+                                 text = "$ 18700.27",//"${walletAmount.ethAmount} ETH",
+                                 fontWeight = FontWeight.Normal,
+                                 fontSize = 16.sp,
+                                 color = Color(0xFF9FA2A5)
+                             )
+                         }
+
+                        //Network
+                        var id by remember {mutableStateOf(1) }
+                        SelectedNetworkButton(
+                            chainId = id,
+                            onClickChange = {
+                                coroutineScope.launch {
+                                    if (bottomSheetScaffoldState.bottomSheetState.isCollapsed){
+                                        bottomSheetScaffoldState.bottomSheetState.expand()
+                                    }else{
+                                        bottomSheetScaffoldState.bottomSheetState.collapse()
+                                    }
+                                }
+                            }
+                        )
+
+
+
+
+
+
+
+
+                //Input Section
+                Column (){
+                        NumPad(
+                            value = value,
+                            modifier = Modifier,
+                            onValueChange = {
+                                value = it
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        SwipeButton(
+                            text = "Swipe to send",
+                            icon = Icons.Rounded.ArrowForward,
+                            completeIcon = Icons.Rounded.Check,
+                        ){}
+                    }
+
             }
+
+
+
         }
-
-
-
     }
+
 
 }
 

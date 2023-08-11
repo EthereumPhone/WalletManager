@@ -35,17 +35,17 @@ fun TextToggleButton(
         ),
         shape = CircleShape,
         //elevation = ButtonDefaults.elevation(0.dp, 0.dp),
-        modifier = Modifier.padding(14.dp, 0.dp),
+        modifier = modifier.padding(14.dp, 0.dp),
     ) {
         Row(
-            modifier = Modifier.padding(0.dp),
+            modifier = modifier.padding(0.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
                 text = text,
                 fontWeight = FontWeight.SemiBold,
                 color = if (selected.value) Color(0xFF24303D) else Color.White,
-                modifier = Modifier.padding(0.dp),
+                modifier = modifier.padding(0.dp),
             )
         }
     }

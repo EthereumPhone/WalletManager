@@ -85,12 +85,12 @@ class SendViewModel @Inject constructor(
     fun send(){
         viewModelScope.launch {
 
-            sendRepository.sendTo(
-                chainId = selectedAsset.value.,
-                toAddress = toAddress.toString(),
-                data = "",
-                value = amount.toString()
-            )
+//            sendRepository.sendTo(
+//                chainId = selectedAsset.value,
+//                toAddress = toAddress.toString(),
+//                data = "",
+//                value = amount.toString()
+//            )
         }
     }
 
