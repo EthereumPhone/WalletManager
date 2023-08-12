@@ -5,6 +5,7 @@ import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
+import com.core.data.remote.UniswapApi
 import com.core.data.util.MoshiAdapters
 import com.core.model.NetworkChain
 import com.squareup.moshi.Moshi
@@ -100,6 +101,21 @@ object DataModule {
         return UniswapRoutingSDK(
             context = context,
             web3RPC = NetworkChain.MAIN.rpc
+        )
+    }
+
+
+    @Singleton
+    @Provides
+    fun provideUniSwapApi(
+        walletSDK: WalletSDK,
+        web3j: Web3j,
+        uniswapRoutingSDK: UniswapRoutingSDK
+    ): UniswapApi {
+        return UniswapApi(
+            walletSDK,
+            web3j,
+            uniswapRoutingSDK
         )
     }
 

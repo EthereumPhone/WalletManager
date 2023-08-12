@@ -16,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 class AlchemyTokenBalanceRepository @Inject constructor(
@@ -26,10 +27,12 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         tokenBalanceDao.getTokenBalances()
             .map { it.map(TokenBalanceEntity::asExternalModule) }
 
-    override fun getTokensBalances(
-        contractAddresses: List<String>
-    ): Flow<List<TokenBalance>> =
+    override fun getTokensBalances(contractAddresses: List<String>): Flow<List<TokenBalance>> =
         tokenBalanceDao.getTokenBalances(contractAddresses)
+            .map { it.map(TokenBalanceEntity::asExternalModule) }
+
+    override fun getTokensBalances(chainId: Int): Flow<List<TokenBalance>> =
+        tokenBalanceDao.getTokenBalances(chainId)
             .map { it.map(TokenBalanceEntity::asExternalModule) }
 
     override suspend fun refreshTokensBalances(toAddress: String) {

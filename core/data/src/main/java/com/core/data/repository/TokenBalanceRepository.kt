@@ -7,6 +7,7 @@ interface TokenBalanceRepository {
 
     fun getTokensBalances(): Flow<List<TokenBalance>>
     fun getTokensBalances(contractAddresses: List<String>): Flow<List<TokenBalance>>
+    fun getTokensBalances(chainId: Int): Flow<List<TokenBalance>>
     suspend fun refreshTokensBalances(toAddress: String)
 
 }

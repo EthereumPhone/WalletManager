@@ -6,8 +6,10 @@ import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenMetadataDao
+import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModel
+import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenMetadata
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,10 @@ class AlchemyTokenMetadataRepository @Inject constructor(
 
     override fun getTokensMetadata(contractAddresses: List<String>): Flow<List<TokenMetadata>> =
         tokenMetadataDao.getTokenMetadata(contractAddresses)
+            .map { it.map(TokenMetadataEntity::asExternalModel) }
+
+    override fun getTokensMetadata(chainId: Int): Flow<List<TokenMetadata>> =
+        tokenMetadataDao.getTokenMetadata(chainId)
             .map { it.map(TokenMetadataEntity::asExternalModel) }
 
 

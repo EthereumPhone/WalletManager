@@ -12,8 +12,10 @@ import java.util.Scanner
 import java.util.concurrent.CompletableFuture
 
 
-class UniswapRoutingSDK(private val context: Context, private val web3RPC: String)
-{
+class UniswapRoutingSDK(
+    private val context: Context,
+    private val web3RPC: String
+) {
     companion object {
         val ETH_MAINNET = Token(
             1,
@@ -25,7 +27,7 @@ class UniswapRoutingSDK(private val context: Context, private val web3RPC: Strin
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String, context: Context): CompletableFuture<Double> {
+    fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String): CompletableFuture<Double> {
         val wv = WebView(context)
         wv.settings.javaScriptEnabled = true
         wv.settings.allowFileAccess = true

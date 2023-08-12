@@ -14,6 +14,7 @@ import com.core.designsystem.theme.background
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
+import com.core.ui.WmListItem
 import kotlinx.datetime.Clock
 
 
@@ -32,10 +33,10 @@ internal fun TransferItem(
     }
     val networkName = remember { chainToNetworkName(transfer.chainId) }
 
-    ListItem(
+    WmListItem(
         headlineContent = {
             Text(text = headlineText)
-       },
+        },
         supportingContent = {
             Row {
                 Text(
@@ -44,13 +45,8 @@ internal fun TransferItem(
                 )
                 Text(text = transfer.timeStamp)
             }
-        },
-        colors = ListItemDefaults.colors(
-            headlineColor = primary,
-            supportingColor = primary,
-            containerColor = Color.Transparent
-        )
-   )
+        }
+    )
 }
 
 private fun chainToNetworkName(chainId: Int): String = when(chainId) {

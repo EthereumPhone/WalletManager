@@ -18,6 +18,9 @@ interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata WHERE contractAddress IN (:contractAddresses)")
     fun getTokenMetadata(contractAddresses: List<String>): Flow<List<TokenMetadataEntity>>
 
+    @Query("SELECT * FROM token_metadata WHERE chainId == :chainId")
+    fun getTokenMetadata(chainId: Int): Flow<List<TokenMetadataEntity>>
+
     @Upsert
     fun upsertTokensMetadata(tokenMetadata: List<TokenMetadataEntity>)
 }

@@ -1,7 +1,13 @@
-package com.core.data.repository
+package com.core.data.remote
 
+import android.content.Context
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import org.ethereumphone.swaptestapp.RealEncoder
 import org.ethereumphone.walletsdk.WalletSDK
 import org.ethosmobile.uniswap_routing_sdk.ERC20
@@ -17,15 +23,18 @@ import org.web3j.utils.Numeric
 import java.lang.Long.parseLong
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.MathContext
 import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
-class UniSwapRepository @Inject constructor(
+class UniswapApi @Inject constructor(
     private val walletSDK: WalletSDK,
     private val web3j: Web3j,
-    private val uniswapRouterSDK: UniswapRoutingSDK
-): SwapRepository {
+    private val uniswapRouterSDK: UniswapRoutingSDK,
+) {
+
 
 
     companion object {
@@ -50,7 +59,19 @@ class UniSwapRepository @Inject constructor(
 
     val universalRouter = UniversalRouter.load(UNISWAP_V3_ADDRESS, web3j, credentials, DefaultGasProvider())
 
-    override fun getBestRoute(fromToken: Token, toToken: Token, amount: Double): List<String> {
+    suspend fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String): Double =
+        suspendCoroutine { continuation ->
+            uniswapRouterSDK.getQuote(inputToken, outputToken, amountIn, receiverAddress)
+                .whenComplete { result, exception ->
+                    if (exception == null) {
+                        continuation.resume(result)
+                    } else {
+                        continuation.resumeWithException(exception)
+                    }
+                }
+        }
+
+    fun getBestRoute(fromToken: Token, toToken: Token, amount: Double): List<String> {
         return uniswapRouterSDK.getAllRouter(
             inputToken = fromToken,
             outputToken = toToken,
@@ -59,7 +80,9 @@ class UniSwapRepository @Inject constructor(
         ).get()
     }
 
-    override suspend fun swap(
+
+
+    suspend fun swap(
         fromToken: Token,
         toToken: Token,
         amount: Double
