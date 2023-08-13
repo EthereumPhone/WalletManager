@@ -79,8 +79,8 @@ fun InfoDialog(
                             contentDescription = "Close",
                             tint = Color(0xFF24303D),//Color.White,
                             modifier = Modifier
-                                .width(16.dp)
-                                .height(16.dp)
+                                .width(30.dp)
+                                .height(30.dp)
                                 .clickable { setShowDialog() }
                         )
                     }

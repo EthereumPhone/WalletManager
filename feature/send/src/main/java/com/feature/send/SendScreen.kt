@@ -34,6 +34,8 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -74,6 +76,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.ui.TopHeader
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
 import com.feature.send.ui.BottomSheet
@@ -158,6 +161,24 @@ fun SendScreen(
             hasCameraPermission = granted
         }
     )
+
+    var amountfontSize by remember { mutableStateOf(68.sp) }
+
+    val maxFontSize = 68.sp
+    val minFontSize = 42.sp
+    val characterCount = value.length
+    amountfontSize =
+        when {
+        characterCount <= 2 -> 68.sp
+        characterCount > 2 && characterCount <= 4 -> 60.sp
+        characterCount > 4 && characterCount <= 6 -> 52.sp
+            characterCount > 4 && characterCount <= 6 -> 48.sp
+            characterCount > 6 && characterCount <= 9 -> 44.sp
+        //characterCount > 5 && characterCount <= 10 -> 18.sp
+        else -> minFontSize
+    }
+
+
 
 
 
@@ -249,8 +270,29 @@ fun SendScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF1E2730))
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
         ){
+            //Breadcrumb w/ backbutton
+            TopHeader(
+                onBackClick = { /*TODO*/ },
+                title = "Send",
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Information",
+                        tint = Color(0xFF9FA2A5),
+                        modifier = modifier
+                            .clip(CircleShape)
+                            //.background(Color.Red)
+                            .clickable {
+                                //opens InfoDialog
+                                showDialog.value = true
+                            }
+
+                    )
+                }
+            )
+            Spacer(modifier = modifier.height(12.dp))
 
             Column (
                 modifier = Modifier
@@ -329,7 +371,7 @@ fun SendScreen(
 
                 }
 
-                //Amount Sectio
+                //Amount Section
 
                         //Max Amount Section
                         Column (
@@ -349,8 +391,10 @@ fun SendScreen(
 
                         //Currency Section
                          Column (
+                             modifier = modifier.fillMaxWidth(),
                              horizontalAlignment = Alignment.CenterHorizontally
                          ){
+
                              Text(
                                  text = //"0.0 ETH",
                                  if (value == "") {
@@ -366,7 +410,7 @@ fun SendScreen(
                                          }
                                      } else {
                                          value
-                                     } //+ " ETH"
+                                     } + " ETH"
                                  },
 
                                  color = if (value == "") {
@@ -376,7 +420,9 @@ fun SendScreen(
                                      //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
                                  },//"${walletAmount.ethAmount} ETH",
                                  fontWeight = FontWeight.SemiBold,
-                                 fontSize = 76.sp,
+                                 fontSize = amountfontSize,
+                                 textAlign = TextAlign.Center
+
 
                              )
                              Text(
@@ -389,7 +435,8 @@ fun SendScreen(
 
                         //Network
                         var id by remember {mutableStateOf(1) }
-                        SelectedNetworkButton(
+                //different network -> different color
+                SelectedNetworkButton(
                             chainId = id,
                             onClickChange = {
                                 coroutineScope.launch {
@@ -401,13 +448,6 @@ fun SendScreen(
                                 }
                             }
                         )
-
-
-
-
-
-
-
 
                 //Input Section
                 Column (){

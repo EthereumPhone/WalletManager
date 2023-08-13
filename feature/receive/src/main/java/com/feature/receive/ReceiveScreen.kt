@@ -74,6 +74,7 @@ import java.util.Hashtable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.ui.InfoDialog
+import com.core.ui.TopHeader
 
 @Composable
 internal fun ReceiveRoute(
@@ -112,69 +113,29 @@ fun ReceiveScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color(0xFF1E2730))
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
         ){
             //Breadcrumb w/ backbutton
-            Row (
-                modifier = modifier
-                    .fillMaxWidth(),
-                    //.background(Color.Red),
-                Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ){
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
+        //Breadcrumb w/ backbutton
+        TopHeader(
+            onBackClick = { /*TODO*/ },
+            title = "Receive",
+            icon = {
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "Information",
+                    tint = Color(0xFF9FA2A5),
                     modifier = modifier
-                        .width(100.dp)
-                ) {
+                        .clip(CircleShape)
+                        //.background(Color.Red)
+                        .clickable {
+                            //opens InfoDialog
+                            showDialog.value = true
+                        }
 
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Go back",
-                        tint = Color.White
-                    )
-//                    Text(
-//                        text = "Home",
-//                        color = Color.White,
-//                        fontSize = 18.sp,
-//
-//                        )
-                }
-
-                //Header title
-                Text(
-                    modifier =modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    text = "Receive",
-                    fontSize = 18.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
                 )
-
-                //Warning or info
-                //Todo: poverover
-
-                Box (
-                    contentAlignment = Alignment.CenterEnd,
-                    modifier = modifier
-                        .width(100.dp)
-                ){
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Information",
-                        tint = Color(0xFF9FA2A5),
-                        modifier = modifier.clip(CircleShape)
-                            //.background(Color.Red)
-                            .clickable {
-                                //opens InfoDialog
-                                showDialog.value = true
-                            }
-
-                        )
-                }
-
-
             }
+        )
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
