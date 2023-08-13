@@ -10,6 +10,7 @@ import com.core.model.TokenAsset
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,8 +44,12 @@ class SwapViewModel @Inject constructor(
             initialValue = ""
         )
 
+    val query = savedStateHandle.getStateFlow(QUERY, "")
+
     val swapTokenUiState: StateFlow<SwapTokenUiState> =
-        swapTokenUiState(getSwapTokens
+        swapTokenUiState(
+            getSwapTokens,
+            query
         ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -52,7 +57,7 @@ class SwapViewModel @Inject constructor(
         )
 
     // this value makes sure that exchange only gets calculated when switchTokens as switched both tokens.
-    val tokenSwitched: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private val tokenSwitched: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
     val fromAsset = savedStateHandle.getStateFlow<SelectedTokenUiState>(FROM_ASSET, SelectedTokenUiState.Unselected)
     val toAsset = savedStateHandle.getStateFlow<SelectedTokenUiState>(TO_ASSET, SelectedTokenUiState.Unselected)
@@ -125,6 +130,10 @@ class SwapViewModel @Inject constructor(
         tokenSwitched.value = true
     }
 
+    fun updateQuery(query: String) {
+        savedStateHandle[QUERY] = query
+    }
+
 
 }
 
@@ -132,20 +141,27 @@ private const val FROM_ASSET = "fromAsset"
 private const val TO_ASSET = "toAsset"
 private const val FROM_AMOUNT = "fromAmount"
 private const val TO_AMOUNT = "toAmount"
+private const val QUERY = "query"
 
 
+@OptIn(ExperimentalCoroutinesApi::class)
 private fun swapTokenUiState(
-    getSwapTokens: GetSwapTokens
+    getSwapTokens: GetSwapTokens,
+    searchQuery: Flow<String>
 ): Flow<SwapTokenUiState> =
-    getSwapTokens()
-        .asResult()
-        .map { result ->
-            when(result) {
-                is Result.Success -> { SwapTokenUiState.Success(result.data) }
-                is Result.Loading -> { SwapTokenUiState.Loading }
-                is Result.Error -> { SwapTokenUiState.Error }
+    searchQuery.flatMapLatest { query ->
+        getSwapTokens(query)
+            .asResult()
+            .map { result ->
+                when(result) {
+                    is Result.Success -> { SwapTokenUiState.Success(result.data) }
+                    is Result.Loading -> { SwapTokenUiState.Loading }
+                    is Result.Error -> { SwapTokenUiState.Error }
+                }
             }
-        }
+    }
+
+
 
 sealed interface SwapTokenUiState {
     object Loading: SwapTokenUiState

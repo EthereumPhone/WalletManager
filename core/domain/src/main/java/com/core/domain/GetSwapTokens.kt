@@ -14,7 +14,9 @@ class GetSwapTokens @Inject constructor(
     private val tokenBalanceRepository: TokenBalanceRepository
 ) {
 
-    operator fun invoke(): Flow<List<TokenAsset>> =
+    operator fun invoke(
+        query: String
+    ): Flow<List<TokenAsset>> =
         combine(
             tokenMetadataRepository.getTokensMetadata(1),
             tokenBalanceRepository.getTokensBalances(1),
@@ -38,7 +40,10 @@ class GetSwapTokens @Inject constructor(
                     balance = tokenBalance?.tokenBalance?.toDouble() ?: 0.0
                 )
             }
-
-            listOf(networkAsset) + erc20Assets
+            if(query.isEmpty()) {
+                listOf(networkAsset) + erc20Assets
+            } else {
+                (listOf(networkAsset) + erc20Assets).filter { it.name.contains(query, ignoreCase = true) || it.symbol.contains(query, ignoreCase = true) }
+            }
         }
 }

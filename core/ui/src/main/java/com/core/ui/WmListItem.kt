@@ -12,11 +12,13 @@ fun WmListItem(
     headlineContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     supportingContent: @Composable (() -> Unit)? = null,
+    trailingContent: @Composable (() -> Unit)? = null
 ) {
     ListItem(
         headlineContent = headlineContent,
         modifier = modifier,
         supportingContent = supportingContent,
+        trailingContent = trailingContent,
         colors = ListItemDefaults.colors(
             headlineColor = primary,
             supportingColor = primary,

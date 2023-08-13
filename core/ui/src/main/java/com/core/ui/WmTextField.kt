@@ -13,11 +13,15 @@ fun WmTextField(
     value: String,
     onChange: (String) -> Unit,
     leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    placeHolder: @Composable (() -> Unit)? = null
 ) {
     TextField(
         value = value,
         onValueChange = { onChange(it) },
-        leadingIcon = leadingIcon
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        placeholder = placeHolder
     )
 }
 

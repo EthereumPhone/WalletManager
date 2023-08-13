@@ -16,6 +16,8 @@ fun NavGraphBuilder.swapScreen(
     onBackClick: () -> Unit
 ) {
     composable(route = swapRoute) {
-        SwapRoute()
+        SwapRoute(
+            modifier = Modifier
+        )
     }
 }
