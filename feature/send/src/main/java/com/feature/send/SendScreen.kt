@@ -77,6 +77,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
 import com.feature.send.ui.BottomSheet
+import com.feature.send.ui.MockNetworkData
 import com.feature.send.ui.SelectedNetworkButton
 import com.feature.send.ui.SwipeButton
 import com.feature.send.ui.TextToggleButton
@@ -181,6 +182,48 @@ fun SendScreen(
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
     )
+
+    val tmp1 = MockNetworkData(
+        name = "Mainnet",
+        chainId = 1,
+        ethAmount= 0.45,
+        fiatAmount= 843.34
+    )
+
+    //MockUp Info
+    val walletInfo = listOf<MockNetworkData>(
+        MockNetworkData(
+            name = "Mainnet",
+            chainId = 1,
+            ethAmount= 0.45,
+            fiatAmount= 843.34
+        ),
+        MockNetworkData(
+            name = "Goerli",
+            chainId = 2,
+            ethAmount= 132.76,
+            fiatAmount= 170543.34
+        ),
+        MockNetworkData(
+            name = "Polygon",
+            chainId = 3,
+            ethAmount= 1.3,
+            fiatAmount= 1893.34
+        ),
+        MockNetworkData(
+            name = "Optimism",
+            chainId = 4,
+            ethAmount= 10.24,
+            fiatAmount= 18843.34
+        ),
+        MockNetworkData(
+            name = "Arbitrum",
+            chainId = 5,
+            ethAmount= 0.0001,
+            fiatAmount= 1.07
+        )
+    )
+
     val amountOfNetwork = 3
     val sheetheight = 64*amountOfNetwork
 
@@ -196,6 +239,7 @@ fun SendScreen(
         sheetContent =  {
             BottomSheet(
                 value = id,
+                walletInfo=walletInfo
             )
         },
 

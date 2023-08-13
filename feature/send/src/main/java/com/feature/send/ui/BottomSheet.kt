@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetValue
@@ -38,8 +39,7 @@ import com.example.ethoscomponents.components.NumPad
 fun BottomSheet(
     value: Int,
     modifier: Modifier = Modifier,
-    //onBottomSheetClick: () -> Unit,
-    //walletInformation: List<>
+    walletInfo: List<MockNetworkData>
 ){
     val context = LocalContext.current
     Box(
@@ -80,23 +80,22 @@ fun BottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //Text(text = "Hello Geek!", fontSize = 20.sp, color = Color.White)
+                val tmp = listOf("hfoa","jsohgo")
+                itemsIndexed(
+                   walletInfo
+                ){ index, item  ->
 
-                items(2) { index ->
-                    Box (
-                        modifier= Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                            Toast.makeText(context, "This is a Sample Toast", Toast.LENGTH_LONG).show()
-                        }
-                    ){
                         BottomSheetAsset(
-                            "Mainnet",
-                            1.123,
-                            1886.45,
+                            item.name,
+                            item.ethAmount,
+                            item.fiatAmount,
+                            modifier = Modifier.clickable {
+                                value = item.chainId
+                            }
                             )
-                    }
 
-                    if(index < 2) {
+
+                    if(index < walletInfo.size-1) {
                         Divider(
                             color = Color(0xFF9FA2A5)
                         )
