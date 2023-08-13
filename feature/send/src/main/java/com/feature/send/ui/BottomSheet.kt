@@ -90,9 +90,9 @@ fun BottomSheet(
                             item.ethAmount,
                             item.fiatAmount,
                             modifier = Modifier.clickable {
-                                value = item.chainId
+                                //value = item.chainId
                             }
-                            )
+                        )
 
 
                     if(index < walletInfo.size-1) {

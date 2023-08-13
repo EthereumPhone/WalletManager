@@ -80,7 +80,7 @@ fun NumPad(
                         modifier = Modifier
                             .size(buttonSize)
                             .clip(CircleShape)
-                            .background(Color(0xFF3C4958))
+                            //.background(Color(0xFF3C4958))
                             .clickable {
                                 when (button) {
                                     NumPadButtons.COMMA -> {
@@ -114,7 +114,7 @@ fun NumPad(
                         modifier = Modifier
                             .size(buttonSize)
                             .clip(CircleShape)
-                            .background(Color(0xFF24303D))//Color(0xFF1E2730))
+                            //.background(Color(0xFF24303D))//Color(0xFF1E2730))
                             .clickable {
                                 when (button) {
                                     NumPadButtons.COMMA -> {
@@ -137,7 +137,7 @@ fun NumPad(
                         Text(
                             text = input,
                             fontSize = NumPadDefaults.fontSize,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Normal,
                             color = contentColor,
                         )
                     }
@@ -153,7 +153,7 @@ fun NumPad(
 
 object NumPadDefaults {
     val contentColor = Color.White
-    val fontSize = 24.sp
+    val fontSize = 32.sp
 }
 
 @Preview

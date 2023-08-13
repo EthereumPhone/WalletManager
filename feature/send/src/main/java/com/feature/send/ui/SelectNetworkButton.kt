@@ -84,7 +84,7 @@ fun SelectedNetworkButton(
         ) {
             Row (
                 verticalAlignment = Alignment.CenterVertically ,
-                horizontalArrangement=Arrangement.spacedBy(8.dp)
+                //horizontalArrangement=Arrangement.spacedBy(4.dp)
 
             ){
 
@@ -96,7 +96,7 @@ fun SelectedNetworkButton(
 
 //                Icon(
 //                    imageVector = Icons.Rounded.ArrowDropDown,
-//                    contentDescription = "Address by QR",
+//                    contentDescription = "Select Network",
 //                    tint = Color.White,
 //                    modifier = modifier.size(24.dp)
 //                )

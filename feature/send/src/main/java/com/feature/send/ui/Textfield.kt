@@ -80,9 +80,9 @@ fun ethOSTextField(
                 if(text == "") {
                     Text(
                         label,
-                        color = Color.LightGray,
+                        color = Color(0xFF9FA2A5),
                         fontSize = 18.sp,
-                        fontWeight= FontWeight.Medium,
+                        fontWeight= FontWeight.Normal,
                         modifier = Modifier.align(Alignment.CenterStart)
                     )
                 }

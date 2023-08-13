@@ -376,7 +376,7 @@ fun SendScreen(
                                      //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
                                  },//"${walletAmount.ethAmount} ETH",
                                  fontWeight = FontWeight.SemiBold,
-                                 fontSize = 72.sp,
+                                 fontSize = 76.sp,
 
                              )
                              Text(
