@@ -1,19 +1,32 @@
 package com.feature.swap
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
+import com.core.ui.WmButton
 import com.feature.home.AssetUiState
 import com.feature.swap.ui.TokenPickerSheet
+import com.feature.swap.ui.TokenSelector
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun SwapRoute(
@@ -21,24 +34,27 @@ internal fun SwapRoute(
     viewModel: SwapViewModel = hiltViewModel()
 
 ) {
-    val fromAmountUiState by viewModel.fromAmount.collectAsStateWithLifecycle()
-    val toAmountUiState by viewModel.toAmount.collectAsStateWithLifecycle()
-    val fromAssetUiState by viewModel.fromAsset.collectAsStateWithLifecycle()
-    val toAssetUiState by viewModel.toAsset.collectAsStateWithLifecycle()
+    val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
+    val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
 
     val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
         swapTokenUiState = swapTokenUiState,
         exchangeUiState = exchangeUiState,
-        fromAmountUiState = fromAmountUiState,
-        toAmountUiState = toAmountUiState,
-        fromAssetUiState = toAssetUiState,
-        toAssetUiState = fromAssetUiState,
+        amountsUiState = amountsUiState,
+        assetsUiState = assetsUiState,
+        searchQuery = searchQuery,
+        onQueryChange = viewModel::updateSearchQuery,
+        switchTokens = viewModel::switchTokens,
+        onTextFieldSelected = viewModel::setSelectedTextField,
+        onAmountChange = viewModel::updateAmount,
+        onSelectAsset = viewModel::selectAsset,
+        onSwapClicked = viewModel::swap
     )
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,28 +63,63 @@ internal fun SwapScreen(
     modifier: Modifier,
     swapTokenUiState: SwapTokenUiState,
     exchangeUiState: Double,
-    fromAmountUiState: Double,
-    toAmountUiState: Double,
-    fromAssetUiState: SelectedTokenUiState,
-    toAssetUiState: SelectedTokenUiState
-
+    amountsUiState: AmountsUiState,
+    assetsUiState: AssetsUiState,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    switchTokens: () -> Unit,
+    onTextFieldSelected: (TextFieldSelected) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onSelectAsset: (TokenAsset) -> Unit,
+    onSwapClicked: () -> Unit
 ) {
 
-    var isVisible by remember { mutableStateOf(true) }
 
     // Create a BottomSheetScaffoldState
-    val scaffoldState = rememberBottomSheetScaffoldState()
-
-    // Wrap the content inside the BottomSheetScaffold
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetContent = {
-            //TokenPickerSheet(emptyList())
-                       },
-        sheetPeekHeight = 0.dp
-    ) {
+    val modalSheetState = rememberModalBottomSheetState()
+    val coroutineScope = rememberCoroutineScope()
 
 
+    Column {
+        TokenSelector(
+            amountsUiState = amountsUiState,
+            assetsUiState = assetsUiState,
+            switchTokens = switchTokens,
+            onAmountChange = { selectedTextField, amount ->
+                onTextFieldSelected(selectedTextField)
+                onAmountChange(amount)
+            },
+            onPickAssetClicked = {
+                coroutineScope.launch {
+                    onTextFieldSelected(it)
+                    modalSheetState.expand()
+                }
+            }
+        )
+
+        ModalBottomSheet(
+            onDismissRequest = {
+                coroutineScope.launch {
+                    modalSheetState.hide()
+                }
+            },
+            sheetState = modalSheetState
+        ) {
+            TokenPickerSheet(
+                swapTokenUiState = swapTokenUiState,
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                onSelectAsset = { onSelectAsset(it)  }
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        WmButton(
+            onClick = onSwapClicked,
+        ) {
+            Text("Swap")
+        }
 
     }
 }

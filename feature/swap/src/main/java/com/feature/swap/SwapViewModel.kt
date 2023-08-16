@@ -15,22 +15,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import javax.inject.Inject
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
     getSwapTokens: GetSwapTokens,
-    swapRepository: SwapRepository,
+    private val swapRepository: SwapRepository,
     private val savedStateHandle: SavedStateHandle,
 
     ): ViewModel() {
@@ -44,33 +42,33 @@ class SwapViewModel @Inject constructor(
             initialValue = ""
         )
 
-    val query = savedStateHandle.getStateFlow(QUERY, "")
+    val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
     val swapTokenUiState: StateFlow<SwapTokenUiState> =
         swapTokenUiState(
             getSwapTokens,
-            query
+            searchQuery
         ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SwapTokenUiState.Loading
         )
 
-    // this value makes sure that exchange only gets calculated when switchTokens as switched both tokens.
-    private val tokenSwitched: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private val _assetsUiState = MutableStateFlow(AssetsUiState())
+    val assetsUiState = _assetsUiState.asStateFlow()
 
-    val fromAsset = savedStateHandle.getStateFlow<SelectedTokenUiState>(FROM_ASSET, SelectedTokenUiState.Unselected)
-    val toAsset = savedStateHandle.getStateFlow<SelectedTokenUiState>(TO_ASSET, SelectedTokenUiState.Unselected)
-    val fromAmount = savedStateHandle.getStateFlow(FROM_AMOUNT, 0.0)
-    val toAmount = savedStateHandle.getStateFlow(TO_AMOUNT, 0.0)
+    private val _amountsUiState = MutableStateFlow(AmountsUiState())
+    val amountsUiState = _amountsUiState.asStateFlow()
+
+    private val _selectedTextField = MutableStateFlow(TextFieldSelected.FROM)
+    val selectedTextField = _selectedTextField.asStateFlow()
 
     val exchangeRate: StateFlow<Double> =
-        combine(
-            tokenSwitched,
-            fromAsset,
-            toAsset
-        ) { tokenSwitched, fromAsset, toAsset ->
-            if (tokenSwitched && fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+        assetsUiState.map { currentState ->
+            val fromAsset = currentState.fromAsset
+            val toAsset = currentState.toAsset
+
+            if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
                 swapRepository.getQuote(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
@@ -86,62 +84,113 @@ class SwapViewModel @Inject constructor(
             initialValue = 0.0
         )
 
-    fun selectFromAsset(tokenAsset: TokenAsset) {
-        val currentToAsset = toAsset.value
+    fun setSelectedTextField(selectedTextField: TextFieldSelected) {
+        _selectedTextField.value = selectedTextField
+    }
 
-        if (currentToAsset is SelectedTokenUiState.Selected
-            && currentToAsset.tokenAsset != tokenAsset) {
-            savedStateHandle[TO_ASSET] = SelectedTokenUiState.Unselected
+    fun selectAsset(tokenAsset: TokenAsset) {
+        _assetsUiState.update { currentState ->
+            val fromAsset = currentState.fromAsset
+            val toAsset = currentState.toAsset
+
+            when(selectedTextField.value) {
+                TextFieldSelected.FROM -> {
+                    if (toAsset is SelectedTokenUiState.Selected && toAsset.tokenAsset == tokenAsset) {
+                        currentState.copy(
+                            toAsset = SelectedTokenUiState.Unselected,
+                            fromAsset = SelectedTokenUiState.Selected(tokenAsset)
+                        )
+                    } else {
+                        currentState.copy(
+                            fromAsset = SelectedTokenUiState.Selected(tokenAsset)
+                        )
+                    }
+                }
+
+                TextFieldSelected.TO -> {
+                    if (fromAsset is SelectedTokenUiState.Selected && fromAsset.tokenAsset == tokenAsset) {
+                        currentState.copy(
+                            fromAsset = SelectedTokenUiState.Unselected,
+                            toAsset = SelectedTokenUiState.Selected(tokenAsset)
+                        )
+                    } else {
+                        currentState.copy(
+                            toAsset = SelectedTokenUiState.Selected(tokenAsset)
+                        )
+                    }
+                }
+            }
         }
-        savedStateHandle[FROM_ASSET] = SelectedTokenUiState.Selected(tokenAsset)
     }
 
-    fun selectToAsset(tokenAsset: TokenAsset) {
-        val currentToAsset = fromAsset.value
-
-        if (currentToAsset is SelectedTokenUiState.Selected
-            && currentToAsset.tokenAsset != tokenAsset) {
-            savedStateHandle[FROM_ASSET] = SelectedTokenUiState.Unselected
+    fun updateAmount(
+        amount: String,
+    ) {
+        _amountsUiState.update { currentState ->
+            when(selectedTextField.value) {
+                TextFieldSelected.FROM -> {
+                    currentState.copy(
+                        fromAmount = amount,
+                        toAmount = BigDecimal(amount).multiply(BigDecimal(exchangeRate.value)).toPlainString()
+                    )
+                }
+                TextFieldSelected.TO -> {
+                    currentState.copy(
+                        fromAmount = BigDecimal.ONE.divide(BigDecimal(amount)).toPlainString(),
+                        toAmount = amount
+                    )
+                }
+            }
         }
-        savedStateHandle[TO_ASSET] = SelectedTokenUiState.Selected(tokenAsset)
-    }
-
-    fun updateFromAmount(amount: String) {
-        savedStateHandle[FROM_AMOUNT] = amount.toDouble()
-        savedStateHandle[TO_AMOUNT]  = amount.toDouble() * exchangeRate.value
-
-    }
-
-    fun updateToAmount(amount: String) {
-        savedStateHandle[FROM_AMOUNT] = 1.0/amount.toDouble()
-        savedStateHandle[TO_AMOUNT]  = amount.toDouble()
     }
 
     fun switchTokens() {
-        tokenSwitched.value = false
-        val currentFromAsset = fromAsset.value
-        val currentToAsset = fromAmount.value
+        _assetsUiState.update { currentState ->
+            val currentFromAsset = currentState.fromAsset
 
-        savedStateHandle[FROM_ASSET] = toAsset.value
-        savedStateHandle[FROM_AMOUNT] = toAmount.value
+            currentState.copy(
+                fromAsset = currentState.toAsset,
+                toAsset = currentFromAsset
+            )
+        }
 
-        savedStateHandle[TO_ASSET] = currentFromAsset
-        savedStateHandle[TO_AMOUNT] = currentToAsset
-        tokenSwitched.value = true
+        _amountsUiState.update { currentState ->
+            val currentFromAmount = currentState.fromAmount
+
+            currentState.copy(
+                fromAmount = currentState.toAmount,
+                toAmount = currentFromAmount,
+                )
+
+        }
     }
 
-    fun updateQuery(query: String) {
-        savedStateHandle[QUERY] = query
+    fun updateSearchQuery(query: String) {
+        savedStateHandle[SEARCH_QUERY] = query
     }
 
+    fun swap() {
 
+        viewModelScope.launch {
+            val (fromAsset, toAsset) = assetsUiState.value
+            val fromAmount = amountsUiState.value.fromAmount
+
+            if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                swapRepository.swap(
+                    fromAsset.tokenAsset.address,
+                    toAsset.tokenAsset.address,
+                    fromAmount.toDouble()
+                )
+            }
+        }
+    }
 }
 
-private const val FROM_ASSET = "fromAsset"
-private const val TO_ASSET = "toAsset"
-private const val FROM_AMOUNT = "fromAmount"
-private const val TO_AMOUNT = "toAmount"
-private const val QUERY = "query"
+enum class TextFieldSelected {
+    FROM, TO
+}
+
+private const val SEARCH_QUERY = "searchQuery"
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -161,13 +210,21 @@ private fun swapTokenUiState(
             }
     }
 
-
-
 sealed interface SwapTokenUiState {
     object Loading: SwapTokenUiState
     object Error: SwapTokenUiState
-    data class Success(val tokenMetadata: List<TokenAsset>): SwapTokenUiState
+    data class Success(val tokenAssets: List<TokenAsset>): SwapTokenUiState
 }
+
+data class AmountsUiState(
+    val fromAmount: String = "",
+    val toAmount: String = "",
+)
+
+data class AssetsUiState(
+    val fromAsset: SelectedTokenUiState = SelectedTokenUiState.Unselected,
+    val toAsset: SelectedTokenUiState = SelectedTokenUiState.Unselected
+)
 
 sealed interface SelectedTokenUiState {
     object Unselected: SelectedTokenUiState
