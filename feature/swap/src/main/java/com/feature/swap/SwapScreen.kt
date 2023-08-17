@@ -1,11 +1,14 @@
 package com.feature.swap
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -76,11 +79,17 @@ internal fun SwapScreen(
 
 
     // Create a BottomSheetScaffoldState
-    val modalSheetState = rememberModalBottomSheetState()
+    var showSheet by remember { mutableStateOf(false) }
+    val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
 
 
-    Column {
+    Log.d("SheetState", modalSheetState.currentValue.toString())
+
+
+    Column(
+        Modifier.fillMaxSize()
+    ) {
         TokenSelector(
             amountsUiState = amountsUiState,
             assetsUiState = assetsUiState,
@@ -90,29 +99,10 @@ internal fun SwapScreen(
                 onAmountChange(amount)
             },
             onPickAssetClicked = {
-                coroutineScope.launch {
-                    onTextFieldSelected(it)
-                    modalSheetState.expand()
-                }
+                showSheet = true
+                onTextFieldSelected(it)
             }
         )
-
-        ModalBottomSheet(
-            onDismissRequest = {
-                coroutineScope.launch {
-                    modalSheetState.hide()
-                }
-            },
-            sheetState = modalSheetState
-        ) {
-            TokenPickerSheet(
-                swapTokenUiState = swapTokenUiState,
-                searchQuery = searchQuery,
-                onQueryChange = onQueryChange,
-                onSelectAsset = { onSelectAsset(it)  }
-            )
-        }
-
         Spacer(modifier = Modifier.weight(1f))
 
         WmButton(
@@ -121,5 +111,25 @@ internal fun SwapScreen(
             Text("Swap")
         }
 
+
+        if(showSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }.invokeOnCompletion {
+                        if(!modalSheetState.isVisible) showSheet = false
+                    }
+                },
+                sheetState = modalSheetState
+            ) {
+                TokenPickerSheet(
+                    swapTokenUiState = swapTokenUiState,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    onSelectAsset = { onSelectAsset(it) }
+                )
+            }
+        }
     }
 }

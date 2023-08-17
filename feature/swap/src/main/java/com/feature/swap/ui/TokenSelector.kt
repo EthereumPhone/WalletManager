@@ -2,6 +2,7 @@ package com.feature.swap.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.BottomSheetScaffoldState
@@ -17,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,14 +36,19 @@ import com.feature.swap.TextFieldSelected
 fun TokenSelector(
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    modifier: Modifier = Modifier,
     switchTokens: () -> Unit,
     onPickAssetClicked: (TextFieldSelected) -> Unit,
     onAmountChange: (TextFieldSelected, String) -> Unit
 ) {
-    Column {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         WmTextField(
             value = amountsUiState.fromAmount,
             onChange = { onAmountChange(TextFieldSelected.FROM, it) },
+            modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 TokenAssetIcon(assetsUiState.fromAsset) {
                     onPickAssetClicked(TextFieldSelected.FROM)
@@ -49,9 +57,7 @@ fun TokenSelector(
         )
 
         IconButton(
-            onClick = {
-                switchTokens()
-            },
+            onClick = { switchTokens() },
             content = {
                 Icon(
                     imageVector = Icons.Outlined.SwapVert,
@@ -64,6 +70,8 @@ fun TokenSelector(
         WmTextField(
             value = amountsUiState.toAmount,
             onChange = { onAmountChange(TextFieldSelected.TO, it) },
+            modifier = Modifier.fillMaxWidth(),
+
             trailingIcon = {
                 TokenAssetIcon(assetsUiState.toAsset) {
                     onPickAssetClicked(TextFieldSelected.TO)
@@ -93,15 +101,37 @@ private fun TokenAssetIcon(
 
 
 
-
-
-
-
-
-
-
 @Preview
 @Composable
 fun PreviewTokenSelector() {
+    var clicked by remember { mutableStateOf(0) }
+    var amount by remember { mutableStateOf(AmountsUiState("0.123", "0.234")) }
+
+    Column {
+        TokenSelector(
+            amountsUiState = amount,
+            assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
+            modifier = Modifier.fillMaxWidth(),
+            {},
+            {textFieldSelected: TextFieldSelected -> clicked += 1 },
+            {textFieldSelected: TextFieldSelected, text: String ->
+                when(textFieldSelected) {
+                    TextFieldSelected.FROM -> {
+                        amount = amount.copy(
+                            fromAmount = text
+                        )
+                    }
+                    TextFieldSelected.TO -> {
+                        amount = amount.copy(
+                            toAmount = text
+                        )
+                    }
+                }
+
+            }
+        )
+        Text(text = "Test TEXT $clicked")
+    }
+
 
 }
