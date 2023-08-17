@@ -1,5 +1,6 @@
 package com.feature.home.ui
 
+import android.widget.Space
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -7,9 +8,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -56,6 +61,8 @@ import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
 import java.lang.reflect.Type
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -164,20 +171,25 @@ private fun AssetList(assetsUiState: AssetUiState) {
 private fun TransferList(transfersUiState: TransfersUiState) {
     when (transfersUiState) {
         is TransfersUiState.Success -> if(transfersUiState.transfers.isNotEmpty()){
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = primaryVariant
-                ),
-            ) {
-                LazyColumn {
+//            Card(
+//                colors = CardDefaults.cardColors(
+//                    containerColor = primaryVariant
+//                ),
+//            ) {
+
+            LazyColumn (
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+
                     items(
                         items = transfersUiState.transfers,
                         key = { transfer -> transfer.timeStamp }
                     ) {
-                        TransferItem(transfer = it)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        TransferItemCard(transfer = it)
                     }
                 }
-            }
+            //}
         } else {
             LazyColumn {
                 item { Box(
@@ -186,7 +198,7 @@ private fun TransferList(transfersUiState: TransfersUiState) {
                 ) {
                     Text(
                         text = "No Transfers found",
-                        color = Color.White,
+                        color = Color(0xFF9FA2A5),
                         modifier = Modifier.align(Alignment.Center)
                     )
                 } }
@@ -283,11 +295,23 @@ fun PreviewWalletTabRow() {
 @Composable
 @Preview
 fun PreviewEmptyWalletTabRow() {
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         WalletTabRow(
-            TransfersUiState.Success(emptyList()),
+            TransfersUiState.Success(
+                listOf(
+//                    TransferItem(
+//                        1,
+//                        "0x123123123123123123123123",
+//                        "ETH",
+//                        "1.5445",
+//                        "12:12:12",
+//                        true
+//                    )
+                )
+            ),
             AssetUiState.Empty,
             false,
             {}

@@ -2,10 +2,16 @@ package com.feature.home.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -16,14 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalTime
 import java.util.Calendar
 
 @Composable
 internal fun AddressBar(
+
     userAddress: String,
-    onclick: () -> Unit
+    onclick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val greeting = when(LocalTime.now().hour) {
         in 5..12 -> "Gm \uD83C\uDF1E" // sun with face emoji
@@ -31,13 +40,45 @@ internal fun AddressBar(
         else -> "Gn \uD83C\uDF1D" // full moon with face emoji
     }
 
-    Column {
-        Text(
-            text = greeting,
-            fontSize = 23.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.White
-        )
+    Column (
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        //Mock - SelectedNetworkButton
+        Button(
+            onClick = {  },
+            //modifier= modifier.height(64.dp),
+            contentPadding = PaddingValues(14.dp, 0.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color(0xFF24303D),
+                contentColor = Color.White
+            ),
+            shape = CircleShape,
+            //elevation = ButtonDefaults.elevation(0.dp, 0.dp),
+            //modifier = modifier.padding(14.dp, 0.dp),
+
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                //horizontalArrangement=Arrangement.spacedBy(4.dp)
+
+            ) {
+
+                Text(
+                    text = "Mainnet",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+
+            }
+        }
+
+//            Text(
+//            text = greeting,
+//            fontSize = 23.sp,
+//            fontWeight = FontWeight.Medium,
+//            color = Color.White
+//        )
+        Spacer(modifier = modifier.height(4.dp))
         Row(
             modifier = Modifier
                 .clickable { onclick() },
@@ -45,8 +86,8 @@ internal fun AddressBar(
         ) {
             Text(
                 text = truncateText(userAddress),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
                 color = Color.White
             )
             Icon(

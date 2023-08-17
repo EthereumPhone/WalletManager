@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 //import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.core.designsystem.theme.background
 
 @Composable
@@ -31,11 +32,11 @@ fun WmIconButton(
     IconButton(
         onClick = onClick,
         colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White),
-        modifier = Modifier.size(42.dp)
+        modifier = Modifier.size(64.dp)
     ) {
         Icon(
             imageVector = icon,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(36.dp),
             contentDescription = contentDescription,
             tint = background
         )
@@ -44,7 +45,8 @@ fun WmIconButton(
         Text(
             text = contentDescription,
             color = Color.White,
-            modifier = Modifier.padding(top = 5.dp),
+            modifier = Modifier.padding(top = 4.dp),
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
     }

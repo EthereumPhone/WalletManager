@@ -2,13 +2,16 @@ package com.feature.home
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,10 +70,13 @@ internal fun HomeScreen(
 ) {
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = modifier
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement=  Arrangement.spacedBy(42.dp),
+
+        modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp)
+            .background(Color(0xFF1E2730))
+            .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
         AddressBar(
             userAddress,

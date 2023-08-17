@@ -26,19 +26,19 @@ internal fun FunctionsRow(
         WmIconButton(
             onClick = { navigateToSend() },
             icon = Icons.Filled.NorthEast,
-            contentDescription = "send"
+            contentDescription = "Send"
         )
 
         WmIconButton(
             onClick = { navigateToReceive() },
             icon = Icons.Filled.ArrowDownward,
-            contentDescription = "receive"
+            contentDescription = "Receive"
         )
 
         WmIconButton(
             onClick = { navigateToSwap() },
             icon = Icons.Filled.SwapVert,
-            contentDescription = "swap"
+            contentDescription = "Swap"
         )
     }
 }
