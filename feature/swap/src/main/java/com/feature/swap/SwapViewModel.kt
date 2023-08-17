@@ -126,18 +126,20 @@ class SwapViewModel @Inject constructor(
     fun updateAmount(
         amount: String,
     ) {
+        val updatedAmount = amount.replace(",",".")
+
         _amountsUiState.update { currentState ->
             when(selectedTextField.value) {
                 TextFieldSelected.FROM -> {
                     currentState.copy(
-                        fromAmount = amount,
-                        toAmount = BigDecimal(amount).multiply(BigDecimal(exchangeRate.value)).toPlainString()
+                        fromAmount = updatedAmount,
+                        toAmount = BigDecimal(updatedAmount).multiply(BigDecimal(exchangeRate.value)).toPlainString()
                     )
                 }
                 TextFieldSelected.TO -> {
                     currentState.copy(
-                        fromAmount = BigDecimal.ONE.divide(BigDecimal(amount)).toPlainString(),
-                        toAmount = amount
+                        fromAmount = BigDecimal.ONE.divide(BigDecimal(updatedAmount)).toPlainString(),
+                        toAmount = updatedAmount
                     )
                 }
             }

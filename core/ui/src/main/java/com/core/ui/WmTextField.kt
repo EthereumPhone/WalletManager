@@ -1,5 +1,6 @@
 package com.core.ui
 
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +17,8 @@ fun WmTextField(
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    placeHolder: @Composable (() -> Unit)? = null
+    placeHolder: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     TextField(
         value = value,
@@ -24,7 +26,8 @@ fun WmTextField(
         modifier = modifier,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
-        placeholder = placeHolder
+        placeholder = placeHolder,
+        keyboardOptions = keyboardOptions
     )
 }
 

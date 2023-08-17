@@ -3,6 +3,7 @@ package com.feature.swap.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.BottomSheetScaffoldState
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -49,6 +51,7 @@ fun TokenSelector(
             value = amountsUiState.fromAmount,
             onChange = { onAmountChange(TextFieldSelected.FROM, it) },
             modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             trailingIcon = {
                 TokenAssetIcon(assetsUiState.fromAsset) {
                     onPickAssetClicked(TextFieldSelected.FROM)
@@ -71,7 +74,7 @@ fun TokenSelector(
             value = amountsUiState.toAmount,
             onChange = { onAmountChange(TextFieldSelected.TO, it) },
             modifier = Modifier.fillMaxWidth(),
-
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             trailingIcon = {
                 TokenAssetIcon(assetsUiState.toAsset) {
                     onPickAssetClicked(TextFieldSelected.TO)
@@ -115,14 +118,15 @@ fun PreviewTokenSelector() {
             {},
             {textFieldSelected: TextFieldSelected -> clicked += 1 },
             {textFieldSelected: TextFieldSelected, text: String ->
-                when(textFieldSelected) {
+                amount = when(textFieldSelected) {
                     TextFieldSelected.FROM -> {
-                        amount = amount.copy(
+                        amount.copy(
                             fromAmount = text
                         )
                     }
+
                     TextFieldSelected.TO -> {
-                        amount = amount.copy(
+                        amount.copy(
                             toAmount = text
                         )
                     }
