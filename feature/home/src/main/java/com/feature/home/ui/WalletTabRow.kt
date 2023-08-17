@@ -132,7 +132,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
         is AssetUiState.Empty -> {
             Box(
                 modifier = Modifier
-                    .background(primaryVariant)
+                    //.background(primaryVariant)
                     .fillMaxSize()
             ) {
                 Text(

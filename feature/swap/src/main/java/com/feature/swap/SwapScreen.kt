@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,6 +90,7 @@ internal fun SwapScreen(
 
 
     Column(
+
         Modifier.fillMaxSize()
     ) {
         TokenSelector(
@@ -114,6 +117,9 @@ internal fun SwapScreen(
 
         if(showSheet) {
             ModalBottomSheet(
+                containerColor= Color(0xFF24303D),
+                contentColor= Color.White,
+
                 onDismissRequest = {
                     coroutineScope.launch {
                         modalSheetState.hide()
@@ -133,3 +139,5 @@ internal fun SwapScreen(
         }
     }
 }
+
+

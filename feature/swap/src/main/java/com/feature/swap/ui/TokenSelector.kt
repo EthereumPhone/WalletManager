@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Button
@@ -49,6 +50,12 @@ fun TokenSelector(
             value = amountsUiState.fromAmount,
             onChange = { onAmountChange(TextFieldSelected.FROM, it) },
             modifier = Modifier.fillMaxWidth(),
+            placeHolder = {
+                Text(
+                    text = "Amount",
+                    color = Color(0xFF9FA2A5)
+                )
+            },
             trailingIcon = {
                 TokenAssetIcon(assetsUiState.fromAsset) {
                     onPickAssetClicked(TextFieldSelected.FROM)
