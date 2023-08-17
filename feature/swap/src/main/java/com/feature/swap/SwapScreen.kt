@@ -127,7 +127,15 @@ internal fun SwapScreen(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
                     onQueryChange = onQueryChange,
-                    onSelectAsset = { onSelectAsset(it) }
+                    onSelectAsset = {
+                        onSelectAsset(it)
+
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    }
                 )
             }
         }
