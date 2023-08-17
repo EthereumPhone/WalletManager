@@ -202,12 +202,12 @@ private fun swapTokenUiState(
 ): Flow<SwapTokenUiState> =
     searchQuery.flatMapLatest { query ->
         getSwapTokens(query)
-            .asResult()
             .map { result ->
-                when(result) {
-                    is Result.Success -> { SwapTokenUiState.Success(result.data) }
-                    is Result.Loading -> { SwapTokenUiState.Loading }
-                    is Result.Error -> { SwapTokenUiState.Error }
+                if(result.isEmpty()) {
+                    SwapTokenUiState.Loading
+                } else {
+                    SwapTokenUiState.Success(result)
+
                 }
             }
     }
