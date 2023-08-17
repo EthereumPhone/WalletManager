@@ -85,10 +85,6 @@ internal fun SwapScreen(
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
 
-
-    Log.d("SheetState", modalSheetState.currentValue.toString())
-
-
     Column(
 
         Modifier.fillMaxSize()
@@ -133,7 +129,14 @@ internal fun SwapScreen(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
                     onQueryChange = onQueryChange,
-                    onSelectAsset = { onSelectAsset(it) }
+                    onSelectAsset = {
+                        onSelectAsset(it)
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    }
                 )
             }
         }

@@ -1,6 +1,7 @@
 package com.core.ui
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -20,7 +21,8 @@ fun WmTextField(
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    placeHolder: @Composable (() -> Unit)? = null
+    placeHolder: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     TextField(
         colors= TextFieldDefaults.colors(
@@ -35,7 +37,8 @@ fun WmTextField(
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
         shape = RoundedCornerShape(16.dp),
-        placeholder = placeHolder
+        placeholder = placeHolder,
+        keyboardOptions = keyboardOptions
     )
 }
 
