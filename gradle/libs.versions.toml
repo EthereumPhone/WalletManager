@@ -1,0 +1,132 @@
+[versions]
+
+# plugins
+androidGradlePlugin = "7.4.2"
+espressoCore = "3.5.1"
+hiltAndroid = "2.46.1"
+hiltWork = "1.0.0"
+kotlin = "1.8.0"
+hilt = "2.46.1"
+material3 = "1.1.1"
+protobufPlugin = "0.8.19"
+
+# libs
+ktx = "1.9.0"
+appcompat = "1.6.1"
+androidx-junit = "1.1.5"
+junit-version = "4.13.2"
+
+espresso = "3.5.1"
+compose = "1.4.3"
+
+roomdb = "2.5.0"
+work = "2.8.1"
+hilt-jetpack = "1.0.0"
+datastore = "1.0.0"
+retrofit2 = "2.9.0"
+compose-lifecycle = "2.6.0-beta01"
+compose-navigation = "2.6.0"
+moshi = "1.13.0"
+datetime = "0.4.0"
+protobuf = "3.21.9"
+walletsdk = "0.0.10"
+web3j = "4.8.8-android"
+workRuntimeKtx = "2.5.0"
+headlong = "9.2.0"
+fasterxml = "2.12.5"
+
+
+
+[plugins]
+android-application = {id = "com.android.application", version.ref = "androidGradlePlugin"}
+android-library = {id = "com.android.library", version.ref = "androidGradlePlugin"}
+
+kotlin-android = {id = "org.jetbrains.kotlin.android", version.ref = "kotlin"}
+kotlin-jvm = {id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+hilt-android = {id = "com.google.dagger.hilt.android", version.ref = "hilt"}
+kotlin-kapt = {id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin"}
+google-protobuf = {id = "com.google.protobuf", version.ref = "protobufPlugin"}
+
+
+
+[libraries]
+androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+
+# material
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+
+# test
+junit = { group = "junit", name = "junit", version.ref = "junit-version" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
+androidx-espresso = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+
+#compose
+androidx-compose-icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
+androidx-compose-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose" }
+androidx-compose-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
+
+androidx-compose-test = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "compose" }
+
+androidx-lifecycle-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "compose-lifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
+
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
+
+
+# room
+androidx-room-runtime = {group = "androidx.room", name = "room-runtime", version.ref = "roomdb"}
+androidx-room-ktx = {group = "androidx.room", name = "room-ktx", version.ref = "roomdb"}
+androidx-room-compiler = {group = "androidx.room", name = "room-compiler", version.ref = "roomdb"}
+
+# hilt
+hilt-android = {group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
+hilt-compiler = {group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt"}
+hilt-navigation-compose = {group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-jetpack"}
+
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
+
+
+# coroutine worker
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-jetpack" }
+
+# system wallet
+ethos-wallet = { group = "com.github.EthereumPhone", name = "WalletSDK", version.ref = "walletsdk" }
+
+# web3j
+web3j-android = { group = "org.web3j", name = "core", version.ref = "web3j" }
+
+# datastore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-datastore-proto = {group = "androidx.datastore", name = "datastore", version.ref = "datastore"}
+
+# retrofit
+retrofit2-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit2" }
+
+# moshi
+moshi = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
+
+# protobuf
+protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
+protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobuf" }
+
+# kotlin date time
+kotlinx-datetime = {group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime"}
+
+# headlong
+headlong = {group = "com.esaulpaugh", name = "headlong", version.ref = "headlong"}
+
+# fasterxml
+fasterxml = {group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "fasterxml"}
+
+
+
+
+
+
+
+[bundles]

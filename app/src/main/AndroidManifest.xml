@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:sharedUserId="android.uid.system"
-    coreApp="true"
->
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -12,42 +9,22 @@
 
 
     <application
+        android:name=".WmApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/wallet_manager_icon"
         android:label="@string/app_name"
+        android:roundIcon="@drawable/wallet_manager_icon"
         android:supportsRtl="true"
         android:theme="@style/Theme.WalletManager"
         android:fitsSystemWindows="true"
-        tools:targetApi="31">
-        <activity
-            android:name=".activities.AddNetworkActivity"
-            android:exported="false">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
-            android:name=".activities.SendActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize">
+        tools:targetApi="33"
+        android:debuggable="true"
+        tools:ignore="HardcodedDebugMode">
 
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
         <activity
-            android:name=".activities.MainActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true">
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
-            android:name=".WalletManagerActivity"
+            android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
@@ -57,20 +34,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="walletapp" />
-
-                <data android:host="ax.com" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
         </activity>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <!-- If you are using androidx.startup to initialize other components -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>

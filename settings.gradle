@@ -15,3 +15,17 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Wallet Manager"
 include ':app'
+include ':feature:home'
+include ':core:data'
+include ':core:database'
+include ':core:ui'
+include ':core:designsystem'
+include ':core:model'
+include ':core:common'
+include ':core:domain'
+include ':workers:work'
+include ':core:datastore'
+include ':feature:send'
+include ':feature:swap'
+include ':feature:receive'
+include ':uniswap-routing-sdk'
