@@ -69,7 +69,7 @@ fun TokenSelector(
                     color= Color.White
                 )
                 Text(
-                    text = "Balance: 12 ETH",
+                    text = "Balance: 12",
                     color= Color(0xFF9FA2A5)
                 )
             }
@@ -131,7 +131,7 @@ fun TokenSelector(
                     color= Color.White
                 )
                 Text(
-                    text = "Balance: 12 ETH",
+                    text = "Balance: 12",
                     color= Color(0xFF9FA2A5)
                 )
             }
@@ -144,7 +144,8 @@ fun TokenSelector(
                     TokenAssetIcon(assetsUiState.toAsset) {
                         onPickAssetClicked(TextFieldSelected.TO)
                     }
-                }
+                },
+                placeholder = "Amount",
             )
             Row (
                 modifier = modifier.fillMaxWidth(),

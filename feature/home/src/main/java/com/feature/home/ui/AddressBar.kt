@@ -43,42 +43,7 @@ internal fun AddressBar(
     Column (
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        //Mock - SelectedNetworkButton
-        Button(
-            onClick = {  },
-            //modifier= modifier.height(64.dp),
-            contentPadding = PaddingValues(14.dp, 0.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = Color(0xFF24303D),
-                contentColor = Color.White
-            ),
-            shape = CircleShape,
-            //elevation = ButtonDefaults.elevation(0.dp, 0.dp),
-            //modifier = modifier.padding(14.dp, 0.dp),
 
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                //horizontalArrangement=Arrangement.spacedBy(4.dp)
-
-            ) {
-
-                Text(
-                    text = "Mainnet",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-
-            }
-        }
-
-//            Text(
-//            text = greeting,
-//            fontSize = 23.sp,
-//            fontWeight = FontWeight.Medium,
-//            color = Color.White
-//        )
-        Spacer(modifier = modifier.height(4.dp))
         Row(
             modifier = Modifier
                 .clickable { onclick() },
@@ -86,14 +51,14 @@ internal fun AddressBar(
         ) {
             Text(
                 text = truncateText(userAddress),
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White
+                color = Color(0xFF9FA2A5)
             )
             Icon(
                 imageVector = Icons.Rounded.ContentCopy,
                 contentDescription = null,
-                tint = Color.White
+                tint = Color(0xFF9FA2A5)
             )
         }
     }

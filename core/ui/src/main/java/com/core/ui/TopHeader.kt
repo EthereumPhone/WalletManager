@@ -50,7 +50,7 @@ fun TopHeader(
                 contentDescription = "Go back",
                 tint = Color.White,
                 modifier = modifier.clickable {
-                    onBackClick
+                    onBackClick()
                 }
             )
 //                    Text(

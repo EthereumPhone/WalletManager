@@ -1,5 +1,6 @@
 package com.feature.receive
 
+import android.app.PendingIntent.getActivity
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -79,13 +80,15 @@ import com.core.ui.TopHeader
 @Composable
 internal fun ReceiveRoute(
     modifier: Modifier = Modifier,
-    viewModel: ReceiveViewModel = hiltViewModel()
+    viewModel: ReceiveViewModel = hiltViewModel(),
+    onBackClick: () -> Unit
 ) {
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
 
     ReceiveScreen(
         address = userAddress,
-        modifier = modifier
+        modifier = modifier,
+        onBackClick = onBackClick
     )
 
 }
@@ -93,7 +96,8 @@ internal fun ReceiveRoute(
 @Composable
 fun ReceiveScreen(
     address: String,
-    modifier: Modifier=Modifier
+    modifier: Modifier=Modifier,
+    onBackClick: () -> Unit
 ) {
 
     val showDialog =  remember { mutableStateOf(false) }
@@ -118,7 +122,7 @@ fun ReceiveScreen(
             //Breadcrumb w/ backbutton
         //Breadcrumb w/ backbutton
         TopHeader(
-            onBackClick = { /*TODO*/ },
+            onBackClick = onBackClick,
             title = "Receive",
             icon = {
                 androidx.compose.material3.Icon(
@@ -281,5 +285,5 @@ fun BitmapImage(
 @Composable
 fun PreviewReceiveScreen() {
     val address = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-    ReceiveScreen(address)
+    //ReceiveScreen(address)
 }

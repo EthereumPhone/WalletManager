@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.designsystem.theme.primary
-import com.core.designsystem.theme.primaryVariant
 import com.core.model.TokenAsset
 import com.core.ui.ExpandableListItem
 import com.feature.home.R
@@ -44,22 +43,26 @@ fun AssetExpandableItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(Color.Transparent),
         headline = {
-            Row {
+            Row (
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = title,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 20.sp,
                     color = Color.White
                 )
                 Text(
-                    text = ": ${assets.sumOf { it.balance }}",
-                    fontSize = 20.sp,
-                    color = Color.White
+                    text = " ${assets.sumOf { it.balance }}",
+                    fontSize = 16.sp,
+                    color = Color(0xFF9FA2A5)
                 )
             }
         },
         support = {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            LazyRow(
+                modifier=Modifier.padding(top=4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(assets) { asset ->
                     chainToIconMapper(chainId = asset.chainId, size = 20.dp)
                 }
@@ -69,8 +72,8 @@ fun AssetExpandableItem(
         expandedContent = {
             Column(
                 Modifier
-                    .clip(RoundedCornerShape(0, 0, 5, 5))
-                    .background(primaryVariant)
+                    .background(Color(0xFF3C4958))
+
                 ,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
@@ -89,7 +92,7 @@ private fun IndividualAssetItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(5.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -118,15 +121,13 @@ private fun chainToIconMapper(
             modifier = modifier,
             tint = Color.Unspecified
         )
-        5 -> Box(
-            modifier = modifier
-                .clip(CircleShape)
-                .background(Color.White),
-            contentAlignment = Alignment.Center
-        ) { Text(
-            text = "Gö",
-            fontSize = 14.sp
-        ) }
+        5 ->
+            Icon(
+                painterResource(id = R.drawable.goerli),
+                "Goerli Icon",
+                modifier = modifier,
+                tint = Color.Unspecified
+            )
         10 -> Icon(
             painterResource(id = R.drawable.optimism_logo),
             "Optimism Icon",

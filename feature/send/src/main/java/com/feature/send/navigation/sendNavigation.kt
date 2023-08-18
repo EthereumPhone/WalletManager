@@ -18,8 +18,8 @@ fun NavGraphBuilder.sendScreen(
 ) {
     composable(route = sendRoute) {
         SendRoute(
-            onBackClick= onBackClick,
-            )
+            onBackClick= onBackClick
+        )
         //SendRoute()
     }
 }

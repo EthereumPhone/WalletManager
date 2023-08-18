@@ -21,6 +21,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.WalletTabRow
+import org.ethereumphone.walletsdk.WalletSDK
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
 
 @Composable
 internal fun HomeRoute(
@@ -36,6 +39,12 @@ internal fun HomeRoute(
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
 
+    val web3j = Web3j.build(HttpService("https://rpc.ankr.com/eth"))
+    val wallet = WalletSDK(
+        context = localContext,
+        web3jInstance = web3j
+    )
+
 
     HomeScreen(
         userAddress = userAddress,
@@ -50,7 +59,6 @@ internal fun HomeRoute(
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
         onRefresh = viewModel::refreshData,
-
         modifier = modifier
     )
 }
@@ -69,9 +77,11 @@ internal fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
+
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement=  Arrangement.spacedBy(42.dp),
+        verticalArrangement=  Arrangement.spacedBy(56.dp),
 
         modifier = Modifier
             .fillMaxSize()
