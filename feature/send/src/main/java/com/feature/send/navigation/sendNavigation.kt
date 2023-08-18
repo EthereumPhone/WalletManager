@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.feature.send.SendRoute
 
 const val sendRoute = "send_route"
+const val sendGraphRoutePattern = "send_graph"
 
 fun NavController.navigateToSend() {
     this.navigate(sendRoute)
@@ -16,6 +17,9 @@ fun NavGraphBuilder.sendScreen(
     onBackClick: () -> Unit
 ) {
     composable(route = sendRoute) {
-        SendRoute()
+        SendRoute(
+            onBackClick= onBackClick,
+            )
+        //SendRoute()
     }
 }
