@@ -62,7 +62,7 @@ fun TokenPickerSheet(
                 contentDescription = "search",
                 tint = Color(0xFF9FA2A5)
             ) },
-            placeHolder = {
+            placeholder = {
                 Text(
                     text = "Search tokens",
                     color = Color(0xFF9FA2A5)

@@ -1,4 +1,4 @@
-package com.core.ui
+package com.feature.swap.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,8 +14,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,47 +33,82 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WmTextField(
+fun SwapTextField(
     value: String,
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    placeholder: @Composable (() -> Unit)? = null,
+    placeholder: String="Placeholder",
+    //placeholder: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 
     ) {
 
-    TextField(
-        colors= TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF24303D),
-            unfocusedContainerColor = Color(0xFF24303D),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-        ),
+    BasicTextField(
         value = value,
         onValueChange = onChange,
-        modifier = modifier,
-        leadingIcon = leadingIcon,
-        trailingIcon = trailingIcon,
-        shape = RoundedCornerShape(8.dp),
-        placeholder = placeholder,
-        keyboardOptions = keyboardOptions
-    )
+        singleLine = true,
+        textStyle = TextStyle(
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold
 
+        ),
+        keyboardOptions = keyboardOptions,
+        cursorBrush = SolidColor(Color.White),
+        modifier = modifier
+            .clip(RoundedCornerShape(10))
+            .background(Color(0xFF24303D))
+            .height(64.dp)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp
+            ),
+
+        )
+    { innerTextField ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                if(value == "") {
+                    Text(
+                        text = placeholder,
+                        color = Color(0xFF9FA2A5),
+                        fontSize = 18.sp,
+                        fontWeight= FontWeight.Normal,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                }
+                innerTextField()
+            }
+
+            Spacer(Modifier.width(10.dp))
+            if (trailingIcon != null) {
+                trailingIcon()
+            }
+        }
+    }
 
 }
 
 @Preview
 @Composable
 fun PreviewWmTextField() {
-    var text by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf("bii b") }
 
-    WmTextField(
+    SwapTextField(
         value = text,
         onChange = { text = it },
+        leadingIcon = {
+            //TokenAssetIcon()
+        }
     )
 
 
