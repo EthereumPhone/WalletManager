@@ -148,20 +148,12 @@ internal fun SwapScreen(
         )
         Spacer(modifier = Modifier.weight(1f))
 
-//        WmButton(
-//            onClick = {},//onSwapClicked,
-//        ) {
-//            Text("Swap")
-//        }
         SwipeButton(
             text = "Swipe to swap",
             icon = Icons.Rounded.ArrowForward,
             completeIcon = Icons.Rounded.Check,
-            onSwipe = {
-                onSwapClicked
-            }//,
+            onSwipe = onSwapClicked
         )
-
 
         if(showSheet) {
             ModalBottomSheet(
