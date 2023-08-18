@@ -62,17 +62,17 @@ internal fun SwapRoute(
 
     SwapScreen(
         modifier = modifier,
-//        swapTokenUiState = swapTokenUiState,
-//        exchangeUiState = exchangeUiState,
-//        amountsUiState = amountsUiState,
-//        assetsUiState = assetsUiState,
-//        searchQuery = searchQuery,
-//        onQueryChange = viewModel::updateSearchQuery,
-//        switchTokens = viewModel::switchTokens,
-//        onTextFieldSelected = viewModel::setSelectedTextField,
-//        onAmountChange = viewModel::updateAmount,
-//        onSelectAsset = viewModel::selectAsset,
-//        onSwapClicked = viewModel::swap
+        swapTokenUiState = swapTokenUiState,
+        exchangeUiState = exchangeUiState,
+        amountsUiState = amountsUiState,
+        assetsUiState = assetsUiState,
+        searchQuery = searchQuery,
+        onQueryChange = viewModel::updateSearchQuery,
+        switchTokens = viewModel::switchTokens,
+        onTextFieldSelected = viewModel::setSelectedTextField,
+        onAmountChange = viewModel::updateAmount,
+        onSelectAsset = viewModel::selectAsset,
+        onSwapClicked = viewModel::swap
     )
 }
 
@@ -80,17 +80,17 @@ internal fun SwapRoute(
 @Composable
 internal fun SwapScreen(
     modifier: Modifier=Modifier,
-//    swapTokenUiState: SwapTokenUiState,
-//    exchangeUiState: Double,
-//    amountsUiState: AmountsUiState,
-//    assetsUiState: AssetsUiState,
-//    searchQuery: String,
-//    onQueryChange: (String) -> Unit,
-//    switchTokens: () -> Unit,
-//    onTextFieldSelected: (TextFieldSelected) -> Unit,
-//    onAmountChange: (String) -> Unit,
-//    onSelectAsset: (TokenAsset) -> Unit,
-//    onSwapClicked: () -> Unit
+    swapTokenUiState: SwapTokenUiState,
+    exchangeUiState: Double,
+    amountsUiState: AmountsUiState,
+    assetsUiState: AssetsUiState,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    switchTokens: () -> Unit,
+    onTextFieldSelected: (TextFieldSelected) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onSelectAsset: (TokenAsset) -> Unit,
+    onSwapClicked: () -> Unit
 ) {
 
 
@@ -128,38 +128,17 @@ internal fun SwapScreen(
         )
         Spacer(modifier = modifier.height(12.dp))
 
-        var clicked by remember { mutableStateOf(0) }
-        var amount by remember { mutableStateOf(AmountsUiState("0.123", "0.234")) }
-
         TokenSelector(
-//            amountsUiState = amountsUiState,
-//            assetsUiState = assetsUiState,
-//            switchTokens = switchTokens,
-//            onAmountChange = { selectedTextField, amount ->
-//                onTextFieldSelected(selectedTextField)
-//                onAmountChange(amount)
-//            },
-
-            amountsUiState = amount,
-            assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
-            modifier = Modifier.fillMaxWidth(),
-            switchTokens = {},
-            onPickAssetClicked = {showSheet = true},//{textFieldSelected: TextFieldSelected -> clicked += 1 },
-            onAmountChange = {
-                    textFieldSelected: TextFieldSelected, text: String ->
-                amount = when(textFieldSelected) {
-                    TextFieldSelected.FROM -> {
-                        amount.copy(
-                            fromAmount = text
-                        )
-                    }
-
-                    TextFieldSelected.TO -> {
-                        amount.copy(
-                            toAmount = text
-                        )
-                    }
-                }
+            amountsUiState = amountsUiState,
+            assetsUiState = assetsUiState,
+            switchTokens = switchTokens,
+            onAmountChange = { selectedTextField, amount ->
+                onTextFieldSelected(selectedTextField)
+                onAmountChange(amount)
+            },
+            onPickAssetClicked = {
+                showSheet = true
+                onTextFieldSelected(it)
             }
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -174,8 +153,8 @@ internal fun SwapScreen(
             icon = Icons.Rounded.ArrowForward,
             completeIcon = Icons.Rounded.Check,
             onSwipe = {
-
-            }//onSwapClicked,
+                onSwapClicked
+            }//,
         )
 
 
@@ -194,30 +173,17 @@ internal fun SwapScreen(
                 sheetState = modalSheetState
             ) {
                 TokenPickerSheet(
-//                    swapTokenUiState = swapTokenUiState,
-//                    searchQuery = searchQuery,
-//                    onQueryChange = onQueryChange,
-//                    onSelectAsset = {
-//                        onSelectAsset(it)
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-                    //MockData
-                    SwapTokenUiState.Success(
-                        listOf(
-                            TokenAsset("1", 1, "test", "test test", 123.2),
-                            TokenAsset("2", 5, "test", "test test", 123.2),
-                            TokenAsset("3", 10, "test", "test test", 123.2),
-                            TokenAsset("4", 137, "test", "test test", 123.2),
-                            TokenAsset("5", 42161, "test", "test test", 123.2),
-                        )
-                    ),
-                    "",
-                    {},
-                    {}
+                    swapTokenUiState = swapTokenUiState,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    onSelectAsset = {
+                        onSelectAsset(it)
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    }
                 )
             }
         }
@@ -227,7 +193,7 @@ internal fun SwapScreen(
 @Preview
 @Composable
 fun PreviewSwapScreen() {
-    SwapScreen()
+    //SwapScreen()
 }
 
 
