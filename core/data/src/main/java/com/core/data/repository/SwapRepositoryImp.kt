@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.withContext
 import org.ethosmobile.uniswap_routing_sdk.Token
@@ -30,22 +31,23 @@ class SwapRepositoryImp @Inject constructor(
         amount: Double,
         receiverAddress: String,
         ): Double {
-        val metadataList = tokenMetadataRepository
-            .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress)).single()
+         val quoteResult = tokenMetadataRepository
+            .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress)).map { tokenMetadataList ->
+                if (tokenMetadataList.size < 2) {
+                    throw IllegalArgumentException("Token metadata could not be retrieved")
+                }
+                val inputToken = toToken(tokenMetadataList[0])
+                val outputToken = toToken(tokenMetadataList[1])
 
-        if (metadataList.size < 2) {
-            throw IllegalArgumentException("Token metadata could not be retrieved")
-        }
+                uniswapApi.getQuote(
+                    inputToken,
+                    outputToken,
+                    amount,
+                    receiverAddress
+                )
+            }
 
-        val inputToken = toToken(metadataList[0])
-        val outputToken = toToken(metadataList[1])
-
-        return uniswapApi.getQuote(
-            inputToken,
-            outputToken,
-            amount,
-            receiverAddress
-        )
+        return quoteResult.single()
     }
 
     override suspend fun swap(

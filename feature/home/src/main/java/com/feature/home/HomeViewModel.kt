@@ -21,6 +21,7 @@ import com.core.model.TransferItem
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -76,10 +78,6 @@ class HomeViewModel @Inject constructor(
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
-
-
-
-
 
     fun refreshData() {
         Log.d("refresh Started", "update started")
@@ -135,8 +133,6 @@ fun assetUiState(
                     if(tokens.isEmpty() && networkTokens.isEmpty()) {
                         AssetUiState.Empty
                     } else {
-                        //val groupedTokens = tokens.groupBy { it.symbol }
-
                         AssetUiState.Success(
                             networkTokens.sortedBy { it.chainId } + tokens.sortedBy { it.chainId }
                         )

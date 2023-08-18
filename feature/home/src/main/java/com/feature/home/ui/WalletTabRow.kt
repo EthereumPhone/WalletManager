@@ -144,7 +144,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
             }
         }
         is AssetUiState.Success -> {
-            val groupedAssets = remember { assetsUiState.assets.groupBy { it.symbol } }
+            val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
 
             Box(
                 modifier = Modifier
@@ -162,7 +162,6 @@ private fun AssetList(assetsUiState: AssetUiState) {
                     }
                 }
             }
-
         }
     }
 }
@@ -170,40 +169,31 @@ private fun AssetList(assetsUiState: AssetUiState) {
 @Composable
 private fun TransferList(transfersUiState: TransfersUiState) {
     when (transfersUiState) {
-        is TransfersUiState.Success -> if(transfersUiState.transfers.isNotEmpty()){
-//            Card(
-//                colors = CardDefaults.cardColors(
-//                    containerColor = primaryVariant
-//                ),
-//            ) {
-
-            LazyColumn (
+        is TransfersUiState.Success ->
+            if(transfersUiState.transfers.isNotEmpty()) {
+                LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
-
-                    items(
-                        items = transfersUiState.transfers,
-                        key = { transfer -> transfer.timeStamp }
-                    ) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        TransferItemCard(transfer = it)
+                ) {
+                    transfersUiState.transfers.forEach { transfer ->
+                        item(key = transfer.timeStamp) {
+                            TransferItemCard(transfer = transfer)
+                        }
                     }
                 }
-            //}
-        } else {
-            LazyColumn {
-                item { Box(
-                    modifier = Modifier
-                        .fillParentMaxSize()
-                ) {
-                    Text(
-                        text = "No Transfers found",
-                        color = Color(0xFF9FA2A5),
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                } }
+            } else {
+                LazyColumn {
+                    item { Box(
+                        modifier = Modifier
+                            .fillParentMaxSize()
+                    ) {
+                        Text(
+                            text = "No Transfers found",
+                            color = Color(0xFF9FA2A5),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    } }
+                }
             }
-        }
         is TransfersUiState.Loading -> {  }
     }
 }
@@ -224,7 +214,6 @@ private fun TabRowItem(
         animationSpec = tween(durationMillis = 300),
         label = ""
     )
-
 
     Tab(
         modifier = Modifier
