@@ -50,8 +50,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun SwapRoute(
     modifier: Modifier,
-    viewModel: SwapViewModel = hiltViewModel()
-
+    viewModel: SwapViewModel = hiltViewModel(),
+    onBackClick: () -> Unit
 ) {
     val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
@@ -72,13 +72,15 @@ internal fun SwapRoute(
         onTextFieldSelected = viewModel::setSelectedTextField,
         onAmountChange = viewModel::updateAmount,
         onSelectAsset = viewModel::selectAsset,
-        onSwapClicked = viewModel::swap
+        onSwapClicked = viewModel::swap,
+        onBackClick = onBackClick
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SwapScreen(
+
     modifier: Modifier=Modifier,
     swapTokenUiState: SwapTokenUiState,
     exchangeUiState: Double,
@@ -90,7 +92,9 @@ internal fun SwapScreen(
     onTextFieldSelected: (TextFieldSelected) -> Unit,
     onAmountChange: (String) -> Unit,
     onSelectAsset: (TokenAsset) -> Unit,
-    onSwapClicked: () -> Unit
+    onSwapClicked: () -> Unit,
+    onBackClick: () -> Unit
+
 ) {
 
 
@@ -108,7 +112,8 @@ internal fun SwapScreen(
     ) {
 
         TopHeader(
-            onBackClick = { /*TODO*/ },
+            onBackClick = onBackClick
+                          ,
             title = "Swap",
             icon = {
                 Icon(

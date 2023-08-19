@@ -18,6 +18,8 @@ fun NavGraphBuilder.receiveScreen(
     onBackClick: () -> Unit
 ) {
     composable(route = receiveRoute) {
-        ReceiveRoute()
+        ReceiveRoute(
+            onBackClick = onBackClick
+        )
     }
 }

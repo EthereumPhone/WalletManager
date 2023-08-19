@@ -43,10 +43,13 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -81,6 +84,7 @@ import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
 import com.feature.send.ui.BottomSheet
 import com.feature.send.ui.MockNetworkData
+import com.feature.send.ui.NetworkPickerSheet
 import com.feature.send.ui.SelectedNetworkButton
 import com.feature.send.ui.SwipeButton
 import com.feature.send.ui.TextToggleButton
@@ -117,6 +121,8 @@ fun SendRoute(
 
     SendScreen(
         modifier = Modifier,
+        onBackClick = onBackClick,
+        balances = balances,
         //userAddress = userAddress,
 //        onAddressClick = {
 //            copyTextToClipboard(localContext, userAddress)
@@ -127,10 +133,12 @@ fun SendRoute(
 
 
 }
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit,
+    balances:  AssetUiState
     //userAddress: String,
 
     //onAddressClick: () -> Unit,
@@ -141,6 +149,7 @@ fun SendScreen(
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
     var validSendAddress by remember { mutableStateOf(true) }
+
 
 
     val context = LocalContext.current
@@ -200,9 +209,7 @@ fun SendScreen(
 
     // Declaring Coroutine scope
     val coroutineScope = rememberCoroutineScope()
-    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
-    )
+
 
     val tmp1 = MockNetworkData(
         name = "Mainnet",
@@ -245,27 +252,14 @@ fun SendScreen(
         )
     )
 
-    val amountOfNetwork = 3
-    val sheetheight = 64*amountOfNetwork
+    // Create a BottomSheetScaffoldState
+    var showSheet by remember { mutableStateOf(false) }
+    val modalSheetState = rememberModalBottomSheetState(true)
 
-    var id by remember {mutableStateOf(1) }
 
-    BottomSheetScaffold(
-        scaffoldState = bottomSheetScaffoldState,
-        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        sheetElevation =  8.dp,
-        sheetBackgroundColor = Color(0xFF24303D),
-        sheetContentColor =  Color.White,
-        sheetPeekHeight=  0.dp,
-        sheetContent =  {
-            BottomSheet(
-                value = id,
-                walletInfo=walletInfo
-            )
-        },
 
-    ){
-        Column (
+
+    Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
@@ -274,7 +268,7 @@ fun SendScreen(
         ){
             //Breadcrumb w/ backbutton
             TopHeader(
-                onBackClick = { /*TODO*/ },
+                onBackClick = onBackClick,
                 title = "Send",
                 icon = {
                     Icon(
@@ -439,13 +433,8 @@ fun SendScreen(
                 SelectedNetworkButton(
                             chainId = id,
                             onClickChange = {
-                                coroutineScope.launch {
-                                    if (bottomSheetScaffoldState.bottomSheetState.isCollapsed){
-                                        bottomSheetScaffoldState.bottomSheetState.expand()
-                                    }else{
-                                        bottomSheetScaffoldState.bottomSheetState.collapse()
-                                    }
-                                }
+                                showSheet = true
+
                             }
                         )
 
@@ -468,10 +457,51 @@ fun SendScreen(
 
             }
 
+            if(showSheet) {
+                ModalBottomSheet(
+                    containerColor= Color(0xFF24303D),
+                    contentColor= Color.White,
+
+                    onDismissRequest = {
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    },
+                    sheetState = modalSheetState
+                ) {
+
+                    NetworkPickerSheet(
+                        balancesState = balances,
+                        onSelectAsset = {
+                            //onSelectAsset(it)
+
+                            //hides ModelBottomSheet
+                            coroutineScope.launch {
+                                modalSheetState.hide()
+                            }.invokeOnCompletion {
+                                if(!modalSheetState.isVisible) showSheet = false
+                            }
+                        }
+//                        swapTokenUiState = swapTokenUiState,
+//                        searchQuery = searchQuery,
+//                        onQueryChange = onQueryChange,
+//                        onSelectAsset = {
+//                            onSelectAsset(it)
+//                            coroutineScope.launch {
+//                                modalSheetState.hide()
+//                            }.invokeOnCompletion {
+//                                if(!modalSheetState.isVisible) showSheet = false
+//                            }
+//                        }
+                    )
+                }
+            }
 
 
         }
-    }
+
 
 
 }
@@ -582,5 +612,5 @@ fun qrCodeDialog(
 @Preview
 @Composable
 fun PreviewSendScreen() {
-    SendScreen()
+    //endScreen()
 }
