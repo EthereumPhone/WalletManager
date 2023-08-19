@@ -24,13 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.core.model.UserData
 import java.time.LocalTime
 import java.util.Calendar
 
 @Composable
 internal fun AddressBar(
 
-    userAddress: String,
+    userData: UserData,
     onclick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -50,7 +51,7 @@ internal fun AddressBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = truncateText(userAddress),
+                text = truncateText(userData.walletAddress),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF9FA2A5)
@@ -75,7 +76,7 @@ private fun truncateText(text: String): String {
 @Composable
 fun previewAddressBar() {
     AddressBar(
-        "0x123123123123123123",
+        UserData("0x123123123123123123"),
         { }
     )
 }
