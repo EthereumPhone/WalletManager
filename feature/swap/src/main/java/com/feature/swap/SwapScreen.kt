@@ -3,7 +3,9 @@ package com.feature.swap
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,8 +36,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
@@ -162,6 +166,50 @@ internal fun SwapScreen(
                 onTextFieldSelected(it)
             }
         )
+        Spacer(modifier = modifier.height(24.dp))
+        Column (
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+
+
+        ){
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "Swap fee",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 20.sp,
+                    color= Color(0xFF9FA2A5)
+                )
+                Text(
+                    text = "(~1%)",
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 16.sp,
+                    color= Color(0xFF9FA2A5)
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "0.001 ETH",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    color = Color(0xFF9FA2A5)
+                )
+                Text(
+                    text = "($2)",
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color(0xFF9FA2A5)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         SwipeButton(

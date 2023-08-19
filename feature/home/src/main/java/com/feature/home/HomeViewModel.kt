@@ -78,6 +78,8 @@ class HomeViewModel @Inject constructor(
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
+
+
     fun refreshData() {
         Log.d("refresh Started", "update started")
 

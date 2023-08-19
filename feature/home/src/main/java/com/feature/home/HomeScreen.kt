@@ -7,10 +7,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
@@ -24,8 +26,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TransferItem
@@ -102,8 +107,6 @@ internal fun HomeScreen(
         )
     }
 
-
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.spacedBy(56.dp),
@@ -133,6 +136,26 @@ internal fun HomeScreen(
                 }
             }
         )
+
+//        Column (
+//            modifier = modifier.fillMaxWidth(),
+//            horizontalAlignment = Alignment.CenterHorizontally,
+//        ){
+//            Text(
+//                text = "Balance",
+//                fontWeight = FontWeight.Normal,
+//                fontSize = 16.sp,
+//                color = Color(0xFF9FA2A5)
+//            )
+//            Text(
+//                text = "2.45 ETH",
+//                fontWeight = FontWeight.SemiBold,
+//                color = Color.White,
+//                fontSize = 56.sp,
+//                textAlign = TextAlign.Center
+//
+//            )
+//        }
         FunctionsRow(
             navigateToSwap,
             navigateToSend,

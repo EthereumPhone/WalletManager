@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.core.ui.TextToggleButton
@@ -66,10 +68,13 @@ fun TokenSelector(
             ){
                 Text(
                     text = "From",
+                    fontWeight= FontWeight.SemiBold,
+                    fontSize = 18.sp,
                     color= Color.White
                 )
                 Text(
                     text = "Balance: 12",
+                    fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
@@ -93,6 +98,7 @@ fun TokenSelector(
             ){
                 Text(
                     text = "Dollar Amount",
+                    fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
                 val maxed = remember { mutableStateOf(false) }
@@ -103,6 +109,7 @@ fun TokenSelector(
         }
 
 
+        //Token Switch
         IconButton(
             colors = IconButtonDefaults.iconButtonColors(
                 containerColor= Color.White,
@@ -128,10 +135,13 @@ fun TokenSelector(
             ){
                 Text(
                     text = "To",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp,
                     color= Color.White
                 )
                 Text(
                     text = "Balance: 12",
+                    fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
@@ -154,6 +164,7 @@ fun TokenSelector(
             ){
                 Text(
                     text = "Dollar Amount",
+                    fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
                 val maxed = remember { mutableStateOf(false) }

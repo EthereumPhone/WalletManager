@@ -89,6 +89,14 @@ fun AssetExpandableItem(
 private fun IndividualAssetItem(
     tokenAsset: TokenAsset
 ) {
+   val network= when(tokenAsset.chainId) {
+       1 -> "Mainnet"
+       5 -> "Görli"
+       10 -> "Optimism"
+       137 -> "Polygon"
+       42161 -> "Arbitrum"
+       else -> ""
+   }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -98,11 +106,18 @@ private fun IndividualAssetItem(
     ) {
         chainToIconMapper(tokenAsset.chainId, 25.dp)
         Text(
-            text = tokenAsset.balance.toString(),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
+            text = network,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Normal,
             color = primary
         )
+        Text(
+            text = tokenAsset.balance.toString(),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = primary
+        )
+
     }
 }
 
