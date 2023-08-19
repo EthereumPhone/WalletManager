@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -118,6 +119,7 @@ fun SwipeButton(
             color = Color(0xFF24303D),
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
             modifier = Modifier
                 .align(Alignment.Center)
                 .alpha(if (swipeComplete) 0f else alpha)
@@ -146,7 +148,7 @@ fun SwipeIndicator(
         shape = CircleShape,
         color = Color(0xFF24303D),
         modifier = modifier
-            .size(30.dp)
+            .size(36.dp)
     ) {
         Icon(
             icon,
@@ -159,7 +161,7 @@ fun SwipeIndicator(
 
 object SwipeButtonDefaults {
     val horizontalPadding = 8.dp
-    val verticalPadding = 5.dp
+    val verticalPadding = 8.dp
     val iconContainer = 30.dp
 
     val paddingValues = PaddingValues(

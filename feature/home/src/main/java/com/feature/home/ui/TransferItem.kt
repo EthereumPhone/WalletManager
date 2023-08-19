@@ -10,9 +10,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.NorthEast
+import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -45,7 +50,8 @@ import kotlinx.datetime.Clock
 @Composable
 internal fun TransferItemCard(
     modifier: Modifier = Modifier,
-    transfer: TransferItem
+    transfer: TransferItem,
+    onCardClick: () -> Unit
 ) {
     val headlineText = remember {
         buildString {
@@ -81,30 +87,46 @@ internal fun TransferItemCard(
             contentColor= Color.White,
         ),
         shape = RoundedCornerShape(12.dp),
-        onClick = { /*TODO*/ }
+        onClick = {
+            //Show Dialog w/ more info
+            onCardClick()
+        }
     ) {
         Row (
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = modifier.padding(12.dp)
         ) {
 
+            Box (
+                contentAlignment = Alignment.Center,
+                modifier = modifier
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .size(42.dp)
+            ){
+                Icon(
+                    imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
+                    contentDescription = "Send",
+                    tint = Color(0xFF24303D)
+                )
+            }
             Column (
                 modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ){
                 Row(
                     modifier = modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text(
-                        text = if (transfer.userSent) "Sent to" else "Received from",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Icon(imageVector = Icons.Rounded.MoreHoriz, contentDescription = "More Info")
-                }
+//                    Text(
+//                        text = if (transfer.userSent) "Sent to" else "Received from",
+//                        fontSize = 20.sp,
+//                        fontWeight = FontWeight.SemiBold
+//                    )
+//                    Icon(imageVector = Icons.Rounded.MoreHoriz, contentDescription = "More Info")
+                 }
 
             Row(
                 modifier = modifier.fillMaxWidth(),
@@ -125,11 +147,11 @@ internal fun TransferItemCard(
 
                                 text = transfer.address,
                                 color = Color.White,//(0xFF9FA2A5),
-                                fontSize = 24.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Normal,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
-                                modifier = Modifier.width(175.dp)
+                                modifier = Modifier.width(125.dp)
                             )
                             Text(
                                 text = chainToNetworkName(transfer.chainId),
@@ -141,7 +163,7 @@ internal fun TransferItemCard(
                         ) {
                             Text(
                                 text = transfer.value+" "+transfer.asset,
-                                fontSize = 32.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
@@ -193,15 +215,15 @@ fun TransferItemPreview() {
         timeStamp = Clock.System.now().toString(),
         userSent = true
     )
-    TransferItemCard(
-        transfer = TransferItem(
-            chainId = 5,
-            asset = "ETH",
-            address = "0x123123123123123123123123",
-            value = "2.24",
-            timeStamp = "12:12:00",
-            userSent = true
-        )
-    )
+//    TransferItemCard(
+//        transfer = TransferItem(
+//            chainId = 5,
+//            asset = "ETH",
+//            address = "0x123123123123123123123123",
+//            value = "2.24",
+//            timeStamp = "12:12:00",
+//            userSent = true
+//        )
+//    )
 
 }

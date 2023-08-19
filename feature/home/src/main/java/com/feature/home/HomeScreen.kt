@@ -28,10 +28,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
+import com.feature.home.ui.TransferDialog
 import com.feature.home.ui.WalletTabRow
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
@@ -101,6 +103,7 @@ internal fun HomeScreen(
     }
 
 
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.spacedBy(56.dp),
@@ -137,6 +140,19 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
+            //MockData
+//            TransfersUiState.Success(
+//                listOf(
+//                    TransferItem(
+//                        1,
+//                        "0x123123123123123123123123",
+//                        "ETH",
+//                        "1.5445",
+//                        "12:12:12",
+//                        true
+//                    )
+//                )
+//            ),
             transfersUiState,
             assetsUiState,
             refreshState,

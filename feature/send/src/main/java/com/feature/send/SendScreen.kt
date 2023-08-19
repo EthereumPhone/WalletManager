@@ -80,6 +80,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.ui.InfoDialog
+import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
@@ -87,7 +88,6 @@ import com.feature.send.ui.BottomSheet
 import com.feature.send.ui.MockNetworkData
 import com.feature.send.ui.NetworkPickerSheet
 import com.feature.send.ui.SelectedNetworkButton
-import com.feature.send.ui.SwipeButton
 import com.feature.send.ui.TextToggleButton
 import com.feature.send.ui.ethOSTextField
 import com.journeyapps.barcodescanner.CaptureManager

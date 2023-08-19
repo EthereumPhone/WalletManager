@@ -71,8 +71,11 @@ internal fun WalletTabRow(
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    //showDialog: : () -> Unit
 ) {
+
+
     val tabItems = remember { TabItems.values().toList() }
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -168,15 +171,55 @@ private fun AssetList(assetsUiState: AssetUiState) {
 
 @Composable
 private fun TransferList(transfersUiState: TransfersUiState) {
+
+    val showTransferInfoDialog =  remember { mutableStateOf(false) }
+
+    val chainId =  remember { mutableStateOf(1) }
+    val asset =  remember { mutableStateOf("ETH") }
+    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
+    val value =  remember { mutableStateOf("2.234") }
+    val timeStamp =  remember { mutableStateOf("12:12:00") }
+    val userSent =  remember { mutableStateOf(true) }
+
+    if(showTransferInfoDialog.value){
+        TransferDialog(
+            setShowDialog = {
+                showTransferInfoDialog.value = false
+            },
+            //title = "Transfer",
+            address = address.value ,
+            chainId = chainId.value,
+                    amount = value.value,
+                   timeStamp = timeStamp.value,
+                    asset = asset.value ,
+        )
+    }
+
+
     when (transfersUiState) {
         is TransfersUiState.Success ->
             if(transfersUiState.transfers.isNotEmpty()) {
+
+
+
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     transfersUiState.transfers.forEach { transfer ->
                         item(key = transfer.timeStamp) {
-                            TransferItemCard(transfer = transfer)
+                            //Spacer(modifier = Modifier.height(12.dp))
+                            //transfer.
+                            address.value = transfer.address
+                            chainId.value = transfer.chainId
+                            value.value = transfer.value
+                            timeStamp.value = transfer.timeStamp
+                            asset.value = transfer.asset
+                            TransferItemCard(
+                                transfer = transfer,
+                                onCardClick = {
+                                    showTransferInfoDialog.value = true
+                                }
+                            )
                         }
                     }
                 }
@@ -291,14 +334,14 @@ fun PreviewEmptyWalletTabRow() {
         WalletTabRow(
             TransfersUiState.Success(
                 listOf(
-//                    TransferItem(
-//                        1,
-//                        "0x123123123123123123123123",
-//                        "ETH",
-//                        "1.5445",
-//                        "12:12:12",
-//                        true
-//                    )
+                    TransferItem(
+                        1,
+                        "0x123123123123123123123123",
+                        "ETH",
+                        "1.5445",
+                        "12:12:12",
+                        true
+                    )
                 )
             ),
             AssetUiState.Empty,

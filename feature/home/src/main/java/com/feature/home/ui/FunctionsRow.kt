@@ -8,6 +8,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.NorthEast
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,19 +28,19 @@ internal fun FunctionsRow(
     ) {
         WmIconButton(
             onClick = { navigateToSend() },
-            icon = Icons.Filled.NorthEast,
+            icon = Icons.Rounded.NorthEast,
             contentDescription = "Send"
         )
 
         WmIconButton(
             onClick = { navigateToReceive() },
-            icon = Icons.Filled.ArrowDownward,
+            icon = Icons.Rounded.ArrowDownward,
             contentDescription = "Receive"
         )
 
         WmIconButton(
             onClick = { navigateToSwap() },
-            icon = Icons.Filled.SwapVert,
+            icon = Icons.Rounded.SwapVert,
             contentDescription = "Swap"
         )
     }
