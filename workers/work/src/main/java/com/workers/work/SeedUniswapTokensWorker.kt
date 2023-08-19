@@ -35,27 +35,31 @@ class SeedUniswapTokensWorker @AssistedInject constructor(
 
 ) : CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
         try {
-            val listType = Types.newParameterizedType(List::class.java, UniswapToken::class.java)
-            val adapter: JsonAdapter<List<UniswapToken>> = moshi.adapter(listType)
+            val tokens = withContext(Dispatchers.Default) {
+                val listType = Types.newParameterizedType(List::class.java, UniswapToken::class.java)
+                val adapter: JsonAdapter<List<UniswapToken>> = moshi.adapter(listType)
 
-            val inputStream = appContext.resources.openRawResource(R.raw.uniswap_token_list)
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
-            val tokens: List<UniswapToken> = adapter.fromJson(jsonString) ?: emptyList()
+                val inputStream = appContext.resources.openRawResource(R.raw.uniswap_token_list)
+                val jsonString = inputStream.bufferedReader().use { it.readText() }
+                adapter.fromJson(jsonString) ?: emptyList()
+            }
 
-            tokenMetadataRepository.insertTokenMetadata(
-                tokens.map {
-                    TokenMetadataEntity(
-                        contractAddress = it.address,
-                        decimals = it.decimals,
-                        name = it.name,
-                        symbol = it.symbol,
-                        logo = it.logoURI,
-                        chainId = it.chainId
-                    )
-                }
-            )
+            withContext(Dispatchers.IO) {
+                tokenMetadataRepository.insertTokenMetadata(
+                    tokens.map {
+                        TokenMetadataEntity(
+                            contractAddress = it.address,
+                            decimals = it.decimals,
+                            name = it.name,
+                            symbol = it.symbol,
+                            logo = it.logoURI,
+                            chainId = it.chainId
+                        )
+                    }
+                )
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure()

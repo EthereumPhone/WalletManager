@@ -1,5 +1,6 @@
 package com.feature.swap
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,13 +11,17 @@ import com.core.model.TokenAsset
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,14 +38,7 @@ class SwapViewModel @Inject constructor(
 
     ): ViewModel() {
 
-    private val userAddress: StateFlow<String> =
-        userDataRepository.userData.map {
-            it.walletAddress
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
+    private val userData = userDataRepository.userData
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
@@ -69,12 +67,18 @@ class SwapViewModel @Inject constructor(
             val toAsset = currentState.toAsset
 
             if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
-                swapRepository.getQuote(
+                val address = userData.first().walletAddress
+
+                val test = swapRepository.getQuote(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     1.0,
-                    userAddress.value
+                    address
                 )
+                Log.d("getQuote", test.toString())
+                test
+
+
             } else {
                 0.0
             }
@@ -172,7 +176,6 @@ class SwapViewModel @Inject constructor(
     }
 
     fun swap() {
-
         viewModelScope.launch {
             val (fromAsset, toAsset) = assetsUiState.value
             val fromAmount = amountsUiState.value.fromAmount

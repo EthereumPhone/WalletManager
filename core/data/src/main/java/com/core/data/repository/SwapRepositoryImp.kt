@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.util.Log
 import com.core.data.remote.UniswapApi
 import com.core.model.TokenMetadata
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.withContext
@@ -31,46 +33,50 @@ class SwapRepositoryImp @Inject constructor(
         amount: Double,
         receiverAddress: String,
         ): Double {
-         val quoteResult = tokenMetadataRepository
-            .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress)).map { tokenMetadataList ->
-                if (tokenMetadataList.size < 2) {
-                    throw IllegalArgumentException("Token metadata could not be retrieved")
+        val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
+            .first()
+
+
+        val (inputToken, outputToken) = when {
+            tokenMetadataList.size < 2 -> {
+                when {
+                    inputTokenAddress == "1" -> UniswapRoutingSDK.ETH_MAINNET to toToken(tokenMetadataList[0])
+                    outputTokenAddress == "1" -> toToken(tokenMetadataList[0]) to UniswapRoutingSDK.ETH_MAINNET
+                    else -> throw IllegalArgumentException("Token metadata could not be retrieved")
                 }
-                val inputToken = toToken(tokenMetadataList[0])
-                val outputToken = toToken(tokenMetadataList[1])
-
-                uniswapApi.getQuote(
-                    inputToken,
-                    outputToken,
-                    amount,
-                    receiverAddress
-                )
             }
+            else -> toToken(tokenMetadataList[0]) to toToken(tokenMetadataList[1])
+        }
 
-        return quoteResult.single()
+        return withContext(Dispatchers.IO) {
+            uniswapApi.getQuote(
+                inputToken,
+                outputToken,
+                amount,
+                receiverAddress
+            )
+        }
     }
 
     override suspend fun swap(
         inputTokenAddress: String,
         outputTokenAddress: String,
         amount: Double
-    ): String {
-        val metadataList = tokenMetadataRepository
-            .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress)).single()
+    ): String = withContext(Dispatchers.IO) {
+        val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
+            .single()
 
-        if (metadataList.size < 2) {
-            throw IllegalArgumentException("Token metadata could not be retrieved")
+        val (inputToken, outputToken) = when {
+            tokenMetadataList.size < 2 -> {
+                when {
+                    inputTokenAddress == "1" -> UniswapRoutingSDK.ETH_MAINNET to toToken(tokenMetadataList[0])
+                    outputTokenAddress == "1" -> toToken(tokenMetadataList[0]) to UniswapRoutingSDK.ETH_MAINNET
+                    else -> throw IllegalArgumentException("Token metadata could not be retrieved")
+                }
+            }
+            else -> toToken(tokenMetadataList[0]) to toToken(tokenMetadataList[1])
         }
-
-        val inputToken = toToken(metadataList[0])
-        val outputToken = toToken(metadataList[1])
-
-        return withContext(Dispatchers.IO) {
-            val inputAddress = if (inputToken.address == "1") UniswapRoutingSDK.ETH_MAINNET else inputToken
-            val outputAddress = if (outputToken.address == "1") UniswapRoutingSDK.ETH_MAINNET else outputToken
-
-            uniswapApi.swap(inputAddress, outputAddress, amount)
-        }
+        uniswapApi.swap(inputToken, outputToken, amount)
     }
 }
 

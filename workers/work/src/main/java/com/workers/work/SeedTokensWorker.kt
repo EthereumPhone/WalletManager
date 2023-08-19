@@ -17,11 +17,14 @@ import com.core.domain.UpdateTokensUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 import java.io.File
@@ -46,8 +49,10 @@ class SeedTokensWorker @AssistedInject constructor(
         Log.d("Worker Debug", address.walletAddress)
 
         try {
-            transferRepository.refreshTransfers(address.walletAddress)
-            updateTokenUseCase(address.walletAddress)
+            coroutineScope {
+                launch  { transferRepository.refreshTransfers(address.walletAddress) }
+                launch { updateTokenUseCase(address.walletAddress) }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure()

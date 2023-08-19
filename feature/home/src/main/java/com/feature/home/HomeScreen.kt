@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.UserData
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.WalletTabRow
@@ -30,7 +32,7 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
+    val userData by viewModel.userData.collectAsStateWithLifecycle()
     val transfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -38,13 +40,13 @@ internal fun HomeRoute(
 
 
     HomeScreen(
-        userAddress = userAddress,
+        userData = userData,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         onAddressClick = {
             // had to do it here because I need the local context.
-            copyTextToClipboard(localContext, userAddress)
+            copyTextToClipboard(localContext, userData.walletAddress)
         },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
@@ -57,7 +59,7 @@ internal fun HomeRoute(
 
 @Composable
 internal fun HomeScreen(
-    userAddress: String,
+    userData: UserData,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
@@ -79,7 +81,7 @@ internal fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
         AddressBar(
-            userAddress,
+            userData,
             onAddressClick
         )
         FunctionsRow(
@@ -107,7 +109,7 @@ private fun copyTextToClipboard(context: Context, text: String) {
 @Composable
 fun PreviewHomeScreen() {
     HomeScreen(
-        userAddress = "0x123123123123123123123123",
+        userData = UserData("0x123...123"),
         transfersUiState = TransfersUiState.Loading,
         assetsUiState = AssetUiState.Loading,
         refreshState = false,

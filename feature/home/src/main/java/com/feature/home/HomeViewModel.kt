@@ -18,6 +18,7 @@ import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.Transfer
 import com.core.model.TransferItem
+import com.core.model.UserData
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,15 +48,13 @@ class HomeViewModel @Inject constructor(
     private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
-    val userAddress: StateFlow<String> =
-        userDataRepository.userData.map {
-            it.walletAddress
-        }.stateIn(
+    val userData = userDataRepository.userData
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
+            initialValue = UserData("")
 
+    )
 
     val tokenAssetState: StateFlow<AssetUiState> =
         assetUiState(
@@ -86,7 +85,7 @@ class HomeViewModel @Inject constructor(
             _refreshState.value = true
 
             try {
-                val address = userAddress.first()
+                val address = userData.first().walletAddress
                 transferRepository.refreshTransfers(address)
                 updateTokensUseCase(address)
             } catch (e: Exception) {
