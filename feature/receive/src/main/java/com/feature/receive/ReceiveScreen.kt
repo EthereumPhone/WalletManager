@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.DismissValue
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -100,11 +101,11 @@ fun ReceiveScreen(
     onBackClick: () -> Unit
 ) {
 
-    val showDialog =  remember { mutableStateOf(false) }
-    if(showDialog.value){
+    val showInfoDialog =  remember { mutableStateOf(false) }
+    if(showInfoDialog.value){
         InfoDialog(
             setShowDialog = {
-                showDialog.value = false
+                showInfoDialog.value = false
             },
             title = "Info",
             text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
@@ -117,7 +118,7 @@ fun ReceiveScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color(0xFF1E2730))
-                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
             //Breadcrumb w/ backbutton
         //Breadcrumb w/ backbutton
@@ -125,19 +126,20 @@ fun ReceiveScreen(
             onBackClick = onBackClick,
             title = "Receive",
             icon = {
-                androidx.compose.material3.Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Information",
-                    tint = Color(0xFF9FA2A5),
-                    modifier = modifier
-                        .clip(CircleShape)
-                        //.background(Color.Red)
-                        .clickable {
-                            //opens InfoDialog
-                            showDialog.value = true
-                        }
-
-                )
+                IconButton(
+                    onClick = {
+                        //opens InfoDialog
+                        showInfoDialog.value = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Information",
+                        tint = Color(0xFF9FA2A5),
+                        modifier = modifier
+                            .clip(CircleShape)
+                    )
+                }
             }
         )
 

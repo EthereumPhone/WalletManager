@@ -79,6 +79,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.AddressBar
@@ -96,6 +97,12 @@ import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.HttpEthereumRPC
+import org.web3j.crypto.WalletUtils
+import org.web3j.crypto.WalletUtils.isValidAddress
 
 
 @Composable
@@ -207,50 +214,19 @@ fun SendScreen(
             Log.i("HomePage","HomePage : $it")
         }
 
+    val showInfoDialog =  remember { mutableStateOf(false) }
+    if(showInfoDialog.value){
+        InfoDialog(
+            setShowDialog = {
+                showInfoDialog.value = false
+            },
+            title = "Info",
+            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+        )
+    }
+
     // Declaring Coroutine scope
     val coroutineScope = rememberCoroutineScope()
-
-
-    val tmp1 = MockNetworkData(
-        name = "Mainnet",
-        chainId = 1,
-        ethAmount= 0.45,
-        fiatAmount= 843.34
-    )
-
-    //MockUp Info
-    val walletInfo = listOf<MockNetworkData>(
-        MockNetworkData(
-            name = "Mainnet",
-            chainId = 1,
-            ethAmount= 0.45,
-            fiatAmount= 843.34
-        ),
-        MockNetworkData(
-            name = "Goerli",
-            chainId = 2,
-            ethAmount= 132.76,
-            fiatAmount= 170543.34
-        ),
-        MockNetworkData(
-            name = "Polygon",
-            chainId = 3,
-            ethAmount= 1.3,
-            fiatAmount= 1893.34
-        ),
-        MockNetworkData(
-            name = "Optimism",
-            chainId = 4,
-            ethAmount= 10.24,
-            fiatAmount= 18843.34
-        ),
-        MockNetworkData(
-            name = "Arbitrum",
-            chainId = 5,
-            ethAmount= 0.0001,
-            fiatAmount= 1.07
-        )
-    )
 
     // Create a BottomSheetScaffoldState
     var showSheet by remember { mutableStateOf(false) }
@@ -264,26 +240,28 @@ fun SendScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF1E2730))
-                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
             //Breadcrumb w/ backbutton
             TopHeader(
                 onBackClick = onBackClick,
                 title = "Send",
                 icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Information",
-                        tint = Color(0xFF9FA2A5),
-                        modifier = modifier
-                            .clip(CircleShape)
-                            //.background(Color.Red)
-                            .clickable {
-                                //opens InfoDialog
-                                showDialog.value = true
-                            }
+                    IconButton(
+                        onClick = {
+                            //opens InfoDialog
+                            showInfoDialog.value = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "Information",
+                            tint = Color(0xFF9FA2A5),
+                            modifier = modifier
+                                .clip(CircleShape)
 
-                    )
+                        )
+                    }
                 }
             )
             Spacer(modifier = modifier.height(12.dp))
@@ -296,15 +274,11 @@ fun SendScreen(
             ){
                 //AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
 
-                //Input Section
-                Column (
 
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ){
 
+                    //Textfield
                     Row(
                         verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ){
 
                         ethOSTextField(
@@ -312,22 +286,22 @@ fun SendScreen(
                             label = "Address or ENS",
                             onTextChanged = {
 
-//                    address = it.lowercase()
-//                    if (address.endsWith(".eth")) {
-//                        if (ENSName(address).isPotentialENSDomain()) {
-//                            // It is ENS
-//                            CompletableFuture.runAsync {
-//                                val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-//                                val ensAddr = ens.getAddress(ENSName(address))
-//                                address = ensAddr?.hex.toString()
-//                            }
-//                        } else {
-//                            if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
-//                        }
-//                        if(address.isEmpty()) {
-//                            validSendAddress = true
-//                        }
-//                    }
+                                address = it.lowercase()
+                                if (address.endsWith(".eth")) {
+                                    if (ENSName(address).isPotentialENSDomain()) {
+                                        // It is ENS
+                                        CompletableFuture.runAsync {
+                                            val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+                                            val ensAddr = ens.getAddress(ENSName(address))
+                                            address = ensAddr?.hex.toString()
+                                        }
+                                    } else {
+                                        if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
+                                    }
+                                    if(address.isEmpty()) {
+                                        validSendAddress = true
+                                    }
+                                }
                             },
                             trailingIcon = {
                                 IconButton(
@@ -348,98 +322,111 @@ fun SendScreen(
                                 .weight(1f)
                                 .onFocusChanged {
 
-//                    if (ENSName(address).isPotentialENSDomain()) {
-//                        // It is ENS
-//                        CompletableFuture.runAsync {
-//                            val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-//                            val ensAddr = ens.getAddress(ENSName(address))
-//                            address = ensAddr?.hex.toString()
-//                        }
-//                    } else {
-//                        if (address.isNotEmpty()) validSendAddress = isValidAddress(address) }
-//                    if(address.isEmpty()) validSendAddress = true
+                                    if (ENSName(address).isPotentialENSDomain()) {
+                                        // It is ENS
+                                        CompletableFuture.runAsync {
+                                            val ens =
+                                                ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+                                            val ensAddr = ens.getAddress(ENSName(address))
+                                            address = ensAddr?.hex.toString()
+                                        }
+                                    } else {
+                                        if (address.isNotEmpty()) validSendAddress =
+                                            isValidAddress(address)
+                                    }
+                                    if (address.isEmpty()) validSendAddress = true
 
                                 }
                         )
                     }
+                    Spacer(modifier = Modifier
+                        .height(16.dp)
+                    )
 
-                }
-
-                //Amount Section
-
-                        //Max Amount Section
+                        //Amount Section
                         Column (
+                            modifier = modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            val maxed = remember { mutableStateOf(false) }
-                            TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                                maxed.value = !maxed.value
-                            })
-                            Text(
-                                text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5)
-                            )
-                        }
 
-                        //Currency Section
-                         Column (
-                             modifier = modifier.fillMaxWidth(),
-                             horizontalAlignment = Alignment.CenterHorizontally
-                         ){
+                            //Max Amount Section
+                            Column (
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                val maxed = remember { mutableStateOf(false) }
+                                TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
+                                    maxed.value = !maxed.value
+                                })
+                                Text(
+                                    text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF9FA2A5)
+                                )
+                            }
 
-                             Text(
-                                 text = //"0.0 ETH",
-                                 if (value == "") {
-                                     "0.0 ETH"
-                                 } else {
-                                     // If value has more than 7 decimals, show the string with less decimals
-                                     if (value.contains(".")) {
-                                         val decimals = value.split(".")[1]
-                                         if (decimals.length > 5) {
-                                             value.split(".")[0] + "." + decimals.substring(0, 5)
-                                         } else {
-                                             value
-                                         }
-                                     } else {
-                                         value
-                                     } + " ETH"
-                                 },
+                            //Amount
+                            Column (horizontalAlignment = Alignment.CenterHorizontally){
+                                Text(
+                                    text = //"0.0 ETH",
+                                    if (value == "") {
+                                        "0.0 ETH"
+                                    } else {
+                                        // If value has more than 7 decimals, show the string with less decimals
+                                        if (value.contains(".")) {
+                                            val decimals = value.split(".")[1]
+                                            if (decimals.length > 5) {
+                                                value.split(".")[0] + "." + decimals.substring(0, 5)
+                                            } else {
+                                                value
+                                            }
+                                        } else {
+                                            value
+                                        } + " ETH"
+                                    },
 
-                                 color = if (value == "") {
-                                     Color.White
-                                 } else {
-                                     Color.White
-                                     //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
-                                 },//"${walletAmount.ethAmount} ETH",
-                                 fontWeight = FontWeight.SemiBold,
-                                 fontSize = amountfontSize,
-                                 textAlign = TextAlign.Center
-
-
-                             )
-                             Text(
-                                 text = "$ 18700.27",//"${walletAmount.ethAmount} ETH",
-                                 fontWeight = FontWeight.Normal,
-                                 fontSize = 16.sp,
-                                 color = Color(0xFF9FA2A5)
-                             )
-                         }
-
-                        //Network
-                        var id by remember {mutableStateOf(1) }
-                //different network -> different color
-                SelectedNetworkButton(
-                            chainId = id,
-                            onClickChange = {
-                                showSheet = true
+                                    color = if (value == "") {
+                                        Color.White
+                                    } else {
+                                        Color.White
+                                        //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
+                                    },//"${walletAmount.ethAmount} ETH",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = amountfontSize,
+                                    textAlign = TextAlign.Center
+                                )
+                                //max amount
+                                Text(
+                                    text = "$ 18700.27",//"${walletAmount.ethAmount} ETH",
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF9FA2A5)
+                                )
 
                             }
-                        )
 
+                            //select network
+                            var id by remember {mutableStateOf(1) }
+                            //different network -> different color
+                            SelectedNetworkButton(
+                                chainId = id,
+                                onClickChange = {
+                                    showSheet = true
+
+                                }
+                            )
+
+
+
+                        }
+
+
+                Spacer(modifier = Modifier
+                    .height(16.dp)
+                )
                 //Input Section
-                Column (){
+                Column (horizontalAlignment = Alignment.CenterHorizontally){
                         NumPad(
                             value = value,
                             modifier = Modifier,
@@ -447,7 +434,7 @@ fun SendScreen(
                                 value = it
                             }
                         )
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         SwipeButton(
                             text = "Swipe to send",
                             icon = Icons.Rounded.ArrowForward,
@@ -484,17 +471,6 @@ fun SendScreen(
                                 if(!modalSheetState.isVisible) showSheet = false
                             }
                         }
-//                        swapTokenUiState = swapTokenUiState,
-//                        searchQuery = searchQuery,
-//                        onQueryChange = onQueryChange,
-//                        onSelectAsset = {
-//                            onSelectAsset(it)
-//                            coroutineScope.launch {
-//                                modalSheetState.hide()
-//                            }.invokeOnCompletion {
-//                                if(!modalSheetState.isVisible) showSheet = false
-//                            }
-//                        }
                     )
                 }
             }
@@ -567,6 +543,15 @@ fun qrCodeDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "",
+                            tint = Color.Transparent,
+                            modifier = Modifier
+//                                .width(30.dp)
+//                                .height(30.dp)
+
+                        )
                         Text(
                             text = "Scan QR Code",
                             style = TextStyle(
@@ -575,15 +560,20 @@ fun qrCodeDialog(
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "",
-                            tint = Color.White,
+                        IconButton(
                             modifier = Modifier
                                 .width(30.dp)
-                                .height(30.dp)
-                                .clickable { setShowDialog() }
-                        )
+                                .height(30.dp),
+                            onClick = {
+                                setShowDialog()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Close",
+                                tint = Color(0xFF9FA2A5),
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(36.dp))
 

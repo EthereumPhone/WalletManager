@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
 import com.core.ui.WmButton
@@ -103,12 +105,24 @@ internal fun SwapScreen(
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
 
+    //Info
+    val showInfoDialog =  remember { mutableStateOf(false) }
+    if(showInfoDialog.value){
+        InfoDialog(
+            setShowDialog = {
+                showInfoDialog.value = false
+            },
+            title = "Info",
+            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+        )
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1E2730))
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
 
         TopHeader(
@@ -116,19 +130,21 @@ internal fun SwapScreen(
                           ,
             title = "Swap",
             icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Information",
-                    tint = Color(0xFF9FA2A5),
-                    modifier = modifier
-                        .clip(CircleShape)
-                        //.background(Color.Red)
-                        .clickable {
-                            //opens InfoDialog
-                            //showDialog.value = true
-                        }
+                IconButton(
+                    onClick = {
+                        //opens InfoDialog
+                        showInfoDialog.value = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Information",
+                        tint = Color(0xFF9FA2A5),
+                        modifier = modifier
+                            .clip(CircleShape)
 
-                )
+                    )
+                }
             }
         )
         Spacer(modifier = modifier.height(12.dp))

@@ -1,5 +1,6 @@
 package com.core.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
@@ -44,15 +46,19 @@ fun TopHeader(
                 .width(100.dp)
         ) {
 
-
-            Icon(
-                imageVector = Icons.Rounded.ArrowBackIosNew,
-                contentDescription = "Go back",
-                tint = Color.White,
-                modifier = modifier.clickable {
+            IconButton(
+                onClick = {
                     onBackClick()
                 }
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBackIosNew,
+                    contentDescription = "Go back",
+                    tint = Color.White
+                )
+            }
+
+
 //                    Text(
 //                        text = "Home",
 //                        color = Color.White,
@@ -66,7 +72,7 @@ fun TopHeader(
             modifier = modifier.weight(1f),
             textAlign = TextAlign.Center,
             text = title,
-            fontSize = 18.sp,
+            fontSize = 20.sp,
             color = Color.White,
             fontWeight = FontWeight.SemiBold
         )
