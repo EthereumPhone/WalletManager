@@ -38,7 +38,7 @@ fun WmIconButton(
             imageVector = icon,
             modifier = Modifier.size(36.dp),
             contentDescription = contentDescription,
-            tint = background
+            tint = Color(0xFF24303D)//background
         )
     }
     if (contentDescription != null) {
@@ -46,6 +46,7 @@ fun WmIconButton(
             text = contentDescription,
             color = Color.White,
             modifier = Modifier.padding(top = 4.dp),
+            lineHeight = 14.08.sp,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )

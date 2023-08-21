@@ -147,7 +147,7 @@ internal fun TransferItemCard(
 
                                 text = transfer.address,
                                 color = Color.White,//(0xFF9FA2A5),
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Normal,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
@@ -163,7 +163,7 @@ internal fun TransferItemCard(
                         ) {
                             Text(
                                 text = transfer.value+" "+transfer.asset,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(

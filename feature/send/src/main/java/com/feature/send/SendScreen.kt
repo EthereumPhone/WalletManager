@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -147,7 +148,6 @@ fun SendScreen(
     onBackClick: () -> Unit,
     balances:  AssetUiState
     //userAddress: String,
-
     //onAddressClick: () -> Unit,
 ) {
 
@@ -310,7 +310,7 @@ fun SendScreen(
                                     ) {
 
                                     Icon(
-                                        imageVector = Icons.Default.QrCode,
+                                        imageVector = Icons.Rounded.QrCode,
                                         contentDescription = "Address by QR",
                                         tint = if(validSendAddress) Color.White else Color.Red,
                                         modifier = Modifier.size(32.dp)
@@ -342,6 +342,7 @@ fun SendScreen(
                     Spacer(modifier = Modifier
                         .height(16.dp)
                     )
+
 
                         //Amount Section
                         Column (
