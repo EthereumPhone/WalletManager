@@ -80,6 +80,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.designsystem.theme.placeHolder
+import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
@@ -127,11 +129,13 @@ fun SendRoute(
 //        }
 //    }
 
+    val tmp =  userAddress
     SendScreen(
         modifier = Modifier,
         onBackClick = onBackClick,
         balances = balances,
-        //userAddress = userAddress,
+
+        userAddress = userAddress,
 //        onAddressClick = {
 //            copyTextToClipboard(localContext, userAddress)
 //        }
@@ -146,8 +150,8 @@ fun SendRoute(
 fun SendScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    balances:  AssetUiState
-    //userAddress: String,
+    balances:  AssetUiState,
+    userAddress: String,
     //onAddressClick: () -> Unit,
 ) {
 
@@ -156,6 +160,18 @@ fun SendScreen(
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
     var validSendAddress by remember { mutableStateOf(true) }
+
+
+
+    var maxAmount by remember { mutableStateOf(1.0) }
+    var prevAmount by remember { mutableStateOf(value) }
+    //var amountColor by remember { mutableStateOf(Color.White) }
+    var network by remember { mutableStateOf(1) }
+
+
+
+
+
 
 
 
@@ -231,6 +247,8 @@ fun SendScreen(
     // Create a BottomSheetScaffoldState
     var showSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
+
+    //Values
 
 
 
@@ -344,6 +362,7 @@ fun SendScreen(
                     )
 
 
+
                         //Amount Section
                         Column (
                             modifier = modifier.fillMaxWidth(),
@@ -358,9 +377,17 @@ fun SendScreen(
                                 val maxed = remember { mutableStateOf(false) }
                                 TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
                                     maxed.value = !maxed.value
+
+                                    //If max
+                                    if(maxed.value){
+                                        prevAmount = value // save previous amount
+                                        value = maxAmount.toString() // replace maxAmount with current value
+                                    }else{//if switches bck
+                                        value = prevAmount // replace value w/ maxAmount w/ prevAmount
+                                    }
                                 })
                                 Text(
-                                    text = "Available: 10.13235 ETH",//"${walletAmount.ethAmount} ETH",
+                                    text = "Available: ${maxAmount} "+ if(network == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
                                     fontWeight = FontWeight.Normal,
                                     fontSize = 16.sp,
                                     color = Color(0xFF9FA2A5)
@@ -372,7 +399,7 @@ fun SendScreen(
                                 Text(
                                     text = //"0.0 ETH",
                                     if (value == "") {
-                                        "0.0 ETH"
+                                        "0.0 "+ if(network == 137) "MATIC" else "ETH"
                                     } else {
                                         // If value has more than 7 decimals, show the string with less decimals
                                         if (value.contains(".")) {
@@ -384,13 +411,18 @@ fun SendScreen(
                                             }
                                         } else {
                                             value
-                                        } + " ETH"
+                                        } + " " + if(network == 137) "MATIC" else "ETH"
                                     },
+                                    //check if value over maxamount
 
                                     color = if (value == "") {
                                         Color.White
                                     } else {
-                                        Color.White
+                                        if(value.toDouble() >= maxAmount){
+                                            Color.Red
+                                        }else{
+                                            Color.White
+                                        }
                                         //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
                                     },//"${walletAmount.ethAmount} ETH",
                                     fontWeight = FontWeight.SemiBold,
@@ -408,14 +440,15 @@ fun SendScreen(
                             }
 
                             //select network
-                            var id by remember {mutableStateOf(1) }
+                            //var id by remember {mutableStateOf(1) }
                             //different network -> different color
                             SelectedNetworkButton(
-                                chainId = id,
+                                chainId = network,
                                 onClickChange = {
                                     showSheet = true
 
-                                }
+                                },
+
                             )
 
 
@@ -433,6 +466,7 @@ fun SendScreen(
                             modifier = Modifier,
                             onValueChange = {
                                 value = it
+
                             }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -463,7 +497,20 @@ fun SendScreen(
                     NetworkPickerSheet(
                         balancesState = balances,
                         onSelectAsset = {
-                            //onSelectAsset(it)
+
+                            maxAmount = it.balance
+
+//                            network = when(it.chainId) {
+//                                1 -> "Mainnet"
+//                                5 -> "Görli"
+//                                10 -> "Optimism"
+//                                137 -> "Polygon"
+//                                42161 -> "Arbitrum"
+//                                else -> ""
+//                            }
+
+                            network =  it.chainId
+
 
                             //hides ModelBottomSheet
                             coroutineScope.launch {
@@ -483,10 +530,28 @@ fun SendScreen(
 
 }
 
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
+
+
+private fun getBalance(assetsUiState: AssetUiState, chainid: Int): Double {
+    lateinit var networkinfo: TokenAsset
+    when (assetsUiState) {
+        is AssetUiState.Loading -> {}
+        is AssetUiState.Error -> {}
+        is AssetUiState.Empty -> {}
+        is AssetUiState.Success -> {
+            val groupedAssets = assetsUiState.assets.groupBy { it.chainId }
+//            groupedAssets.forEach { (assetId, assetList) ->
+//
+//            }
+
+            val tmp = groupedAssets[chainid]
+            if (tmp != null) {
+                networkinfo = tmp.first()
+            }
+        }
+    }
+
+    return networkinfo.balance
 }
 
 @Composable

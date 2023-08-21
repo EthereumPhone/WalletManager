@@ -69,7 +69,7 @@ fun NetworkPickerSheet(
                                 },
                                 trailingContent = {
                                     Text(
-                                        text = tokenAsset.balance.toString(),
+                                        text = tokenAsset.balance.toString() + " " + if(tokenAsset.chainId == 137) "MATIC" else "ETH",
                                         fontSize = 18.sp,
                                         color = Color.White,
                                         fontWeight = FontWeight.Medium

@@ -53,21 +53,20 @@ fun SelectedNetworkButton(
 ) {
 
     var color = when(chainId){
-        3 -> Color(0xFF442fb2)//Polygon
-        4 -> Color(0xFFc82e31)//Optimum
-        5 -> Color(0xFF2b88b8)//Arbitrum
+        137 -> Color(0xFF442fb2)//Polygon
+        10 -> Color(0xFFc82e31)//Optimum
+        42161 -> Color(0xFF2b88b8)//Arbitrum
         else -> {
             Color(0xFF24303D)
         }
     }
     var network = when(chainId){
-        2 -> "Goerli"//Goerli
-        3 -> "Polygon"//Polygon
-        4 -> "Optimum"//Optimum
-        5 -> "Arbitrum"//Arbitrum
-        else -> {
-            "Mainnet"
-        }
+        1 -> "Mainnet"
+                                5 -> "Görli"
+                                10 -> "Optimism"
+                                137 -> "Polygon"
+                                42161 -> "Arbitrum"
+                                else -> ""
     }
         Button(
             onClick = onClickChange,
