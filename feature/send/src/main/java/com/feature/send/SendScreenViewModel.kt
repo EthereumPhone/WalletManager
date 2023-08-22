@@ -80,7 +80,7 @@ class SendViewModel @Inject constructor(
     val toAddress: Flow<String> = _toAddress .asStateFlow()
 
     private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
-    private val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
+    val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
 
     fun send(){
         viewModelScope.launch {
@@ -92,6 +92,10 @@ class SendViewModel @Inject constructor(
 //                value = amount.toString()
 //            )
         }
+    }
+
+    fun changeToAddress(address: String) {
+        _toAddress.value = address
     }
 
     fun changeSelectedAsset(tokenAsset: TokenAsset) {

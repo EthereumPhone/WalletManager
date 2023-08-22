@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.session.MediaSession.Token
 import android.net.Network
 import android.util.Log
 import android.widget.Toast
@@ -120,6 +121,9 @@ fun SendRoute(
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
 
+    //val toAddress by viewModel.toAddress.collectAsStateWithLifecycle()
+    val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
+
 //    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
 //    val composableScope = rememberCoroutineScope()
 //    composableScope.launch {
@@ -129,13 +133,17 @@ fun SendRoute(
 //        }
 //    }
 
-    val tmp =  userAddress
+    //val tmp =  userAddress
     SendScreen(
         modifier = Modifier,
         onBackClick = onBackClick,
         balances = balances,
-
-        userAddress = userAddress,
+        onChangeAssetClicked = viewModel::changeSelectedAsset,
+        onToAddressChanged= viewModel::changeToAddress,
+        //sendTransaction = view
+        //userAddress = userAddress,
+        //toAddress = toAddress,
+        selectedToken = selectedToken
 //        onAddressClick = {
 //            copyTextToClipboard(localContext, userAddress)
 //        }
@@ -145,13 +153,17 @@ fun SendRoute(
 
 
 }
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     balances:  AssetUiState,
-    userAddress: String,
+    onChangeAssetClicked: (TokenAsset) -> Unit,
+    onToAddressChanged: (String) -> Unit,
+    selectedToken: SelectedTokenUiState,
+    //toAddress: String,
     //onAddressClick: () -> Unit,
 ) {
 
@@ -161,12 +173,33 @@ fun SendScreen(
     var amountError by remember { mutableStateOf(false) }
     var validSendAddress by remember { mutableStateOf(true) }
 
+    var tokeninfo by remember { mutableStateOf(TokenAsset("",0,"","",7.0)) }
+
+    // Declaring Coroutine scope
+    val coroutineScope = rememberCoroutineScope()
+
+    // Create a BottomSheetScaffoldState
+    var showSheet by remember { mutableStateOf(false) }
+    val modalSheetState = rememberModalBottomSheetState(true)
+
+    //initalize values
 
 
-    var maxAmount by remember { mutableStateOf(1.0) }
+
+
+
+
+
+    var test by remember { mutableStateOf(tokeninfo) }
+
+
+    var maxAmount by remember { mutableStateOf(test.balance) }
     var prevAmount by remember { mutableStateOf(value) }
+    var enableButton by remember { mutableStateOf(true) }
     //var amountColor by remember { mutableStateOf(Color.White) }
-    var network by remember { mutableStateOf(1) }
+    var network by remember { mutableStateOf(test.chainId) }
+
+
 
 
 
@@ -230,6 +263,8 @@ fun SendScreen(
             Log.i("HomePage","HomePage : $it")
         }
 
+
+
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
         InfoDialog(
@@ -241,12 +276,7 @@ fun SendScreen(
         )
     }
 
-    // Declaring Coroutine scope
-    val coroutineScope = rememberCoroutineScope()
 
-    // Create a BottomSheetScaffoldState
-    var showSheet by remember { mutableStateOf(false) }
-    val modalSheetState = rememberModalBottomSheetState(true)
 
     //Values
 
@@ -312,6 +342,7 @@ fun SendScreen(
                                             val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
+
                                         }
                                     } else {
                                         if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
@@ -320,6 +351,9 @@ fun SendScreen(
                                         validSendAddress = true
                                     }
                                 }
+
+                                onToAddressChanged(address)
+
                             },
                             trailingIcon = {
                                 IconButton(
@@ -374,61 +408,101 @@ fun SendScreen(
                             Column (
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                val maxed = remember { mutableStateOf(false) }
-                                TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                                    maxed.value = !maxed.value
 
-                                    //If max
-                                    if(maxed.value){
-                                        prevAmount = value // save previous amount
-                                        value = maxAmount.toString() // replace maxAmount with current value
-                                    }else{//if switches bck
-                                        value = prevAmount // replace value w/ maxAmount w/ prevAmount
+                                when (selectedToken) {
+                                    is SelectedTokenUiState.Unselected -> {
+                                        val maxed = remember { mutableStateOf(false) }
+                                        TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
+                                        }, enabled = false)
+
+                                        Text(
+                                            text = "-",//"${walletAmount.ethAmount} ETH",
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 16.sp,
+                                            color = Color(0xFF9FA2A5)
+                                        )
                                     }
-                                })
-                                Text(
-                                    text = "Available: ${maxAmount} "+ if(network == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5)
-                                )
+                                    is SelectedTokenUiState.Selected -> {
+
+                                        val maxed = remember { mutableStateOf(false) }
+                                        TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
+                                            maxed.value = !maxed.value
+
+                                            //If max
+                                            if(maxed.value){
+                                                prevAmount = value // save previous amount
+                                                value = selectedToken.tokenAsset.balance.toString() // replace maxAmount with current value
+                                                enableButton = false
+                                            }else{//if switches bck
+                                                value = prevAmount // replace value w/ maxAmount w/ prevAmount
+                                                enableButton = true
+                                            }
+                                        }, enabled = true)
+
+                                        Text(
+                                            text = "Available: ${selectedToken.tokenAsset.balance} "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 16.sp,
+                                            color = Color(0xFF9FA2A5)
+                                        )
+                                    }
+                                }
+
+
                             }
 
                             //Amount
                             Column (horizontalAlignment = Alignment.CenterHorizontally){
-                                Text(
-                                    text = //"0.0 ETH",
-                                    if (value == "") {
-                                        "0.0 "+ if(network == 137) "MATIC" else "ETH"
-                                    } else {
-                                        // If value has more than 7 decimals, show the string with less decimals
-                                        if (value.contains(".")) {
-                                            val decimals = value.split(".")[1]
-                                            if (decimals.length > 5) {
-                                                value.split(".")[0] + "." + decimals.substring(0, 5)
-                                            } else {
-                                                value
-                                            }
-                                        } else {
-                                            value
-                                        } + " " + if(network == 137) "MATIC" else "ETH"
-                                    },
-                                    //check if value over maxamount
 
-                                    color = if (value == "") {
-                                        Color.White
-                                    } else {
-                                        if(value.toDouble() >= maxAmount){
-                                            Color.Red
-                                        }else{
-                                            Color.White
-                                        }
-                                        //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
-                                    },//"${walletAmount.ethAmount} ETH",
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = amountfontSize,
-                                    textAlign = TextAlign.Center
-                                )
+                                when (selectedToken) {
+                                    is SelectedTokenUiState.Unselected -> {
+                                        Text(
+                                            text = "0.0 ETH"
+                                             ,
+                                            //check if value over maxamount
+
+                                            color = Color(0xFF9FA2A5),//"${walletAmount.ethAmount} ETH",
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = amountfontSize,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                    is SelectedTokenUiState.Selected -> {
+                                        Text(
+                                            text = //"0.0 ETH",
+                                            if (value == "") {
+                                                "0.0 "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
+                                            } else {
+                                                // If value has more than 7 decimals, show the string with less decimals
+                                                if (value.contains(".")) {
+                                                    val decimals = value.split(".")[1]
+                                                    if (decimals.length > 5) {
+                                                        value.split(".")[0] + "." + decimals.substring(0, 5)
+                                                    } else {
+                                                        value
+                                                    }
+                                                } else {
+                                                    value
+                                                } + " " + if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
+                                            },
+                                            //check if value over maxamount
+
+                                            color = if (value == "") {
+                                                Color.White
+                                            } else {
+                                                if(value.toDouble() > selectedToken.tokenAsset.balance){
+                                                    Color.Red
+                                                }else{
+                                                    Color.White
+                                                }
+                                                //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
+                                            },//"${walletAmount.ethAmount} ETH",
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = amountfontSize,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
                                 //max amount
                                 Text(
                                     text = "$ 18700.27",//"${walletAmount.ethAmount} ETH",
@@ -442,14 +516,29 @@ fun SendScreen(
                             //select network
                             //var id by remember {mutableStateOf(1) }
                             //different network -> different color
-                            SelectedNetworkButton(
-                                chainId = network,
-                                onClickChange = {
-                                    showSheet = true
+                            when (selectedToken) {
+                                is SelectedTokenUiState.Unselected -> {
+                                    SelectedNetworkButton(
+                                        chainId = 0,
+                                        onClickChange = {
+                                            showSheet = true
 
-                                },
+                                        },
 
-                            )
+                                        )
+                                }
+                                is SelectedTokenUiState.Selected -> {
+                                    SelectedNetworkButton(
+                                        chainId = selectedToken.tokenAsset.chainId,
+                                        onClickChange = {
+                                            showSheet = true
+
+                                        },
+
+                                        )
+                                }
+                            }
+
 
 
 
@@ -467,7 +556,8 @@ fun SendScreen(
                             onValueChange = {
                                 value = it
 
-                            }
+                            },
+                            enabled = enableButton
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         SwipeButton(
@@ -498,7 +588,9 @@ fun SendScreen(
                         balancesState = balances,
                         onSelectAsset = {
 
-                            maxAmount = it.balance
+                            onChangeAssetClicked(it)
+
+                            //maxAmount = it.balance
 
 //                            network = when(it.chainId) {
 //                                1 -> "Mainnet"
@@ -509,7 +601,7 @@ fun SendScreen(
 //                                else -> ""
 //                            }
 
-                            network =  it.chainId
+                            //network =  it.chainId
 
 
                             //hides ModelBottomSheet
@@ -532,26 +624,11 @@ fun SendScreen(
 
 
 
-private fun getBalance(assetsUiState: AssetUiState, chainid: Int): Double {
-    lateinit var networkinfo: TokenAsset
-    when (assetsUiState) {
-        is AssetUiState.Loading -> {}
-        is AssetUiState.Error -> {}
-        is AssetUiState.Empty -> {}
-        is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.groupBy { it.chainId }
-//            groupedAssets.forEach { (assetId, assetList) ->
-//
-//            }
+private fun getBalance(assetsUiState: AssetUiState, chainid: Int): TokenAsset {
+    lateinit var info: TokenAsset
 
-            val tmp = groupedAssets[chainid]
-            if (tmp != null) {
-                networkinfo = tmp.first()
-            }
-        }
-    }
 
-    return networkinfo.balance
+    return info
 }
 
 @Composable

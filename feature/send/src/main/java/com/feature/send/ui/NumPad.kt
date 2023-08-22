@@ -49,7 +49,8 @@ fun NumPad(
     value: String,
     contentColor: Color = NumPadDefaults.contentColor,
     modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    enabled: Boolean
 ) {
     val numPadButtons = NumPadButtons.values().asList()
     val buttonSize = 64.dp
@@ -76,31 +77,29 @@ fun NumPad(
                 }
 
                 if(input is ImageVector) {
-                    Box(
+                    IconButton(
                         modifier = Modifier
                             .size(buttonSize)
-                            .clip(CircleShape)
-                            //.background(Color(0xFF3C4958))
-                            .clickable {
-                                when (button) {
-                                    NumPadButtons.COMMA -> {
-                                        if (!value.contains(".")) {
-                                            if (value == "") {
-                                                onValueChange("0.")
+                            .clip(CircleShape),
+                        onClick = {
+                        when (button) {
+                            NumPadButtons.COMMA -> {
+                                if (!value.contains(".")) {
+                                    if (value == "") {
+                                        onValueChange("0.")
 
-                                            } else {
-                                                onValueChange("$value.")
+                                    } else {
+                                        onValueChange("$value.")
 
-                                            }
-                                        }
                                     }
-
-                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
-                                    else -> onValueChange(value + fixedIndex.toString())
                                 }
-                            },
-                            //.padding(8.dp),
-                        contentAlignment = Alignment.Center
+                            }
+
+                            NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+                            else -> onValueChange(value + fixedIndex.toString())
+                        }
+                    },
+                        enabled = enabled
                     ) {
                         Icon(
                             tint= Color.White,
@@ -108,32 +107,62 @@ fun NumPad(
                             contentDescription = null // decorative element
                         )
                     }
+//                    Box(
+//                        modifier = Modifier
+//                            .size(buttonSize)
+//                            .clip(CircleShape)
+//                            //.background(Color(0xFF3C4958))
+//                            .clickable {
+//                                when (button) {
+//                                    NumPadButtons.COMMA -> {
+//                                        if (!value.contains(".")) {
+//                                            if (value == "") {
+//                                                onValueChange("0.")
+//
+//                                            } else {
+//                                                onValueChange("$value.")
+//
+//                                            }
+//                                        }
+//                                    }
+//
+//                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+//                                    else -> onValueChange(value + fixedIndex.toString())
+//                                }
+//                            },
+//                            //.padding(8.dp),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Icon(
+//                            tint= Color.White,
+//                            imageVector = Icons.Rounded.Backspace,
+//                            contentDescription = null // decorative element
+//                        )
+//                    }
                 }
                 if(input is String) {
-                    Box(
+                    IconButton(
                         modifier = Modifier
                             .size(buttonSize)
-                            .clip(CircleShape)
-                            //.background(Color(0xFF24303D))//Color(0xFF1E2730))
-                            .clickable {
-                                when (button) {
-                                    NumPadButtons.COMMA -> {
-                                        if (!value.contains(".")) {
-                                            if (value == "") {
-                                                onValueChange("0.")
-                                            } else {
-                                                onValueChange("$value.")
-                                            }
+                            .clip(CircleShape),
+                        onClick = {
+                            when (button) {
+                                NumPadButtons.COMMA -> {
+                                    if (!value.contains(".")) {
+                                        if (value == "") {
+                                            onValueChange("0.")
+                                        } else {
+                                            onValueChange("$value.")
                                         }
                                     }
-
-                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
-                                    else -> onValueChange(value + fixedIndex.toString())
                                 }
+
+                                NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+                                else -> onValueChange(value + fixedIndex.toString())
                             }
-                        ,
-                        contentAlignment = Alignment.Center
-                    ){
+                                  },
+                        enabled = enabled
+                    ) {
                         Text(
                             text = input,
                             fontSize = NumPadDefaults.fontSize,
@@ -141,6 +170,37 @@ fun NumPad(
                             color = contentColor,
                         )
                     }
+//                    Box(
+//                        modifier = Modifier
+//                            .size(buttonSize)
+//                            .clip(CircleShape)
+//                            //.background(Color(0xFF24303D))//Color(0xFF1E2730))
+//                            .clickable {
+//                                when (button) {
+//                                    NumPadButtons.COMMA -> {
+//                                        if (!value.contains(".")) {
+//                                            if (value == "") {
+//                                                onValueChange("0.")
+//                                            } else {
+//                                                onValueChange("$value.")
+//                                            }
+//                                        }
+//                                    }
+//
+//                                    NumPadButtons.UNDO -> onValueChange(value.dropLast(1))
+//                                    else -> onValueChange(value + fixedIndex.toString())
+//                                }
+//                            }
+//                        ,
+//                        contentAlignment = Alignment.Center
+//                    ){
+//                        Text(
+//                            text = input,
+//                            fontSize = NumPadDefaults.fontSize,
+//                            fontWeight = FontWeight.Normal,
+//                            color = contentColor,
+//                        )
+//                    }
 
                 }
             }
@@ -159,8 +219,9 @@ object NumPadDefaults {
 @Preview
 @Composable
 fun PreviewNumPad() {
-    NumPad(
-        value = "",
-        modifier = Modifier
-    ) {}
+//    NumPad(
+//        value = "",
+//        modifier = Modifier,
+//        enabled = true
+//    ) {}
 }

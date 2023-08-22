@@ -24,6 +24,7 @@ fun TextToggleButton(
     selected: MutableState<Boolean>,
     onClickChange: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     Button(
@@ -33,6 +34,7 @@ fun TextToggleButton(
             containerColor = if (selected.value) Color.White else Color(0xFF24303D),
             contentColor = Color.White
         ),
+        enabled = enabled,
         shape = CircleShape,
         //elevation = ButtonDefaults.elevation(0.dp, 0.dp),
         modifier = modifier.padding(14.dp, 0.dp),
