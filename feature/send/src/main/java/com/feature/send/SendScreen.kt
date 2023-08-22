@@ -140,7 +140,7 @@ fun SendRoute(
         balances = balances,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
         onToAddressChanged= viewModel::changeToAddress,
-        //sendTransaction = view
+        sendTransaction = viewModel::send,
         //userAddress = userAddress,
         //toAddress = toAddress,
         selectedToken = selectedToken
@@ -162,6 +162,7 @@ fun SendScreen(
     balances:  AssetUiState,
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onToAddressChanged: (String) -> Unit,
+    sendTransaction: () -> Unit,
     selectedToken: SelectedTokenUiState,
     //toAddress: String,
     //onAddressClick: () -> Unit,
@@ -564,7 +565,9 @@ fun SendScreen(
                             text = "Swipe to send",
                             icon = Icons.Rounded.ArrowForward,
                             completeIcon = Icons.Rounded.Check,
-                        ){}
+                            onSwipe = {sendTransaction}
+
+                        )
                     }
 
             }

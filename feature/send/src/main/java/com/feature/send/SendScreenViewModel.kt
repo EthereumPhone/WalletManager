@@ -84,14 +84,31 @@ class SendViewModel @Inject constructor(
 
     fun send(){
         viewModelScope.launch {
+            when(_selectedAsset.value) {
+                is SelectedTokenUiState.Selected -> {
+                    sendRepository.sendTo(
+                        chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
+                        toAddress = toAddress.toString(),
+                        data = "",
+                        value = amount.toString()
+                    )
+                }
 
-//            sendRepository.sendTo(
-//                chainId = selectedAsset.value,
-//                toAddress = toAddress.toString(),
-//                data = "",
-//                value = amount.toString()
-//            )
-        }
+                is SelectedTokenUiState.Unselected -> {
+                    //_selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+                }
+
+            }
+
+//                    sendRepository.sendTo(
+//                        chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
+//                        toAddress = toAddress.toString(),
+//                        data = "",
+//                        value = amount.toString()
+//                    )
+
+            }
+
     }
 
     fun changeToAddress(address: String) {
@@ -102,6 +119,7 @@ class SendViewModel @Inject constructor(
         when(_selectedAsset.value) {
             is SelectedTokenUiState.Selected -> {
                 _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+
             }
             is SelectedTokenUiState.Unselected -> {
                 _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
