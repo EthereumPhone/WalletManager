@@ -83,31 +83,33 @@ class SendViewModel @Inject constructor(
     val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
 
     fun send(){
+
+
         viewModelScope.launch {
-            when(_selectedAsset.value) {
-                is SelectedTokenUiState.Selected -> {
+//            when(selectedAsset.value) {
+//                is SelectedTokenUiState.Selected -> {
+//                    sendRepository.sendTo(
+//                        chainId = (selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
+//                        toAddress = toAddress.toString(),
+//                        data = "",
+//                        value = amount.toString()
+//                    )
+//                }
+//
+//                is SelectedTokenUiState.Unselected -> {
+//                    //_selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+//                }
+//
+//            }
+
                     sendRepository.sendTo(
                         chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
                         toAddress = toAddress.toString(),
                         data = "",
                         value = amount.toString()
                     )
-                }
 
-                is SelectedTokenUiState.Unselected -> {
-                    //_selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
-                }
-
-            }
-
-//                    sendRepository.sendTo(
-//                        chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
-//                        toAddress = toAddress.toString(),
-//                        data = "",
-//                        value = amount.toString()
-//                    )
-
-            }
+           }
 
     }
 

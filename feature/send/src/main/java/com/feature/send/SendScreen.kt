@@ -5,18 +5,14 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.media.session.MediaSession.Token
-import android.net.Network
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,23 +24,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetState
-import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.QrCode
-import androidx.compose.material.rememberBottomSheetScaffoldState
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +41,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,9 +52,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -81,32 +64,32 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.designsystem.theme.placeHolder
+import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
+import com.core.ui.ethOSButton
 import com.example.ethoscomponents.components.NumPad
-import com.feature.send.ui.AddressBar
-import com.feature.send.ui.BottomSheet
-import com.feature.send.ui.MockNetworkData
 import com.feature.send.ui.NetworkPickerSheet
 import com.feature.send.ui.SelectedNetworkButton
 import com.feature.send.ui.TextToggleButton
 import com.feature.send.ui.ethOSTextField
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.CompletableFuture
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.ethereumphone.walletsdk.WalletSDK
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import org.web3j.crypto.WalletUtils.isValidAddress
+import java.math.BigDecimal
 
 
 @Composable
@@ -123,6 +106,9 @@ fun SendRoute(
 
     //val toAddress by viewModel.toAddress.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val walletSDK = WalletSDK(context)
+    val coroutineScope = rememberCoroutineScope()
 
 //    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
 //    val composableScope = rememberCoroutineScope()
@@ -140,7 +126,66 @@ fun SendRoute(
         balances = balances,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
         onToAddressChanged= viewModel::changeToAddress,
-        sendTransaction = viewModel::send,
+        sendTransaction = { sendData ->
+
+            val amount = sendData.amount.toString()
+            var address = sendData.address
+
+
+            // Check if phone is connected to internet using NetworkManager
+            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
+            val activeNetwork = connectivityManager?.activeNetwork
+            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+
+            if(hasInternet) {
+                CoroutineScope(Dispatchers.IO).launch {
+//
+                    val wallet = WalletSDK(
+                    context = context,
+                    )
+
+                    val res = wallet.sendTransaction(
+                        to = address,
+                        value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+                        data = ""
+                    )
+                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
+                    //println(res)
+                    Log.e("Test",res)
+                }
+
+
+//                val walletSDK = WalletSDK(context)
+//                val ensName = ENSName(address)
+//                if (ensName.isPotentialENSDomain()) {
+//                    val completableFuture = CompletableFuture<String>()
+//                    CompletableFuture.runAsync {
+//                        val ens = ENS(HttpEthereumRPC(walletManagerState.network.value.chainRPC))
+//                        completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
+//                    }
+//                    address = completableFuture.get()
+//                }
+//                walletSDK.sendTransaction(
+//                    to = address,
+//                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
+//                    data = "",
+//                    gasPrice = null,
+//                ).whenComplete { txHash, throwable ->
+//                    println("Send transaction result: $txHash")
+//                    // Open tx in etherscan
+//                    if (txHash != "decline") {
+//                        val intent = Intent(Intent.ACTION_VIEW)
+//                        intent.data = android.net.Uri.parse(walletManagerState.network.value.chainExplorer + "/tx/" + txHash)
+//                        context.startActivity(intent)
+//                    }
+//                }
+            } else {
+                (context as Activity).runOnUiThread {
+                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
+                }
+            }
+        },
         //userAddress = userAddress,
         //toAddress = toAddress,
         selectedToken = selectedToken
@@ -162,7 +207,7 @@ fun SendScreen(
     balances:  AssetUiState,
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: () -> Unit,
+    sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
     //toAddress: String,
     //onAddressClick: () -> Unit,
@@ -503,6 +548,8 @@ fun SendScreen(
                                             textAlign = TextAlign.Center
                                         )
                                     }
+
+                                    else -> {}
                                 }
                                 //max amount
                                 Text(
@@ -538,6 +585,8 @@ fun SendScreen(
 
                                         )
                                 }
+
+                                else -> {}
                             }
 
 
@@ -561,13 +610,155 @@ fun SendScreen(
                             enabled = enableButton
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        SwipeButton(
-                            text = "Swipe to send",
-                            icon = Icons.Rounded.ArrowForward,
-                            completeIcon = Icons.Rounded.Check,
-                            onSwipe = {sendTransaction}
 
-                        )
+                    var swipeableState = rememberSwipeableState(initialValue = 0)
+                    val (swipeComplete, setSwipeComplete) = remember {
+                        mutableStateOf(false)
+                    }
+                    var result by  remember { mutableStateOf("") }
+
+
+
+                    when (selectedToken) {
+                        is SelectedTokenUiState.Unselected -> {
+//                            SwipeButton(
+//                                text = "Swipe to send",
+//                                icon = Icons.Rounded.ArrowForward,
+//                                completeIcon = Icons.Rounded.Check,
+//                                enabled = false,
+//                                onSwipe =  {},
+//                                swipeableState = swipeableState,
+//                                swipeComplete = swipeComplete,
+//                                setSwipeComplete = setSwipeComplete
+//
+//                            )
+                            ethOSButton(
+                                onClick = {
+                                },
+                                enabled = false,
+                                text = "Send"
+                            )
+                        }
+                        is SelectedTokenUiState.Selected -> {
+                            ethOSButton(
+                                onClick = {
+                                    sendTransaction(
+                                            SendData(
+                                                amount = value.toFloat(),
+                                                address = address,
+                                                selectedToken.tokenAsset.chainId
+                                            )
+                                        )
+
+                                },
+                                enabled = true,
+                                text = "Send"
+                            )
+//                            SwipeButton(
+//                                text = "Swipe to send",
+//                                icon = Icons.Rounded.ArrowForward,
+//                                completeIcon = Icons.Rounded.Check,
+//                                enabled = true,
+//                                onSwipe =  {
+//                                    //send Transaction
+//                                    if (value == "") {
+//                                        val amount = "0.0".toFloat().toString()
+//                                        var address = address
+//
+//
+//
+//
+//                                        // Check if phone is connected to internet using NetworkManager
+//                                        val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
+//                                        val activeNetwork = connectivityManager?.activeNetwork
+//                                        val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+//                                        val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+//
+//                                        if(hasInternet) {
+//                                            CoroutineScope(Dispatchers.IO).launch {
+////
+//                                                val wallet = WalletSDK(
+//                                                    context = context,
+//                                                )
+//
+//                                                val res = wallet.sendTransaction(
+//                                                    to = address,
+//                                                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+//                                                    data = ""
+//                                                )
+//                                                //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
+//                                                //println(res)
+//                                                result = res
+//                                                //Log.e("Test",res)
+//                                            }
+//
+//                                        } else {
+//                                            (context as Activity).runOnUiThread {
+//                                                Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
+//                                            }
+//                                        }
+////                                        sendTransaction(
+////                                            SendData(
+////                                                amount = "0.0".toFloat(),
+////                                                address = address,
+////                                                selectedToken.tokenAsset.chainId
+////                                            )
+////                                        )
+//                                    }
+//                                    else{
+////                                        sendTransaction(
+////                                            SendData(
+////                                                amount = value.toFloat(),
+////                                                address = address,
+////                                                selectedToken.tokenAsset.chainId
+////                                            )
+////                                        )
+//
+//
+//                                            val amount = value.toFloat().toString()
+//                                            var address = address
+//
+//
+//                                            // Check if phone is connected to internet using NetworkManager
+//                                            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
+//                                            val activeNetwork = connectivityManager?.activeNetwork
+//                                            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+//                                            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+//
+//                                            if(hasInternet) {
+//                                                CoroutineScope(Dispatchers.IO).launch {
+////
+//                                                    val wallet = WalletSDK(
+//                                                        context = context,
+//                                                    )
+//
+//                                                    val res = wallet.sendTransaction(
+//                                                        to = address,
+//                                                        value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+//                                                        data = ""
+//                                                    )
+//                                                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
+//                                                    //println(res)
+//                                                    setSwipeComplete(false)
+//                                                }
+//
+//                                            } else {
+//                                                (context as Activity).runOnUiThread {
+//                                                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
+//                                                }
+//                                            }
+//
+//                                    }
+//
+//                                },
+//                                swipeableState = swipeableState,
+//                                swipeComplete = swipeComplete,
+//                                setSwipeComplete = setSwipeComplete
+//
+//                            )
+                        }
+                    }
+
                     }
 
             }

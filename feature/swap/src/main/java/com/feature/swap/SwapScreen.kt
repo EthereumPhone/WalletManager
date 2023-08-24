@@ -46,7 +46,7 @@ import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
-import com.core.ui.WmButton
+//import com.core.ui.WmButton
 import com.feature.home.AssetUiState
 import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
@@ -216,6 +216,7 @@ internal fun SwapScreen(
             text = "Swipe to swap",
             icon = Icons.Rounded.ArrowForward,
             completeIcon = Icons.Rounded.Check,
+            //enabled = true,
             onSwipe = onSwapClicked
         )
 
