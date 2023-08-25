@@ -80,24 +80,48 @@ class SendViewModel @Inject constructor(
     val toAddress: Flow<String> = _toAddress .asStateFlow()
 
     private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
-    private val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
+    val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
 
     fun send(){
-        viewModelScope.launch {
 
-//            sendRepository.sendTo(
-//                chainId = selectedAsset.value,
-//                toAddress = toAddress.toString(),
-//                data = "",
-//                value = amount.toString()
-//            )
-        }
+
+        viewModelScope.launch {
+//            when(selectedAsset.value) {
+//                is SelectedTokenUiState.Selected -> {
+//                    sendRepository.sendTo(
+//                        chainId = (selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
+//                        toAddress = toAddress.toString(),
+//                        data = "",
+//                        value = amount.toString()
+//                    )
+//                }
+//
+//                is SelectedTokenUiState.Unselected -> {
+//                    //_selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+//                }
+//
+//            }
+
+                    sendRepository.sendTo(
+                        chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
+                        toAddress = toAddress.toString(),
+                        data = "",
+                        value = amount.toString()
+                    )
+
+           }
+
+    }
+
+    fun changeToAddress(address: String) {
+        _toAddress.value = address
     }
 
     fun changeSelectedAsset(tokenAsset: TokenAsset) {
         when(_selectedAsset.value) {
             is SelectedTokenUiState.Selected -> {
                 _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
+
             }
             is SelectedTokenUiState.Unselected -> {
                 _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)

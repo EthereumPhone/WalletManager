@@ -66,7 +66,7 @@ fun SelectedNetworkButton(
                                 10 -> "Optimism"
                                 137 -> "Polygon"
                                 42161 -> "Arbitrum"
-                                else -> ""
+                                else -> "Select Network"
     }
         Button(
             onClick = onClickChange,

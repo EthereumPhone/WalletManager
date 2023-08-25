@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
+import androidx.compose.material.SwipeableState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
@@ -58,6 +59,11 @@ fun SwipeButton(
     icon: ImageVector,
     completeIcon: ImageVector,
     modifier: Modifier = Modifier,
+    //enabled: Boolean,
+//    result: String,
+//    swipeableState: SwipeableState<Int>,
+//    swipeComplete: Boolean,
+//    setSwipeComplete: (Boolean) -> Unit,
     onSwipe: () -> Unit
 ) {
     val swipeableState = rememberSwipeableState(initialValue = 0)
@@ -169,6 +175,7 @@ object SwipeButtonDefaults {
         vertical = verticalPadding
     )
 }
+@OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
 private fun PreviewSwipeButton() {
@@ -192,6 +199,7 @@ private fun PreviewSwipeButton() {
                 icon = Icons.Filled.ArrowForward,
                 completeIcon = Icons.Filled.Check,
                 text = "Swipe",
+                //enabled = true,
             ) { coroutineScope.launch {
                 setIsComplete(true)
             }
