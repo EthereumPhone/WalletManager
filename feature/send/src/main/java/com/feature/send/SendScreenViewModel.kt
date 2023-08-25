@@ -82,6 +82,11 @@ class SendViewModel @Inject constructor(
     private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
     val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
 
+    private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)
+    val txComplete: StateFlow<TxCompleteUiState> = _txComplete.asStateFlow()
+
+    
+
     fun send(){
 
 
@@ -117,6 +122,18 @@ class SendViewModel @Inject constructor(
         _toAddress.value = address
     }
 
+    fun changeTxComplete() {
+        when(_txComplete.value) {
+            is TxCompleteUiState.UnComplete -> {
+                _txComplete.value = TxCompleteUiState.Complete
+
+            }
+            is TxCompleteUiState.Complete -> {
+                _txComplete.value = TxCompleteUiState.UnComplete
+            }
+        }
+    }
+
     fun changeSelectedAsset(tokenAsset: TokenAsset) {
         when(_selectedAsset.value) {
             is SelectedTokenUiState.Selected -> {
@@ -130,6 +147,10 @@ class SendViewModel @Inject constructor(
     }
 }
 
+sealed interface TxCompleteUiState {
+    object UnComplete: TxCompleteUiState
+    object Complete: TxCompleteUiState
+}
 
 sealed interface SelectedTokenUiState {
     object Unselected: SelectedTokenUiState

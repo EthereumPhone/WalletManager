@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.UserData
+import com.core.ui.SelectedNetworkButton
 import java.time.LocalTime
 import java.util.Calendar
 
@@ -57,7 +58,7 @@ internal fun AddressBar(
     ){
         Row (
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             modifier = Modifier.fillMaxWidth(),
         ){
             IconButton(
@@ -81,12 +82,26 @@ internal fun AddressBar(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = truncateText(userData.walletAddress),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF9FA2A5)
-                )
+                Column (
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ){
+//                    SelectedNetworkButton(
+//                        chainId = 1,
+//                        onClickChange = {
+//
+//
+//                        },
+//                        )
+                    Text(
+                        text = truncateText(userData.walletAddress),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9FA2A5)
+                    )
+
+                }
+
 //                Icon(
 //                    imageVector = Icons.Rounded.ContentCopy,
 //                    contentDescription = null,

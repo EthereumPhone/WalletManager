@@ -3,43 +3,40 @@ package com.feature.home
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
-import com.feature.home.ui.TransferDialog
 import com.feature.home.ui.WalletTabRow
+import kotlinx.coroutines.launch
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
@@ -82,6 +79,7 @@ internal fun HomeRoute(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
     userData: UserData,
@@ -95,6 +93,11 @@ internal fun HomeScreen(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    var showSheet by remember { mutableStateOf(false) }
+    val modalSheetState = rememberModalBottomSheetState(true)
+    // Declaring Coroutine scope
+    val coroutineScope = rememberCoroutineScope()
 
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
@@ -163,24 +166,43 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
-            //MockData
-//            TransfersUiState.Success(
-//                listOf(
-//                    TransferItem(
-//                        1,
-//                        "0x123123123123123123123123",
-//                        "ETH",
-//                        "1.5445",
-//                        "12:12:12",
-//                        true
-//                    )
-//                )
-//            ),
             transfersUiState,
             assetsUiState,
             refreshState,
             onRefresh = { onRefresh() }
         )
+
+        if(showSheet) {
+            ModalBottomSheet(
+                containerColor= Color(0xFF24303D),
+                contentColor= Color.White,
+
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }.invokeOnCompletion {
+                        if(!modalSheetState.isVisible) showSheet = false
+                    }
+                },
+                sheetState = modalSheetState
+            ) {
+
+//                NetworkPickerSheet(
+//                    balancesState = balances,
+//                    onSelectAsset = {
+//                        //onChangeAssetClicked(it)
+//                        //hides ModelBottomSheet
+//                        coroutineScope.launch {
+//                            modalSheetState.hide()
+//                        }.invokeOnCompletion {
+//                            if(!modalSheetState.isVisible) showSheet = false
+//                        }
+//                    }
+//                )
+            }
+        }
+
+
     }
 }
 

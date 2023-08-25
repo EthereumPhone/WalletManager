@@ -27,8 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.rememberSwipeableState
@@ -67,12 +65,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
-import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
 import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.NetworkPickerSheet
-import com.feature.send.ui.SelectedNetworkButton
+import com.core.ui.SelectedNetworkButton
 import com.feature.send.ui.TextToggleButton
 import com.feature.send.ui.ethOSTextField
 import com.journeyapps.barcodescanner.CaptureManager
@@ -89,6 +86,8 @@ import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import org.web3j.crypto.WalletUtils.isValidAddress
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
 import java.math.BigDecimal
 
 
@@ -109,6 +108,7 @@ fun SendRoute(
     val context = LocalContext.current
     val walletSDK = WalletSDK(context)
     val coroutineScope = rememberCoroutineScope()
+    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
 //    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
 //    val composableScope = rememberCoroutineScope()
@@ -130,8 +130,19 @@ fun SendRoute(
 
             val amount = sendData.amount.toString()
             var address = sendData.address
+            val chainid = sendData.chainId
+
+            val rpcurl = when(chainid){
+                1 -> "https://rpc.ankr.com/eth"
+                5 -> "https://rpc.ankr.com/eth_goerli"
+                10 -> "https://rpc.ankr.com/optimism"
+                137 -> "https://rpc.ankr.com/polygon"
+                42161 -> "https://rpc.ankr.com/arbitrum"
+                else -> {"https://rpc.ankr.com/eth"}
+            }
 
 
+            Log.e("not complete","$txComplete")
             // Check if phone is connected to internet using NetworkManager
             val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
             val activeNetwork = connectivityManager?.activeNetwork
@@ -139,20 +150,32 @@ fun SendRoute(
             val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
 
             if(hasInternet) {
+                var res = null
                 CoroutineScope(Dispatchers.IO).launch {
 //
                     val wallet = WalletSDK(
                     context = context,
+                        web3jInstance = Web3j.build(HttpService(rpcurl))
                     )
 
-                    val res = wallet.sendTransaction(
+                    wallet.changeChain(chainid,rpcurl)
+
+
+                    var res = wallet.sendTransaction(
                         to = address,
                         value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
                         data = ""
                     )
+                    Log.e("Test",res)
                     //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
                     //println(res)
-                    Log.e("Test",res)
+                    if(res != "decline"){
+                        //onBackClick()
+                        viewModel.changeTxComplete()
+                        //Log.e("complete","$txComplete")
+
+                    }
+
                 }
 
 
@@ -185,9 +208,12 @@ fun SendRoute(
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
                 }
             }
+
+            //onBackClick()
         },
         //userAddress = userAddress,
         //toAddress = toAddress,
+        txComplete = txComplete,
         selectedToken = selectedToken
 //        onAddressClick = {
 //            copyTextToClipboard(localContext, userAddress)
@@ -209,6 +235,7 @@ fun SendScreen(
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
+    txComplete: TxCompleteUiState
     //toAddress: String,
     //onAddressClick: () -> Unit,
 ) {
@@ -228,6 +255,7 @@ fun SendScreen(
     var showSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
 
+    var txmade by remember { mutableStateOf(false) }
     //initalize values
 
 
@@ -320,6 +348,15 @@ fun SendScreen(
             title = "Info",
             text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
         )
+    }
+
+    when (txComplete) {
+        is TxCompleteUiState.UnComplete -> {
+
+        }
+        is TxCompleteUiState.Complete -> {
+            onBackClick()
+        }
     }
 
 
@@ -572,8 +609,7 @@ fun SendScreen(
                                             showSheet = true
 
                                         },
-
-                                        )
+                                    )
                                 }
                                 is SelectedTokenUiState.Selected -> {
                                     SelectedNetworkButton(
@@ -646,9 +682,10 @@ fun SendScreen(
                                             SendData(
                                                 amount = value.toFloat(),
                                                 address = address,
-                                                selectedToken.tokenAsset.chainId
+                                                chainId = selectedToken.tokenAsset.chainId
                                             )
                                         )
+
 
                                 },
                                 enabled = true,
