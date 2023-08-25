@@ -89,6 +89,7 @@ import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import java.math.BigDecimal
+import java.util.Currency
 
 
 @Composable
@@ -110,6 +111,8 @@ fun SendRoute(
     val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
+    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
+
 //    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
 //    val composableScope = rememberCoroutineScope()
 //    composableScope.launch {
@@ -124,8 +127,10 @@ fun SendRoute(
         modifier = Modifier,
         onBackClick = onBackClick,
         balances = balances,
+        currencyPrice = currencyprice,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
         onToAddressChanged= viewModel::changeToAddress,
+        onCurrencyChange = viewModel::getExchange,
         sendTransaction = { sendData ->
 
             val amount = sendData.amount.toString()
@@ -231,8 +236,10 @@ fun SendScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     balances:  AssetUiState,
+    currencyPrice: String,
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onToAddressChanged: (String) -> Unit,
+    onCurrencyChange: (String) -> Unit,
     sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState
@@ -255,7 +262,6 @@ fun SendScreen(
     var showSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
 
-    var txmade by remember { mutableStateOf(false) }
     //initalize values
 
 
@@ -584,17 +590,30 @@ fun SendScreen(
                                             fontSize = amountfontSize,
                                             textAlign = TextAlign.Center
                                         )
+
+
+
+
+                                            Log.e("currenccy",currencyPrice)
+                                            Text(
+                                                text = if (value == "" || value == "0." || currencyPrice=="" ) {
+                                                    "$${"0.0".toFloat() * "0.0".toFloat()}"
+                                                } else {
+                                                    "$${value.toFloat() * currencyPrice.toFloat()}"
+                                                },//"$${value.toFloat()}",
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 16.sp,
+                                                color = Color(0xFF9FA2A5)
+                                            )
+
+
                                     }
 
                                     else -> {}
                                 }
                                 //max amount
-                                Text(
-                                    text = "$ 18700.27",//"${walletAmount.ethAmount} ETH",
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5)
-                                )
+
+
 
                             }
 
@@ -819,7 +838,13 @@ fun SendScreen(
                         balancesState = balances,
                         onSelectAsset = {
 
+
                             onChangeAssetClicked(it)
+                            var currencychange = when(it.chainId){
+                                137 -> "MATICUSDT"
+                                else -> "ETHUSDT"
+                            }
+                            onCurrencyChange(currencychange)
 
                             //maxAmount = it.balance
 

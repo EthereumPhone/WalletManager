@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
@@ -11,6 +13,7 @@ import com.core.data.repository.SendRepository
 import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.ExchangeApi
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -85,7 +88,8 @@ class SendViewModel @Inject constructor(
     private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)
     val txComplete: StateFlow<TxCompleteUiState> = _txComplete.asStateFlow()
 
-    
+    private val _exchange = MutableStateFlow("")
+    val exchange: Flow<String> = _exchange
 
     fun send(){
 
@@ -116,6 +120,18 @@ class SendViewModel @Inject constructor(
 
            }
 
+    }
+
+    fun getExchange(symbol: String?) {
+        viewModelScope.launch {
+            try {
+                val listResult = ExchangeApi.retrofitService.getExchange(symbol)
+                _exchange.value = listResult.price
+            } catch (e: Exception) {
+                _exchange.value =  "Error: ${e.message}"
+            }
+
+        }
     }
 
     fun changeToAddress(address: String) {
