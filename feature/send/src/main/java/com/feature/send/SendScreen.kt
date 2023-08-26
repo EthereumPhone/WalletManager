@@ -595,6 +595,7 @@ fun SendScreen(
 
 
                                             Log.e("currenccy",currencyPrice)
+                                        if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
                                                     "$${"0.0".toFloat() * "0.0".toFloat()}"
@@ -605,6 +606,15 @@ fun SendScreen(
                                                 fontSize = 16.sp,
                                                 color = Color(0xFF9FA2A5)
                                             )
+                                        }else{
+                                            Text(
+                                                text = "$0.0",//$${value.toFloat()},
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 16.sp,
+                                                color = Color(0xFF9FA2A5)
+                                            )
+                                        }
+
 
 
                                     }

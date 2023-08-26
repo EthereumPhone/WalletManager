@@ -31,10 +31,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
+import com.feature.home.ui.TransferDialog
 import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletsdk.WalletSDK
@@ -110,6 +112,40 @@ internal fun HomeScreen(
         )
     }
 
+
+    var showTransferInfoDialog = remember { mutableStateOf(false) }
+    var txInfo =  remember { mutableStateOf(
+        TransferItem(
+            chainId = 1,
+            address = "",
+            asset = "",
+            value = "",
+            timeStamp = "",
+            userSent = true
+        )
+    ) }
+//    val chainId =  remember { mutableStateOf(1) }
+//    val asset =  remember { mutableStateOf("ETH") }
+//    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
+//    val value =  remember { mutableStateOf("2.234") }
+//    val timeStamp =  remember { mutableStateOf("12:12:00") }
+//    val userSent =  remember { mutableStateOf(true) }
+
+    if(showTransferInfoDialog.value){
+        TransferDialog(
+            setShowDialog = {
+                showTransferInfoDialog.value = false
+            },
+            //title = "Transfer",
+            transfer = txInfo.value
+//            address = address.value ,
+//            chainId = chainId.value,
+//            amount = value.value,
+//            timeStamp = timeStamp.value,
+//            asset = asset.value ,
+        )
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.spacedBy(56.dp),
@@ -169,6 +205,10 @@ internal fun HomeScreen(
             transfersUiState,
             assetsUiState,
             refreshState,
+            onTxOpen = {
+                txInfo.value= it
+                showTransferInfoDialog.value = true
+            },
             onRefresh = { onRefresh() }
         )
 

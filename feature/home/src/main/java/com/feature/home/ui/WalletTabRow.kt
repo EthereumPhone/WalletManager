@@ -1,6 +1,5 @@
 package com.feature.home.ui
 
-import android.widget.Space
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -8,11 +7,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -20,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -36,12 +32,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,14 +50,10 @@ import androidx.compose.ui.zIndex
 import com.core.designsystem.theme.placeHolder
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
-import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
-import java.lang.reflect.Type
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -72,6 +63,7 @@ internal fun WalletTabRow(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
+    onTxOpen: (TransferItem) -> Unit,
     //showDialog: : () -> Unit
 ) {
 
@@ -114,7 +106,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState)
+                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen)
                 TabItems.ASSETS -> AssetList(assetsUiState)
             }
         }
@@ -170,37 +162,26 @@ private fun AssetList(assetsUiState: AssetUiState) {
 }
 
 @Composable
-private fun TransferList(transfersUiState: TransfersUiState) {
+private fun TransferList(
+    transfersUiState: TransfersUiState,
+    onTxOpen: (TransferItem) -> Unit
+) {
 
-    val showTransferInfoDialog =  remember { mutableStateOf(false) }
+//    val showTransferInfoDialog =  remember { mutableStateOf(false) }
+//
+//    val chainId =  remember { mutableStateOf(1) }
+//    val asset =  remember { mutableStateOf("ETH") }
+//    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
+//    val value =  remember { mutableStateOf("2.234") }
+//    val timeStamp =  remember { mutableStateOf("12:12:00") }
+//    val userSent =  remember { mutableStateOf(true) }
 
-    val chainId =  remember { mutableStateOf(1) }
-    val asset =  remember { mutableStateOf("ETH") }
-    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
-    val value =  remember { mutableStateOf("2.234") }
-    val timeStamp =  remember { mutableStateOf("12:12:00") }
-    val userSent =  remember { mutableStateOf(true) }
 
-    if(showTransferInfoDialog.value){
-        TransferDialog(
-            setShowDialog = {
-                showTransferInfoDialog.value = false
-            },
-            //title = "Transfer",
-            address = address.value ,
-            chainId = chainId.value,
-                    amount = value.value,
-                   timeStamp = timeStamp.value,
-                    asset = asset.value ,
-        )
-    }
 
 
     when (transfersUiState) {
         is TransfersUiState.Success ->
             if(transfersUiState.transfers.isNotEmpty()) {
-
-
 
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -209,15 +190,22 @@ private fun TransferList(transfersUiState: TransfersUiState) {
                         item(key = transfer.timeStamp) {
                             //Spacer(modifier = Modifier.height(12.dp))
                             //transfer.
-                            address.value = transfer.address
-                            chainId.value = transfer.chainId
-                            value.value = transfer.value
-                            timeStamp.value = transfer.timeStamp
-                            asset.value = transfer.asset
+
+//                            address.value = transfer.address
+//                            chainId.value = transfer.chainId
+//                            value.value = transfer.value
+//                            timeStamp.value = transfer.timeStamp
+//                            asset.value = transfer.asset
+                            Spacer(modifier = Modifier.height(12.dp))
                             TransferItemCard(
                                 transfer = transfer,
                                 onCardClick = {
-                                    showTransferInfoDialog.value = true
+
+                                    onTxOpen(
+                                        transfer
+                                    )
+                                    //showTransferInfoDialog.value = true
+
                                 }
                             )
                         }
@@ -314,12 +302,26 @@ enum class TabItems {
 @Composable
 @Preview
 fun PreviewWalletTabRow() {
+    var txInfo by remember { mutableStateOf(
+        TransferItem(
+            chainId = 1,
+            address = "",
+            asset = "",
+            value = "",
+            timeStamp = "",
+            userSent = true
+        )
+    ) }
+
     Column {
         WalletTabRow(
             TransfersUiState.Loading,
             AssetUiState.Loading,
             false,
-            {}
+            {},
+            onTxOpen = {
+                txInfo = it
+            }
         )
     }
 }
@@ -327,6 +329,17 @@ fun PreviewWalletTabRow() {
 @Composable
 @Preview
 fun PreviewEmptyWalletTabRow() {
+
+    var txInfo by remember { mutableStateOf(
+        TransferItem(
+            chainId = 1,
+            address = "",
+            asset = "",
+            value = "",
+            timeStamp = "",
+            userSent = true
+        )
+    ) }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -341,12 +354,23 @@ fun PreviewEmptyWalletTabRow() {
                         "1.5445",
                         "12:12:12",
                         true
-                    )
+                    ),
+                            TransferItem(
+                            137,
+                    "0x123123123123123123123123",
+                    "MATIC",
+                    "1.00",
+                    "12:12:12",
+                    true
+                )
                 )
             ),
             AssetUiState.Empty,
             false,
-            {}
+            {},
+            onTxOpen = {
+                txInfo = it
+            }
         )
     }
 }

@@ -31,17 +31,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import com.core.model.Transfer
+import com.core.model.TransferItem
+
 @Composable
 fun TransferDialog(
-    address: String,
-    chainId: Int,
-    amount: String,
-    timeStamp: String,
-    asset:String,
+    transfer: TransferItem= TransferItem(
+        chainId = 1,
+        address = "",
+        asset = "",
+        value = "",
+        timeStamp = "",
+        userSent = true
+    ),
     setShowDialog: () -> Unit,
 ){
 
-    val network = when(chainId) {
+    val network = when(transfer.chainId) {
         1 -> "Mainnet"
         5 -> "Görli"
         10 -> "Optimism"
@@ -114,7 +120,7 @@ fun TransferDialog(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = amount+" "+asset,
+                            text = transfer.value+" "+transfer.asset,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
                             textAlign = TextAlign.Center,
@@ -136,7 +142,7 @@ fun TransferDialog(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = address,
+                            text = transfer.address,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
                             textAlign = TextAlign.Center,
@@ -180,7 +186,7 @@ fun TransferDialog(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = timeStamp,
+                            text = transfer.timeStamp,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
                             textAlign = TextAlign.Center,
