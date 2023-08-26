@@ -51,6 +51,7 @@ import kotlinx.datetime.Clock
 internal fun TransferItemCard(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
+    sendTx: Boolean,
     onCardClick: () -> Unit
 ) {
     val headlineText = remember {
@@ -60,7 +61,7 @@ internal fun TransferItemCard(
             append(" ")
             append(transfer.asset)
             append(if (transfer.userSent) " to " else " from ")
-            append(transfer.address)
+            //append(transfer.address)
         }
     }
     val networkName = remember { chainToNetworkName(transfer.chainId) }
@@ -106,7 +107,7 @@ internal fun TransferItemCard(
                     .size(42.dp)
             ){
                 Icon(
-                    imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
+                    imageVector = if (sendTx) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
                     contentDescription = "Send",
                     tint = Color(0xFF24303D)
                 )
@@ -145,7 +146,7 @@ internal fun TransferItemCard(
                         ) {
                             Text(
 
-                                text = transfer.address,
+                                text = if(sendTx) transfer.to else transfer.from,
                                 color = Color.White,//(0xFF9FA2A5),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Normal,
@@ -207,14 +208,14 @@ private fun chainToNetworkName(chainId: Int): String = when(chainId) {
 @Preview
 @Composable
 fun TransferItemPreview() {
-    TransferItem(
-        chainId = 5,
-        asset = "ether",
-        address = "0x123123",
-        value = "2.24",
-        timeStamp = Clock.System.now().toString(),
-        userSent = true
-    )
+//    TransferItem(
+//        chainId = 5,
+//        asset = "ether",
+//        address = "0x123123",
+//        value = "2.24",
+//        timeStamp = Clock.System.now().toString(),
+//        userSent = true
+//    )
 //    TransferItemCard(
 //        transfer = TransferItem(
 //            chainId = 5,

@@ -117,7 +117,8 @@ internal fun HomeScreen(
     var txInfo =  remember { mutableStateOf(
         TransferItem(
             chainId = 1,
-            address = "",
+            from = "",
+            to = "",
             asset = "",
             value = "",
             timeStamp = "",
@@ -202,6 +203,7 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
+            userAddress = userData.walletAddress,
             transfersUiState,
             assetsUiState,
             refreshState,
@@ -211,6 +213,7 @@ internal fun HomeScreen(
             },
             onRefresh = { onRefresh() }
         )
+
 
         if(showSheet) {
             ModalBottomSheet(

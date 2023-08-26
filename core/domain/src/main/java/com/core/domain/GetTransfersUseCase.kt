@@ -26,9 +26,13 @@ class GetTransfersUseCase @Inject constructor(
                     val timeStamp = it.blockTimestamp
                         .toLocalDateTime(TimeZone.currentSystemDefault())
 
+
+                    println("${address.substring(0,5) + "..." + address.takeLast(3)} - ${it.value} - ${it.userIsSender}")
                     TransferItem(
                         chainId = it.chainId,
-                        address = address.substring(0,5) + "..." + address.takeLast(3),
+                        from = it.from,
+                        to = it.to,
+                        //address = address.substring(0,5) + "..." + address.takeLast(3),
                         asset = networkCurrency,
                         value = it.value.toString(),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,

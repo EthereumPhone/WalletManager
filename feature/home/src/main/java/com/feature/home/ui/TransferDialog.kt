@@ -38,7 +38,8 @@ import com.core.model.TransferItem
 fun TransferDialog(
     transfer: TransferItem= TransferItem(
         chainId = 1,
-        address = "",
+        from = "",
+        to = "",
         asset = "",
         value = "",
         timeStamp = "",
@@ -116,36 +117,60 @@ fun TransferDialog(
                             text = "Amount",
                             fontSize = 16.sp,
                             color = Color.White,
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             text = transfer.value+" "+transfer.asset,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.Normal,
                         )
                     }
 
-                    //Address
+
+
+                    //From address
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(4.dp)  ,
                         horizontalAlignment = Alignment.Start,
                     ){
                         Text(
-                            text = "Address",
+                            text = "From",
                             fontSize = 16.sp,
                             color = Color.White,
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = transfer.address,
+                            text = transfer.from,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.Normal,
+                        )
+                    }
+
+                    //To address
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)  ,
+                        horizontalAlignment = Alignment.Start,
+                    ){
+                        Text(
+                            text = "To",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = transfer.to,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9FA2A5),
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.Normal,
                         )
                     }
@@ -160,17 +185,18 @@ fun TransferDialog(
                             text = "Network",
                             fontSize = 16.sp,
                             color = Color.White,
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             text = network,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.Normal,
                         )
                     }
+
 
                     //Time
                     Column(
@@ -182,14 +208,14 @@ fun TransferDialog(
                             text = "Time",
                             fontSize = 16.sp,
                             color = Color.White,
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             text = transfer.timeStamp,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Left,
                             fontWeight = FontWeight.Normal,
                         )
                     }

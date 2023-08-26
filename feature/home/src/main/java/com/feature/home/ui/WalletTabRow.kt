@@ -1,5 +1,6 @@
 package com.feature.home.ui
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -59,6 +60,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 internal fun WalletTabRow(
+    userAddress: String,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
@@ -106,7 +108,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen)
+                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
                 TabItems.ASSETS -> AssetList(assetsUiState)
             }
         }
@@ -164,7 +166,8 @@ private fun AssetList(assetsUiState: AssetUiState) {
 @Composable
 private fun TransferList(
     transfersUiState: TransfersUiState,
-    onTxOpen: (TransferItem) -> Unit
+    onTxOpen: (TransferItem) -> Unit,
+    userAddress: String
 ) {
 
 //    val showTransferInfoDialog =  remember { mutableStateOf(false) }
@@ -184,9 +187,9 @@ private fun TransferList(
             if(transfersUiState.transfers.isNotEmpty()) {
 
                 LazyColumn(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    //horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    transfersUiState.transfers.forEach { transfer ->
+                    transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
                             //Spacer(modifier = Modifier.height(12.dp))
                             //transfer.
@@ -197,8 +200,14 @@ private fun TransferList(
 //                            timeStamp.value = transfer.timeStamp
 //                            asset.value = transfer.asset
                             Spacer(modifier = Modifier.height(12.dp))
+                            val str1: String = transfer.from
+                            val str2: String = userAddress
+                            Log.e("Test","from-${transfer.from}, user-${userAddress}, res:${userAddress.equals(transfer.from,true)}")
+
+                            var sendingTx = userAddress.equals(transfer.from,true)
                             TransferItemCard(
                                 transfer = transfer,
+                                sendTx = sendingTx,
                                 onCardClick = {
 
                                     onTxOpen(
@@ -302,75 +311,75 @@ enum class TabItems {
 @Composable
 @Preview
 fun PreviewWalletTabRow() {
-    var txInfo by remember { mutableStateOf(
-        TransferItem(
-            chainId = 1,
-            address = "",
-            asset = "",
-            value = "",
-            timeStamp = "",
-            userSent = true
-        )
-    ) }
-
-    Column {
-        WalletTabRow(
-            TransfersUiState.Loading,
-            AssetUiState.Loading,
-            false,
-            {},
-            onTxOpen = {
-                txInfo = it
-            }
-        )
-    }
+//    var txInfo by remember { mutableStateOf(
+//        TransferItem(
+//            chainId = 1,
+//            address = "",
+//            asset = "",
+//            value = "",
+//            timeStamp = "",
+//            userSent = true
+//        )
+//    ) }
+//
+//    Column {
+//        WalletTabRow(
+//            TransfersUiState.Loading,
+//            AssetUiState.Loading,
+//            false,
+//            {},
+//            onTxOpen = {
+//                txInfo = it
+//            }
+//        )
+//    }
 }
 
 @Composable
 @Preview
 fun PreviewEmptyWalletTabRow() {
 
-    var txInfo by remember { mutableStateOf(
-        TransferItem(
-            chainId = 1,
-            address = "",
-            asset = "",
-            value = "",
-            timeStamp = "",
-            userSent = true
-        )
-    ) }
-
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        WalletTabRow(
-            TransfersUiState.Success(
-                listOf(
-                    TransferItem(
-                        1,
-                        "0x123123123123123123123123",
-                        "ETH",
-                        "1.5445",
-                        "12:12:12",
-                        true
-                    ),
-                            TransferItem(
-                            137,
-                    "0x123123123123123123123123",
-                    "MATIC",
-                    "1.00",
-                    "12:12:12",
-                    true
-                )
-                )
-            ),
-            AssetUiState.Empty,
-            false,
-            {},
-            onTxOpen = {
-                txInfo = it
-            }
-        )
-    }
+//    var txInfo by remember { mutableStateOf(
+//        TransferItem(
+//            chainId = 1,
+//            address = "",
+//            asset = "",
+//            value = "",
+//            timeStamp = "",
+//            userSent = true
+//        )
+//    ) }
+//
+//    Column(
+//        modifier = Modifier.fillMaxSize()
+//    ) {
+//        WalletTabRow(
+//            TransfersUiState.Success(
+//                listOf(
+//                    TransferItem(
+//                        1,
+//                        "0x123123123123123123123123",
+//                        "ETH",
+//                        "1.5445",
+//                        "12:12:12",
+//                        true
+//                    ),
+//                            TransferItem(
+//                            137,
+//                    "0x123123123123123123123123",
+//                    "MATIC",
+//                    "1.00",
+//                    "12:12:12",
+//                    true
+//                )
+//                )
+//            ),
+//            AssetUiState.Empty,
+//            false,
+//            {},
+//            onTxOpen = {
+//                txInfo = it
+//            }
+//        )
+//    }
 }

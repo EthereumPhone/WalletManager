@@ -49,18 +49,30 @@ class AlchemyTransferRepository @Inject constructor(
             networks.map { network ->
                 val apiKey = chainToApiKey(network.chainName)
                 async {
+
+                    //if(fromAddress == )
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         requestBody = NetworkTransferRequestBody(
                             params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
                                 toAddress = toAddress,
+                                fromAddress = toAddress,
                                 category = listOf("external")
                             ))
                         )
-                    ).result.transfers.map { it.asEntity(
-                        chainId = network.chainId,
-                        userIsSender = toAddress == it.from
-                    ) }
+                    ).result.transfers.map {
+                        it.asEntity(
+
+
+                            chainId = network.chainId,
+                            userIsSender = toAddress.equals(it.from)
+                        )
+                    }
+
+                    //test
+
+
+
                     transferDao.insertTransfers(transfers)
                 }
             }

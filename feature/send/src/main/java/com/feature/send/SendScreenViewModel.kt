@@ -43,7 +43,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SendViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
-    private val sendRepository: SendRepository,
+    private val sendRepository: SendRepositoryWalletSDK,
     private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
@@ -91,7 +91,9 @@ class SendViewModel @Inject constructor(
     private val _exchange = MutableStateFlow("")
     val exchange: Flow<String> = _exchange
 
-    fun send(){
+    fun send(
+
+    ){
 
 
         viewModelScope.launch {

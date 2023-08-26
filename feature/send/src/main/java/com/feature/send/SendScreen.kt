@@ -156,6 +156,7 @@ fun SendRoute(
 
             if(hasInternet) {
                 var res = null
+
                 CoroutineScope(Dispatchers.IO).launch {
 //
                     val wallet = WalletSDK(
@@ -183,31 +184,6 @@ fun SendRoute(
 
                 }
 
-
-//                val walletSDK = WalletSDK(context)
-//                val ensName = ENSName(address)
-//                if (ensName.isPotentialENSDomain()) {
-//                    val completableFuture = CompletableFuture<String>()
-//                    CompletableFuture.runAsync {
-//                        val ens = ENS(HttpEthereumRPC(walletManagerState.network.value.chainRPC))
-//                        completableFuture.complete(ens.getAddress(ensName)?.hex.toString())
-//                    }
-//                    address = completableFuture.get()
-//                }
-//                walletSDK.sendTransaction(
-//                    to = address,
-//                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(),
-//                    data = "",
-//                    gasPrice = null,
-//                ).whenComplete { txHash, throwable ->
-//                    println("Send transaction result: $txHash")
-//                    // Open tx in etherscan
-//                    if (txHash != "decline") {
-//                        val intent = Intent(Intent.ACTION_VIEW)
-//                        intent.data = android.net.Uri.parse(walletManagerState.network.value.chainExplorer + "/tx/" + txHash)
-//                        context.startActivity(intent)
-//                    }
-//                }
             } else {
                 (context as Activity).runOnUiThread {
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
