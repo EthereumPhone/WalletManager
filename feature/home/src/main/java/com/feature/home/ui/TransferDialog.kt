@@ -38,8 +38,7 @@ import com.core.model.TransferItem
 fun TransferDialog(
     transfer: TransferItem= TransferItem(
         chainId = 1,
-        from = "",
-        to = "",
+        address= "",
         asset = "",
         value = "",
         timeStamp = "",
@@ -138,14 +137,14 @@ fun TransferDialog(
                         horizontalAlignment = Alignment.Start,
                     ){
                         Text(
-                            text = "From",
+                            text = if (transfer.userSent) "To" else "From",
                             fontSize = 16.sp,
                             color = Color.White,
                             textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = transfer.from,
+                            text = transfer.address,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
                             textAlign = TextAlign.Left,
@@ -153,27 +152,8 @@ fun TransferDialog(
                         )
                     }
 
-                    //To address
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)  ,
-                        horizontalAlignment = Alignment.Start,
-                    ){
-                        Text(
-                            text = "To",
-                            fontSize = 16.sp,
-                            color = Color.White,
-                            textAlign = TextAlign.Left,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            text = transfer.to,
-                            fontSize = 16.sp,
-                            color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Left,
-                            fontWeight = FontWeight.Normal,
-                        )
-                    }
+
+
 
                     //Network
                     Column(

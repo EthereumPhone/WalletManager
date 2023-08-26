@@ -51,7 +51,7 @@ import kotlinx.datetime.Clock
 internal fun TransferItemCard(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
-    sendTx: Boolean,
+
     onCardClick: () -> Unit
 ) {
     val headlineText = remember {
@@ -107,7 +107,7 @@ internal fun TransferItemCard(
                     .size(42.dp)
             ){
                 Icon(
-                    imageVector = if (sendTx) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
+                    imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
                     contentDescription = "Send",
                     tint = Color(0xFF24303D)
                 )
@@ -146,7 +146,7 @@ internal fun TransferItemCard(
                         ) {
                             Text(
 
-                                text = if(sendTx) transfer.to else transfer.from,
+                                text = transfer.address,
                                 color = Color.White,//(0xFF9FA2A5),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Normal,

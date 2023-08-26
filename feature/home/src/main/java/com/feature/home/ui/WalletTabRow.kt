@@ -60,12 +60,12 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 internal fun WalletTabRow(
-    userAddress: String,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
     onTxOpen: (TransferItem) -> Unit,
+    userAddress: String,
     //showDialog: : () -> Unit
 ) {
 
@@ -167,7 +167,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
 private fun TransferList(
     transfersUiState: TransfersUiState,
     onTxOpen: (TransferItem) -> Unit,
-    userAddress: String
+    userAddress: String,
 ) {
 
 //    val showTransferInfoDialog =  remember { mutableStateOf(false) }
@@ -191,7 +191,7 @@ private fun TransferList(
                 ) {
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
-                            //Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                             //transfer.
 
 //                            address.value = transfer.address
@@ -199,15 +199,11 @@ private fun TransferList(
 //                            value.value = transfer.value
 //                            timeStamp.value = transfer.timeStamp
 //                            asset.value = transfer.asset
-                            Spacer(modifier = Modifier.height(12.dp))
-                            val str1: String = transfer.from
-                            val str2: String = userAddress
-                            Log.e("Test","from-${transfer.from}, user-${userAddress}, res:${userAddress.equals(transfer.from,true)}")
-
-                            var sendingTx = userAddress.equals(transfer.from,true)
+                            println("usersent-"+transfer.userSent+" , user-0xC051629B226c1Cf361536e5882603634c4084720, address-${transfer.address}, ${"0xC051629B226c1Cf361536e5882603634c4084720".equals(transfer.address,true)}")
+                            transfer.userSent = userAddress.equals(transfer.address,true)
                             TransferItemCard(
                                 transfer = transfer,
-                                sendTx = sendingTx,
+
                                 onCardClick = {
 
                                     onTxOpen(

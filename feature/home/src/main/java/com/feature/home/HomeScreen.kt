@@ -117,8 +117,7 @@ internal fun HomeScreen(
     var txInfo =  remember { mutableStateOf(
         TransferItem(
             chainId = 1,
-            from = "",
-            to = "",
+            address = "",
             asset = "",
             value = "",
             timeStamp = "",
@@ -203,7 +202,6 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
-            userAddress = userData.walletAddress,
             transfersUiState,
             assetsUiState,
             refreshState,
@@ -211,7 +209,8 @@ internal fun HomeScreen(
                 txInfo.value= it
                 showTransferInfoDialog.value = true
             },
-            onRefresh = { onRefresh() }
+            onRefresh = { onRefresh() } ,
+            userAddress= userData.walletAddress
         )
 
 
