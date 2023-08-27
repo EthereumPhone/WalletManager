@@ -58,7 +58,7 @@ internal fun AddressBar(
     ){
         Row (
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ){
             IconButton(
@@ -86,12 +86,12 @@ internal fun AddressBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ){
-                    SelectedNetworkButton(
-                        chainId = 1,
-                        onClickChange = {
-
-
-                        },)
+//                    SelectedNetworkButton(
+//                        chainId = 1,
+//                        onClickChange = {
+//
+//
+//                        },)
                     Text(
                         text = truncateText(userData.walletAddress),
                         fontSize = 20.sp,

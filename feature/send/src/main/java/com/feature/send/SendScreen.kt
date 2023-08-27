@@ -158,13 +158,17 @@ fun SendRoute(
                 var res = null
 
                 CoroutineScope(Dispatchers.IO).launch {
-//
+
                     val wallet = WalletSDK(
                     context = context,
                         web3jInstance = Web3j.build(HttpService(rpcurl))
                     )
 
-                    wallet.changeChain(chainid,rpcurl)
+                    if(wallet.getChainId() != chainid){
+                        wallet.changeChain(chainid,rpcurl)
+                    }
+
+
 
 
                     var res = wallet.sendTransaction(
@@ -183,6 +187,13 @@ fun SendRoute(
                     }
 
                 }
+
+//                    viewModel.send(
+//                        to = address,
+//                        chainId = chainid,
+//                        amount = amount
+//                    )
+//                }
 
             } else {
                 (context as Activity).runOnUiThread {
@@ -481,7 +492,7 @@ fun SendScreen(
                                         }, enabled = false)
 
                                         Text(
-                                            text = "-",//"${walletAmount.ethAmount} ETH",
+                                            text = "",//"${walletAmount.ethAmount} ETH",
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 16.sp,
                                             color = Color(0xFF9FA2A5)
@@ -662,17 +673,7 @@ fun SendScreen(
 
                     when (selectedToken) {
                         is SelectedTokenUiState.Unselected -> {
-//                            SwipeButton(
-//                                text = "Swipe to send",
-//                                icon = Icons.Rounded.ArrowForward,
-//                                completeIcon = Icons.Rounded.Check,
-//                                enabled = false,
-//                                onSwipe =  {},
-//                                swipeableState = swipeableState,
-//                                swipeComplete = swipeComplete,
-//                                setSwipeComplete = setSwipeComplete
-//
-//                            )
+
                             ethOSButton(
                                 onClick = {
                                 },
@@ -696,108 +697,6 @@ fun SendScreen(
                                 enabled = true,
                                 text = "Send"
                             )
-//                            SwipeButton(
-//                                text = "Swipe to send",
-//                                icon = Icons.Rounded.ArrowForward,
-//                                completeIcon = Icons.Rounded.Check,
-//                                enabled = true,
-//                                onSwipe =  {
-//                                    //send Transaction
-//                                    if (value == "") {
-//                                        val amount = "0.0".toFloat().toString()
-//                                        var address = address
-//
-//
-//
-//
-//                                        // Check if phone is connected to internet using NetworkManager
-//                                        val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
-//                                        val activeNetwork = connectivityManager?.activeNetwork
-//                                        val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
-//                                        val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-//
-//                                        if(hasInternet) {
-//                                            CoroutineScope(Dispatchers.IO).launch {
-////
-//                                                val wallet = WalletSDK(
-//                                                    context = context,
-//                                                )
-//
-//                                                val res = wallet.sendTransaction(
-//                                                    to = address,
-//                                                    value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-//                                                    data = ""
-//                                                )
-//                                                //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-//                                                //println(res)
-//                                                result = res
-//                                                //Log.e("Test",res)
-//                                            }
-//
-//                                        } else {
-//                                            (context as Activity).runOnUiThread {
-//                                                Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
-//                                            }
-//                                        }
-////                                        sendTransaction(
-////                                            SendData(
-////                                                amount = "0.0".toFloat(),
-////                                                address = address,
-////                                                selectedToken.tokenAsset.chainId
-////                                            )
-////                                        )
-//                                    }
-//                                    else{
-////                                        sendTransaction(
-////                                            SendData(
-////                                                amount = value.toFloat(),
-////                                                address = address,
-////                                                selectedToken.tokenAsset.chainId
-////                                            )
-////                                        )
-//
-//
-//                                            val amount = value.toFloat().toString()
-//                                            var address = address
-//
-//
-//                                            // Check if phone is connected to internet using NetworkManager
-//                                            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
-//                                            val activeNetwork = connectivityManager?.activeNetwork
-//                                            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
-//                                            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-//
-//                                            if(hasInternet) {
-//                                                CoroutineScope(Dispatchers.IO).launch {
-////
-//                                                    val wallet = WalletSDK(
-//                                                        context = context,
-//                                                    )
-//
-//                                                    val res = wallet.sendTransaction(
-//                                                        to = address,
-//                                                        value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-//                                                        data = ""
-//                                                    )
-//                                                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-//                                                    //println(res)
-//                                                    setSwipeComplete(false)
-//                                                }
-//
-//                                            } else {
-//                                                (context as Activity).runOnUiThread {
-//                                                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
-//                                                }
-//                                            }
-//
-//                                    }
-//
-//                                },
-//                                swipeableState = swipeableState,
-//                                swipeComplete = swipeComplete,
-//                                setSwipeComplete = setSwipeComplete
-//
-//                            )
                         }
                     }
 

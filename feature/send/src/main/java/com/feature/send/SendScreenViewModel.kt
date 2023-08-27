@@ -43,7 +43,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SendViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
-    private val sendRepository: SendRepositoryWalletSDK,
+    private val sendRepository: SendRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
@@ -92,7 +92,9 @@ class SendViewModel @Inject constructor(
     val exchange: Flow<String> = _exchange
 
     fun send(
-
+        to: String,
+        chainId: Int,
+        amount: String
     ){
 
 
@@ -114,10 +116,10 @@ class SendViewModel @Inject constructor(
 //            }
 
                     sendRepository.sendTo(
-                        chainId = (_selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
-                        toAddress = toAddress.toString(),
+                        chainId = chainId,
+                        toAddress = to,
                         data = "",
-                        value = amount.toString()
+                        value = amount
                     )
 
            }

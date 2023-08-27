@@ -6,26 +6,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemColors
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -38,12 +30,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.core.designsystem.theme.background
-import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
-import com.core.ui.WmListItem
-import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+import java.util.Date
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,7 +139,7 @@ internal fun TransferItemCard(
                         ) {
                             Text(
 
-                                text = transfer.address,
+                                text = if(transfer.userSent) transfer.to else transfer.from,
                                 color = Color.White,//(0xFF9FA2A5),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Normal,
@@ -163,13 +156,18 @@ internal fun TransferItemCard(
                             horizontalAlignment = Alignment.End
                         ) {
                             Text(
-                                text = transfer.value+" "+transfer.asset,
+                                text = transfer.value+" "+transfer.asset.uppercase(),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
+
+
+
+                            val date = compareDate(transfer.timeStamp)
                             Text(
-                                    text = transfer.timeStamp,
-                            color = Color(0xFF9FA2A5)
+                                    text = date
+
+                                ,color = Color(0xFF9FA2A5)
                             )
                         }
 
@@ -193,6 +191,35 @@ internal fun TransferItemCard(
         }
 
 
+    }
+}
+
+fun compareDate(transfer: String): String{//date1: String, date2:String) {
+    //val d1 = "12/24/2018"
+    val year = transfer.substring(0,4)
+    val month = transfer.substring(5,7)
+    val day = transfer.substring(8,10)
+    val txdate = "${month}-${day}-${year}"
+    val txtime = transfer.takeLast(8)
+    val today = "${LocalDateTime.now().month.value}-${LocalDateTime.now().dayOfMonth}-${LocalDateTime.now().year}"
+
+    val sdf = SimpleDateFormat("MM-dd-yyyy")
+
+    val firstDate: Date = sdf.parse(txdate)
+    val secondDate: Date = sdf.parse(today)
+
+    val cmp = firstDate.compareTo(secondDate)
+    when {
+        cmp > 0 -> {
+            return "${txdate} ${txtime}"//after today
+        }
+        cmp < 0 -> {
+            return txdate//before today
+        }
+        else -> {
+            return txtime// same day
+
+        }
     }
 }
 

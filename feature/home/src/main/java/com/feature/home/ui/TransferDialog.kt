@@ -38,12 +38,15 @@ import com.core.model.TransferItem
 fun TransferDialog(
     transfer: TransferItem= TransferItem(
         chainId = 1,
-        address= "",
+        from= "",
+        to="",
         asset = "",
         value = "",
         timeStamp = "",
         userSent = true
     ),
+    currencyPrice: String,
+    onCurrencyChange: (String) -> Unit,
     setShowDialog: () -> Unit,
 ){
 
@@ -55,6 +58,13 @@ fun TransferDialog(
         42161 -> "Arbitrum"
         else -> ""
     }
+
+    var currencychange = when(transfer.chainId){
+        137 -> "MATICUSDT"
+        else -> "ETHUSDT"
+    }
+    onCurrencyChange(currencychange)
+
     Dialog(onDismissRequest = { setShowDialog() }) { //}){//
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -66,7 +76,9 @@ fun TransferDialog(
                 contentAlignment = Alignment.Center
             ) {
                 Column(
-                    modifier = Modifier.padding(28.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(28.dp)
+                        .fillMaxWidth(),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
 
@@ -119,13 +131,26 @@ fun TransferDialog(
                             textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Text(
-                            text = transfer.value+" "+transfer.asset,
-                            fontSize = 16.sp,
-                            color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Left,
-                            fontWeight = FontWeight.Normal,
-                        )
+                        if(transfer.chainId != 5){
+                            Text(
+                                text = "${transfer.value} ${transfer.asset.uppercase()} " +
+                                        "${ if (currencyPrice!= "") "($${currencyPrice.toFloat()*transfer.value.toFloat()})" else "" }",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                        }else{
+                            Text(
+                                text = "${transfer.value} ${transfer.asset.uppercase()} " +
+                                        "($0.0)",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                        }
+
                     }
 
 
@@ -144,7 +169,7 @@ fun TransferDialog(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = transfer.address,
+                            text = if (transfer.userSent) transfer.to else transfer.from,
                             fontSize = 16.sp,
                             color = Color(0xFF9FA2A5),
                             textAlign = TextAlign.Left,
@@ -191,13 +216,37 @@ fun TransferDialog(
                             textAlign = TextAlign.Left,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Text(
-                            text = transfer.timeStamp,
-                            fontSize = 16.sp,
-                            color = Color(0xFF9FA2A5),
-                            textAlign = TextAlign.Left,
-                            fontWeight = FontWeight.Normal,
-                        )
+                        val year = transfer.timeStamp.substring(0,4)
+                        val month = transfer.timeStamp.substring(5,7)
+                        val day = transfer.timeStamp.substring(8,10)
+                        val txdate = "${month}-${day}-${year}"
+                        val txtime = transfer.timeStamp.takeLast(8)
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Text(
+                                text = "${txdate}",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                            Text(
+                                text = " at ",
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                            Text(
+                                text = "${txtime}",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                        }
+
                     }
                 }
             }

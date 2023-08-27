@@ -199,8 +199,8 @@ private fun TransferList(
 //                            value.value = transfer.value
 //                            timeStamp.value = transfer.timeStamp
 //                            asset.value = transfer.asset
-                            println("usersent-"+transfer.userSent+" , user-0xC051629B226c1Cf361536e5882603634c4084720, address-${transfer.address}, ${"0xC051629B226c1Cf361536e5882603634c4084720".equals(transfer.address,true)}")
-                            transfer.userSent = userAddress.equals(transfer.address,true)
+                            //println("usersent-"+transfer.userSent+" , user-0xC051629B226c1Cf361536e5882603634c4084720, address-${transfer.address}, ${"0xC051629B226c1Cf361536e5882603634c4084720".equals(transfer.address,true)}")
+                            transfer.userSent = userAddress.equals(transfer.from,true)
                             TransferItemCard(
                                 transfer = transfer,
 

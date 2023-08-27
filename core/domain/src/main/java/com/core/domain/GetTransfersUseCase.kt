@@ -27,10 +27,11 @@ class GetTransfersUseCase @Inject constructor(
                         .toLocalDateTime(TimeZone.currentSystemDefault())
 
 
-                    println("${address.substring(0,5) + "..." + address.takeLast(3)} - ${it.value} - ${it.userIsSender}")
+                    //println("${address.substring(0,5) + "..." + address.takeLast(3)} - ${it.value} - ${it.userIsSender}")
                     TransferItem(
                         chainId = it.chainId,
-                        address = address,//address.substring(0,5) + "..." + address.takeLast(3),
+                        from = it.from,//address.substring(0,5) + "..." + address.takeLast(3),
+                        to = it.to,
                         asset = networkCurrency,
                         value = it.value.toString(),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.ExchangeApi
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -71,6 +72,10 @@ class HomeViewModel @Inject constructor(
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
+    private val _exchange = MutableStateFlow("")
+    val exchange: Flow<String> = _exchange
+
+
 
 
 
@@ -88,6 +93,18 @@ class HomeViewModel @Inject constructor(
                 e.printStackTrace()
             }
             _refreshState.value = false
+        }
+    }
+
+    fun getExchange(symbol: String?) {
+        viewModelScope.launch {
+            try {
+                val listResult = ExchangeApi.retrofitService.getExchange(symbol)
+                _exchange.value = listResult.price
+            } catch (e: Exception) {
+                _exchange.value =  "Error: ${e.message}"
+            }
+
         }
     }
 

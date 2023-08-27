@@ -39,6 +39,7 @@ import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.TransferDialog
 import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
@@ -56,6 +57,7 @@ internal fun HomeRoute(
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
+    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
     val web3j = Web3j.build(HttpService("https://rpc.ankr.com/eth"))
     val wallet = WalletSDK(
@@ -69,6 +71,8 @@ internal fun HomeRoute(
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
+        currencyPrice = currencyprice,
+        onCurrencyChange = viewModel::getExchange,
         onAddressClick = {
             // had to do it here because I need the local context.
             copyTextToClipboard(localContext, userData.walletAddress)
@@ -88,6 +92,8 @@ internal fun HomeScreen(
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
+    currencyPrice: String,
+    onCurrencyChange: (String) -> Unit,
     onAddressClick: () -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
@@ -117,7 +123,8 @@ internal fun HomeScreen(
     var txInfo =  remember { mutableStateOf(
         TransferItem(
             chainId = 1,
-            address = "",
+            from="",
+            to="",
             asset = "",
             value = "",
             timeStamp = "",
@@ -137,7 +144,9 @@ internal fun HomeScreen(
                 showTransferInfoDialog.value = false
             },
             //title = "Transfer",
-            transfer = txInfo.value
+            transfer = txInfo.value,
+            currencyPrice = currencyPrice,
+            onCurrencyChange = onCurrencyChange
 //            address = address.value ,
 //            chainId = chainId.value,
 //            amount = value.value,
@@ -257,15 +266,15 @@ private fun copyTextToClipboard(context: Context, text: String) {
 @Preview
 @Composable
 fun PreviewHomeScreen() {
-    HomeScreen(
-        userData = UserData("0x123...123"),
-        transfersUiState = TransfersUiState.Loading,
-        assetsUiState = AssetUiState.Loading,
-        refreshState = false,
-        onAddressClick = { },
-        navigateToReceive = { },
-        navigateToSend = { },
-        navigateToSwap = { },
-        onRefresh = { }
-    )
+//    HomeScreen(
+//        userData = UserData("0x123...123"),
+//        transfersUiState = TransfersUiState.Loading,
+//        assetsUiState = AssetUiState.Loading,
+//        refreshState = false,
+//        onAddressClick = { },
+//        navigateToReceive = { },
+//        navigateToSend = { },
+//        navigateToSwap = { },
+//        onRefresh = { }
+//    )
 }
