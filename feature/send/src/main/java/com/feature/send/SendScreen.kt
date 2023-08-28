@@ -88,7 +88,9 @@ import org.web3j.crypto.WalletUtils
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
+import java.lang.NullPointerException
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.Currency
 
 
@@ -136,7 +138,7 @@ fun SendRoute(
             val amount = sendData.amount.toString()
             var address = sendData.address
             val chainid = sendData.chainId
-
+            //TODO: Replace with actual method to get rpcUrl
             val rpcurl = when(chainid){
                 1 -> "https://rpc.ankr.com/eth"
                 5 -> "https://rpc.ankr.com/eth_goerli"
@@ -158,10 +160,11 @@ fun SendRoute(
                 var res = null
 
                 CoroutineScope(Dispatchers.IO).launch {
+                    val web3jInstance = Web3j.build(HttpService(rpcurl))
 
                     val wallet = WalletSDK(
-                    context = context,
-                        web3jInstance = Web3j.build(HttpService(rpcurl))
+                        context = context,
+                        web3jInstance = web3jInstance
                     )
 
                     if(wallet.getChainId() != chainid){
@@ -169,13 +172,21 @@ fun SendRoute(
                     }
 
 
+                    val gasPrice = web3jInstance.ethGasPrice().send().gasPrice
+                    // Add two percent to the gasPrice
 
 
-                    var res = wallet.sendTransaction(
-                        to = address,
-                        value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-                        data = ""
-                    )
+                    var res = try {
+                         wallet.sendTransaction(
+                            to = address,
+                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+                            data = "",
+                            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100))).toString()
+                         )
+                    } catch (exception: NullPointerException) {
+                        "error"
+                    }
+
                     Log.e("Test",res)
                     //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
                     //println(res)
@@ -184,6 +195,11 @@ fun SendRoute(
                         viewModel.changeTxComplete()
                         //Log.e("complete","$txComplete")
 
+                    }
+                    if (res == "error") {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                 }
@@ -623,7 +639,6 @@ fun SendScreen(
                                         chainId = 0,
                                         onClickChange = {
                                             showSheet = true
-
                                         },
                                     )
                                 }
