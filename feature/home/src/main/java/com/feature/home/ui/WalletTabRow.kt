@@ -153,7 +153,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
                     LazyColumn {
                         groupedAssets.forEach { (assetName, assetList) ->
                             item(key = assetName) {
-                                AssetExpandableItem(title = assetName, assets = assetList)
+                                AssetExpandableItem(title = formatString(assetName), assets = assetList)
                             }
                         }
                     }
@@ -161,6 +161,18 @@ private fun AssetList(assetsUiState: AssetUiState) {
             }
         }
     }
+}
+
+fun formatString(input: String): String {
+    if (input.isEmpty()) {
+        return input
+    }
+
+    val lowercaseRest = input.substring(1).lowercase()
+    val firstLetter = input[0]
+    val capitalizedFirstLetter = firstLetter.uppercase()
+
+    return capitalizedFirstLetter + lowercaseRest
 }
 
 @Composable
