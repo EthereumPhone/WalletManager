@@ -59,11 +59,6 @@ internal fun HomeRoute(
     val localContext = LocalContext.current
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
-    val web3j = Web3j.build(HttpService("https://rpc.ankr.com/eth"))
-    val wallet = WalletSDK(
-        context = localContext,
-        web3jInstance = web3j
-    )
 
 
     HomeScreen(
