@@ -32,6 +32,7 @@ import com.core.designsystem.theme.primary
 import com.core.model.TokenAsset
 import com.core.ui.ExpandableListItem
 import com.feature.home.R
+import java.text.DecimalFormat
 
 @Composable
 fun AssetExpandableItem(
@@ -53,7 +54,7 @@ fun AssetExpandableItem(
                     color = Color.White
                 )
                 Text(
-                    text = " ${assets.sumOf { it.balance }}",
+                    text = " ${formatDouble(assets.sumOf { it.balance })}",
                     fontSize = 16.sp,
                     color = Color(0xFF9FA2A5)
                 )
@@ -85,6 +86,11 @@ fun AssetExpandableItem(
     )
 }
 
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
+
 @Composable
 private fun IndividualAssetItem(
     tokenAsset: TokenAsset
@@ -112,7 +118,7 @@ private fun IndividualAssetItem(
             color = primary
         )
         Text(
-            text = tokenAsset.balance.toString(),
+            text = formatDouble(tokenAsset.balance),
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             color = primary
