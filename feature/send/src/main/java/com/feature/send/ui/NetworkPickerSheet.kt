@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.core.model.TokenAsset
 import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
+import java.text.DecimalFormat
 
 @Composable
 fun NetworkPickerSheet(
@@ -50,20 +51,20 @@ fun NetworkPickerSheet(
                             WmListItem(
                                 headlineContent = {
                                     Text(
-                                        text = tokenAsset.symbol.uppercase(),
+                                        text = formatString(tokenAsset.symbol),
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 },
                                 supportingContent = {
                                     Text(
-                                        text = tokenAsset.name,
+                                        text = formatString(tokenAsset.name),
                                         color = Color(0xFF9FA2A5)
                                     )
                                 },
                                 trailingContent = {
                                     Text(
-                                        text = tokenAsset.balance.toString() + " " + if(tokenAsset.chainId == 137) "MATIC" else "ETH",
+                                        text = formatDouble(tokenAsset.balance) + " " + if(tokenAsset.chainId == 137) "MATIC" else "ETH",
                                         fontSize = 18.sp,
                                         color = Color.White,
                                         fontWeight = FontWeight.Medium
@@ -134,6 +135,24 @@ fun NetworkPickerSheet(
 
     }
 }
+
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
+
+fun formatString(input: String): String {
+    if (input.isEmpty()) {
+        return input
+    }
+
+    val lowercaseRest = input.substring(1).lowercase()
+    val firstLetter = input[0]
+    val capitalizedFirstLetter = firstLetter.uppercase()
+
+    return capitalizedFirstLetter + lowercaseRest
+}
+
 
 
 
