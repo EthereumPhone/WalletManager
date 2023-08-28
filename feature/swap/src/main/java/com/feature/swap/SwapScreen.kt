@@ -159,7 +159,9 @@ internal fun SwapScreen(
             switchTokens = switchTokens,
             onAmountChange = { selectedTextField, amount ->
                 onTextFieldSelected(selectedTextField)
-                onAmountChange(amount)
+                if (amount != "") {
+                    onAmountChange(amount)
+                }
             },
             onPickAssetClicked = {
                 showSheet = true
