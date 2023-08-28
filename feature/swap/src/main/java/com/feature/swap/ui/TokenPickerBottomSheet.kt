@@ -33,6 +33,8 @@ import com.core.model.TokenMetadata
 import com.core.ui.WmListItem
 import com.core.ui.WmTextField
 import com.feature.swap.SwapTokenUiState
+import java.text.DecimalFormat
+import kotlin.math.pow
 
 @Composable
 fun TokenPickerSheet(
@@ -76,8 +78,9 @@ fun TokenPickerSheet(
 
                 }
                 is SwapTokenUiState.Success -> {
-
-                    swapTokenUiState.tokenAssets.forEach { tokenAsset ->
+                    swapTokenUiState.tokenAssets.sortedByDescending {
+                        it.balance
+                    }.forEach { tokenAsset ->
                         item(key = tokenAsset.address) {
                             WmListItem(
                                 headlineContent = {
@@ -95,7 +98,7 @@ fun TokenPickerSheet(
                                 },
                                 trailingContent = {
                                     Text(
-                                        text = tokenAsset.balance.toString(),
+                                        text = formatDouble(tokenAsset.balance),
                                         fontSize = 18.sp,
                                         color = Color.White,
                                         fontWeight = FontWeight.Medium
@@ -124,7 +127,10 @@ fun TokenPickerSheet(
     }
 }
 
-
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
 
 @Preview
 @Composable
