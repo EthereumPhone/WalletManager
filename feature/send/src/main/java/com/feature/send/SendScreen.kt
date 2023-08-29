@@ -62,6 +62,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.data.util.chainToApiKey
 import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
@@ -91,6 +92,7 @@ import org.web3j.protocol.http.HttpService
 import java.lang.NullPointerException
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.text.DecimalFormat
 import java.util.Currency
 
 
@@ -139,15 +141,18 @@ fun SendRoute(
             var address = sendData.address
             val chainid = sendData.chainId
             //TODO: Replace with actual method to get rpcUrl
-            val rpcurl = when(chainid){
-                1 -> "https://rpc.ankr.com/eth"
-                5 -> "https://rpc.ankr.com/eth_goerli"
-                10 -> "https://rpc.ankr.com/optimism"
-                137 -> "https://rpc.ankr.com/polygon"
-                42161 -> "https://rpc.ankr.com/arbitrum"
-                else -> {"https://rpc.ankr.com/eth"}
+            val chainName = when(chainid) {
+                1 -> "eth-mainnet"
+                5 -> "eth-goerli"
+                10 -> "opt-mainnet"
+                137 -> "polygon-mainnet"
+                42161 -> "arb-mainnet"
+                else -> "eth-mainnet"
             }
 
+            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
+
+            println("RPC: $rpcurl")
 
             Log.e("not complete","$txComplete")
             // Check if phone is connected to internet using NetworkManager
@@ -171,17 +176,20 @@ fun SendRoute(
                         wallet.changeChain(chainid,rpcurl)
                     }
 
-
-                    val gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    // Add two percent to the gasPrice
-
+                    // TODO: Find out why polygon transaction is underpriced
+                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
+                    gasPrice = if (chainid != 137) {
+                        gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100)))
+                    } else {
+                        gasPrice.add(gasPrice.multiply(BigInteger.valueOf(8)).divide(BigInteger.valueOf(100)))
+                    }
 
                     var res = try {
                          wallet.sendTransaction(
                             to = address,
                             value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
                             data = "",
-                            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100))).toString()
+                            gasPrice = gasPrice.toString()
                          )
                     } catch (exception: NullPointerException) {
                         "error"
@@ -190,7 +198,7 @@ fun SendRoute(
                     Log.e("Test",res)
                     //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
                     //println(res)
-                    if(res != "decline"){
+                    if(res != "decline" && res != "error"){
                         //onBackClick()
                         viewModel.changeTxComplete()
                         //Log.e("complete","$txComplete")
@@ -199,6 +207,11 @@ fun SendRoute(
                     if (res == "error") {
                         (context as Activity).runOnUiThread {
                             Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
                         }
                     }
 
@@ -532,7 +545,7 @@ fun SendScreen(
                                         }, enabled = true)
 
                                         Text(
-                                            text = "Available: ${selectedToken.tokenAsset.balance} "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
+                                            text = "Available: ${formatDouble(selectedToken.tokenAsset.balance)} "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 16.sp,
                                             color = Color(0xFF9FA2A5)
@@ -603,7 +616,7 @@ fun SendScreen(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
                                                     "$${"0.0".toFloat() * "0.0".toFloat()}"
                                                 } else {
-                                                    "$${value.toFloat() * currencyPrice.toFloat()}"
+                                                    "$${formatDouble((value.toFloat() * currencyPrice.toFloat()).toDouble())}"
                                                 },//"$${value.toFloat()}",
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 16.sp,
@@ -778,7 +791,10 @@ fun SendScreen(
 
 }
 
-
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
 
 private fun getBalance(assetsUiState: AssetUiState, chainid: Int): TokenAsset {
     lateinit var info: TokenAsset
