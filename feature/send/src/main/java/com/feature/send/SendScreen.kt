@@ -162,7 +162,7 @@ fun SendRoute(
             val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
 
             if(hasInternet) {
-                var res = null
+
 
                 CoroutineScope(Dispatchers.IO).launch {
                     val web3jInstance = Web3j.build(HttpService(rpcurl))
@@ -331,10 +331,10 @@ fun SendScreen(
     amountfontSize =
         when {
         characterCount <= 2 -> 68.sp
-        characterCount > 2 && characterCount <= 4 -> 60.sp
-        characterCount > 4 && characterCount <= 6 -> 52.sp
-            characterCount > 4 && characterCount <= 6 -> 48.sp
-            characterCount > 6 && characterCount <= 9 -> 44.sp
+        characterCount > 2 && characterCount <= 4 -> 64.sp
+        characterCount > 4 && characterCount <= 6 -> 54.sp
+            characterCount > 4 && characterCount <= 6 -> 50.sp
+            characterCount > 6 && characterCount <= 9 -> 48.sp
         //characterCount > 5 && characterCount <= 10 -> 18.sp
         else -> minFontSize
     }

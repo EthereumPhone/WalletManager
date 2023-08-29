@@ -123,7 +123,8 @@ internal fun HomeScreen(
             asset = "",
             value = "",
             timeStamp = "",
-            userSent = true
+            userSent = true,
+            txHash = ""
         )
     ) }
 //    val chainId =  remember { mutableStateOf(1) }
@@ -210,7 +211,7 @@ internal fun HomeScreen(
             assetsUiState,
             refreshState,
             onTxOpen = {
-                txInfo.value= it
+                txInfo.value = it
                 showTransferInfoDialog.value = true
             },
             onRefresh = { onRefresh() } ,

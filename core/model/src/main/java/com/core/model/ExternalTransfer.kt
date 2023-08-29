@@ -10,5 +10,6 @@ data class TransferItem(
     val asset: String,
     val value: String,
     val timeStamp: String,
-    var userSent: Boolean
+    var userSent: Boolean,
+    val txHash: String
 )

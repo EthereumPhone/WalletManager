@@ -1,27 +1,37 @@
 package com.feature.home.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.core.model.Transfer
 import com.core.model.TransferItem
 import java.math.BigDecimal
@@ -44,7 +55,8 @@ fun TransferDialog(
         asset = "",
         value = "",
         timeStamp = "",
-        userSent = true
+        userSent = true,
+        txHash = ""
     ),
     currencyPrice: String,
     onCurrencyChange: (String) -> Unit,
@@ -60,18 +72,22 @@ fun TransferDialog(
         else -> ""
     }
 
+    val context = LocalContext.current
+
     var currencychange = when(transfer.chainId){
         137 -> "MATICUSDT"
         else -> "ETHUSDT"
     }
     onCurrencyChange(currencychange)
 
-    Dialog(onDismissRequest = { setShowDialog() }) { //}){//
+    Dialog(
+        onDismissRequest = { setShowDialog() },
+    ) { //}){//
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = Color(0xFF24303D),
             contentColor = Color.White,
-            tonalElevation = 4.dp
+            tonalElevation = 20.dp
         ) {
             Box(
                 contentAlignment = Alignment.Center
@@ -117,6 +133,28 @@ fun TransferDialog(
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    //From txhash
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)  ,
+                        horizontalAlignment = Alignment.Start,
+                    ){
+                        Text(
+                            text = "Tx Hash",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = transfer.txHash,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9FA2A5),
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.Normal,
+                        )
+                    }
 
 
                     //Amount
@@ -249,9 +287,71 @@ fun TransferDialog(
                         }
 
                     }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row (
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                        ){
+                        EtherscanButton(
+                            onClickChange = {
+                                //Log.e("tag","URL IS "+url.value.text)
+                                val urlIntent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse(
+                                        "https://etherscan.io/tx/${transfer.txHash}"
+
+                                    )
+                                )
+                                context.startActivity(urlIntent)
+
+                            }
+                        )
+
+                    }
+
+
+
+
+
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun EtherscanButton(
+    onClickChange: () -> Unit,
+    modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
+    Button(
+        onClick = onClickChange,
+        contentPadding = PaddingValues(14.dp,0.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF3C4958),//1E2730),
+            contentColor = Color.White
+        ),
+        enabled = true,
+        shape = CircleShape,
+        elevation = ButtonDefaults.elevatedButtonElevation(
+            2.dp,//defaultElevation
+            0.dp,//pressedElevation
+//            8.dp,//focusedElevation
+//            8.dp, //hoveredElevation
+        )
+        //modifier = modifier.padding(14.dp, 0.dp),
+    ) {
+
+            Text(
+                text = "See Tx on Etherscan",
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = modifier.padding(0.dp),
+            )
+
     }
 }
 

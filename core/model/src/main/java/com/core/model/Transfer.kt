@@ -15,7 +15,8 @@ data class Transfer(
     val tokenId: String,
     val value: Double,
     val blockTimestamp: Instant,
-    val userIsSender: Boolean
+    val userIsSender: Boolean,
+    val txHash: String
 ) {
     data class Erc1155MetadataObject(
         val tokenId: String,

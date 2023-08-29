@@ -77,7 +77,7 @@ internal fun TransferItemCard(
         modifier = modifier
             .fillMaxWidth(),
         colors =  CardDefaults.cardColors(
-            containerColor= primaryVariant,
+            containerColor= Color(0xFF1E2730),//primaryVariant,
             contentColor= Color.White,
         ),
         shape = RoundedCornerShape(12.dp),
