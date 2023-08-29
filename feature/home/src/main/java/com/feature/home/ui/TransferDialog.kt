@@ -33,6 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.core.model.Transfer
 import com.core.model.TransferItem
+import java.math.BigDecimal
 
 @Composable
 fun TransferDialog(
@@ -133,7 +134,7 @@ fun TransferDialog(
                         )
                         if(transfer.chainId != 5){
                             Text(
-                                text = "${transfer.value} ${transfer.asset.uppercase()} " +
+                                text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
                                         "${ if (currencyPrice!= "") "($${currencyPrice.toFloat()*transfer.value.toFloat()})" else "" }",
                                 fontSize = 16.sp,
                                 color = Color(0xFF9FA2A5),
@@ -142,7 +143,7 @@ fun TransferDialog(
                             )
                         }else{
                             Text(
-                                text = "${transfer.value} ${transfer.asset.uppercase()} " +
+                                text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
                                         "($0.0)",
                                 fontSize = 16.sp,
                                 color = Color(0xFF9FA2A5),

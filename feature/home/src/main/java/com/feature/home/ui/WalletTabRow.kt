@@ -66,6 +66,8 @@ internal fun WalletTabRow(
     onRefresh: () -> Unit,
     onTxOpen: (TransferItem) -> Unit,
     userAddress: String,
+//    currencyPrice: String,
+//    onCurrencyChange: (String) -> Unit,
     //showDialog: : () -> Unit
 ) {
 
@@ -109,7 +111,7 @@ internal fun WalletTabRow(
         ) { page ->
             when (tabItems[page]) {
                 TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
-                TabItems.ASSETS -> AssetList(assetsUiState)
+                TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
 
@@ -122,7 +124,7 @@ internal fun WalletTabRow(
 }
 
 @Composable
-private fun AssetList(assetsUiState: AssetUiState) {
+private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, onCurrencyChange: (String) -> Unit) {
     when (assetsUiState) {
         is AssetUiState.Loading -> {  }
         is AssetUiState.Error -> {  }
@@ -153,7 +155,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
                     LazyColumn {
                         groupedAssets.forEach { (assetName, assetList) ->
                             item(key = assetName) {
-                                AssetExpandableItem(title = formatString(assetName), assets = assetList)
+                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
                             }
                         }
                     }

@@ -102,7 +102,7 @@ internal fun TransferItemCard(
                 Icon(
                     imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
                     contentDescription = "Send",
-                    tint = Color(0xFF24303D)
+                    tint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)//Color(0xFF24303D)
                 )
             }
             Column (

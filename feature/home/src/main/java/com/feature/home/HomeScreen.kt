@@ -214,7 +214,10 @@ internal fun HomeScreen(
                 showTransferInfoDialog.value = true
             },
             onRefresh = { onRefresh() } ,
-            userAddress= userData.walletAddress
+            userAddress= userData.walletAddress,
+//            currencyPrice = currencyPrice,
+//            onCurrencyChange = onCurrencyChange
+
         )
 
 
