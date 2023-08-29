@@ -150,7 +150,11 @@ fun SendRoute(
                 else -> "eth-mainnet"
             }
 
-            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
+            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
+
+            if (chainid == 137) {
+                rpcurl = "https://rpc.ankr.com/polygon"
+            }
 
             println("RPC: $rpcurl")
 
@@ -178,11 +182,8 @@ fun SendRoute(
 
                     // TODO: Find out why polygon transaction is underpriced
                     var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    gasPrice = if (chainid != 137) {
-                        gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100)))
-                    } else {
-                        gasPrice.add(gasPrice.multiply(BigInteger.valueOf(8)).divide(BigInteger.valueOf(100)))
-                    }
+                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100)))
+
 
                     var res = try {
                          wallet.sendTransaction(
