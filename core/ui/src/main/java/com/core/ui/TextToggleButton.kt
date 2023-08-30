@@ -23,6 +23,7 @@ fun TextToggleButton(
     selected: MutableState<Boolean>,
     onClickChange: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     Button(
@@ -33,6 +34,7 @@ fun TextToggleButton(
             contentColor = Color.White
         ),
         shape = CircleShape,
+        enabled = enabled
         //elevation = ButtonDefaults.elevation(0.dp, 0.dp),
 
     ) {

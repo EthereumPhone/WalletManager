@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -41,10 +43,11 @@ fun SwapTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     placeholder: String="Placeholder",
     //placeholder: @Composable (() -> Unit)? = null,
+    focusRequester: FocusRequester,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-
+    enabled: Boolean
     ) {
 
     BasicTextField(
@@ -57,6 +60,7 @@ fun SwapTextField(
             fontWeight = FontWeight.SemiBold
 
         ),
+        enabled = enabled,
         keyboardOptions = keyboardOptions,
         cursorBrush = SolidColor(Color.White),
         modifier = modifier
@@ -75,7 +79,7 @@ fun SwapTextField(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).focusRequester(focusRequester)
             ) {
                 if(value == "") {
                     Text(
@@ -103,13 +107,13 @@ fun SwapTextField(
 fun PreviewWmTextField() {
     var text by remember { mutableStateOf("bii b") }
 
-    SwapTextField(
-        value = text,
-        onChange = { text = it },
-        leadingIcon = {
-            //TokenAssetIcon()
-        }
-    )
+//    SwapTextField(
+//        value = text,
+//        onChange = { text = it },
+//        leadingIcon = {
+//            //TokenAssetIcon()
+//        }
+//    )
 
 
 }
