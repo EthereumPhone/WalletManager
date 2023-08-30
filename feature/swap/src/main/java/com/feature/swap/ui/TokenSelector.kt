@@ -44,6 +44,7 @@ import com.feature.swap.AssetsUiState
 import com.feature.swap.SelectedTokenUiState
 import com.feature.swap.SwapTokenUiState
 import com.feature.swap.TextFieldSelected
+import java.math.BigDecimal
 
 @Composable
 fun TokenSelector(
@@ -54,6 +55,33 @@ fun TokenSelector(
     onPickAssetClicked: (TextFieldSelected) -> Unit,
     onAmountChange: (TextFieldSelected, String) -> Unit
 ) {
+
+    val fromBalance = when(assetsUiState.fromAsset) {
+        is SelectedTokenUiState.Unselected -> { "" }
+        is SelectedTokenUiState.Selected -> {
+            BigDecimal(assetsUiState.fromAsset.tokenAsset.balance.toString())
+        }
+    }
+//    val fromSymbol = when(assetsUiState.fromAsset) {
+//        is SelectedTokenUiState.Unselected -> { "" }
+//        is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
+//    }
+
+    val toBalance = when(assetsUiState.toAsset) {
+        is SelectedTokenUiState.Unselected -> { "" }
+        is SelectedTokenUiState.Selected -> {
+            BigDecimal(assetsUiState.toAsset.tokenAsset.balance.toString())
+        }
+    }
+//    val toSymbol = when(assetsUiState.toAsset) {
+//        is SelectedTokenUiState.Unselected -> { "" }
+//        is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
+//    }
+    //var fromValue by remember { mutableStateOf(amountsUiState.fromAmount) }
+    val maxed = remember { mutableStateOf(false) }
+    //var fromPrevAmount by remember { mutableStateOf(fromValue) }
+
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -72,8 +100,9 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
+
                 Text(
-                    text = "Balance: 12",
+                    text = "Balance: $fromBalance",
                     fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
@@ -85,7 +114,7 @@ fun TokenSelector(
                         onPickAssetClicked(TextFieldSelected.FROM)
                     }
                 },
-                value = amountsUiState.fromAmount,
+                value = if(maxed.value)"$fromBalance" else amountsUiState.fromAmount,
                 onChange = { onAmountChange(TextFieldSelected.FROM, it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
@@ -101,9 +130,9 @@ fun TokenSelector(
                     fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
-                val maxed = remember { mutableStateOf(false) }
                 TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
                     maxed.value = !maxed.value
+
                 })
             }
         }
@@ -139,8 +168,10 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
+
+
                 Text(
-                    text = "Balance: 12",
+                    text = "Balance: ${toBalance}",
                     fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
@@ -185,7 +216,7 @@ private fun TokenAssetIcon(
 ) {
     val text = when(tokenAsset) {
         is SelectedTokenUiState.Unselected -> { "Select Token" }
-        is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol }
+        is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
     }
     Button(
         onClick = onClick,
