@@ -41,12 +41,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.core.ui.TextToggleButton
 import com.core.ui.WmTextField
+import com.core.ui.ethOSButton
 import com.feature.swap.AmountsUiState
 import com.feature.swap.AssetsUiState
 import com.feature.swap.SelectedTokenUiState
 import com.feature.swap.SwapTokenUiState
 import com.feature.swap.TextFieldSelected
 import java.math.BigDecimal
+import java.text.DecimalFormat
 
 @Composable
 fun TokenSelector(
@@ -61,7 +63,7 @@ fun TokenSelector(
     val fromBalance = when(assetsUiState.fromAsset) {
         is SelectedTokenUiState.Unselected -> { "" }
         is SelectedTokenUiState.Selected -> {
-            BigDecimal(assetsUiState.fromAsset.tokenAsset.balance.toString())
+            formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
         }
     }
 //    val fromSymbol = when(assetsUiState.fromAsset) {
@@ -72,7 +74,7 @@ fun TokenSelector(
     val toBalance = when(assetsUiState.toAsset) {
         is SelectedTokenUiState.Unselected -> { "" }
         is SelectedTokenUiState.Selected -> {
-            BigDecimal(assetsUiState.toAsset.tokenAsset.balance.toString())
+            formatDouble(assetsUiState.toAsset.tokenAsset.balance)
         }
     }
 //    val toSymbol = when(assetsUiState.toAsset) {
@@ -80,7 +82,6 @@ fun TokenSelector(
 //        is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
 //    }
     //var fromValue by remember { mutableStateOf(amountsUiState.fromAmount) }
-    val maxed1 = remember { mutableStateOf(false) }
     val maxed2 = remember { mutableStateOf(false) }
     //var fromPrevAmount by remember { mutableStateOf(fromValue) }
 
@@ -121,12 +122,13 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
-
-                Text(
-                    text = "Balance: $fromBalance",
-                    fontSize = 16.sp,
-                    color= Color(0xFF9FA2A5)
-                )
+                if (fromBalance != "") {
+                    Text(
+                        text = "Balance: $fromBalance",
+                        fontSize = 16.sp,
+                        color= Color(0xFF9FA2A5)
+                    )
+                }
             }
             SwapTextField(
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
@@ -136,7 +138,7 @@ fun TokenSelector(
                         //fromEnabled = true
                     }
                 },
-                value = if(maxed1.value) "$fromBalance" else amountsUiState.fromAmount,
+                value = amountsUiState.fromAmount,
                 onChange = { onAmountChange(TextFieldSelected.FROM, it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
@@ -145,25 +147,6 @@ fun TokenSelector(
 
 
                 )
-            Row (
-                modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(
-                    text = "Dollar Amount",
-                    fontSize = 16.sp,
-                    color= Color(0xFF9FA2A5)
-                )
-                TextToggleButton(
-                    text = "MAX",
-                    selected = maxed1,
-                    onClickChange = {
-                        maxed1.value = !maxed1.value
-                    },
-                    enabled = fromEnabled
-                )
-            }
         }
 
 
@@ -201,12 +184,13 @@ fun TokenSelector(
                     color= Color.White
                 )
 
-
-                Text(
-                    text = "Balance: ${toBalance}",
-                    fontSize = 16.sp,
-                    color= Color(0xFF9FA2A5)
-                )
+                if (toBalance != "") {
+                    Text(
+                        text = "Balance: ${toBalance}",
+                        fontSize = 16.sp,
+                        color= Color(0xFF9FA2A5)
+                    )
+                }
             }
             SwapTextField(
                 value = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
@@ -225,29 +209,7 @@ fun TokenSelector(
                 placeholder = "Amount",
                 focusRequester = focusRequester,
                 enabled = toEnabled
-
-
             )
-            Row (
-                modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(
-                    text = "Dollar Amount",
-                    fontSize = 16.sp,
-                    color= Color(0xFF9FA2A5)
-                )
-                val maxed = remember { mutableStateOf(false) }
-                TextToggleButton(
-                    text = "MAX",
-                    selected = maxed2,
-                    onClickChange = {
-                        maxed2.value = !maxed2.value
-                    },
-                    enabled = toEnabled
-                )
-            }
         }
 
     }
@@ -276,6 +238,7 @@ private fun TokenAssetIcon(
         }
     )
 }
+
 
 
 
