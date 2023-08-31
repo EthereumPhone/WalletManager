@@ -28,7 +28,7 @@ data class TransferDto(
     val tokenId: String?,
     val uniqueId: String,
     val value: String?,
-    val metadata: TransferMetadata
+    val metadata: TransferMetadata,
 ) {
     data class RawContract(
         val address: String?,
@@ -47,7 +47,7 @@ data class TransferDto(
 
     fun asEntity(
         chainId: Int,
-        userIsSender: Boolean
+        userIsSender: Boolean,
     ): TransferEntity {
         return TransferEntity(
             asset = asset.orEmpty(),

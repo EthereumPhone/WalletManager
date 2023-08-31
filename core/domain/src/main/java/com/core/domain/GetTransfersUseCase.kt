@@ -20,11 +20,12 @@ class GetTransfersUseCase @Inject constructor(
             .map { items ->
                 val sortedItems = items.sortedBy { it.blockTimestamp }
                 sortedItems.map {
-                    val networkCurrency = if (it.chainId == 137) "matic" else "eth"
+                    val networkCurrency = if (it.chainId == 137) "MATIC" else "ETH"
                     //val assetType = it.asset.ifEmpty { networkCurrency }
                     val address = if (it.userIsSender) it.to else it.from
                     val timeStamp = it.blockTimestamp
                         .toLocalDateTime(TimeZone.currentSystemDefault())
+
 
 
                     //println("${address.substring(0,5) + "..." + address.takeLast(3)} - ${it.value} - ${it.userIsSender}")
@@ -35,7 +36,8 @@ class GetTransfersUseCase @Inject constructor(
                         asset = networkCurrency,
                         value = it.value.toString(),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
-                        userSent = it.userIsSender
+                        userSent = it.userIsSender,
+                        txHash = it.txHash
                     )
                 }
             }

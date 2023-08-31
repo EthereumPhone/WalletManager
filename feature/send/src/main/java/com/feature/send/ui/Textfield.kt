@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -46,6 +48,7 @@ import com.feature.send.R
 @Composable
 fun ethOSTextField(
     text: String,
+    focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     label: String = "",
     trailingIcon: @Composable (() -> Unit)?,
@@ -75,7 +78,7 @@ fun ethOSTextField(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).focusRequester(focusRequester)
             ) {
                 if(text == "") {
                     Text(
@@ -106,23 +109,23 @@ fun PreviewTextField() {
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            ethOSTextField(
-                text = test,
-                label = "ENS or Address",
-                trailingIcon = {
-//                    Icon(painter = painterResource(id = R.drawable.baseline_qr_code_24),
-//                        contentDescription = "",
-//                        tint = Color.White,
-//                        modifier = Modifier.size(32.dp)
-//                    )
-                               Icon(imageVector = Icons.Rounded.Lock,
-                                   tint = Color.White,
-                                    modifier = Modifier.size(32.dp),
-                                   contentDescription = "")
-                },
-                modifier = Modifier.fillMaxWidth()
-
-            ) {test = it}
+//            ethOSTextField(
+//                text = test,
+//                label = "ENS or Address",
+//                trailingIcon = {
+////                    Icon(painter = painterResource(id = R.drawable.baseline_qr_code_24),
+////                        contentDescription = "",
+////                        tint = Color.White,
+////                        modifier = Modifier.size(32.dp)
+////                    )
+//                               Icon(imageVector = Icons.Rounded.Lock,
+//                                   tint = Color.White,
+//                                    modifier = Modifier.size(32.dp),
+//                                   contentDescription = "")
+//                },
+//                modifier = Modifier.fillMaxWidth()
+//
+//            ) {test = it}
             TextField(value = test, onValueChange = {test = it})
         }
 

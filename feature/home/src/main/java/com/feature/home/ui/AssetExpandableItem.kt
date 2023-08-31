@@ -38,7 +38,9 @@ import java.text.DecimalFormat
 fun AssetExpandableItem(
     modifier: Modifier = Modifier,
     title: String,
-    assets: List<TokenAsset>
+    assets: List<TokenAsset>,
+//    currencyPrice: String,
+//    onCurrencyChange: (String) -> Unit,
 ) {
     ExpandableListItem(
         modifier = modifier,
@@ -54,10 +56,11 @@ fun AssetExpandableItem(
                     color = Color.White
                 )
                 Text(
-                    text = " ${formatDouble(assets.sumOf { it.balance })}",
+                    text = " ${formatDouble(assets.sumOf { it.balance })} ",
                     fontSize = 16.sp,
                     color = Color(0xFF9FA2A5)
                 )
+
             }
         },
         support = {
@@ -66,6 +69,7 @@ fun AssetExpandableItem(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(assets) { asset ->
                     chainToIconMapper(chainId = asset.chainId, size = 20.dp)
+
                 }
             }
 
@@ -79,7 +83,7 @@ fun AssetExpandableItem(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 assets.forEach {
-                    IndividualAssetItem(it)
+                    IndividualAssetItem(it)//,currencyPrice,onCurrencyChange)
                 }
             }
         }
@@ -93,7 +97,9 @@ fun formatDouble(input: Double): String {
 
 @Composable
 private fun IndividualAssetItem(
-    tokenAsset: TokenAsset
+    tokenAsset: TokenAsset,
+//    currencyPrice: String,
+//    onCurrencyChange: (String) -> Unit,
 ) {
    val network= when(tokenAsset.chainId) {
        1 -> "Mainnet"
@@ -103,6 +109,12 @@ private fun IndividualAssetItem(
        42161 -> "Arbitrum"
        else -> ""
    }
+//    var currencychange = when(tokenAsset.chainId){
+//        137 -> "MATICUSDT"
+//        else -> "ETHUSDT"
+//    }
+//    onCurrencyChange(currencychange)
+//    var current = ""+currencyPrice
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -118,11 +130,20 @@ private fun IndividualAssetItem(
             color = primary
         )
         Text(
-            text = formatDouble(tokenAsset.balance),
+            text = "${formatDouble(tokenAsset.balance)} ${if(tokenAsset.chainId == 137) "MATIC" else "ETH"}",
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             color = primary
         )
+//        if(current != ""){
+//            Text(
+//                text = " $${tokenAsset.balance.toFloat() * current.toFloat()}",
+//                fontSize = 18.sp,
+//                fontWeight = FontWeight.Normal,
+//                color = primary
+//            )
+//        }
+
 
     }
 }
@@ -173,23 +194,23 @@ private fun chainToIconMapper(
 @Preview
 @Composable
 fun AssetExapndableItemPreview() {
-    LazyColumn {
-        item {
-            AssetExpandableItem(
-                //modifier = Modifier.background(Color.DarkGray),
-                title = "test",
-                assets =
-                listOf(
-                    TokenAsset("", 1, "test", "test test", 123.2),
-                    TokenAsset("", 5, "test", "test test", 123.2),
-                    TokenAsset("", 10, "test", "test test", 123.2),
-                    TokenAsset("", 137, "test", "test test", 123.2),
-                    TokenAsset("", 42161, "test", "test test", 123.2),
-                )
-
-            )
-        }
-    }
+//    LazyColumn {
+//        item {
+//            AssetExpandableItem(
+//                //modifier = Modifier.background(Color.DarkGray),
+//                title = "test",
+//                assets =
+//                listOf(
+//                    TokenAsset("", 1, "test", "test test", 123.2),
+//                    TokenAsset("", 5, "test", "test test", 123.2),
+//                    TokenAsset("", 10, "test", "test test", 123.2),
+//                    TokenAsset("", 137, "test", "test test", 123.2),
+//                    TokenAsset("", 42161, "test", "test test", 123.2),
+//                )
+//
+//            )
+//        }
+//    }
 }
 
 

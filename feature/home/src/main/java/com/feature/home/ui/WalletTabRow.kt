@@ -6,10 +6,13 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+
+
+
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -21,8 +24,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Tab
 import androidx.compose.material.TabPosition
 import androidx.compose.material.TabRow
@@ -33,6 +39,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,11 +47,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -55,6 +71,7 @@ import com.core.model.TransferItem
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
 import kotlinx.coroutines.launch
+import java.lang.Float.min
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -66,6 +83,8 @@ internal fun WalletTabRow(
     onRefresh: () -> Unit,
     onTxOpen: (TransferItem) -> Unit,
     userAddress: String,
+//    currencyPrice: String,
+//    onCurrencyChange: (String) -> Unit,
     //showDialog: : () -> Unit
 ) {
 
@@ -109,7 +128,7 @@ internal fun WalletTabRow(
         ) { page ->
             when (tabItems[page]) {
                 TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
-                TabItems.ASSETS -> AssetList(assetsUiState)
+                TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
 
@@ -122,7 +141,7 @@ internal fun WalletTabRow(
 }
 
 @Composable
-private fun AssetList(assetsUiState: AssetUiState) {
+private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, onCurrencyChange: (String) -> Unit) {
     when (assetsUiState) {
         is AssetUiState.Loading -> {  }
         is AssetUiState.Error -> {  }
@@ -153,13 +172,15 @@ private fun AssetList(assetsUiState: AssetUiState) {
                     LazyColumn {
                         groupedAssets.forEach { (assetName, assetList) ->
                             item(key = assetName) {
-                                AssetExpandableItem(title = formatString(assetName), assets = assetList)
+                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
                             }
                         }
                     }
                 }
             }
         }
+
+        else -> {}
     }
 }
 
@@ -191,6 +212,9 @@ private fun TransferList(
 //    val timeStamp =  remember { mutableStateOf("12:12:00") }
 //    val userSent =  remember { mutableStateOf(true) }
 
+    val scrollState = rememberScrollState()//Scrollstate for fading edges
+
+
 
 
 
@@ -200,19 +224,21 @@ private fun TransferList(
 
                 LazyColumn(
                     //horizontalAlignment = Alignment.CenterHorizontally
+
+                        //.weight(1f)
+                        //.verticalScroll(scrollState)
+
+
+                    modifier = Modifier.verticalFadingEdge(
+                        scrollState,
+                        25.dp,
+                        Color(0xFF1E2730)
+                    )
                 ) {
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
-                            //transfer.
-
-//                            address.value = transfer.address
-//                            chainId.value = transfer.chainId
-//                            value.value = transfer.value
-//                            timeStamp.value = transfer.timeStamp
-//                            asset.value = transfer.asset
-                            //println("usersent-"+transfer.userSent+" , user-0xC051629B226c1Cf361536e5882603634c4084720, address-${transfer.address}, ${"0xC051629B226c1Cf361536e5882603634c4084720".equals(transfer.address,true)}")
-                            transfer.userSent = userAddress.equals(transfer.from,true)
+                             transfer.userSent = userAddress.equals(transfer.from,true)
                             TransferItemCard(
                                 transfer = transfer,
 
@@ -243,6 +269,64 @@ private fun TransferList(
                 }
             }
         is TransfersUiState.Loading -> {  }
+        else -> {}
+    }
+}
+
+/**
+ * Own Modifier for fading edges
+ */
+fun Modifier.verticalFadingEdge(
+    scrollState: ScrollState,
+    length: Dp,
+    edgeColor: Color? = null,
+) = composed(
+    debugInspectorInfo {
+        name = "length"
+        value = length
+    }
+) {
+    val color = edgeColor ?: MaterialTheme.colors.surface
+
+    drawWithContent {
+        val lengthValue = length.toPx()
+        val scrollFromTop  by derivedStateOf { scrollState.value }
+        val scrollFromBottom by derivedStateOf { scrollState.maxValue - scrollState.value }
+
+        val topFadingEdgeStrength = lengthValue * (scrollFromTop / lengthValue).coerceAtMost(1f)
+
+        val bottomFadingEdgeStrength = lengthValue * (scrollFromBottom / lengthValue).coerceAtMost(1f)
+
+
+
+        drawContent()
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    color,
+                    Color.Transparent,
+                ),
+                startY = 0f,
+                endY = topFadingEdgeStrength,
+            ),
+            size = Size(
+                this.size.width,
+                topFadingEdgeStrength
+            ),
+        )
+
+
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    color,
+                ),
+                startY = size.height - bottomFadingEdgeStrength,
+                endY = size.height,
+            ),
+            topLeft = Offset(x = 0f, y = size.height - bottomFadingEdgeStrength),
+        )
     }
 }
 

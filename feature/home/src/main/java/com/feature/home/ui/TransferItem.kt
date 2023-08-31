@@ -77,7 +77,7 @@ internal fun TransferItemCard(
         modifier = modifier
             .fillMaxWidth(),
         colors =  CardDefaults.cardColors(
-            containerColor= primaryVariant,
+            containerColor= Color(0xFF1E2730),//primaryVariant,
             contentColor= Color.White,
         ),
         shape = RoundedCornerShape(12.dp),
@@ -102,7 +102,7 @@ internal fun TransferItemCard(
                 Icon(
                     imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
                     contentDescription = "Send",
-                    tint = Color(0xFF24303D)
+                    tint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)//Color(0xFF24303D)
                 )
             }
             Column (

@@ -47,9 +47,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -166,7 +168,7 @@ fun SendRoute(
             val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
 
             if(hasInternet) {
-                var res = null
+
 
                 CoroutineScope(Dispatchers.IO).launch {
                     val web3jInstance = Web3j.build(HttpService(rpcurl))
@@ -246,7 +248,7 @@ fun SendRoute(
 
 
 }
-@SuppressLint("CoroutineCreationDuringComposition")
+@SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
@@ -332,10 +334,10 @@ fun SendScreen(
     amountfontSize =
         when {
         characterCount <= 2 -> 68.sp
-        characterCount > 2 && characterCount <= 4 -> 60.sp
-        characterCount > 4 && characterCount <= 6 -> 52.sp
-            characterCount > 4 && characterCount <= 6 -> 48.sp
-            characterCount > 6 && characterCount <= 9 -> 44.sp
+        characterCount > 2 && characterCount <= 4 -> 64.sp
+        characterCount > 4 && characterCount <= 6 -> 54.sp
+            characterCount > 4 && characterCount <= 6 -> 50.sp
+            characterCount > 6 && characterCount <= 9 -> 48.sp
         //characterCount > 5 && characterCount <= 10 -> 18.sp
         else -> minFontSize
     }
@@ -430,6 +432,11 @@ fun SendScreen(
 
 
 
+                // Creating a values and variables to remember
+                // focus requester, manager and state
+                val focusRequester = remember { FocusRequester() }
+                val focusManager = LocalFocusManager.current
+
                     //Textfield
                     Row(
                         verticalAlignment = Alignment.Bottom,
@@ -438,6 +445,7 @@ fun SendScreen(
                         ethOSTextField(
                             text = address,
                             label = "Address or ENS",
+                            focusRequester = focusRequester,
                             onTextChanged = {
 
                                 address = it.lowercase()
@@ -448,13 +456,15 @@ fun SendScreen(
                                             val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
-
+                                            focusManager.clearFocus()
                                         }
                                     } else {
                                         if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
+                                        focusManager.clearFocus()
                                     }
                                     if(address.isEmpty()) {
                                         validSendAddress = true
+                                        focusManager.clearFocus()
                                     }
                                 }
 
@@ -478,23 +488,24 @@ fun SendScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .onFocusChanged {
-
-                                    if (ENSName(address).isPotentialENSDomain()) {
-                                        // It is ENS
-                                        CompletableFuture.runAsync {
-                                            val ens =
-                                                ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-                                            val ensAddr = ens.getAddress(ENSName(address))
-                                            address = ensAddr?.hex.toString()
-                                        }
-                                    } else {
-                                        if (address.isNotEmpty()) validSendAddress =
-                                            isValidAddress(address)
-                                    }
-                                    if (address.isEmpty()) validSendAddress = true
-
-                                }
+//                                .onFocusChanged {
+//
+//                                    if (ENSName(address).isPotentialENSDomain()) {
+//                                        // It is ENS
+//                                        CompletableFuture.runAsync {
+//                                            val ens =
+//                                                ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+//                                            val ensAddr = ens.getAddress(ENSName(address))
+//                                            address = ensAddr?.hex.toString()
+//                                        }
+//                                        focusManager.clearFocus()
+//                                    } else {
+//                                        if (address.isNotEmpty()) validSendAddress =
+//                                            isValidAddress(address)
+//                                    }
+//                                    if (address.isEmpty()) validSendAddress = true
+//
+//                                }
                         )
                     }
                     Spacer(modifier = Modifier
@@ -611,7 +622,7 @@ fun SendScreen(
 
 
 
-                                            Log.e("currenccy",currencyPrice)
+                                            //Log.e("currenccy",currencyPrice)
                                         if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
@@ -653,6 +664,7 @@ fun SendScreen(
                                         chainId = 0,
                                         onClickChange = {
                                             showSheet = true
+                                            focusManager.clearFocus()
                                         },
                                     )
                                 }
@@ -661,6 +673,7 @@ fun SendScreen(
                                         chainId = selectedToken.tokenAsset.chainId,
                                         onClickChange = {
                                             showSheet = true
+                                            focusManager.clearFocus()
 
                                         },
 
@@ -686,6 +699,7 @@ fun SendScreen(
                             modifier = Modifier,
                             onValueChange = {
                                 value = it
+                                focusManager.clearFocus()
 
                             },
                             enabled = enableButton

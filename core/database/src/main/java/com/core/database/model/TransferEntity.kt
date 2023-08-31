@@ -37,6 +37,7 @@ data class RawContract(
     val value: String?
 )
 
+//TransferEntity that gets maped
 fun TransferEntity.asExternalModel() = Transfer(
     asset,
     chainId,
@@ -68,5 +69,6 @@ fun TransferEntity.asExternalModel() = Transfer(
     tokenId,
     value,
     blockTimestamp,
-    userIsSender
+    userIsSender,
+    txHash = hash
 )

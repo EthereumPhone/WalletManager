@@ -27,8 +27,8 @@ class GetSwapTokens @Inject constructor(
             val networkAsset = TokenAsset(
                 address = networkAmount.contractAddress,
                 chainId = networkAmount.chainId,
-                symbol = "eth",
-                name = "eth",
+                symbol = "ETH",
+                name = "Ether",
                 balance = networkAmount.tokenBalance.toDouble()
             )
 
@@ -36,6 +36,7 @@ class GetSwapTokens @Inject constructor(
                 val tokenBalance = erc20Amount.find { tokenMetadata.contractAddress.lowercase() == it.contractAddress.lowercase() }
                 val scale = 10.0.pow(tokenMetadata.decimals).toBigDecimal()
                 val truncatedValue = tokenBalance?.tokenBalance?.setScale(tokenMetadata.decimals, BigDecimal.ROUND_DOWN)
+
                 TokenAsset(
                     address = tokenMetadata.contractAddress,
                     chainId = tokenMetadata.chainId,

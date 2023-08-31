@@ -48,6 +48,7 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         TokenBalanceRequestBody.allErc20Tokens(toAddress)
                     ).result.tokenBalances.map {
+
                         it.asEntity(network.chainId)
                     }
                     tokenBalanceDao.upsertTokenBalances(results)
