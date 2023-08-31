@@ -177,15 +177,19 @@ class SwapViewModel @Inject constructor(
 
     fun swap() {
         viewModelScope.launch {
+            println("Swapping now viewmodel")
             val (fromAsset, toAsset) = assetsUiState.value
             val fromAmount = amountsUiState.value.fromAmount
 
             if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                println("Swapping now: going to swapRepo")
                 swapRepository.swap(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     fromAmount.toDouble()
                 )
+            } else {
+                println("Swapping: is else")
             }
         }
     }

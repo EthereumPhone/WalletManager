@@ -11,6 +11,7 @@ import android.webkit.WebView
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStream
+import java.math.BigDecimal
 import java.net.URL
 import java.util.Scanner
 import java.util.concurrent.CompletableFuture
@@ -146,27 +147,39 @@ class UniswapRoutingSDK(
 
 
         CompletableFuture.runAsync {
+            println("getAllRouter running now")
             val params = StringBuilder()
             params.append("?inputTokenChainId=${inputToken.chainId}")
             params.append("&inputTokenAddress=${inputToken.address}")
             params.append("&inputTokenDecimals=${inputToken.decimals}")
-            params.append("&inputTokenSymbol=${inputToken.symbol}")
-            params.append("&inputTokenName=${inputToken.name}")
+            params.append("&inputTokenSymbol=${java.net.URLEncoder.encode(inputToken.symbol, "utf-8")}")
+            params.append("&inputTokenName=${java.net.URLEncoder.encode(inputToken.name, "utf-8")}")
 
             params.append("&outputTokenChainId=${outputToken.chainId}")
             params.append("&outputTokenAddress=${outputToken.address}")
             params.append("&outputTokenDecimals=${outputToken.decimals}")
-            params.append("&outputTokenSymbol=${outputToken.symbol}")
-            params.append("&outputTokenName=${outputToken.name}")
+            params.append("&outputTokenSymbol=${java.net.URLEncoder.encode(outputToken.symbol, "utf-8")}")
+            params.append("&outputTokenName=${java.net.URLEncoder.encode(outputToken.name, "utf-8")}")
 
-            params.append("&amount=${amountIn}")
+            params.append("&amount=${BigDecimal(amountIn).toPlainString()}")
             params.append("&receiverAddress=${receiverAddress}")
 
             println("Doing request")
+            val finalUrl = "https://getallrouter-dey2ouq2ya-uc.a.run.app/${params}"
+            println(finalUrl)
 
-            val response = URL("https://getquote-dey2ouq2ya-uc.a.run.app/${params}").readText()
+            val response = try {
+                URL(finalUrl).readText()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val list = ArrayList<String>()
+                list.add(inputToken.address)
+                list.add(outputToken.address)
+                completableFuture.complete(list)
+                return@runAsync
+            }
 
-            println("Response: ${response}")
+            println("Response getAllRouter: ${response}")
             val responseObj = JSONObject(response)
             try {
                 println("Completing future")

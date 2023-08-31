@@ -32,7 +32,7 @@ protobuf = "3.21.9"
 walletsdk = "0.0.11"
 web3j = "4.8.8-android"
 workRuntimeKtx = "2.5.0"
-headlong = "9.2.0"
+headlong = "9.4.0"
 fasterxml = "2.12.5"
 
 

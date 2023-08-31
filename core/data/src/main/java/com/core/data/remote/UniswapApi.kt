@@ -44,7 +44,7 @@ class UniswapApi @Inject constructor(
     }
 
     // Fee amount
-    val FEE_SIZE = 5
+    val FEE_SIZE = 3
 
     // Uniswap commands
     val permit2PermitCommand: Byte = 0x0a.toByte()
@@ -83,10 +83,12 @@ class UniswapApi @Inject constructor(
 
 
     suspend fun swap(
-        fromToken: Token,
-        toToken: Token,
+        fromTokenVal: Token,
+        toTokenVal: Token,
         amount: Double
     ): String {
+        val fromToken = toTokenVal
+        val toToken = fromTokenVal
         if (fromToken == UniswapRoutingSDK.ETH_MAINNET) {
             return swapEthToToken(toToken, amount)
         } else if (toToken == UniswapRoutingSDK.ETH_MAINNET) {
@@ -133,7 +135,7 @@ class UniswapApi @Inject constructor(
                 inputTokenContract.approve(UNISWAP_PERMIT2, fullAmountToSwap).encodeFunctionCall()
             val approveTxId = walletSDK.sendTransaction(
                 to = fromToken.address,
-                value = "0x0",
+                value = "0",
                 data = approveTokenData,
                 gasAmount = estimateGas(
                     to = fromToken.address,
@@ -196,7 +198,7 @@ class UniswapApi @Inject constructor(
         ).encodeFunctionCall()
         return walletSDK.sendTransaction(
             to = UNISWAP_V3_ADDRESS,
-            value = "0x0",
+            value = "0",
             data = universalData,
             gasAmount = estimateGas(
                 to = UNISWAP_V3_ADDRESS,
@@ -256,7 +258,7 @@ class UniswapApi @Inject constructor(
                 inputTokenContract.approve(UNISWAP_PERMIT2, fullAmountToSwap).encodeFunctionCall()
             val approveTxId = walletSDK.sendTransaction(
                 to = fromToken.address,
-                value = "0x0",
+                value = "0",
                 data = approveTokenData,
                 gasAmount = estimateGas(
                     to = fromToken.address,
@@ -382,7 +384,7 @@ class UniswapApi @Inject constructor(
         // Using permit transfer as pay portion because its the same abi
         val transferData = realEncoder.encodePermitTransfer(
             token = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            fee = BigInteger("50")
+            fee = BigInteger("30")
         )
 
 
