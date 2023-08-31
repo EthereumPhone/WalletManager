@@ -64,19 +64,38 @@ class SwapRepositoryImp @Inject constructor(
         amount: Double
     ): String = withContext(Dispatchers.IO) {
         val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
-            .single()
-
-        val (inputToken, outputToken) = when {
-            tokenMetadataList.size < 2 -> {
-                when {
-                    inputTokenAddress == "1" -> UniswapRoutingSDK.ETH_MAINNET to toToken(tokenMetadataList[0])
-                    outputTokenAddress == "1" -> toToken(tokenMetadataList[0]) to UniswapRoutingSDK.ETH_MAINNET
-                    else -> throw IllegalArgumentException("Token metadata could not be retrieved")
-                }
-            }
-            else -> toToken(tokenMetadataList[0]) to toToken(tokenMetadataList[1])
+            .first()
+        println("TokenMetadatalist: $tokenMetadataList")
+        val inputToken = if (inputTokenAddress == "1") {
+            UniswapRoutingSDK.ETH_MAINNET
+        } else {
+            val inputTokenMetadata = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
+            Token(
+                chainId = inputTokenMetadata?.chainId!!,
+                address = inputTokenMetadata.contractAddress,
+                decimals = inputTokenMetadata.decimals,
+                name = inputTokenMetadata.name,
+                symbol = inputTokenMetadata.symbol
+            )
         }
-        uniswapApi.swap(inputToken, outputToken, amount)
+        val outputToken = if (outputTokenAddress == "1") {
+            UniswapRoutingSDK.ETH_MAINNET
+        } else {
+            val outputTokenMetadata = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
+            Token(
+                chainId = outputTokenMetadata?.chainId!!,
+                address = outputTokenMetadata.contractAddress,
+                decimals = outputTokenMetadata.decimals,
+                name = outputTokenMetadata.name,
+                symbol = outputTokenMetadata.symbol
+            )
+        }
+
+        uniswapApi.swap(
+            fromToken = inputToken,
+            toToken = outputToken,
+            amount = amount
+        )
     }
 }
 
