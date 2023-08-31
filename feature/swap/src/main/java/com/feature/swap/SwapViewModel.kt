@@ -175,21 +175,18 @@ class SwapViewModel @Inject constructor(
         savedStateHandle[SEARCH_QUERY] = query
     }
 
-    fun swap() {
+    fun swap(callback: (String) -> Unit) {
         viewModelScope.launch {
-            println("Swapping now viewmodel")
             val (fromAsset, toAsset) = assetsUiState.value
             val fromAmount = amountsUiState.value.fromAmount
 
             if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
-                println("Swapping now: going to swapRepo")
-                swapRepository.swap(
+                val result = swapRepository.swap(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     fromAmount.toDouble()
                 )
-            } else {
-                println("Swapping: is else")
+                callback(result)
             }
         }
     }

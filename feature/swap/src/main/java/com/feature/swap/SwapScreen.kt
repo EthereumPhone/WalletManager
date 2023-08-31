@@ -1,6 +1,8 @@
 package com.feature.swap
 
+import android.app.Activity
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +38,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
@@ -78,7 +82,9 @@ internal fun SwapRoute(
         onTextFieldSelected = viewModel::setSelectedTextField,
         onAmountChange = viewModel::updateAmount,
         onSelectAsset = viewModel::selectAsset,
-        onSwapClicked = viewModel::swap,
+        onSwapClicked = {
+                        viewModel.swap(it)
+        },
         onBackClick = onBackClick
     )
 }
@@ -98,7 +104,7 @@ internal fun SwapScreen(
     onTextFieldSelected: (TextFieldSelected) -> Unit,
     onAmountChange: (String) -> Unit,
     onSelectAsset: (TokenAsset) -> Unit,
-    onSwapClicked: () -> Unit,
+    onSwapClicked: ((String) -> Unit) -> Unit,
     onBackClick: () -> Unit
 
 ) {
@@ -187,39 +193,40 @@ internal fun SwapScreen(
                     color= Color(0xFF9FA2A5)
                 )
                 Text(
-                    text = "(~1%)",
+                    text = "(0.5%)",
                     fontWeight = FontWeight.Normal,
                     fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(
-                    text = "0.001 ETH",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = Color(0xFF9FA2A5)
-                )
-                Text(
-                    text = "($2)",
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp,
-                    color = Color(0xFF9FA2A5)
-                )
-            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
-
+        val context = LocalContext.current
         SwipeButton(
             text = "Swipe to swap",
             icon = Icons.Rounded.ArrowForward,
-            completeIcon = Icons.Rounded.Check,
             //enabled = true,
-            onSwipe = onSwapClicked
+            onSwipe = {
+                onSwapClicked {
+                    if (it.length == 66 && isEthereumTransactionHash(it)) {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
+                        }
+                    } else if (it == "decline") {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    onBackClick()
+
+
+                }
+            }
         )
 
         if(showSheet) {
@@ -252,6 +259,11 @@ internal fun SwapScreen(
             }
         }
     }
+}
+
+fun isEthereumTransactionHash(input: String): Boolean {
+    val transactionHashPattern = "^0x([A-Fa-f0-9]{64})$"
+    return Regex(transactionHashPattern).matches(input)
 }
 
 @Preview
