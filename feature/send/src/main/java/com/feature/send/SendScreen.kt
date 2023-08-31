@@ -184,7 +184,7 @@ fun SendRoute(
 
                     // TODO: Find out why polygon transaction is underpriced
                     var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(2)).divide(BigInteger.valueOf(100)))
+                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
 
 
                     var res = try {
@@ -203,6 +203,9 @@ fun SendRoute(
                     //println(res)
                     if(res != "decline" && res != "error"){
                         //onBackClick()
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
+                        }
                         viewModel.changeTxComplete()
                         //Log.e("complete","$txComplete")
 
