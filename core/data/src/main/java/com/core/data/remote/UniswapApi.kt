@@ -1,6 +1,7 @@
 package com.core.data.remote
 
 import android.content.Context
+import com.core.data.util.chainToApiKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +36,6 @@ class UniswapApi @Inject constructor(
     private val uniswapRouterSDK: UniswapRoutingSDK,
 ) {
 
-
-
     companion object {
         val UNISWAP_V3_ADDRESS = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
         val UNISWAP_PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3"
@@ -52,7 +51,7 @@ class UniswapApi @Inject constructor(
     val permitTransferCommand: Byte = 0x02.toByte()
     val wrapEthCommand: Byte = 0x0b.toByte()
     val unwrapWethCommand: Byte = 0x0c.toByte()
-    val payPortionCommand: Byte = 0x06.toByte()
+    val payPortionCommand: Byte = 0x05.toByte()
 
     // Random credentials to make web3j happy
     val credentials = Credentials.create("0x0ec8bb8d1aebf3b6e9e838dba065501c06a6ffa4cc12794abfd385eb24accfc1")
@@ -72,23 +71,33 @@ class UniswapApi @Inject constructor(
         }
 
     fun getBestRoute(fromToken: Token, toToken: Token, amount: Double): List<String> {
-        return uniswapRouterSDK.getAllRouter(
+        /*
+        uniswapRouterSDK.getAllRouter(
             inputToken = fromToken,
             outputToken = toToken,
             amountIn = amount,
             receiverAddress = walletSDK.getAddress()
         ).get()
+         */
+        return listOf(fromToken.address, toToken.address)
     }
 
 
 
     suspend fun swap(
-        fromTokenVal: Token,
-        toTokenVal: Token,
+        fromToken: Token,
+        toToken: Token,
         amount: Double
     ): String {
-        val fromToken = toTokenVal
-        val toToken = fromTokenVal
+        if (walletSDK.getChainId() != 1) {
+            val res = walletSDK.changeChain(1, "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            if (res == WalletSDK.DECLINE) {
+                return WalletSDK.DECLINE
+            }
+        }
+
+        println("fromToken: $fromToken")
+        println("toToken: $toToken")
         if (fromToken == UniswapRoutingSDK.ETH_MAINNET) {
             return swapEthToToken(toToken, amount)
         } else if (toToken == UniswapRoutingSDK.ETH_MAINNET) {
@@ -133,10 +142,13 @@ class UniswapApi @Inject constructor(
             // Approve input token
             val approveTokenData =
                 inputTokenContract.approve(UNISWAP_PERMIT2, fullAmountToSwap).encodeFunctionCall()
+            var gasPrice = web3j.ethGasPrice().send().gasPrice
+            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
             val approveTxId = walletSDK.sendTransaction(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
+                gasPrice = gasPrice.toString(),
                 gasAmount = estimateGas(
                     to = fromToken.address,
                     data = approveTokenData,
@@ -144,6 +156,9 @@ class UniswapApi @Inject constructor(
                     web3j = web3j
                 ).toString()
             )
+            if (approveTxId == WalletSDK.DECLINE) {
+                return WalletSDK.DECLINE
+            }
             waitForTxToBeValidated(
                 txHash = approveTxId,
                 web3j = web3j
@@ -196,10 +211,13 @@ class UniswapApi @Inject constructor(
             ),
             BigInteger.ZERO
         ).encodeFunctionCall()
+        var gasPrice = web3j.ethGasPrice().send().gasPrice
+        gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
         return walletSDK.sendTransaction(
             to = UNISWAP_V3_ADDRESS,
             value = "0",
             data = universalData,
+            gasPrice = gasPrice.toString(),
             gasAmount = estimateGas(
                 to = UNISWAP_V3_ADDRESS,
                 data = universalData,
@@ -256,10 +274,13 @@ class UniswapApi @Inject constructor(
             // Approve input token
             val approveTokenData =
                 inputTokenContract.approve(UNISWAP_PERMIT2, fullAmountToSwap).encodeFunctionCall()
+            var gasPrice = web3j.ethGasPrice().send().gasPrice
+            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
             val approveTxId = walletSDK.sendTransaction(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
+                gasPrice = gasPrice.toString(),
                 gasAmount = estimateGas(
                     to = fromToken.address,
                     data = approveTokenData,
@@ -267,6 +288,9 @@ class UniswapApi @Inject constructor(
                     web3j = web3j
                 ).toString()
             )
+            if (approveTxId == WalletSDK.DECLINE) {
+                return WalletSDK.DECLINE
+            }
             waitForTxToBeValidated(
                 txHash = approveTxId,
                 web3j = web3j
@@ -324,10 +348,14 @@ class UniswapApi @Inject constructor(
                 ),
             BigInteger.ZERO
         ).encodeFunctionCall()
+
+        var gasPrice = web3j.ethGasPrice().send().gasPrice
+        gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
         return walletSDK.sendTransaction(
             to = UNISWAP_V3_ADDRESS,
             value = fullAmountToSwap.toString(),
             data = universalData,
+            gasPrice = gasPrice.toString(),
             gasAmount = estimateGas(
                 to = UNISWAP_V3_ADDRESS,
                 data = universalData,
@@ -384,9 +412,8 @@ class UniswapApi @Inject constructor(
         // Using permit transfer as pay portion because its the same abi
         val transferData = realEncoder.encodePermitTransfer(
             token = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            fee = BigInteger("30")
+            fee = feeAmount
         )
-
 
         val universalData = universalRouter.execute(
             byteArrayOf(wrapEthCommand, payPortionCommand, exactInSwapCommand),
@@ -397,16 +424,19 @@ class UniswapApi @Inject constructor(
             ),
             BigInteger.ZERO
         ).encodeFunctionCall()
+        var gasPrice = web3j.ethGasPrice().send().gasPrice
+        gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
         return walletSDK.sendTransaction(
             to = UNISWAP_V3_ADDRESS,
             value = fullAmountToSwap.toString(),
             data = universalData,
+            gasPrice = gasPrice.toString(),
             gasAmount = estimateGas(
                 to = UNISWAP_V3_ADDRESS,
                 data = universalData,
+                value = "0x" + fullAmountToSwap.toString(16),
                 walletSDK = walletSDK,
-                web3j = web3j,
-                value = fullAmountToSwap.toString()
+                web3j = web3j
             ).toString()
         )
     }
@@ -431,9 +461,12 @@ class UniswapApi @Inject constructor(
         )?.sendAsync()?.get()
         if (gas?.hasError() == true) {
             println("Error: ${gas.error.message}")
-            throw Exception(gas.error.message)
+            //throw Exception(gas.error.message)
+            return BigInteger.valueOf(240000)
         }
-        return gas?.amountUsed!!
+        val gasResult = gas?.amountUsed!!
+        println("Gas estimation: $gasResult")
+        return gasResult
     }
 
 
