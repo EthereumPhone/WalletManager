@@ -107,8 +107,8 @@ fun ReceiveScreen(
             setShowDialog = {
                 showInfoDialog.value = false
             },
-            title = "Info",
-            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+            title = "Receive crypto",
+            text = "Receive crypto to your system-level wallet."
         )
     }
 

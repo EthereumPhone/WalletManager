@@ -373,8 +373,8 @@ fun SendScreen(
             setShowDialog = {
                 showInfoDialog.value = false
             },
-            title = "Info",
-            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+            title = "Send crypto",
+            text = "Here you can send crypto to any address or ENS domain."
         )
     }
 

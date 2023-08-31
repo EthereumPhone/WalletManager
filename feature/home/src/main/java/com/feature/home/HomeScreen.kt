@@ -108,8 +108,8 @@ internal fun HomeScreen(
             setShowDialog = {
                 showInfoDialog.value = false
             },
-            title = "Info",
-            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+            title = "Home",
+            text = "Send and receive crypto, all natively from inside the WalletManager."
         )
     }
 

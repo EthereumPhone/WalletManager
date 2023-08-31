@@ -122,8 +122,8 @@ internal fun SwapScreen(
             setShowDialog = {
                 showInfoDialog.value = false
             },
-            title = "Info",
-            text = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt"
+            title = "Swap crypto",
+            text = "Here you can swap from one crypto into another."
         )
     }
 
