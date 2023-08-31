@@ -353,7 +353,7 @@ class UniswapApi @Inject constructor(
         gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
         return walletSDK.sendTransaction(
             to = UNISWAP_V3_ADDRESS,
-            value = fullAmountToSwap.toString(),
+            value = "0",
             data = universalData,
             gasPrice = gasPrice.toString(),
             gasAmount = estimateGas(
