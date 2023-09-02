@@ -12,5 +12,5 @@ interface TransferRepository {
         categories: List<String>
     ): Flow<List<Transfer>>
 
-    suspend fun refreshTransfers(toAddress: String)
+    suspend fun refreshTransfers(address: String)
 }

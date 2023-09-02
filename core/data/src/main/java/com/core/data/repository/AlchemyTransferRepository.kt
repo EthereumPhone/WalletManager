@@ -11,7 +11,6 @@ import com.core.model.NetworkChain
 import com.core.model.Transfer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -41,7 +40,7 @@ class AlchemyTransferRepository @Inject constructor(
         transferDao.getTransfers(chainId, categories)
             .map { it.map(TransferEntity::asExternalModel) }
 
-    override suspend fun refreshTransfers(toAddress: String) {
+    override suspend fun refreshTransfers(address: String) {
         Log.d("Transfer API", "update started")
 
         withContext(Dispatchers.IO) {
@@ -49,28 +48,38 @@ class AlchemyTransferRepository @Inject constructor(
             networks.map { network ->
                 val apiKey = chainToApiKey(network.chainName)
                 async {
-
-                    //if(fromAddress == )
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         requestBody = NetworkTransferRequestBody(
                             params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
-                                toAddress = toAddress,
-                                fromAddress = toAddress,
+                                fromAddress = address,
                                 category = listOf("external")
                             ))
                         )
                     ).result.transfers.map {
                         it.asEntity(
                             chainId = network.chainId,
-                            userIsSender = toAddress.equals(it.from,true),
+                            userIsSender = address.equals(it.from,true),
                         )
                     }
+                    transferDao.insertTransfers(transfers)
+                }
 
-                    //test
-
-
-
+                async {
+                    val transfers = transfersApi.getTransfers(
+                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
+                        requestBody = NetworkTransferRequestBody(
+                            params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                                toAddress = address,
+                                category = listOf("external")
+                            ))
+                        )
+                    ).result.transfers.map {
+                        it.asEntity(
+                            chainId = network.chainId,
+                            userIsSender = address.equals(it.from,true),
+                        )
+                    }
                     transferDao.insertTransfers(transfers)
                 }
             }

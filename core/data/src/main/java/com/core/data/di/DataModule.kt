@@ -33,7 +33,6 @@ object DataModule {
         return Moshi
             .Builder()
             .add(KotlinJsonAdapterFactory())
-            //.add(MoshiAdapters())
             .build()
     }
 
