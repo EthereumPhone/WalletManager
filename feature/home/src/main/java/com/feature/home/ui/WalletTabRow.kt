@@ -166,9 +166,9 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
-                ) {
+//                Card(
+//                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
+//                ) {
                     LazyColumn {
                         groupedAssets.forEach { (assetName, assetList) ->
                             item(key = assetName) {
@@ -176,7 +176,7 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
                             }
                         }
                     }
-                }
+                //}
             }
         }
 
