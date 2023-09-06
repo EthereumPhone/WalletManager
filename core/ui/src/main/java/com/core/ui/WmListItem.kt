@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import com.core.designsystem.theme.primary
 
 @Composable
@@ -30,14 +29,4 @@ fun WmListItem(
             containerColor = Color.Transparent
         )
     )
-}
-
-@Preview
-@Composable
-fun PreviewWmListItem() {
-    var text by remember { mutableStateOf("") }
-
-    //WmListItem()
-
-
 }
