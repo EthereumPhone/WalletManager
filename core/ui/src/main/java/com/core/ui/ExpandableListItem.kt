@@ -38,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 //import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,49 +102,4 @@ fun ExpandableListItem(
             expandedContent()
         }
     }
-}
-
-
-@Composable
-@Preview
-fun ExpandableListItemPreview() {
-    ExpandableListItem(
-        modifier = Modifier.fillMaxWidth(),
-        headline = {
-
-                Text(
-                    text = "USDC",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 20.sp
-                )
-
-
-
-                   },
-        icons = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                for( i in 1..5) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color.Red)
-                            .size(20.dp)
-                    )
-                }
-            }
-        },
-        support = {
-            Text(
-                text = "1234.45",
-                fontSize = 32.sp
-            )
-        },
-        expandedContent = {
-                Text("TEstTest".repeat(20))
-        }
-    )
-
 }
