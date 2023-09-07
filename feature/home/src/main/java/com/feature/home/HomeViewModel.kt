@@ -138,8 +138,8 @@ fun assetUiState(
                     TokenAsset(
                         address = it.contractAddress,
                         chainId = it.chainId,
-                        symbol = name,
-                        name = name,
+                        symbol = "eth",
+                        name = "eth",
                         balance = it.tokenBalance.toDouble()
                     )
                 }
