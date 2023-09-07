@@ -183,18 +183,11 @@ internal fun SwapScreen(
 
         ){
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ){
                 Text(
-                    text = "Swap fee",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 20.sp,
-                    color= Color(0xFF9FA2A5)
-                )
-                Text(
-                    text = "(0.5%)",
-                    fontWeight = FontWeight.Normal,
+                    text = "Swap fee (0.5%)",
                     fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
