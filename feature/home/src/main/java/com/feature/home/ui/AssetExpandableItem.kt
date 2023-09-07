@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,26 +45,28 @@ fun AssetExpandableItem(
 ) {
     ExpandableListItem(
         modifier = modifier,
-        colors = ListItemDefaults.colors(Color.Transparent),
+        colors = ListItemDefaults.colors(
+            containerColor = Color(0xFF24303D),
+            supportingColor = Color.White,
+            headlineColor = Color.White
+        ),
         headline = {
-            Row (
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+//            Row (
+//                modifier =  Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
                 Text(
                     text = title,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 20.sp,
                     color = Color.White
                 )
-                Text(
-                    text = " ${formatDouble(assets.sumOf { it.balance })} ",
-                    fontSize = 16.sp,
-                    color = Color(0xFF9FA2A5)
-                )
 
-            }
+
+            //}
         },
-        support = {
+        icons = {
             LazyRow(
                 modifier=Modifier.padding(top=4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -72,6 +75,14 @@ fun AssetExpandableItem(
 
                 }
             }
+        },
+        support = {
+            Text(
+                text = "${formatDouble(assets.sumOf { it.balance })}",
+                fontSize = 32.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Normal
+            )
 
         },
         expandedContent = {
@@ -122,7 +133,7 @@ private fun IndividualAssetItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        chainToIconMapper(tokenAsset.chainId, 25.dp)
+        chainToIconMapper(tokenAsset.chainId, 24.dp)
         Text(
             text = network,
             fontSize = 16.sp,
@@ -194,23 +205,23 @@ private fun chainToIconMapper(
 @Preview
 @Composable
 fun AssetExapndableItemPreview() {
-//    LazyColumn {
-//        item {
-//            AssetExpandableItem(
-//                //modifier = Modifier.background(Color.DarkGray),
-//                title = "test",
-//                assets =
-//                listOf(
-//                    TokenAsset("", 1, "test", "test test", 123.2),
-//                    TokenAsset("", 5, "test", "test test", 123.2),
-//                    TokenAsset("", 10, "test", "test test", 123.2),
-//                    TokenAsset("", 137, "test", "test test", 123.2),
-//                    TokenAsset("", 42161, "test", "test test", 123.2),
-//                )
-//
-//            )
-//        }
-//    }
+    LazyColumn {
+        item {
+            AssetExpandableItem(
+                //modifier = Modifier.background(Color.DarkGray),
+                title = "test",
+                assets =
+                listOf(
+                    TokenAsset("", 1, "test", "test test", 123.2),
+                    TokenAsset("", 5, "test", "test test", 123.2),
+                    TokenAsset("", 10, "test", "test test", 123.2),
+                    TokenAsset("", 137, "test", "test test", 123.2),
+                    TokenAsset("", 42161, "test", "test test", 123.2),
+                )
+
+            )
+        }
+    }
 }
 
 

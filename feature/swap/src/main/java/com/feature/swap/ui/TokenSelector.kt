@@ -1,5 +1,6 @@
 package com.feature.swap.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -124,6 +125,9 @@ fun TokenSelector(
                 )
                 if (fromBalance != "") {
                     Text(
+                        modifier = Modifier.clickable {
+                            onAmountChange(TextFieldSelected.FROM, fromBalance)
+                        },
                         text = "Balance: $fromBalance",
                         fontSize = 16.sp,
                         color= Color(0xFF9FA2A5)

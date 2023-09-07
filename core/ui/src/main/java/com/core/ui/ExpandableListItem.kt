@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 //import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,13 +50,18 @@ fun ExpandableListItem(
     colors: ListItemColors = ListItemDefaults.colors(),
     headline: @Composable () -> Unit,
     support: @Composable () -> Unit,
+    icons: @Composable () -> Unit,
     expandedContent: @Composable () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+
     ) {
         ListItem(
+            modifier = modifier.clip(RoundedCornerShape(12.dp)),
+
             headlineContent = headline,
             supportingContent = {
                 AnimatedVisibility(
@@ -65,14 +73,28 @@ fun ExpandableListItem(
                 }
             },
             trailingContent = {
-                IconButton(
-                    onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
+                Column (
+
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ){
+                    AnimatedVisibility(
+                        visible = !expanded,
+                        enter =  expandVertically(expandFrom = Alignment.Top),
+                        exit = shrinkVertically(shrinkTowards = Alignment.Top)
+                    ) {
+                        icons()
+                    }
+                    IconButton(
+                        onClick = { expanded = !expanded }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
                 }
+
             },
             colors = colors
         )
@@ -85,38 +107,41 @@ fun ExpandableListItem(
 
 
 @Composable
-//@Preview
+@Preview
 fun ExpandableListItemPreview() {
     ExpandableListItem(
         modifier = Modifier.fillMaxWidth(),
         headline = {
-            Row {
+
                 Text(
-                    text = "USDC: ",
-                    fontWeight = FontWeight.Bold,
+                    text = "USDC",
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 20.sp
                 )
-                Text(
-                    text = "1234.45",
-                    fontSize = 20.sp
-                )
-            }
+
+
 
                    },
-        support = {
+        icons = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                for( i in 1..10) {
+                for( i in 1..5) {
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(Color.Red)
-                            .size(14.dp)
+                            .size(20.dp)
                     )
                 }
             }
+        },
+        support = {
+            Text(
+                text = "1234.45",
+                fontSize = 32.sp
+            )
         },
         expandedContent = {
                 Text("TEstTest".repeat(20))
