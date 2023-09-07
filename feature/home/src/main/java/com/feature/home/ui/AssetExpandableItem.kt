@@ -141,7 +141,7 @@ private fun IndividualAssetItem(
             color = primary
         )
         Text(
-            text = "${formatDouble(tokenAsset.balance)} ${if(tokenAsset.chainId == 137) "MATIC" else "ETH"}",
+            text = "${formatDouble(tokenAsset.balance)} ${tokenAsset.symbol}",
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             color = primary
