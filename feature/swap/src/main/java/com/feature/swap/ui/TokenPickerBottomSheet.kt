@@ -4,18 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,6 +43,17 @@ import com.feature.swap.SwapTokenUiState
 import java.text.DecimalFormat
 import kotlin.math.pow
 
+fun getEtherscanDomainForChain(chainId: Int): String {
+    return when(chainId) {
+        1 -> "https://etherscan.io/"
+        5 -> "https://goerli.etherscan.io/"
+        10 -> "https://optimistic.etherscan.io/"
+        137 -> "https://polygonscan.com/"
+        42161 -> "https://arbiscan.io/"
+        else -> ""
+    }
+}
+
 @Composable
 fun TokenPickerSheet(
     swapTokenUiState: SwapTokenUiState,
@@ -43,6 +61,7 @@ fun TokenPickerSheet(
     onQueryChange: (String) -> Unit,
     onSelectAsset: (TokenAsset) -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -97,13 +116,36 @@ fun TokenPickerSheet(
                                     )
                                 },
                                 trailingContent = {
-                                    Text(
-                                        text = formatDouble(tokenAsset.balance),
-                                        fontSize = 18.sp,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Medium
+                                    Row {
+                                        Text(
+                                            modifier = Modifier.align(Alignment.CenterVertically),
+                                            text = formatDouble(tokenAsset.balance),
+                                            fontSize = 18.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                //opens InfoDialog
+                                                val domain = getEtherscanDomainForChain(tokenAsset.chainId)
+                                                val link = "${domain}token/${tokenAsset.address}"
 
-                                    )
+                                                // Open link in browser
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                                                intent.data = android.net.Uri.parse(link)
+                                                context.startActivity(intent)
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.OpenInNew,
+                                                contentDescription = "Information",
+                                                tint = Color(0xFF9FA2A5),
+                                                modifier = Modifier
+                                                    .clip(CircleShape)
+                                            )
+                                        }
+                                    }
+
                                 },
                                 modifier = Modifier.clickable {
                                     onSelectAsset(tokenAsset)
