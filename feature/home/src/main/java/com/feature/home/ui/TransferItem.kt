@@ -156,7 +156,7 @@ internal fun TransferItemCard(
                             horizontalAlignment = Alignment.End
                         ) {
                             Text(
-                                text = transfer.value+" "+transfer.asset.uppercase(),
+                                text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
