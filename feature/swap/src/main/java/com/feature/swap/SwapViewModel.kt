@@ -89,27 +89,6 @@ class SwapViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = 0.0
         )
-    init {
-        viewModelScope.launch {
-            exchangeRate.collect {
-                Log.d("exchangeRate", it.toString())
-                // Update the to amount by taking the from amount and multiplying it by the exchange rate
-                _amountsUiState.update { currentState ->
-                    val fromAmount = currentState.fromAmount
-
-                    val amountText = if (fromAmount == "") "" else (BigDecimal(fromAmount)
-                        .multiply(BigDecimal(it)))
-                        .setScale(4, RoundingMode.HALF_EVEN)
-                        .stripTrailingZeros()
-                        .toPlainString()
-
-                    currentState.copy(
-                        toAmount = amountText
-                    )
-                }
-            }
-        }
-    }
 
     fun setSelectedTextField(selectedTextField: TextFieldSelected) {
         _selectedTextField.value = selectedTextField
@@ -120,7 +99,7 @@ class SwapViewModel @Inject constructor(
             val fromAsset = currentState.fromAsset
             val toAsset = currentState.toAsset
 
-            when(selectedTextField.value) {
+            when(_selectedTextField.value) {
                 TextFieldSelected.FROM -> {
                     if (toAsset is SelectedTokenUiState.Selected && toAsset.tokenAsset == tokenAsset) {
                         currentState.copy(
@@ -148,38 +127,47 @@ class SwapViewModel @Inject constructor(
                 }
             }
         }
-    }
 
+        if(_selectedTextField.value == TextFieldSelected.FROM) {
+            setSelectedTextField(TextFieldSelected.TO)
+        } else {
+            setSelectedTextField(TextFieldSelected.FROM)
+        }
+    }
 
     fun updateAmount(
         amount: String,
     ) {
         val updatedAmount = amount.replace(",",".")
 
-        _amountsUiState.update { currentState ->
-            when(selectedTextField.value) {
-                TextFieldSelected.FROM -> {
-                    val amountText = if (updatedAmount == "") "" else (BigDecimal(updatedAmount)
-                        .multiply(BigDecimal(exchangeRate.value)))
-                        .setScale(4, RoundingMode.HALF_EVEN)
-                        .stripTrailingZeros()
-                        .toPlainString()
+        viewModelScope.launch {
+            exchangeRate.collect { rate ->
+                _amountsUiState.update { currentState ->
+                    when(_selectedTextField.value) {
+                        TextFieldSelected.FROM -> {
+                            val amountText = if (updatedAmount == "") "" else (BigDecimal(updatedAmount)
+                                .multiply(BigDecimal(rate)))
+                                .setScale(4, RoundingMode.HALF_EVEN)
+                                .stripTrailingZeros()
+                                .toPlainString()
 
-                    currentState.copy(
-                        fromAmount = updatedAmount,
-                        toAmount = amountText
-                    )
-                }
-                TextFieldSelected.TO -> {
-                    val amountText = if(updatedAmount == "") "" else BigDecimal(updatedAmount)
-                        .divide(BigDecimal(exchangeRate.value), 4, RoundingMode.HALF_EVEN)
-                        .stripTrailingZeros()
-                        .toPlainString()
+                            currentState.copy(
+                                fromAmount = updatedAmount,
+                                toAmount = amountText
+                            )
+                        }
+                        TextFieldSelected.TO -> {
+                            val amountText = if(updatedAmount == "") "" else BigDecimal(updatedAmount)
+                                .divide(BigDecimal(rate), 4, RoundingMode.HALF_EVEN)
+                                .stripTrailingZeros()
+                                .toPlainString()
 
-                    currentState.copy(
-                        fromAmount = amountText,
-                        toAmount = updatedAmount
-                    )
+                            currentState.copy(
+                                fromAmount = amountText,
+                                toAmount = updatedAmount
+                            )
+                        }
+                    }
                 }
             }
         }
