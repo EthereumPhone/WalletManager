@@ -43,11 +43,10 @@ fun SwapTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     placeholder: String="Placeholder",
     //placeholder: @Composable (() -> Unit)? = null,
-    focusRequester: FocusRequester,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    enabled: Boolean
+    enabled: Boolean = true
     ) {
 
     BasicTextField(
@@ -78,9 +77,7 @@ fun SwapTextField(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier.weight(1f).focusRequester(focusRequester)
-            ) {
+            Box() {
                 if(value == "") {
                     Text(
                         text = placeholder,

@@ -29,7 +29,8 @@ class GetSwapTokens @Inject constructor(
                 chainId = networkAmount.chainId,
                 symbol = "ETH",
                 name = "Ether",
-                balance = networkAmount.tokenBalance.toDouble()
+                balance = networkAmount.tokenBalance.toDouble(),
+                decimals = 18
             )
 
             val erc20Assets = metadata.map { tokenMetadata ->
@@ -42,7 +43,8 @@ class GetSwapTokens @Inject constructor(
                     chainId = tokenMetadata.chainId,
                     symbol = tokenMetadata.symbol,
                     name = tokenMetadata.name,
-                    balance = (truncatedValue?.div(scale))?.toDouble() ?: 0.0
+                    balance = (truncatedValue?.div(scale))?.toDouble() ?: 0.0,
+                    decimals = tokenMetadata.decimals
                 )
             }
             if(query.isEmpty()) {

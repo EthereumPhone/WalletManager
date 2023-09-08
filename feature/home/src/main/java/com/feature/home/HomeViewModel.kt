@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -140,7 +141,8 @@ fun assetUiState(
                         chainId = it.chainId,
                         symbol = "eth",
                         name = "eth",
-                        balance = it.tokenBalance.toDouble()
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
                     )
                 }
             }
@@ -153,12 +155,11 @@ fun assetUiState(
             when(tokenToTokeResult) {
                 is Result.Success -> {
                     val (tokens, networkTokens) = tokenToTokeResult.data
-                    if(tokens.isEmpty() && networkTokens.isEmpty()) {
+                    val filteredAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }
+                    if(filteredAssets.isEmpty()) {
                         AssetUiState.Empty
                     } else {
-                        AssetUiState.Success(
-                            networkTokens.sortedBy { it.chainId } + tokens.sortedBy { it.chainId }
-                        )
+                        AssetUiState.Success(filteredAssets)
                     }
                 }
                 is Result.Loading -> {
