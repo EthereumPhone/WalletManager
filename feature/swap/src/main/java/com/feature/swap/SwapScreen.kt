@@ -174,8 +174,6 @@ internal fun SwapScreen(
                     }
                 } catch (e: NumberFormatException) {
                     // Catch the error and do nothing
-                    println("Amount: $amount")
-                    e.printStackTrace()
                 }
             },
             onPickAssetClicked = {
