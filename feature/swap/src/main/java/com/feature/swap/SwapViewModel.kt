@@ -10,6 +10,7 @@ import com.core.domain.GetSwapTokens
 import com.core.model.TokenAsset
 import com.core.result.Result
 import com.core.result.asResult
+import com.feature.home.ui.formatDouble
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -137,12 +138,12 @@ class SwapViewModel @Inject constructor(
                 TextFieldSelected.FROM -> {
                     currentState.copy(
                         fromAmount = updatedAmount,
-                        toAmount = BigDecimal(updatedAmount).multiply(BigDecimal(exchangeRate.value)).toPlainString()
+                        toAmount = formatDouble(BigDecimal(updatedAmount).multiply(BigDecimal(exchangeRate.value)).toDouble())
                     )
                 }
                 TextFieldSelected.TO -> {
                     currentState.copy(
-                        fromAmount = BigDecimal.ONE.divide(BigDecimal(updatedAmount)).toPlainString(),
+                        fromAmount = formatDouble(BigDecimal.ONE.divide(BigDecimal(updatedAmount)).toDouble()),
                         toAmount = updatedAmount
                     )
                 }

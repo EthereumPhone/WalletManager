@@ -56,6 +56,8 @@ import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.lang.NumberFormatException
+import java.math.BigDecimal
 
 @Composable
 internal fun SwapRoute(
@@ -165,8 +167,15 @@ internal fun SwapScreen(
             switchTokens = switchTokens,
             onAmountChange = { selectedTextField, amount ->
                 onTextFieldSelected(selectedTextField)
-                if (amount != "") {
-                    onAmountChange(amount)
+                try {
+                    val bigDc = BigDecimal(amount.replace(",", "."))
+                    if (amount != "") {
+                        onAmountChange(amount)
+                    }
+                } catch (e: NumberFormatException) {
+                    // Catch the error and do nothing
+                    println("Amount: $amount")
+                    e.printStackTrace()
                 }
             },
             onPickAssetClicked = {
