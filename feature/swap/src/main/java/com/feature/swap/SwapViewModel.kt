@@ -89,6 +89,27 @@ class SwapViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = 0.0
         )
+    init {
+        viewModelScope.launch {
+            exchangeRate.collect {
+                Log.d("exchangeRate", it.toString())
+                // Update the to amount by taking the from amount and multiplying it by the exchange rate
+                _amountsUiState.update { currentState ->
+                    val fromAmount = currentState.fromAmount
+
+                    val amountText = if (fromAmount == "") "" else (BigDecimal(fromAmount)
+                        .multiply(BigDecimal(it)))
+                        .setScale(4, RoundingMode.HALF_EVEN)
+                        .stripTrailingZeros()
+                        .toPlainString()
+
+                    currentState.copy(
+                        toAmount = amountText
+                    )
+                }
+            }
+        }
+    }
 
     fun setSelectedTextField(selectedTextField: TextFieldSelected) {
         _selectedTextField.value = selectedTextField
@@ -128,6 +149,7 @@ class SwapViewModel @Inject constructor(
             }
         }
     }
+
 
     fun updateAmount(
         amount: String,
