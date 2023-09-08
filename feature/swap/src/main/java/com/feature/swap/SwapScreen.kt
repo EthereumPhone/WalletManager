@@ -168,8 +168,10 @@ internal fun SwapScreen(
             onAmountChange = { selectedTextField, amount ->
                 onTextFieldSelected(selectedTextField)
                 try {
-                    val bigDc = BigDecimal(amount.replace(",", "."))
-                    if (amount != "") {
+                    if (amount == "") {
+                        onAmountChange(amount)
+                    } else {
+                        val bigDc = BigDecimal(amount.replace(",", "."))
                         onAmountChange(amount)
                     }
                 } catch (e: NumberFormatException) {
