@@ -141,7 +141,8 @@ fun assetUiState(
                         chainId = it.chainId,
                         symbol = "eth",
                         name = "eth",
-                        balance = it.tokenBalance.toDouble()
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
                     )
                 }
             }

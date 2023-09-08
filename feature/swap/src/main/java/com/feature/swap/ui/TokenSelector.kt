@@ -88,19 +88,7 @@ fun TokenSelector(
 
     // Creating a values and variables to remember
     // focus requester, manager and state
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
 
-
-    var fromEnabled = when(assetsUiState.fromAsset) {
-        is SelectedTokenUiState.Unselected -> { false }
-        is SelectedTokenUiState.Selected -> { true }
-    }
-
-    var toEnabled = when(assetsUiState.toAsset) {
-        is SelectedTokenUiState.Unselected -> { false }
-        is SelectedTokenUiState.Selected -> { true }
-    }
 
 
 
@@ -146,10 +134,6 @@ fun TokenSelector(
                 onChange = { onAmountChange(TextFieldSelected.FROM, it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
-                focusRequester = focusRequester,
-                enabled = fromEnabled
-
-
                 )
         }
 
@@ -162,7 +146,6 @@ fun TokenSelector(
             ),
             onClick = {
                 switchTokens()
-                focusManager.clearFocus()
                       },
             content = {
                 Icon(
@@ -200,7 +183,6 @@ fun TokenSelector(
                 value = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
                 onChange = {
                     onAmountChange(TextFieldSelected.TO, it)
-                    focusManager.clearFocus()
                            },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
@@ -211,11 +193,8 @@ fun TokenSelector(
                     }
                 },
                 placeholder = "Amount",
-                focusRequester = focusRequester,
-                enabled = toEnabled
             )
         }
-
     }
 }
 

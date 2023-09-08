@@ -5,5 +5,6 @@ data class TokenAsset(
     val chainId: Int,
     val symbol: String,
     val name: String,
-    val balance: Double
+    val balance: Double,
+    val decimals: Int = 0
 )

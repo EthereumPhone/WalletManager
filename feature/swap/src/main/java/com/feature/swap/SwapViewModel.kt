@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 @HiltViewModel
@@ -136,14 +137,25 @@ class SwapViewModel @Inject constructor(
         _amountsUiState.update { currentState ->
             when(selectedTextField.value) {
                 TextFieldSelected.FROM -> {
+                    val amountText = if (updatedAmount == "") "" else (BigDecimal(updatedAmount)
+                        .multiply(BigDecimal(exchangeRate.value)))
+                        .setScale(4, RoundingMode.HALF_EVEN)
+                        .stripTrailingZeros()
+                        .toPlainString()
+
                     currentState.copy(
                         fromAmount = updatedAmount,
-                        toAmount = formatDouble(BigDecimal(updatedAmount).multiply(BigDecimal(exchangeRate.value)).toDouble())
+                        toAmount = amountText
                     )
                 }
                 TextFieldSelected.TO -> {
+                    val amountText = if(updatedAmount == "") "" else BigDecimal(updatedAmount)
+                        .divide(BigDecimal(exchangeRate.value), 4, RoundingMode.HALF_EVEN)
+                        .stripTrailingZeros()
+                        .toPlainString()
+
                     currentState.copy(
-                        fromAmount = formatDouble(BigDecimal.ONE.divide(BigDecimal(updatedAmount)).toDouble()),
+                        fromAmount = amountText,
                         toAmount = updatedAmount
                     )
                 }
@@ -212,7 +224,6 @@ private fun swapTokenUiState(
                     SwapTokenUiState.Loading
                 } else {
                     SwapTokenUiState.Success(result)
-
                 }
             }
     }
