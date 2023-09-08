@@ -173,6 +173,7 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
                         groupedAssets.forEach { (assetName, assetList) ->
                             item(key = assetName) {
                                 AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
