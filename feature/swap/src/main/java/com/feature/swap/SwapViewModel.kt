@@ -128,14 +128,10 @@ class SwapViewModel @Inject constructor(
             }
         }
 
-        if(_selectedTextField.value == TextFieldSelected.FROM) {
-            setSelectedTextField(TextFieldSelected.TO)
-        } else {
-            setSelectedTextField(TextFieldSelected.FROM)
-        }
     }
 
     fun updateAmount(
+        selectedTextField: TextFieldSelected,
         amount: String,
     ) {
         val updatedAmount = amount.replace(",",".")
@@ -143,7 +139,7 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             exchangeRate.collect { rate ->
                 _amountsUiState.update { currentState ->
-                    when(_selectedTextField.value) {
+                    when(selectedTextField) {
                         TextFieldSelected.FROM -> {
                             val amountText = if (updatedAmount == "") "" else (BigDecimal(updatedAmount)
                                 .multiply(BigDecimal(rate)))

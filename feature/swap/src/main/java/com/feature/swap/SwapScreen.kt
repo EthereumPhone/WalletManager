@@ -104,7 +104,7 @@ internal fun SwapScreen(
     onQueryChange: (String) -> Unit,
     switchTokens: () -> Unit,
     onTextFieldSelected: (TextFieldSelected) -> Unit,
-    onAmountChange: (String) -> Unit,
+    onAmountChange: (TextFieldSelected, String) -> Unit,
     onSelectAsset: (TokenAsset) -> Unit,
     onSwapClicked: ((String) -> Unit) -> Unit,
     onBackClick: () -> Unit
@@ -169,10 +169,10 @@ internal fun SwapScreen(
                 onTextFieldSelected(selectedTextField)
                 try {
                     if (amount == "") {
-                        onAmountChange(amount)
+                        onAmountChange(selectedTextField, amount)
                     } else {
                         val bigDc = BigDecimal(amount.replace(",", "."))
-                        onAmountChange(amount)
+                        onAmountChange(selectedTextField, amount)
                     }
                 } catch (e: NumberFormatException) {
                     // Catch the error and do nothing
