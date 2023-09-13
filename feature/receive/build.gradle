@@ -65,7 +65,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation:1.4.3'
 
     implementation 'com.github.kenglxn.QRGen:android:3.0.1'
-
+    implementation 'com.google.zxing:core:3.5.1'
 
     implementation libs.hilt.android
     kapt libs.hilt.compiler

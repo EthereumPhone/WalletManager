@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
@@ -127,12 +128,6 @@ internal fun HomeScreen(
             txHash = ""
         )
     ) }
-//    val chainId =  remember { mutableStateOf(1) }
-//    val asset =  remember { mutableStateOf("ETH") }
-//    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
-//    val value =  remember { mutableStateOf("2.234") }
-//    val timeStamp =  remember { mutableStateOf("12:12:00") }
-//    val userSent =  remember { mutableStateOf(true) }
 
     if(showTransferInfoDialog.value){
         TransferDialog(
@@ -143,11 +138,7 @@ internal fun HomeScreen(
             transfer = txInfo.value,
             currencyPrice = currencyPrice,
             onCurrencyChange = onCurrencyChange
-//            address = address.value ,
-//            chainId = chainId.value,
-//            amount = value.value,
-//            timeStamp = timeStamp.value,
-//            asset = asset.value ,
+
         )
     }
 
@@ -265,15 +256,37 @@ private fun copyTextToClipboard(context: Context, text: String) {
 @Preview
 @Composable
 fun PreviewHomeScreen() {
-//    HomeScreen(
-//        userData = UserData("0x123...123"),
-//        transfersUiState = TransfersUiState.Loading,
-//        assetsUiState = AssetUiState.Loading,
-//        refreshState = false,
-//        onAddressClick = { },
-//        navigateToReceive = { },
-//        navigateToSend = { },
-//        navigateToSwap = { },
-//        onRefresh = { }
-//    )
+    HomeScreen(
+        userData = UserData("0x123...123"),
+        transfersUiState = TransfersUiState.Loading,
+        assetsUiState = AssetUiState.Success(
+
+            listOf(
+                    TokenAsset(
+                        address = "String",
+                        chainId =  5,
+                        symbol=  "ETH",
+                        name= "Ether",
+                        balance= 0.00000245
+                    ),
+                    TokenAsset(
+                        address = "yuooyvyuv",
+                        chainId =  10,
+                        symbol=  "ETH",
+                        name= "Ether",
+                        balance= 0.00000245
+                    )
+                )
+
+
+        ),
+        refreshState = false,
+        onAddressClick = { },
+        navigateToReceive = { },
+        navigateToSend = { },
+        navigateToSwap = { },
+        onRefresh = { },
+        onCurrencyChange = {},
+        currencyPrice = "1650.00"
+    )
 }

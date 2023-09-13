@@ -209,14 +209,14 @@ fun AssetExapndableItemPreview() {
         item {
             AssetExpandableItem(
                 //modifier = Modifier.background(Color.DarkGray),
-                title = "test",
+                title = "Weth",
                 assets =
                 listOf(
-                    TokenAsset("", 1, "test", "test test", 123.2),
-                    TokenAsset("", 5, "test", "test test", 123.2),
-                    TokenAsset("", 10, "test", "test test", 123.2),
-                    TokenAsset("", 137, "test", "test test", 123.2),
-                    TokenAsset("", 42161, "test", "test test", 123.2),
+                    TokenAsset("", 1, "ETH", "test test", 123.2),
+                    TokenAsset("", 5, "ETH", "test test", 123.2),
+                    TokenAsset("", 10, "ETH", "test test", 123.2),
+                    TokenAsset("", 137, "MATIC", "test test", 123.2),
+                    TokenAsset("", 42161, "ETH", "test test", 123.2),
                 )
 
             )

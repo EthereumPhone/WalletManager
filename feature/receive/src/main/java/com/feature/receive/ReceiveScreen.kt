@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.Card
 import androidx.compose.material.DismissValue
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -48,6 +50,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -75,8 +78,14 @@ import net.glxn.qrgen.android.QRCode
 import java.util.Hashtable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
+import com.feature.receive.ui.rememberQrBitmapPainter
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
+import net.glxn.qrgen.core.image.ImageType
+import java.io.ByteArrayOutputStream
 
 @Composable
 internal fun ReceiveRoute(
@@ -84,10 +93,10 @@ internal fun ReceiveRoute(
     viewModel: ReceiveViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
+    val userData by viewModel.userData.collectAsStateWithLifecycle()
 
     ReceiveScreen(
-        address = userAddress,
+        userData = userData,
         modifier = modifier,
         onBackClick = onBackClick
     )
@@ -96,7 +105,7 @@ internal fun ReceiveRoute(
 
 @Composable
 fun ReceiveScreen(
-    address: String,
+    userData: UserData,
     modifier: Modifier=Modifier,
     onBackClick: () -> Unit
 ) {
@@ -120,8 +129,7 @@ fun ReceiveScreen(
                 .background(Color(0xFF1E2730))
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
-            //Breadcrumb w/ backbutton
-        //Breadcrumb w/ backbutton
+
         TopHeader(
             onBackClick = onBackClick,
             title = "Receive",
@@ -157,31 +165,21 @@ fun ReceiveScreen(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = modifier.height(space))
-//                Surface (
-//                    modifier = modifier
-//                        .size(300.dp)
-//                        .clip(RoundedCornerShape(12.dp))
-//                ) {
-//                    //QRCode
-//                    BoxWithConstraints {
-//                        val boxWithConstraintsScope = this
-//                        val width = with(LocalDensity.current) {boxWithConstraintsScope.maxWidth.toPx()*0.9}.toInt()
-//                        BitmapImage(
-//                            bitmap = generateQRCode(
-//                                input = "ethereum:$address",
-//                                size = width,
-//                            ),
-//                        )
-//                    }
-//                }
-                BoxWithConstraints {
-                    val boxWithConstraintsScope = this
-                    val width = with(LocalDensity.current) {boxWithConstraintsScope.maxWidth.toPx()*0.9}.toInt()
-                    BitmapImage(
-                        bitmap = generateQRCode(
-                            input = "ethereum:$address",
-                            size = width,
-                        ),
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.White)
+                        .padding(10.dp)
+
+                ) {
+                    Image(
+                        painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+                        contentDescription = "wallet address QR",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .aspectRatio(1f)
                     )
                 }
 
@@ -196,12 +194,30 @@ fun ReceiveScreen(
                     color = Color(0xFF9FA2A5),
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Normal,
-                    text = address
+                    text = userData.walletAddress
                 )
             }
         }
 }
 
+@Preview
+@Composable
+fun TestQr() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.White)
+            .padding(10.dp)
+
+    ) {
+        Image(
+            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+            contentDescription = "wallet address QR",
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.size(135.dp),
+        )
+    }
+}
 
 fun generateQRCode(input: String, size: Int): Bitmap {
     val hints = Hashtable<EncodeHintType, Any>()

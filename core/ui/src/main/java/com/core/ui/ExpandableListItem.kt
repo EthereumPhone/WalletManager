@@ -59,7 +59,7 @@ fun ExpandableListItem(
 
     ) {
         ListItem(
-            modifier = modifier.clip(RoundedCornerShape(12.dp)),
+            modifier = modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd=12.dp, bottomStart = if(expanded) 0.dp else 12.dp, bottomEnd = if(expanded) 0.dp else 12.dp)),
 
             headlineContent = headline,
             supportingContent = {
@@ -98,7 +98,9 @@ fun ExpandableListItem(
             colors = colors
         )
 
-        AnimatedVisibility(visible = expanded) {
+        AnimatedVisibility(
+            modifier = Modifier.clip(RoundedCornerShape(bottomEnd = 12.dp, bottomStart = 12.dp)),
+            visible = expanded) {
             expandedContent()
         }
     }
