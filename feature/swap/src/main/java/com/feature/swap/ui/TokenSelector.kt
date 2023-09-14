@@ -78,11 +78,7 @@ fun TokenSelector(
             formatDouble(assetsUiState.toAsset.tokenAsset.balance)
         }
     }
-//    val toSymbol = when(assetsUiState.toAsset) {
-//        is SelectedTokenUiState.Unselected -> { "" }
-//        is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
-//    }
-    //var fromValue by remember { mutableStateOf(amountsUiState.fromAmount) }
+
     val maxed2 = remember { mutableStateOf(false) }
     //var fromPrevAmount by remember { mutableStateOf(fromValue) }
 
@@ -101,6 +97,10 @@ fun TokenSelector(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            val fromAmountTooHigh = amountsUiState.fromAmount.isNotBlank() &&
+                    (assetsUiState.fromAsset is SelectedTokenUiState.Selected) &&
+                    (assetsUiState.fromAsset.tokenAsset.balance < amountsUiState.fromAmount.toDouble())
+
             Row (
                 modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -111,6 +111,10 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
+
+
+
+
                 if (fromBalance != "") {
                     Text(
                         modifier = Modifier.clickable {
@@ -118,7 +122,7 @@ fun TokenSelector(
                         },
                         text = "Balance: $fromBalance",
                         fontSize = 16.sp,
-                        color= Color(0xFF9FA2A5)
+                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
                     )
                 }
             }
@@ -134,7 +138,8 @@ fun TokenSelector(
                 onChange = { onAmountChange(TextFieldSelected.FROM, it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
-                )
+                isError = fromAmountTooHigh
+            )
         }
 
 
@@ -156,6 +161,10 @@ fun TokenSelector(
             }
         )
 
+        val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
+                (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
+
         Column (
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ){
@@ -164,6 +173,7 @@ fun TokenSelector(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){
+
                 Text(
                     text = "To",
                     fontWeight = FontWeight.SemiBold,
@@ -175,7 +185,7 @@ fun TokenSelector(
                     Text(
                         text = "Balance: ${toBalance}",
                         fontSize = 16.sp,
-                        color= Color(0xFF9FA2A5)
+                        color= if(toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
                     )
                 }
             }
@@ -193,6 +203,9 @@ fun TokenSelector(
                     }
                 },
                 placeholder = "Amount",
+                isError = amountsUiState.toAmount.isNotBlank() &&
+                        (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
             )
         }
     }

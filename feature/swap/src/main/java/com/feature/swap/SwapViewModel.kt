@@ -71,16 +71,14 @@ class SwapViewModel @Inject constructor(
             if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
                 val address = userData.first().walletAddress
 
-                val test = swapRepository.getQuote(
+                val quote = swapRepository.getQuote(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     1.0,
                     address
                 )
-                Log.d("getQuote", test.toString())
-                test
-
-
+                Log.d("getQuote", quote.toString())
+                quote
             } else {
                 0.0
             }
@@ -139,6 +137,7 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             exchangeRate.collect { rate ->
                 _amountsUiState.update { currentState ->
+                    Log.d("rate", rate.toString())
                     when(selectedTextField) {
                         TextFieldSelected.FROM -> {
                             val amountText = if (updatedAmount == "") "" else (BigDecimal(updatedAmount)
@@ -153,10 +152,14 @@ class SwapViewModel @Inject constructor(
                             )
                         }
                         TextFieldSelected.TO -> {
-                            val amountText = if(updatedAmount == "") "" else BigDecimal(updatedAmount)
-                                .divide(BigDecimal(rate), 4, RoundingMode.HALF_EVEN)
-                                .stripTrailingZeros()
-                                .toPlainString()
+                            val amountText = if(rate != 0.0) {
+                                if(updatedAmount == "") "" else BigDecimal(updatedAmount)
+                                    .divide(BigDecimal(rate), 4, RoundingMode.HALF_EVEN)
+                                    .stripTrailingZeros()
+                                    .toPlainString()
+                            } else {
+                                "0"
+                            }
 
                             currentState.copy(
                                 fromAmount = amountText,
