@@ -186,12 +186,12 @@ internal fun SwapScreen(
                 onTextFieldSelected(it)
             }
         )
-        Spacer(modifier = modifier.height(24.dp))
+        Spacer(modifier = modifier.height(8.dp))
+
         Column (
             modifier = modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(8.dp)
-
 
         ){
             ExchangeRateRow(

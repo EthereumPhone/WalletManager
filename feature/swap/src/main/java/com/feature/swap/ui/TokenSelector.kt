@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.core.model.TokenAsset
 import com.core.ui.TextToggleButton
 import com.core.ui.WmTextField
 import com.core.ui.ethOSButton
@@ -242,6 +244,27 @@ fun PreviewTokenSelector() {
     var clicked by remember { mutableStateOf(0) }
     var amount by remember { mutableStateOf(AmountsUiState("0.123", "0.234")) }
 
+    val assetState = AssetsUiState(
+        SelectedTokenUiState.Selected(
+            TokenAsset(
+                "123",
+                1,
+                "ABC",
+                "ABC",
+                0.1,
+            )
+        ),
+        SelectedTokenUiState.Selected(
+            TokenAsset(
+                "123",
+                1,
+                "ABC",
+                "ABC",
+                0.1,
+            )
+        )
+    )
+
     Column {
         TokenSelector(
             amountsUiState = amount,
@@ -267,7 +290,33 @@ fun PreviewTokenSelector() {
 
             }
         )
-        Text(text = "Test TEXT $clicked")
+        Spacer(modifier = Modifier.height(8.dp))
+        //Text(text = "Test TEXT $clicked")
+//        Column (
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalAlignment = Alignment.Start,
+//            verticalArrangement = Arrangement.spacedBy(36.dp)
+//
+//        ){
+//            ExchangeRateRow(
+//                assetsUiState = assetState,
+//                exchangeUiState = 0.1,
+//                isSyncing = true
+//            )
+//
+//            Row(
+//                horizontalArrangement = Arrangement.spacedBy(4.dp),
+//                verticalAlignment = Alignment.CenterVertically
+//            ){
+//
+//
+//                Text(
+//                    text = "Swap fee (0.5%)",
+//                    fontSize = 16.sp,
+//                    color= Color(0xFF9FA2A5)
+//                )
+//            }
+//        }
     }
 
 
