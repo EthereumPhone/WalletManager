@@ -55,6 +55,7 @@ import java.text.DecimalFormat
 fun TokenSelector(
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    isSyncing: Boolean,
     modifier: Modifier = Modifier,
     switchTokens: () -> Unit,
     onPickAssetClicked: (TextFieldSelected) -> Unit,
@@ -111,9 +112,6 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
-
-
-
 
                 if (fromBalance != "") {
                     Text(
@@ -248,6 +246,7 @@ fun PreviewTokenSelector() {
         TokenSelector(
             amountsUiState = amount,
             assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
+            isSyncing = false,
             modifier = Modifier.fillMaxWidth(),
             {},
             {textFieldSelected: TextFieldSelected -> clicked += 1 },

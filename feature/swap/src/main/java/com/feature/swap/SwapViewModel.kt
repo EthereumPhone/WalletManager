@@ -63,12 +63,16 @@ class SwapViewModel @Inject constructor(
     private val _selectedTextField = MutableStateFlow(TextFieldSelected.FROM)
     val selectedTextField = _selectedTextField.asStateFlow()
 
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing = _isSyncing.asStateFlow()
+
     val exchangeRate: StateFlow<Double> =
         assetsUiState.map { currentState ->
             val fromAsset = currentState.fromAsset
             val toAsset = currentState.toAsset
 
             if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                _isSyncing.value = true
                 val address = userData.first().walletAddress
 
                 val quote = swapRepository.getQuote(
@@ -78,6 +82,7 @@ class SwapViewModel @Inject constructor(
                     address
                 )
                 Log.d("getQuote", quote.toString())
+                _isSyncing.value = false
                 quote
             } else {
                 0.0
