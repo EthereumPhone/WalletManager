@@ -14,6 +14,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,25 +49,29 @@ fun SwapTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    isError: Boolean = false
     ) {
+
+    val textStyling = TextStyle(
+        color = Color.White,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.SemiBold
+    )
+    val background = if(isError) Color(0xFF8C1D18)
+    else Color(0xFF24303D)
 
     BasicTextField(
         value = value,
         onValueChange = onChange,
         singleLine = true,
-        textStyle = TextStyle(
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold
-
-        ),
+        textStyle = textStyling,
         enabled = enabled,
         keyboardOptions = keyboardOptions,
         cursorBrush = SolidColor(Color.White),
         modifier = modifier
             .clip(RoundedCornerShape(10))
-            .background(Color(0xFF24303D))
+            .background(background)
             .height(64.dp)
             .padding(
                 horizontal = 16.dp,
@@ -96,7 +103,6 @@ fun SwapTextField(
             }
         }
     }
-
 }
 
 @Preview
@@ -104,13 +110,26 @@ fun SwapTextField(
 fun PreviewWmTextField() {
     var text by remember { mutableStateOf("bii b") }
 
-//    SwapTextField(
-//        value = text,
-//        onChange = { text = it },
-//        leadingIcon = {
-//            //TokenAssetIcon()
-//        }
-//    )
+    SwapTextField(
+        value = text,
+        onChange = { text = it },
+        leadingIcon = {
+            //TokenAssetIcon()
+        }
+    )
+}
 
+@Preview
+@Composable
+fun previewErrorWmTextFiled() {
+    var text by remember { mutableStateOf("bii b") }
 
+    SwapTextField(
+        value = text,
+        onChange = { text = it },
+        leadingIcon = {
+            //TokenAssetIcon()
+        },
+        isError = text.contains("b")
+    )
 }

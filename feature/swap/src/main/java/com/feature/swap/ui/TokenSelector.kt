@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.core.model.TokenAsset
 import com.core.ui.TextToggleButton
 import com.core.ui.WmTextField
 import com.core.ui.ethOSButton
@@ -55,6 +57,7 @@ import java.text.DecimalFormat
 fun TokenSelector(
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    isSyncing: Boolean,
     modifier: Modifier = Modifier,
     switchTokens: () -> Unit,
     onPickAssetClicked: (TextFieldSelected) -> Unit,
@@ -78,11 +81,7 @@ fun TokenSelector(
             formatDouble(assetsUiState.toAsset.tokenAsset.balance)
         }
     }
-//    val toSymbol = when(assetsUiState.toAsset) {
-//        is SelectedTokenUiState.Unselected -> { "" }
-//        is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
-//    }
-    //var fromValue by remember { mutableStateOf(amountsUiState.fromAmount) }
+
     val maxed2 = remember { mutableStateOf(false) }
     //var fromPrevAmount by remember { mutableStateOf(fromValue) }
 
@@ -101,6 +100,10 @@ fun TokenSelector(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            val fromAmountTooHigh = amountsUiState.fromAmount.isNotBlank() &&
+                    (assetsUiState.fromAsset is SelectedTokenUiState.Selected) &&
+                    (assetsUiState.fromAsset.tokenAsset.balance < amountsUiState.fromAmount.toDouble())
+
             Row (
                 modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -111,6 +114,7 @@ fun TokenSelector(
                     fontSize = 18.sp,
                     color= Color.White
                 )
+
                 if (fromBalance != "") {
                     Text(
                         modifier = Modifier.clickable {
@@ -118,7 +122,7 @@ fun TokenSelector(
                         },
                         text = "Balance: $fromBalance",
                         fontSize = 16.sp,
-                        color= Color(0xFF9FA2A5)
+                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
                     )
                 }
             }
@@ -131,10 +135,14 @@ fun TokenSelector(
                     }
                 },
                 value = amountsUiState.fromAmount,
-                onChange = { onAmountChange(TextFieldSelected.FROM, it) },
+                onChange = {
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.FROM, amountText)
+                           },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
-                )
+                isError = fromAmountTooHigh
+            )
         }
 
 
@@ -156,6 +164,10 @@ fun TokenSelector(
             }
         )
 
+        val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
+                (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
+
         Column (
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ){
@@ -164,6 +176,7 @@ fun TokenSelector(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){
+
                 Text(
                     text = "To",
                     fontWeight = FontWeight.SemiBold,
@@ -175,14 +188,15 @@ fun TokenSelector(
                     Text(
                         text = "Balance: ${toBalance}",
                         fontSize = 16.sp,
-                        color= Color(0xFF9FA2A5)
+                        color= if(toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
                     )
                 }
             }
             SwapTextField(
                 value = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
                 onChange = {
-                    onAmountChange(TextFieldSelected.TO, it)
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.TO, amountText)
                            },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
@@ -193,6 +207,9 @@ fun TokenSelector(
                     }
                 },
                 placeholder = "Amount",
+                isError = amountsUiState.toAmount.isNotBlank() &&
+                        (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
             )
         }
     }
@@ -231,10 +248,32 @@ fun PreviewTokenSelector() {
     var clicked by remember { mutableStateOf(0) }
     var amount by remember { mutableStateOf(AmountsUiState("0.123", "0.234")) }
 
+    val assetState = AssetsUiState(
+        SelectedTokenUiState.Selected(
+            TokenAsset(
+                "123",
+                1,
+                "ABC",
+                "ABC",
+                0.1,
+            )
+        ),
+        SelectedTokenUiState.Selected(
+            TokenAsset(
+                "123",
+                1,
+                "ABC",
+                "ABC",
+                0.1,
+            )
+        )
+    )
+
     Column {
         TokenSelector(
             amountsUiState = amount,
             assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
+            isSyncing = false,
             modifier = Modifier.fillMaxWidth(),
             {},
             {textFieldSelected: TextFieldSelected -> clicked += 1 },
@@ -255,7 +294,33 @@ fun PreviewTokenSelector() {
 
             }
         )
-        Text(text = "Test TEXT $clicked")
+        Spacer(modifier = Modifier.height(8.dp))
+        //Text(text = "Test TEXT $clicked")
+//        Column (
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalAlignment = Alignment.Start,
+//            verticalArrangement = Arrangement.spacedBy(36.dp)
+//
+//        ){
+//            ExchangeRateRow(
+//                assetsUiState = assetState,
+//                exchangeUiState = 0.1,
+//                isSyncing = true
+//            )
+//
+//            Row(
+//                horizontalArrangement = Arrangement.spacedBy(4.dp),
+//                verticalAlignment = Alignment.CenterVertically
+//            ){
+//
+//
+//                Text(
+//                    text = "Swap fee (0.5%)",
+//                    fontSize = 16.sp,
+//                    color= Color(0xFF9FA2A5)
+//                )
+//            }
+//        }
     }
 
 

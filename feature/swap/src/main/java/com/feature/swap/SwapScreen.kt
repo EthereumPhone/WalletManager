@@ -52,6 +52,7 @@ import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
 //import com.core.ui.WmButton
 import com.feature.home.AssetUiState
+import com.feature.swap.ui.ExchangeRateRow
 import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
 import kotlinx.coroutines.coroutineScope
@@ -71,6 +72,7 @@ internal fun SwapRoute(
     val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
@@ -78,15 +80,14 @@ internal fun SwapRoute(
         exchangeUiState = exchangeUiState,
         amountsUiState = amountsUiState,
         assetsUiState = assetsUiState,
+        isSyncing = isSyncing,
         searchQuery = searchQuery,
         onQueryChange = viewModel::updateSearchQuery,
         switchTokens = viewModel::switchTokens,
         onTextFieldSelected = viewModel::setSelectedTextField,
         onAmountChange = viewModel::updateAmount,
         onSelectAsset = viewModel::selectAsset,
-        onSwapClicked = {
-                        viewModel.swap(it)
-        },
+        onSwapClicked = { viewModel.swap(it) },
         onBackClick = onBackClick
     )
 }
@@ -95,11 +96,12 @@ internal fun SwapRoute(
 @Composable
 internal fun SwapScreen(
 
-    modifier: Modifier=Modifier,
+    modifier: Modifier = Modifier,
     swapTokenUiState: SwapTokenUiState,
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    isSyncing: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
     switchTokens: () -> Unit,
@@ -165,6 +167,7 @@ internal fun SwapScreen(
             amountsUiState = amountsUiState,
             assetsUiState = assetsUiState,
             switchTokens = switchTokens,
+            isSyncing = isSyncing,
             onAmountChange = { selectedTextField, amount ->
                 onTextFieldSelected(selectedTextField)
                 try {
@@ -183,18 +186,26 @@ internal fun SwapScreen(
                 onTextFieldSelected(it)
             }
         )
-        Spacer(modifier = modifier.height(24.dp))
+        Spacer(modifier = modifier.height(8.dp))
+
         Column (
             modifier = modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(8.dp)
 
-
         ){
+            ExchangeRateRow(
+                assetsUiState = assetsUiState,
+                exchangeUiState = exchangeUiState,
+                isSyncing = isSyncing
+            )
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ){
+
+
                 Text(
                     text = "Swap fee (0.5%)",
                     fontSize = 16.sp,

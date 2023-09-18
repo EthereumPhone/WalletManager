@@ -141,7 +141,7 @@ private fun IndividualAssetItem(
             color = primary
         )
         Text(
-            text = "${formatDouble(tokenAsset.balance)} ${tokenAsset.symbol}",
+            text = "${formatDouble(tokenAsset.balance)}",
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             color = primary
