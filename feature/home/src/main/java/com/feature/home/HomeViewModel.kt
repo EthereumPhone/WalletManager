@@ -139,8 +139,8 @@ fun assetUiState(
                     TokenAsset(
                         address = it.contractAddress,
                         chainId = it.chainId,
-                        symbol = "eth",
-                        name = "eth",
+                        symbol = if(name.contains("POLYGON")) "matic" else "eth",
+                        name = if(name.contains("POLYGON")) "matic" else "eth",
                         balance = it.tokenBalance.toDouble(),
                         decimals = 18
                     )

@@ -56,12 +56,15 @@ fun NetworkPickerSheet(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 },
+                                /*
                                 supportingContent = {
                                     Text(
                                         text = formatString(tokenAsset.name),
                                         color = Color(0xFF9FA2A5)
                                     )
                                 },
+
+                                 */
                                 trailingContent = {
                                     Text(
                                         text = formatDouble(tokenAsset.balance) + " " + if(tokenAsset.chainId == 137) "MATIC" else "ETH",

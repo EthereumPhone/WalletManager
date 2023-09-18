@@ -194,7 +194,6 @@ class SwapViewModel @Inject constructor(
                 fromAmount = currentState.toAmount,
                 toAmount = currentFromAmount,
                 )
-
         }
     }
 

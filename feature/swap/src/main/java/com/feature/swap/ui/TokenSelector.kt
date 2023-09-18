@@ -135,7 +135,10 @@ fun TokenSelector(
                     }
                 },
                 value = amountsUiState.fromAmount,
-                onChange = { onAmountChange(TextFieldSelected.FROM, it) },
+                onChange = {
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.FROM, amountText)
+                           },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
                 isError = fromAmountTooHigh
@@ -192,7 +195,8 @@ fun TokenSelector(
             SwapTextField(
                 value = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
                 onChange = {
-                    onAmountChange(TextFieldSelected.TO, it)
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.TO, amountText)
                            },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
