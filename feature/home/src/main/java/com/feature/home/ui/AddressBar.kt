@@ -3,12 +3,14 @@ package com.feature.home.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
@@ -19,6 +21,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -40,22 +43,17 @@ import java.util.Calendar
 
 @Composable
 internal fun AddressBar(
-
     userData: UserData,
     onclick: () -> Unit,
     icon: @Composable () -> Unit,
+    currentChain: Int,
     modifier: Modifier = Modifier
 ) {
-    val greeting = when(LocalTime.now().hour) {
-        in 5..12 -> "Gm \uD83C\uDF1E" // sun with face emoji
-        in 13..16 -> "Ga  \uD83C\uDF07" // city-sunset emoji
-        else -> "Gn \uD83C\uDF1D" // full moon with face emoji
-    }
 
     Column (
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ){
+        //Address
         Row (
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -73,48 +71,46 @@ internal fun AddressBar(
                     //.background(Color.Red)
                 )
             }
-
-            //Address
-            Row(
+            Box(
                 modifier = Modifier
-                    .clickable { onclick() }
-                    ,
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column (
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ){
-//                    SelectedNetworkButton(
-//                        chainId = 1,
-//                        onClickChange = {
-//
-//
-//                        },)
-                    Text(
-                        text = truncateText(userData.walletAddress),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF9FA2A5)
-                    )
-
-                }
-
-//                Icon(
-//                    imageVector = Icons.Rounded.ContentCopy,
-//                    contentDescription = null,
-//                    tint = Color(0xFF9FA2A5),
-//                    modifier=modifier.size(18.dp)
-//                )
+                    .clickable { onclick() },
+            ){
+                Text(
+                    modifier = Modifier
+                        .clickable { onclick() },
+                    text = truncateText(userData.walletAddress),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF9FA2A5)
+                )
             }
-
-             icon()
-
+            icon()
         }
-
-
+        //Networkpill
+        val chainName = when(currentChain) {
+            1 -> "Mainnet"
+            5 -> "Goerli"
+            10 -> "Optimism"
+            137 -> "Polygon"
+            42161 -> "Arbitrum"
+            else -> "Mainnet"
+        }
+        Surface (
+            modifier = Modifier
+                .clip(CircleShape),
+            color = Color(0xFF24303D),
+            contentColor = Color.White
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                text = chainName,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+        }
     }
+
 }
 
 private fun truncateText(text: String): String {
@@ -144,7 +140,8 @@ fun previewAddressBar() {
 
                 )
             }
-        }
+        },
+        currentChain = 5
 
     )
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
+import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -41,38 +42,13 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TransferItemCard(
+internal fun TransferListItem(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
 
     onCardClick: () -> Unit
 ) {
-    val headlineText = remember {
-        buildString {
-            append(if (transfer.userSent) "Sent " else "Received ")
-            append(transfer.value)
-            append(" ")
-            append(transfer.asset)
-            append(if (transfer.userSent) " to " else " from ")
-            //append(transfer.address)
-        }
-    }
-    val networkName = remember { chainToNetworkName(transfer.chainId) }
 
-//    WmListItem(
-//        headlineContent = {
-//            Text(text = headlineText)
-//        },
-//        supportingContent = {
-//            Row {
-//                Text(
-//                    text = networkName,
-//                    modifier = Modifier.weight(1f)
-//                )
-//                Text(text = transfer.timeStamp)
-//            }
-//        }
-//    )
     Card(
         modifier = modifier
             .fillMaxWidth(),
@@ -95,7 +71,7 @@ internal fun TransferItemCard(
             Box (
                 contentAlignment = Alignment.Center,
                 modifier = modifier
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(Color.White)
                     .size(42.dp)
             ){
@@ -163,7 +139,7 @@ internal fun TransferItemCard(
 
 
 
-                            val date = compareDate(transfer.timeStamp)
+                            val date = transfer.timeStamp//compareDate(transfer.timeStamp)
                             Text(
                                     text = date
 
@@ -243,15 +219,19 @@ fun TransferItemPreview() {
 //        timeStamp = Clock.System.now().toString(),
 //        userSent = true
 //    )
-//    TransferItemCard(
-//        transfer = TransferItem(
-//            chainId = 5,
-//            asset = "ETH",
-//            address = "0x123123123123123123123123",
-//            value = "2.24",
-//            timeStamp = "12:12:00",
-//            userSent = true
-//        )
-//    )
+    TransferListItem(
+        transfer = TransferItem(
+            chainId = 5,
+            from = "0x123123123123123123123123",
+            to =  "0x123123123123123123123123",
+            asset = "ETH",
+            //address = "0x123123123123123123123123",
+            value = "2.24",
+            timeStamp = "10-19-01",//Clock.System.now().toString(),
+            userSent = true,
+            txHash= "pfpfnopjfpfn"
+        ),
+        onCardClick = {}
+    )
 
 }

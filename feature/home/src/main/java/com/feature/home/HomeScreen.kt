@@ -39,12 +39,15 @@ import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.TransferDialog
 import com.feature.home.ui.WalletTabRow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun HomeRoute(
     modifier: Modifier = Modifier,
@@ -59,11 +62,15 @@ internal fun HomeRoute(
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
+    val currentChain by viewModel.currentChain.collectAsStateWithLifecycle(1)
+
 
 
 
     HomeScreen(
         userData = userData,
+        currentChain = currentChain,
+        //getCurrentChain = viewModel::getCurrentChain,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
@@ -85,6 +92,8 @@ internal fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     userData: UserData,
+    currentChain: Int,
+    //getCurrentChain: (Context) -> Unit,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
@@ -97,6 +106,8 @@ internal fun HomeScreen(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+
 
     var showSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
@@ -169,7 +180,8 @@ internal fun HomeScreen(
                             .clip(CircleShape)
                     )
                 }
-            }
+            },
+            currentChain
         )
 
 //        Column (
@@ -287,6 +299,8 @@ fun PreviewHomeScreen() {
         navigateToSwap = { },
         onRefresh = { },
         onCurrencyChange = {},
-        currencyPrice = "1650.00"
+        currencyPrice = "1650.00",
+        currentChain = 1,
+        //getCurrentChain = {}
     )
 }
