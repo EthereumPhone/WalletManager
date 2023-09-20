@@ -101,12 +101,12 @@ import java.util.Currency
 @Composable
 fun SendRoute(
     modifier: Modifier = Modifier,
-    //selectedNetwork: State<Network>,
     onBackClick: () -> Unit,
+    initialAddress: String = "",
     viewModel: SendViewModel = hiltViewModel()
 ) {
 
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
+    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
 

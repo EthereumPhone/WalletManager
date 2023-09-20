@@ -14,12 +14,13 @@ fun NavController.navigateToSend() {
 }
 
 fun NavGraphBuilder.sendScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    address: String = ""
 ) {
     composable(route = sendRoute) {
         SendRoute(
-            onBackClick= onBackClick
+            onBackClick= onBackClick,
+            initialAddress = address
         )
-        //SendRoute()
     }
 }
