@@ -307,7 +307,7 @@ private fun PreviewSwipeButton() {
                 setIsComplete(true)
             }
             }
-            Text(text=isComplete.toString(), color = Color.Red)
+            //Text(text=isComplete.toString(), color = Color.Red)
         }
     }
 }

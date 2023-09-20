@@ -88,7 +88,7 @@ fun AssetExpandableItem(
         expandedContent = {
             Column(
                 Modifier
-                    .background(Color(0xFF3C4958))
+                    .background(Color(0xFF24303D))
 
                 ,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -209,13 +209,12 @@ fun AssetExapndableItemPreview() {
         item {
             AssetExpandableItem(
                 //modifier = Modifier.background(Color.DarkGray),
-                title = "Weth",
+                title = "Ether",
                 assets =
                 listOf(
                     TokenAsset("", 1, "ETH", "test test", 123.2),
                     TokenAsset("", 5, "ETH", "test test", 123.2),
                     TokenAsset("", 10, "ETH", "test test", 123.2),
-                    TokenAsset("", 137, "MATIC", "test test", 123.2),
                     TokenAsset("", 42161, "ETH", "test test", 123.2),
                 )
 
