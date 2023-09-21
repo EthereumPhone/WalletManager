@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.core.designsystem.theme.background
 import com.feature.home.navigation.homeGraphRoutePattern
+import com.feature.send.navigation.navigateToSend
 import com.feature.send.navigation.sendRoute
 import org.ethereumphone.walletmanager.navigation.WmNavHost
 
@@ -15,7 +16,6 @@ import org.ethereumphone.walletmanager.navigation.WmNavHost
 @Composable
 fun WmApp(
     appState: WmAppState = rememberWmAppState(),
-    intent: Intent?
 ) {
 
     Scaffold(
@@ -23,11 +23,10 @@ fun WmApp(
     ) { paddingValues ->
         paddingValues
 
-
         WmNavHost(
             appState = appState,
             modifier = Modifier.padding(paddingValues),
-            destinationIntent = intent
         )
+
     }
 }
