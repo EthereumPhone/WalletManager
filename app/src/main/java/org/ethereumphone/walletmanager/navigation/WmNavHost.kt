@@ -33,7 +33,7 @@ fun WmNavHost(
         modifier = modifier
     ) {
 
-        var address = destinationIntent?.getStringExtra("recipient_address") ?: "123"
+        val address = destinationIntent?.getStringExtra("recipient_address")
 
         homeGraph(
             navigateToSwap = {
@@ -47,9 +47,10 @@ fun WmNavHost(
             },
             nestedGraphs = {
                 swapScreen(navController::popBackStack)
-                sendScreen(navController::popBackStack, address?: "")
+                sendScreen(navController::popBackStack)
                 receiveScreen(navController::popBackStack)
-            }
+            },
+            address = address
         )
     }
 }

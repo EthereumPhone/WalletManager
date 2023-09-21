@@ -54,6 +54,7 @@ internal fun HomeRoute(
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
+    address: String?,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val userData by viewModel.userData.collectAsStateWithLifecycle()
@@ -84,6 +85,7 @@ internal fun HomeRoute(
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
         onRefresh = viewModel::refreshData,
+        address = address,
         modifier = modifier
     )
 }
@@ -104,10 +106,15 @@ internal fun HomeScreen(
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     onRefresh: () -> Unit,
+    address: String?,
     modifier: Modifier = Modifier
 ) {
 
-
+    if (address != null) {
+        LocalContext.current.getSharedPreferences("wallet", Context.MODE_PRIVATE).edit()
+            .putString("recipient_address", address).apply()
+        navigateToSend()
+    }
 
     var showSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
@@ -301,6 +308,7 @@ fun PreviewHomeScreen() {
         onCurrencyChange = {},
         currencyPrice = "1650.00",
         currentChain = 1,
+        address = "0x123...123",
         //getCurrentChain = {}
     )
 }

@@ -268,8 +268,18 @@ fun SendScreen(
     //toAddress: String,
     //onAddressClick: () -> Unit,
 ) {
+    val context = LocalContext.current
 
-    var address by remember { mutableStateOf("") }
+    var address by remember {
+        if (context.getSharedPreferences("wallet", Context.MODE_PRIVATE).contains("recipient_address")) {
+            val preAddr = context.getSharedPreferences("wallet", Context.MODE_PRIVATE).getString("recipient_address", "")!!
+            // Delete from shared preferences
+            context.getSharedPreferences("wallet", Context.MODE_PRIVATE).edit().remove("recipient_address").apply()
+            mutableStateOf(preAddr)
+        } else {
+            mutableStateOf("")
+        }
+    }
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -309,8 +319,6 @@ fun SendScreen(
 
 
 
-
-    val context = LocalContext.current
     //val selectedNetwork = selectedNetworkState.value
 
 
