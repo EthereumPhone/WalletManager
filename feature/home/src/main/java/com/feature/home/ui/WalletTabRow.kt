@@ -240,7 +240,7 @@ private fun TransferList(
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
                              transfer.userSent = userAddress.equals(transfer.from,true)
-                            TransferItemCard(
+                            TransferListItem(
                                 transfer = transfer,
 
                                 onCardClick = {

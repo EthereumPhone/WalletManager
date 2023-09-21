@@ -1,5 +1,6 @@
 package com.feature.home
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 @HiltViewModel
@@ -76,9 +78,24 @@ class HomeViewModel @Inject constructor(
     private val _exchange = MutableStateFlow("")
     val exchange: Flow<String> = _exchange
 
+    private val _currentChain = MutableStateFlow(0)
+    val currentChain: Flow<Int> = _currentChain
 
 
 
+    fun getCurrentChain(context: Context) {
+        viewModelScope.launch {
+            try {
+                val wallet = WalletSDK(
+                    context = context,
+                )
+                _currentChain.value = wallet.getChainId()
+            } catch (e: Exception) {
+                _currentChain.value = 0
+            }
+            _currentChain.value = 1
+        }
+    }
 
     fun refreshData() {
         Log.d("refresh Started", "update started")

@@ -56,11 +56,9 @@ fun ExpandableListItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-
     ) {
         ListItem(
             modifier = modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd=12.dp, bottomStart = if(expanded) 0.dp else 12.dp, bottomEnd = if(expanded) 0.dp else 12.dp)),
-
             headlineContent = headline,
             supportingContent = {
                 AnimatedVisibility(
@@ -73,7 +71,6 @@ fun ExpandableListItem(
             },
             trailingContent = {
                 Column (
-
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center
                 ){

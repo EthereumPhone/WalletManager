@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -105,28 +107,30 @@ fun ethOSTextField(
 fun PreviewTextField() {
 
     var test by remember { mutableStateOf("") }
-
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-//            ethOSTextField(
-//                text = test,
-//                label = "ENS or Address",
-//                trailingIcon = {
-////                    Icon(painter = painterResource(id = R.drawable.baseline_qr_code_24),
-////                        contentDescription = "",
-////                        tint = Color.White,
-////                        modifier = Modifier.size(32.dp)
-////                    )
-//                               Icon(imageVector = Icons.Rounded.Lock,
-//                                   tint = Color.White,
-//                                    modifier = Modifier.size(32.dp),
-//                                   contentDescription = "")
-//                },
-//                modifier = Modifier.fillMaxWidth()
-//
-//            ) {test = it}
-            TextField(value = test, onValueChange = {test = it})
+            ethOSTextField(
+                text = test,
+                label = "ENS or Address",
+                trailingIcon = {
+//                    Icon(painter = painterResource(id = R.drawable.baseline_qr_code_24),
+//                        contentDescription = "",
+//                        tint = Color.White,
+//                        modifier = Modifier.size(32.dp)
+//                    )
+                               Icon(imageVector = Icons.Rounded.QrCode,
+                                   tint = Color.White,
+                                    modifier = Modifier.size(32.dp),
+                                   contentDescription = "")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                focusRequester = focusRequester,
+
+            ) {test = it}
+            //TextField(value = test, onValueChange = {test = it})
         }
 
 }

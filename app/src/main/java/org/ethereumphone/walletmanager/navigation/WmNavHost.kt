@@ -1,5 +1,6 @@
 package org.ethereumphone.walletmanager.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -8,9 +9,11 @@ import androidx.navigation.compose.composable
 import com.feature.home.navigation.homeGraph
 import com.feature.home.navigation.homeGraphRoutePattern
 import com.feature.home.navigation.homeRoute
+import com.feature.home.navigation.navigateToHome
 import com.feature.receive.navigation.navigateToReceive
 import com.feature.receive.navigation.receiveScreen
 import com.feature.send.navigation.navigateToSend
+import com.feature.send.navigation.sendRoute
 import com.feature.send.navigation.sendScreen
 import com.feature.swap.navigation.navigateToSwap
 import com.feature.swap.navigation.swapScreen
@@ -20,7 +23,8 @@ import org.ethereumphone.walletmanager.ui.WmAppState
 fun WmNavHost(
     appState: WmAppState,
     modifier: Modifier = Modifier,
-    startDestination: String = homeGraphRoutePattern
+    startDestination: String = homeGraphRoutePattern,
+    destinationIntent: Intent?
 ) {
     val navController = appState.navController
     NavHost(
@@ -28,6 +32,9 @@ fun WmNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
+
+        val address = destinationIntent?.getStringExtra("recipient_address")
+
         homeGraph(
             navigateToSwap = {
                 navController.navigateToSwap()
@@ -42,7 +49,8 @@ fun WmNavHost(
                 swapScreen(navController::popBackStack)
                 sendScreen(navController::popBackStack)
                 receiveScreen(navController::popBackStack)
-            }
+            },
+            address = address
         )
     }
 }

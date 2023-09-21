@@ -53,8 +53,12 @@ class MainActivity : ComponentActivity() {
             val systemUiController = rememberSystemUiController()
             systemUiController.setStatusBarColor(
                 color = background
+
             )
-            WmApp()
+
+            val intentAction = intent.takeIf { it.action == "org.ethereumphone.walletmanager.ACTION_SEND_MONEY" }
+
+            WmApp(intent = intentAction)
         }
     }
 

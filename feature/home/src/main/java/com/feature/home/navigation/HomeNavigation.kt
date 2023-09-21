@@ -18,7 +18,8 @@ fun NavGraphBuilder.homeGraph(
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
-    nestedGraphs: NavGraphBuilder.() -> Unit
+    nestedGraphs: NavGraphBuilder.() -> Unit,
+    address: String?
 ) {
     navigation(
         route = homeGraphRoutePattern,
@@ -28,6 +29,7 @@ fun NavGraphBuilder.homeGraph(
             HomeRoute(
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,
+                address = address,
                 navigateToReceive = navigateToReceive
             )
         }
