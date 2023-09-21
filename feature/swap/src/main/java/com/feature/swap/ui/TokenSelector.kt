@@ -70,6 +70,8 @@ fun TokenSelector(
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
         }
+
+        else -> {""}
     }
 //    val fromSymbol = when(assetsUiState.fromAsset) {
 //        is SelectedTokenUiState.Unselected -> { "" }
@@ -81,6 +83,8 @@ fun TokenSelector(
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.toAsset.tokenAsset.balance)
         }
+
+        else -> {""}
     }
 
     val maxed2 = remember { mutableStateOf(false) }
@@ -226,6 +230,7 @@ private fun TokenAssetIcon(
     val text = when(tokenAsset) {
         is SelectedTokenUiState.Unselected -> { "Select Token" }
         is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
+        else -> {""}
     }
     Button(
         onClick = onClick,
