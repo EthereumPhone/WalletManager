@@ -296,13 +296,50 @@ fun TransferDialog(
                         EtherscanButton(
                             onClickChange = {
                                 //Log.e("tag","URL IS "+url.value.text)
-                                val urlIntent = Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse(
-                                        "https://etherscan.io/tx/${transfer.txHash}"
+                                val urlIntent = when(transfer.chainId) {
+                                    1 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://etherscan.io/tx/${transfer.txHash}"
 
+                                        )
                                     )
-                                )
+                                    5 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://goerli.etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                    10 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://optimistic.etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                    137 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://polygonscan.com/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                    42161 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://arbiscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                    else -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                }
                                 context.startActivity(urlIntent)
 
                             }
