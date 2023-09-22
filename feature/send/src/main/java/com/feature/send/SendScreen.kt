@@ -106,7 +106,9 @@ fun SendRoute(
     viewModel: SendViewModel = hiltViewModel()
 ) {
 
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
+    val initialAddress = initialAddress
+
+    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
 
@@ -119,19 +121,12 @@ fun SendRoute(
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
-//    val neworkBalanceRepository by viewModel.networkBalanceInfo.getNetworksBalance()
-//    val composableScope = rememberCoroutineScope()
-//    composableScope.launch {
-//        neworkBalanceRepository. { value ->
-//            // Do something with the collected value
-//            println("Collected value: $value")
-//        }
-//    }
 
-    //val tmp =  userAddress
+
     SendScreen(
         modifier = Modifier,
         onBackClick = onBackClick,
+        initialAddress = initialAddress,
         balances = balances,
         currencyPrice = currencyprice,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
@@ -257,6 +252,7 @@ fun SendRoute(
 fun SendScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
+    initialAddress: String,
     balances:  AssetUiState,
     currencyPrice: String,
     onChangeAssetClicked: (TokenAsset) -> Unit,
@@ -268,18 +264,8 @@ fun SendScreen(
     //toAddress: String,
     //onAddressClick: () -> Unit,
 ) {
-    val context = LocalContext.current
 
-    var address by remember {
-        if (context.getSharedPreferences("wallet", Context.MODE_PRIVATE).contains("recipient_address")) {
-            val preAddr = context.getSharedPreferences("wallet", Context.MODE_PRIVATE).getString("recipient_address", "")!!
-            // Delete from shared preferences
-            context.getSharedPreferences("wallet", Context.MODE_PRIVATE).edit().remove("recipient_address").apply()
-            mutableStateOf(preAddr)
-        } else {
-            mutableStateOf("")
-        }
-    }
+    var address by remember { mutableStateOf(initialAddress) }
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -319,6 +305,8 @@ fun SendScreen(
 
 
 
+
+    val context = LocalContext.current
     //val selectedNetwork = selectedNetworkState.value
 
 

@@ -24,7 +24,6 @@ fun WmNavHost(
     appState: WmAppState,
     modifier: Modifier = Modifier,
     startDestination: String = homeGraphRoutePattern,
-    destinationIntent: Intent?
 ) {
     val navController = appState.navController
     NavHost(
@@ -32,8 +31,6 @@ fun WmNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-
-        val address = destinationIntent?.getStringExtra("recipient_address")
 
         homeGraph(
             navigateToSwap = {
@@ -49,8 +46,9 @@ fun WmNavHost(
                 swapScreen(navController::popBackStack)
                 sendScreen(navController::popBackStack)
                 receiveScreen(navController::popBackStack)
-            },
-            address = address
+            }
         )
     }
 }
+
+//         var address = destinationIntent?.getStringExtra("recipient_address") ?: "123"

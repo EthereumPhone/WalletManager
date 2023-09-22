@@ -49,6 +49,17 @@
                     />
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="app"
+                    android:host="wallet_manager"
+                    android:pathPrefix="/send_deep_link/" />
+            </intent-filter>
+
         </activity>
 
         <provider
