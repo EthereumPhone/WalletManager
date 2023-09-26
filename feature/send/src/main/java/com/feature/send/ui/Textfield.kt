@@ -108,7 +108,7 @@ fun PreviewTextField() {
 
     var test by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
+    //val focusManager = LocalFocusManager.current
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {

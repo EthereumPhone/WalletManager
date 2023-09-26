@@ -4,15 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.QrCode
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
@@ -42,7 +51,6 @@ fun SwapTextField(
     value: String,
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     placeholder: String="Placeholder",
     //placeholder: @Composable (() -> Unit)? = null,
@@ -58,7 +66,7 @@ fun SwapTextField(
         fontSize = 20.sp,
         fontWeight = FontWeight.SemiBold
     )
-    val background = if(isError) Color(0xFF8C1D18)
+    val background = if(isError) Color(0xFFC63B3B)
     else Color(0xFF24303D)
 
     BasicTextField(
@@ -84,7 +92,9 @@ fun SwapTextField(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box() {
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
                 if(value == "") {
                     Text(
                         text = placeholder,
@@ -113,8 +123,32 @@ fun PreviewWmTextField() {
     SwapTextField(
         value = text,
         onChange = { text = it },
-        leadingIcon = {
+        trailingIcon = {
             //TokenAssetIcon()
+//            Button(
+//                onClick = {  },
+//                contentPadding = PaddingValues(horizontal = 12.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color(0xFF1E2730),
+//                    contentColor = Color.White
+//                ),
+//                shape = CircleShape,
+//                content = {
+//                    Text("Select Token")
+//                }
+//            )
+//            IconButton(
+//                onClick = {  },
+//
+//                ) {
+//
+//                Icon(
+//                    imageVector = Icons.Rounded.QrCode,
+//                    contentDescription = "Address by QR",
+//                    tint = Color.White ,
+//                    modifier = Modifier.size(32.dp)
+//                )
+//            }
         }
     )
 }
@@ -127,9 +161,9 @@ fun previewErrorWmTextFiled() {
     SwapTextField(
         value = text,
         onChange = { text = it },
-        leadingIcon = {
-            //TokenAssetIcon()
-        },
+//        leadingIcon = {
+//            //TokenAssetIcon()
+//        },
         isError = text.contains("b")
     )
 }

@@ -48,10 +48,10 @@ fun ExchangeRateRow(
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
-                durationMillis = 1000
+                durationMillis = 2000
                 1.0f at  0 with LinearEasing
-                0f at  500 with LinearEasing
-                1.0f at  1000 with LinearEasing
+                0f at  1000 with LinearEasing
+                1.0f at  2000 with LinearEasing
             }
         )
     )
