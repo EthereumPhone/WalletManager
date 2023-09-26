@@ -58,7 +58,7 @@ fun SwapTextField(
         fontSize = 20.sp,
         fontWeight = FontWeight.SemiBold
     )
-    val background = if(isError) Color(0xFF8C1D18)
+    val background = if(isError) Color(0xFFC63B3B)
     else Color(0xFF24303D)
 
     BasicTextField(
