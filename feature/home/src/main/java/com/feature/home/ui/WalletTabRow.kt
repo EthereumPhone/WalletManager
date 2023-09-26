@@ -203,38 +203,20 @@ private fun TransferList(
     onTxOpen: (TransferItem) -> Unit,
     userAddress: String,
 ) {
-
-//    val showTransferInfoDialog =  remember { mutableStateOf(false) }
-//
-//    val chainId =  remember { mutableStateOf(1) }
-//    val asset =  remember { mutableStateOf("ETH") }
-//    val address =  remember { mutableStateOf("rkubkbbiyiuyig") }
-//    val value =  remember { mutableStateOf("2.234") }
-//    val timeStamp =  remember { mutableStateOf("12:12:00") }
-//    val userSent =  remember { mutableStateOf(true) }
-
     val scrollState = rememberScrollState()//Scrollstate for fading edges
-
-
-
-
 
     when (transfersUiState) {
         is TransfersUiState.Success ->
             if(transfersUiState.transfers.isNotEmpty()) {
 
                 LazyColumn(
-                    //horizontalAlignment = Alignment.CenterHorizontally
-
-                        //.weight(1f)
-                        //.verticalScroll(scrollState)
-
-
-                    modifier = Modifier.verticalFadingEdge(
-                        scrollState,
-                        25.dp,
-                        Color(0xFF1E2730)
-                    )
+                    modifier = Modifier
+                        .verticalFadingEdge(
+                            scrollState,
+                            25.dp,
+                            Color(0xFF1E2730)
+                        )
+                        .fillMaxSize()
                 ) {
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
