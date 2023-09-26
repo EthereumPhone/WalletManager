@@ -82,6 +82,7 @@ fun NumPad(
                             .size(buttonSize)
                             .clip(CircleShape),
                         onClick = {
+                            //if()
                         when (button) {
                             NumPadButtons.COMMA -> {
                                 if (!value.contains(".")) {
@@ -102,7 +103,7 @@ fun NumPad(
                         enabled = enabled
                     ) {
                         Icon(
-                            tint= Color.White,
+                            tint= if(enabled) Color.White else Color(0xFF9FA2A5),
                             imageVector = Icons.Rounded.Backspace,
                             contentDescription = null // decorative element
                         )
@@ -167,7 +168,7 @@ fun NumPad(
                             text = input,
                             fontSize = NumPadDefaults.fontSize,
                             fontWeight = FontWeight.Normal,
-                            color = contentColor,
+                            color = if(enabled) contentColor else Color(0xFF9FA2A5),
                         )
                     }
 //                    Box(

@@ -293,7 +293,7 @@ fun SendScreen(
 
     var maxAmount by remember { mutableStateOf(test.balance) }
     var prevAmount by remember { mutableStateOf(value) }
-    var enableButton by remember { mutableStateOf(true) }
+    var enableButton by remember { mutableStateOf(false) }
     //var amountColor by remember { mutableStateOf(Color.White) }
     var network by remember { mutableStateOf(test.chainId) }
 
@@ -693,7 +693,15 @@ fun SendScreen(
                 )
                 //Input Section
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
-                        NumPad(
+                    var test = when (selectedToken) {
+                        is SelectedTokenUiState.Unselected -> {
+                            false
+                        }
+                        is SelectedTokenUiState.Selected -> {
+                            true
+                        }
+                    }
+                    NumPad(
                             value = value,
                             modifier = Modifier,
                             onValueChange = {
@@ -701,7 +709,7 @@ fun SendScreen(
                                 focusManager.clearFocus()
 
                             },
-                            enabled = enableButton
+                            enabled = test
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -710,6 +718,7 @@ fun SendScreen(
                         mutableStateOf(false)
                     }
                     var result by  remember { mutableStateOf("") }
+
 
 
 
