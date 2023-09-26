@@ -693,7 +693,7 @@ fun SendScreen(
                 )
                 //Input Section
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
-                    var test = when (selectedToken) {
+                    var activeNumpad = when (selectedToken) {
                         is SelectedTokenUiState.Unselected -> {
                             false
                         }
@@ -709,15 +709,12 @@ fun SendScreen(
                                 focusManager.clearFocus()
 
                             },
-                            enabled = test
+                            enabled = activeNumpad
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                    var swipeableState = rememberSwipeableState(initialValue = 0)
-                    val (swipeComplete, setSwipeComplete) = remember {
-                        mutableStateOf(false)
-                    }
-                    var result by  remember { mutableStateOf("") }
+
+
 
 
 
@@ -733,6 +730,7 @@ fun SendScreen(
                             )
                         }
                         is SelectedTokenUiState.Selected -> {
+                            //var test = if(value.toDouble() > selectedToken.tokenAsset.balance && value != "") true else false
                             ethOSButton(
                                 onClick = {
                                     sendTransaction(
@@ -745,7 +743,15 @@ fun SendScreen(
 
 
                                 },
-                                enabled = true,
+                                enabled = if (value == "") {
+                                    true
+                                } else {
+                                    if(value.toDouble() > selectedToken.tokenAsset.balance){
+                                        false
+                                    }else{
+                                        true
+                                    }
+                                       },
                                 text = "Send"
                             )
                         }
