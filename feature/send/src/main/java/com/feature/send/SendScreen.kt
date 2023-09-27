@@ -696,10 +696,25 @@ fun SendScreen(
                     if (selectedToken is SelectedTokenUiState.Unselected) {
                         // Select eth token as default
                         if (balances is AssetUiState.Success) {
-                            val ethMainnet = balances.assets.filter { it.address == "1" }[0]
-                            onChangeAssetClicked(
-                                ethMainnet
-                            )
+                            try {
+                                val ethMainnet = balances.assets.filter { it.address == "1" }[0]
+                                onChangeAssetClicked(
+                                    ethMainnet
+                                )
+                            } catch (
+                                exception: IndexOutOfBoundsException
+                            ) {
+                                onChangeAssetClicked(
+                                    TokenAsset(
+                                        address = "1",
+                                        balance = 0.0,
+                                        name = "Ethereum",
+                                        symbol = "ETH",
+                                        chainId = 1
+                                    )
+                                )
+                            }
+
                         }
 
                     }
