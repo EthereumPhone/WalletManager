@@ -269,7 +269,7 @@ fun SendScreen(
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
-    var validSendAddress by remember { mutableStateOf(true) }
+    var validSendAddress by remember { mutableStateOf(false) }
 
     var tokeninfo by remember { mutableStateOf(TokenAsset("",0,"","",7.0)) }
 
@@ -446,7 +446,6 @@ fun SendScreen(
                             label = "Address or ENS",
                             focusRequester = focusRequester,
                             onTextChanged = {
-
                                 address = it.lowercase()
                                 if (address.endsWith(".eth")) {
                                     if (ENSName(address).isPotentialENSDomain()) {
@@ -455,6 +454,7 @@ fun SendScreen(
                                             val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
+                                            validSendAddress = true
                                             focusManager.clearFocus()
                                         }
                                     } else {
@@ -462,7 +462,7 @@ fun SendScreen(
                                         focusManager.clearFocus()
                                     }
                                     if(address.isEmpty()) {
-                                        validSendAddress = true
+                                        validSendAddress = false
                                         focusManager.clearFocus()
                                     }
                                 }
@@ -479,7 +479,7 @@ fun SendScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.QrCode,
                                         contentDescription = "Address by QR",
-                                        tint = if(validSendAddress) Color.White else Color.Red,
+                                        tint = Color.White,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -660,7 +660,7 @@ fun SendScreen(
                             when (selectedToken) {
                                 is SelectedTokenUiState.Unselected -> {
                                     SelectedNetworkButton(
-                                        chainId = 0,
+                                        chainId = 1,
                                         onClickChange = {
                                             showSheet = true
                                             focusManager.clearFocus()
@@ -693,6 +693,31 @@ fun SendScreen(
                 )
                 //Input Section
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
+                    if (selectedToken is SelectedTokenUiState.Unselected) {
+                        // Select eth token as default
+                        if (balances is AssetUiState.Success) {
+                            try {
+                                val ethMainnet = balances.assets.filter { it.address == "1" }[0]
+                                onChangeAssetClicked(
+                                    ethMainnet
+                                )
+                            } catch (
+                                exception: IndexOutOfBoundsException
+                            ) {
+                                onChangeAssetClicked(
+                                    TokenAsset(
+                                        address = "1",
+                                        balance = 0.0,
+                                        name = "Ethereum",
+                                        symbol = "ETH",
+                                        chainId = 1
+                                    )
+                                )
+                            }
+
+                        }
+
+                    }
                     var activeNumpad = when (selectedToken) {
                         is SelectedTokenUiState.Unselected -> {
                             false
@@ -733,6 +758,7 @@ fun SendScreen(
                             //var test = if(value.toDouble() > selectedToken.tokenAsset.balance && value != "") true else false
                             ethOSButton(
                                 onClick = {
+
                                     sendTransaction(
                                             SendData(
                                                 amount = value.toFloat(),
@@ -743,15 +769,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = if (value == "") {
-                                    true
-                                } else {
-                                    if(value.toDouble() > selectedToken.tokenAsset.balance){
-                                        false
-                                    }else{
-                                        true
-                                    }
-                                       },
+                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
                                 text = "Send"
                             )
                         }
