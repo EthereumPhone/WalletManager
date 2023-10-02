@@ -121,14 +121,6 @@ fun SendRoute(
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
-    if (ENSName(initialAddress).isPotentialENSDomain()) {
-        CompletableFuture.runAsync {
-            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
-            val ens = ENS(HttpEthereumRPC(rpcurl))
-            val ensAddr = ens.getAddress(ENSName(initialAddress))
-            initialAddress = ensAddr?.hex.toString()
-        }
-    }
 
 
 
@@ -275,6 +267,14 @@ fun SendScreen(
 ) {
 
     var address by remember { mutableStateOf(initialAddress) }
+    if (ENSName(initialAddress).isPotentialENSDomain()) {
+        CompletableFuture.runAsync {
+            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+            val ens = ENS(HttpEthereumRPC(rpcurl))
+            val ensAddr = ens.getAddress(ENSName(initialAddress))
+            address = ensAddr?.hex.toString()
+        }
+    }
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
