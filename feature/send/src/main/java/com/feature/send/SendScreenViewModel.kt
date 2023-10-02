@@ -56,6 +56,8 @@ class SendViewModel @Inject constructor(
             initialValue = ""
         )
 
+    val inputAddress: StateFlow<String> = MutableStateFlow("").asStateFlow()
+
 
     val networkBalanceState: StateFlow<AssetUiState> =
         networkBalanceRepository.getNetworksBalance()
