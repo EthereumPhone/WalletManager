@@ -106,7 +106,7 @@ fun SendRoute(
     viewModel: SendViewModel = hiltViewModel()
 ) {
 
-    val initialAddress = initialAddress
+    var initialAddress = initialAddress
 
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
@@ -120,6 +120,15 @@ fun SendRoute(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
+
+    if (ENSName(initialAddress).isPotentialENSDomain()) {
+        CompletableFuture.runAsync {
+            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+            val ens = ENS(HttpEthereumRPC(rpcurl))
+            val ensAddr = ens.getAddress(ENSName(initialAddress))
+            initialAddress = ensAddr?.hex.toString()
+        }
+    }
 
 
 
