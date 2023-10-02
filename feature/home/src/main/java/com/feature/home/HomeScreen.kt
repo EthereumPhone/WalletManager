@@ -64,8 +64,7 @@ internal fun HomeRoute(
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
     val currentChain by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
-
-
+    viewModel.refreshData()
 
     HomeScreen(
         userData = userData,
