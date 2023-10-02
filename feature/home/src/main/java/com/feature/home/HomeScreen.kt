@@ -2,6 +2,7 @@ package com.feature.home
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,15 +57,21 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val userData by viewModel.userData.collectAsStateWithLifecycle()
-    val transfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
-    val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
+    val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
+    val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
-    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
-    val currentChain by viewModel.currentChain.collectAsStateWithLifecycle(1)
+    val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
+    val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
-    viewModel.refreshData()
+    var updater by remember {mutableStateOf(true)}
+
+    if(updater) {
+        Log.d("automatic updater", "TEST")
+        viewModel.refreshData()
+        updater = false
+    }
 
     HomeScreen(
         userData = userData,
@@ -73,7 +80,7 @@ internal fun HomeRoute(
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
-        currencyPrice = currencyprice,
+        currencyPrice = currencyPrice,
         onCurrencyChange = viewModel::getExchange,
         onAddressClick = {
             // had to do it here because I need the local context.

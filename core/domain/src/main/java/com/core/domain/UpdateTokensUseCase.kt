@@ -10,6 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
@@ -37,13 +39,13 @@ class UpdateTokensUseCase @Inject constructor(
         as they don't need to be updated
         */
         val metadataToFetch = combine(
-            balancesAddresses,
+            balancesAddresses.map { balances -> balances.filter { it.contractAddress.contains("0x") }  },
             metadataAddresses.map { metadataList -> metadataList.map { it.contractAddress } }
         ) { balances, metadata ->
             balances.filter {
                 !metadata.contains(it.contractAddress)
             }.groupBy { it.chainId }
-        }
+        }.first()
 
         /*
          The Alchemy metadata api has different endpoints for each network.
@@ -53,14 +55,13 @@ class UpdateTokensUseCase @Inject constructor(
          so that the repository can map them to the right alchemy endpoint.
         */
         coroutineScope {
-            metadataToFetch.map { fetchGroups ->
-                fetchGroups.entries.map { (chainId, metadata) ->
-                    async {
-                        tokenMetadataRepository.refreshTokensMetadata(
-                            metadata.map { it.contractAddress },
-                            chainId
-                        )
-                    }
+
+            metadataToFetch.entries.forEach { (chainId, metadata) ->
+                async {
+                    tokenMetadataRepository.refreshTokensMetadata(
+                        metadata.map { it.contractAddress },
+                        chainId
+                    )
                 }
             }
         }
