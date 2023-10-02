@@ -106,7 +106,7 @@ fun SendRoute(
     viewModel: SendViewModel = hiltViewModel()
 ) {
 
-    val initialAddress = initialAddress
+    var initialAddress = initialAddress
 
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
@@ -120,6 +120,15 @@ fun SendRoute(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
+
+    if (ENSName(initialAddress).isPotentialENSDomain()) {
+        CompletableFuture.runAsync {
+            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+            val ens = ENS(HttpEthereumRPC(rpcurl))
+            val ensAddr = ens.getAddress(ENSName(initialAddress))
+            initialAddress = ensAddr?.hex.toString()
+        }
+    }
 
 
 
@@ -269,7 +278,7 @@ fun SendScreen(
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
-    var validSendAddress by remember { mutableStateOf(true) }
+    var validSendAddress by remember { mutableStateOf(false) }
 
     var tokeninfo by remember { mutableStateOf(TokenAsset("",0,"","",7.0)) }
 
@@ -293,7 +302,7 @@ fun SendScreen(
 
     var maxAmount by remember { mutableStateOf(test.balance) }
     var prevAmount by remember { mutableStateOf(value) }
-    var enableButton by remember { mutableStateOf(true) }
+    var enableButton by remember { mutableStateOf(false) }
     //var amountColor by remember { mutableStateOf(Color.White) }
     var network by remember { mutableStateOf(test.chainId) }
 
@@ -446,7 +455,6 @@ fun SendScreen(
                             label = "Address or ENS",
                             focusRequester = focusRequester,
                             onTextChanged = {
-
                                 address = it.lowercase()
                                 if (address.endsWith(".eth")) {
                                     if (ENSName(address).isPotentialENSDomain()) {
@@ -455,6 +463,7 @@ fun SendScreen(
                                             val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
+                                            validSendAddress = true
                                             focusManager.clearFocus()
                                         }
                                     } else {
@@ -462,7 +471,7 @@ fun SendScreen(
                                         focusManager.clearFocus()
                                     }
                                     if(address.isEmpty()) {
-                                        validSendAddress = true
+                                        validSendAddress = false
                                         focusManager.clearFocus()
                                     }
                                 }
@@ -479,7 +488,7 @@ fun SendScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.QrCode,
                                         contentDescription = "Address by QR",
-                                        tint = if(validSendAddress) Color.White else Color.Red,
+                                        tint = Color.White,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -660,7 +669,7 @@ fun SendScreen(
                             when (selectedToken) {
                                 is SelectedTokenUiState.Unselected -> {
                                     SelectedNetworkButton(
-                                        chainId = 0,
+                                        chainId = 1,
                                         onClickChange = {
                                             showSheet = true
                                             focusManager.clearFocus()
@@ -693,7 +702,40 @@ fun SendScreen(
                 )
                 //Input Section
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
-                        NumPad(
+                    if (selectedToken is SelectedTokenUiState.Unselected) {
+                        // Select eth token as default
+                        if (balances is AssetUiState.Success) {
+                            try {
+                                val ethMainnet = balances.assets.filter { it.address == "1" }[0]
+                                onChangeAssetClicked(
+                                    ethMainnet
+                                )
+                            } catch (
+                                exception: IndexOutOfBoundsException
+                            ) {
+                                onChangeAssetClicked(
+                                    TokenAsset(
+                                        address = "1",
+                                        balance = 0.0,
+                                        name = "Ethereum",
+                                        symbol = "ETH",
+                                        chainId = 1
+                                    )
+                                )
+                            }
+
+                        }
+
+                    }
+                    var activeNumpad = when (selectedToken) {
+                        is SelectedTokenUiState.Unselected -> {
+                            false
+                        }
+                        is SelectedTokenUiState.Selected -> {
+                            true
+                        }
+                    }
+                    NumPad(
                             value = value,
                             modifier = Modifier,
                             onValueChange = {
@@ -701,15 +743,13 @@ fun SendScreen(
                                 focusManager.clearFocus()
 
                             },
-                            enabled = enableButton
+                            enabled = activeNumpad
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                    var swipeableState = rememberSwipeableState(initialValue = 0)
-                    val (swipeComplete, setSwipeComplete) = remember {
-                        mutableStateOf(false)
-                    }
-                    var result by  remember { mutableStateOf("") }
+
+
+
 
 
 
@@ -724,8 +764,10 @@ fun SendScreen(
                             )
                         }
                         is SelectedTokenUiState.Selected -> {
+                            //var test = if(value.toDouble() > selectedToken.tokenAsset.balance && value != "") true else false
                             ethOSButton(
                                 onClick = {
+
                                     sendTransaction(
                                             SendData(
                                                 amount = value.toFloat(),
@@ -736,7 +778,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = true,
+                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
                                 text = "Send"
                             )
                         }
