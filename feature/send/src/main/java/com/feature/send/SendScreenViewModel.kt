@@ -8,12 +8,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
 import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
+import com.core.database.model.TransferEntity
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -45,6 +47,7 @@ class SendViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
     private val sendRepository: SendRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    private val alchemyTransferRepository: AlchemyTransferRepository // for pending transfers
 ): ViewModel() {
 
     val userAddress: StateFlow<String> =
@@ -90,6 +93,30 @@ class SendViewModel @Inject constructor(
 
     private val _exchange = MutableStateFlow("")
     val exchange: Flow<String> = _exchange
+
+
+    /**
+     * Inserts Values for pending transfer into TransferDAO
+     */
+    suspend fun insertPendingTransfer(
+        transfer: TransferEntity
+    ){
+        //get TransferEntity
+        //get tranferDao
+        alchemyTransferRepository.insertTransfer(transfer)
+        //insert TransferEntity into Dao
+    }
+
+    /**
+    * Inserts Values for pending transfer into TransferDAO
+    */
+    suspend fun deletePendingTransfer(
+        transfer: TransferEntity
+    ){
+        //get TransferEntity
+        //get tranferDao
+        alchemyTransferRepository.deleteTransfer(transfer)
+    }
 
     fun send(
         to: String,

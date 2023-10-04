@@ -1,6 +1,7 @@
 package com.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -24,5 +25,18 @@ interface TransferDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertTransfers(transfers: List<TransferEntity>)
+
+    /**
+     * Insert Entry into transfer table
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertTransfer(transfer: TransferEntity)
+
+    /**
+     * Delete Entry into transfer table
+     */
+    @Delete
+    fun deleteTransfer(transfer: TransferEntity)
+
 
 }

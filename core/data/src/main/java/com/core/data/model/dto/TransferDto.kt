@@ -75,7 +75,8 @@ data class TransferDto(
             uniqueId = uniqueId,
             value = value?.toDoubleOrNull() ?: 0.0,
             blockTimestamp = Instant.parse(metadata.blockTimestamp),
-            userIsSender = userIsSender
+            userIsSender = userIsSender,
+            ispending = false // not pending
         )
     }
 }

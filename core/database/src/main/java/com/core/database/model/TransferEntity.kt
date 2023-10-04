@@ -6,6 +6,9 @@ import com.core.model.EntryCategory
 import com.core.model.Transfer
 import kotlinx.datetime.Instant
 
+/**
+ * TABLE: Tranfer
+ */
 @Entity("transfer")
 data class TransferEntity(
     @PrimaryKey
@@ -23,7 +26,8 @@ data class TransferEntity(
     val tokenId: String,
     val value: Double,
     val blockTimestamp: Instant,
-    val userIsSender: Boolean
+    val userIsSender: Boolean,
+    val ispending: Boolean
 )
 
 data class Erc1155MetadataObject(
@@ -70,5 +74,6 @@ fun TransferEntity.asExternalModel() = Transfer(
     value,
     blockTimestamp,
     userIsSender,
-    txHash = hash
+    txHash = hash,
+    ispending = ispending
 )

@@ -56,7 +56,8 @@ fun TransferDialog(
         value = "",
         timeStamp = "",
         userSent = true,
-        txHash = ""
+        txHash = "",
+        ispending = false
     ),
     currencyPrice: String,
     onCurrencyChange: (String) -> Unit,

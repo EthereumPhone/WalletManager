@@ -62,15 +62,16 @@ internal fun HomeRoute(
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
-    val currentChain by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
+
+    val currentChain by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
 
 
     HomeScreen(
         userData = userData,
         currentChain = currentChain,
-        //getCurrentChain = viewModel::getCurrentChain,
+        getCurrentChain = viewModel::getCurrentChain,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
@@ -93,7 +94,7 @@ internal fun HomeRoute(
 internal fun HomeScreen(
     userData: UserData,
     currentChain: Int,
-    //getCurrentChain: (Context) -> Unit,
+    getCurrentChain: (Context) -> Unit,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
@@ -136,7 +137,8 @@ internal fun HomeScreen(
             value = "",
             timeStamp = "",
             userSent = true,
-            txHash = ""
+            txHash = "",
+            ispending = false
         )
     ) }
 
@@ -181,28 +183,10 @@ internal fun HomeScreen(
                     )
                 }
             },
-            currentChain
+            currentChain,
+            getCurrentChain
         )
 
-//        Column (
-//            modifier = modifier.fillMaxWidth(),
-//            horizontalAlignment = Alignment.CenterHorizontally,
-//        ){
-//            Text(
-//                text = "Balance",
-//                fontWeight = FontWeight.Normal,
-//                fontSize = 16.sp,
-//                color = Color(0xFF9FA2A5)
-//            )
-//            Text(
-//                text = "2.45 ETH",
-//                fontWeight = FontWeight.SemiBold,
-//                color = Color.White,
-//                fontSize = 56.sp,
-//                textAlign = TextAlign.Center
-//
-//            )
-//        }
         FunctionsRow(
             navigateToSwap,
             navigateToSend,
@@ -227,8 +211,8 @@ internal fun HomeScreen(
 
         if(showSheet) {
             ModalBottomSheet(
-                containerColor= Color(0xFF24303D),
-                contentColor= Color.White,
+                containerColor = Color(0xFF24303D),
+                contentColor = Color.White,
 
                 onDismissRequest = {
                     coroutineScope.launch {
@@ -301,6 +285,6 @@ fun PreviewHomeScreen() {
         onCurrencyChange = {},
         currencyPrice = "1650.00",
         currentChain = 1,
-        //getCurrentChain = {}
+        getCurrentChain = {}
     )
 }

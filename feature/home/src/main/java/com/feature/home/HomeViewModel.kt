@@ -106,6 +106,7 @@ class HomeViewModel @Inject constructor(
             try {
                 val address = userData.first().walletAddress
                 transferRepository.refreshTransfers(address)
+
                 updateTokensUseCase(address)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -125,6 +126,8 @@ class HomeViewModel @Inject constructor(
 
         }
     }
+
+
 
 
 //    fun addTransaction(tx: TransferItem){

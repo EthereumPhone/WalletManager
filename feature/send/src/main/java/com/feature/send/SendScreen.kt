@@ -65,6 +65,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.util.chainToApiKey
+import com.core.database.model.RawContract
 import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
@@ -96,6 +97,9 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.text.DecimalFormat
 import java.util.Currency
+import com.core.database.model.TransferEntity
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 
 @Composable
@@ -199,8 +203,40 @@ fun SendRoute(
                     if(res != "decline" && res != "error"){
                         //onBackClick()
                         (context as Activity).runOnUiThread {
+                            //TODO: Snackbar
                             Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
                         }
+                        //TODO: put mock transfer into db
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Sending TransferEntity: ", Toast.LENGTH_LONG).show()
+
+                        }
+                        viewModel.insertPendingTransfer(
+                            transfer = TransferEntity(
+                                uniqueId = res,
+                                asset = "",
+                                chainId = chainid,
+                                blockNum = res,
+                                category =  "",
+                                erc1155Metadata = emptyList(),
+                                erc721TokenId = "",
+                                from = userAddress,
+                                hash =  res,
+                                rawContract = RawContract(
+                                    address = "",
+                                    decimal = "",
+                                    value = ""
+                                ),
+                                to = address,
+                                tokenId =  "",
+                                value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
+                                blockTimestamp = Clock.System.now(),
+                                userIsSender =  true,
+                                ispending = true
+
+                            )
+                        )
+
                         viewModel.changeTxComplete()
                         //Log.e("complete","$txComplete")
 
@@ -216,7 +252,12 @@ fun SendRoute(
                         }
                     }
 
+
+
                 }
+
+
+
 
 //                    viewModel.send(
 //                        to = address,
@@ -283,11 +324,6 @@ fun SendScreen(
     //initalize values
 
 
-
-
-
-
-
     var test by remember { mutableStateOf(tokeninfo) }
 
 
@@ -296,14 +332,6 @@ fun SendScreen(
     var enableButton by remember { mutableStateOf(false) }
     //var amountColor by remember { mutableStateOf(Color.White) }
     var network by remember { mutableStateOf(test.chainId) }
-
-
-
-
-
-
-
-
 
 
     val context = LocalContext.current
@@ -382,11 +410,6 @@ fun SendScreen(
             onBackClick()
         }
     }
-
-
-
-    //Values
-
 
 
 
@@ -769,7 +792,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
+                                enabled = true,//value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
                                 text = "Send"
                             )
                         }

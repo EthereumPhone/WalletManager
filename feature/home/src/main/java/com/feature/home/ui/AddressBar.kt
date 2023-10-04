@@ -1,5 +1,7 @@
 package com.feature.home.ui
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,21 +34,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.UserData
 import com.core.ui.SelectedNetworkButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.ethereumphone.walletsdk.WalletSDK
 import java.time.LocalTime
 import java.util.Calendar
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun AddressBar(
     userData: UserData,
     onclick: () -> Unit,
     icon: @Composable () -> Unit,
     currentChain: Int,
+    getCurrentChain: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -86,8 +95,13 @@ internal fun AddressBar(
             }
             icon()
         }
+
+
+        //gets current Chain
+        getCurrentChain(LocalContext.current)
+
         //Networkpill
-        val chainName = when(currentChain) {
+        var chainName = when(currentChain) {
             1 -> "Mainnet"
             5 -> "Goerli"
             10 -> "Optimism"
@@ -141,7 +155,10 @@ fun previewAddressBar() {
                 )
             }
         },
-        currentChain = 5
+        currentChain = 5,
+        getCurrentChain = {
+
+        }
 
     )
 }

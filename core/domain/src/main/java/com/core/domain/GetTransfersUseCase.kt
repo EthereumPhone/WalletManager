@@ -37,7 +37,8 @@ class GetTransfersUseCase @Inject constructor(
                         value = it.value.toString(),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
                         userSent = it.userIsSender,
-                        txHash = it.txHash
+                        txHash = it.txHash,
+                        ispending = false
                     )
                 }
             }
