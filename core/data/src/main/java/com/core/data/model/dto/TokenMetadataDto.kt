@@ -14,7 +14,7 @@ data class TokenMetadataDto(
     val name: String,
     val symbol: String,
     val decimals: Int,
-    val logo: String
+    val logo: String?
 )
 
 fun TokenMetadataDto.asEntity(

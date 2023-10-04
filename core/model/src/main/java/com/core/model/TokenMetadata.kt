@@ -5,6 +5,6 @@ data class TokenMetadata(
     val decimals: Int,
     val name: String,
     val symbol: String,
-    val logo: String,
+    val logo: String?,
     val chainId: Int
 )

@@ -186,15 +186,7 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
 }
 
 fun formatString(input: String): String {
-    if (input.isEmpty()) {
-        return input
-    }
-
-    val lowercaseRest = input.substring(1).lowercase()
-    val firstLetter = input[0]
-    val capitalizedFirstLetter = firstLetter.uppercase()
-
-    return capitalizedFirstLetter + lowercaseRest
+    return input.uppercase()
 }
 
 @Composable
