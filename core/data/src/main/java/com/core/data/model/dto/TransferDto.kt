@@ -29,6 +29,7 @@ data class TransferDto(
     val uniqueId: String,
     val value: String?,
     val metadata: TransferMetadata,
+    val ispending: Boolean
 ) {
     data class RawContract(
         val address: String?,
@@ -76,7 +77,7 @@ data class TransferDto(
             value = value?.toDoubleOrNull() ?: 0.0,
             blockTimestamp = Instant.parse(metadata.blockTimestamp),
             userIsSender = userIsSender,
-            ispending = false // not pending
+            ispending = ispending // not pending
         )
     }
 }

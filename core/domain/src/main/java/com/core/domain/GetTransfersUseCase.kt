@@ -15,6 +15,9 @@ class GetTransfersUseCase @Inject constructor(
     private val transferRepository: TransferRepository
 ) {
 
+    /**
+     * Initializes TransferItems with the TransferEntity
+     */
     operator fun invoke(): Flow<List<TransferItem>> =
         transferRepository.getTransfers(listOf("external"))
             .map { items ->
@@ -38,7 +41,7 @@ class GetTransfersUseCase @Inject constructor(
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
                         userSent = it.userIsSender,
                         txHash = it.txHash,
-                        ispending = false
+                        ispending = it.ispending
                     )
                 }
             }

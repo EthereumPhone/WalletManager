@@ -222,6 +222,7 @@ private fun TransferList(
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
                              transfer.userSent = userAddress.equals(transfer.from,true)
+                            Log.e("Tx Pending", "Pending ${transfer.ispending}, tranfer val: ${transfer.value}")
                             TransferListItem(
                                 transfer = transfer,
 

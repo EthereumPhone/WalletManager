@@ -180,7 +180,7 @@ fun SendRoute(
                                 asset = "",
                                 chainId = chainid,
                                 blockNum = (100..200).random().toString(),
-                                category =  "",
+                                category =  "external",
                                 erc1155Metadata = emptyList(),
                                 erc721TokenId = "",
                                 from = userAddress,
@@ -192,7 +192,7 @@ fun SendRoute(
                                 ),
                                 to = address,
                                 tokenId =  "",
-                                value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
+                                value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
                                 blockTimestamp = Clock.System.now(),
                                 userIsSender =  true,
                                 ispending = true
