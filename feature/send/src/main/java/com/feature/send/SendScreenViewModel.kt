@@ -98,12 +98,14 @@ class SendViewModel @Inject constructor(
     /**
      * Inserts Values for pending transfer into TransferDAO
      */
-    suspend fun insertPendingTransfer(
+    fun insertPendingTransfer(
         transfer: TransferEntity
-    ){
+    ) = viewModelScope.launch{
         //get TransferEntity
         //get tranferDao
+        //viewModelScope.launch {
         alchemyTransferRepository.insertTransfer(transfer)
+        //}
         //insert TransferEntity into Dao
     }
 

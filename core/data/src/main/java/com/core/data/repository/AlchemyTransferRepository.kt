@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 import android.util.Log
+import androidx.annotation.WorkerThread
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import com.core.data.remote.TransfersApi
 import com.core.data.util.chainToApiKey
@@ -91,6 +92,8 @@ class AlchemyTransferRepository @Inject constructor(
      * inserts Transfer into db
      * transfer - TransferEntity
      */
+    @Suppress("RedundantSuspendModifier")
+    @WorkerThread
     override suspend fun insertTransfer(transfer: TransferEntity){
         transferDao.insertTransfer(transfer)
     }

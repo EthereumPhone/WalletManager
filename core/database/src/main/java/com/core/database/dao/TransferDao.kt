@@ -30,13 +30,13 @@ interface TransferDao {
      * Insert Entry into transfer table
      */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertTransfer(transfer: TransferEntity)
+    suspend fun insertTransfer(transfer: TransferEntity)
 
     /**
      * Delete Entry into transfer table
      */
     @Delete
-    fun deleteTransfer(transfer: TransferEntity)
+    suspend fun deleteTransfer(transfer: TransferEntity)
 
 
 }

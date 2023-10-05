@@ -100,6 +100,7 @@ import java.util.Currency
 import com.core.database.model.TransferEntity
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import java.util.Random
 
 
 @Composable
@@ -170,58 +171,20 @@ fun SendRoute(
 
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val web3jInstance = Web3j.build(HttpService(rpcurl))
 
-                    val wallet = WalletSDK(
-                        context = context,
-                        web3jInstance = web3jInstance
-                    )
-
-                    if(wallet.getChainId() != chainid){
-                        wallet.changeChain(chainid,rpcurl)
-                    }
-
-                    // TODO: Find out why polygon transaction is underpriced
-                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
-
-
-                    var res = try {
-                         wallet.sendTransaction(
-                            to = address,
-                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-                            data = "",
-                            gasPrice = gasPrice.toString()
-                         )
-                    } catch (exception: NullPointerException) {
-                        "error"
-                    }
-
-                    Log.e("Test",res)
-                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-                    //println(res)
-                    if(res != "decline" && res != "error"){
-                        //onBackClick()
-                        (context as Activity).runOnUiThread {
-                            //TODO: Snackbar
-                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
-                        }
-                        //TODO: put mock transfer into db
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending TransferEntity: ", Toast.LENGTH_LONG).show()
-
-                        }
+                    //TODO: add Transfer into db
+                    try {
                         viewModel.insertPendingTransfer(
                             transfer = TransferEntity(
-                                uniqueId = res,
+                                uniqueId = (0..100).random().toString(),
                                 asset = "",
                                 chainId = chainid,
-                                blockNum = res,
+                                blockNum = (100..200).random().toString(),
                                 category =  "",
                                 erc1155Metadata = emptyList(),
                                 erc721TokenId = "",
                                 from = userAddress,
-                                hash =  res,
+                                hash =  (200..300).random().toString(),
                                 rawContract = RawContract(
                                     address = "",
                                     decimal = "",
@@ -235,22 +198,104 @@ fun SendRoute(
                                 ispending = true
 
                             )
+
                         )
 
-                        viewModel.changeTxComplete()
-                        //Log.e("complete","$txComplete")
+                    }catch (exception: NullPointerException) {
+//                        "error"
+                   }
 
+                    (context as Activity).runOnUiThread {
+
+                        Toast.makeText(context, "Pending tx sent.", Toast.LENGTH_LONG).show()
                     }
-                    if (res == "error") {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
-                        }
-                    }
+
+
+                    viewModel.changeTxComplete()
+
+
+
+//                    val web3jInstance = Web3j.build(HttpService(rpcurl))
+//
+//                    val wallet = WalletSDK(
+//                        context = context,
+//                        web3jInstance = web3jInstance
+//                    )
+//
+//                    if(wallet.getChainId() != chainid){
+//                        wallet.changeChain(chainid,rpcurl)
+//                    }
+
+//                    // TODO: Find out why polygon transaction is underpriced
+//                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
+//                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
+
+
+//                    var res = try {
+//                         wallet.sendTransaction(
+//                            to = address,
+//                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+//                            data = "",
+//                            gasPrice = gasPrice.toString()
+//                         )
+//                    } catch (exception: NullPointerException) {
+//                        "error"
+//                    }
+
+                    //Log.e("Test",res)
+                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
+                    //println(res)
+//                    if(res != "decline" && res != "error"){
+//                        //onBackClick()
+//                        (context as Activity).runOnUiThread {
+//                            //TODO: Snackbar
+//                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
+//                        }
+//                        //TODO: put mock transfer into db
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Sending TransferEntity: ", Toast.LENGTH_LONG).show()
+//
+//                        }
+//                        viewModel.insertPendingTransfer(
+//                            transfer = TransferEntity(
+//                                uniqueId = res,
+//                                asset = "",
+//                                chainId = chainid,
+//                                blockNum = res,
+//                                category =  "",
+//                                erc1155Metadata = emptyList(),
+//                                erc721TokenId = "",
+//                                from = userAddress,
+//                                hash =  res,
+//                                rawContract = RawContract(
+//                                    address = "",
+//                                    decimal = "",
+//                                    value = ""
+//                                ),
+//                                to = address,
+//                                tokenId =  "",
+//                                value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
+//                                blockTimestamp = Clock.System.now(),
+//                                userIsSender =  true,
+//                                ispending = true
+//
+//                            )
+//                        )
+//
+//                        viewModel.changeTxComplete()
+//                        //Log.e("complete","$txComplete")
+//
+//                    }
+//                    if (res == "error") {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
+//                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
+//                        }
+//                    }
 
 
 
