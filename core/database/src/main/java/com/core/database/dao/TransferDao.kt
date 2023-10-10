@@ -35,13 +35,6 @@ interface TransferDao {
     /**
      * Delete Entry into transfer table
      */
-//    @Query("DELETE FROM transfer " +
-//            "WHERE " +
-//            "ispending == :ispending AND " +
-//            "userIsSender == :userIsSender AND " +
-//            "value == :value AND " +
-//            "chainId == :chainId AND " +
-//            "toaddress == :toaddress LIMIT 1")
     @Query("DELETE FROM transfer WHERE uniqueId IN (SELECT uniqueId FROM transfer WHERE chainId = :chainId AND value = :value AND isPending = :ispending AND userIsSender = :userIsSender AND toAddress = :toaddress LIMIT 1)")
     suspend fun deleteTransfer(
         chainId: Int,

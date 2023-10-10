@@ -215,6 +215,7 @@ private fun TransferList(
 
 
             if(transfersUiState.transfers.isNotEmpty()) {
+                //deletes Pending Txs from database
                 deletePendingTransfers(transfersUiState.transfers, onDelete)
                 //Log.d("deletependingTransfer ", "itas in ")
                 LazyColumn(
@@ -239,7 +240,7 @@ private fun TransferList(
                                     onTxOpen(
                                         transfer
                                     )
-                                    //showTransferInfoDialog.value = true
+
 
                                 }
                             )
