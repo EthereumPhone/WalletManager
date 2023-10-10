@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.TransferRepository
 import com.core.model.Transfer
 import com.core.model.TransferItem
@@ -21,6 +22,7 @@ class GetTransfersUseCase @Inject constructor(
     operator fun invoke(): Flow<List<TransferItem>> =
         transferRepository.getTransfers(listOf("external"))
             .map { items ->
+
                 val sortedItems = items.sortedBy { it.blockTimestamp }
                 sortedItems.map {
                     val networkCurrency = if (it.chainId == 137) "MATIC" else "ETH"
@@ -28,6 +30,8 @@ class GetTransfersUseCase @Inject constructor(
                     val address = if (it.userIsSender) it.to else it.from
                     val timeStamp = it.blockTimestamp
                         .toLocalDateTime(TimeZone.currentSystemDefault())
+
+
 
 
 

@@ -17,5 +17,11 @@ interface TransferRepository {
 
 
     suspend fun insertTransfer(transfer: TransferEntity)
-    suspend fun deleteTransfer(transfer: TransferEntity)
+    suspend fun deleteTransfer(
+        chainId: Int,
+        value: Double,
+        ispending: Boolean,
+        userIsSender: Boolean,
+        toaddress: String
+    )
 }

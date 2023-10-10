@@ -89,7 +89,11 @@ class AlchemyTransferRepository @Inject constructor(
     }
 
     /**
-     * inserts Transfer into db
+     * Deletes pending transfers from db if they are completed
+     */
+
+    /**
+     * inserts transfer into db
      * transfer - TransferEntity
      */
     @Suppress("RedundantSuspendModifier")
@@ -98,57 +102,25 @@ class AlchemyTransferRepository @Inject constructor(
         transferDao.insertTransfer(transfer)
     }
 
+
+
     /**
-     * delete Transfers from db
+     * delete transfers from db
      * transfer - TransferEntity
      */
-    override suspend fun deleteTransfer(transfer: TransferEntity){
-        //TODO: distinguish already made transfer
-        //transferDao.deleteTransfer(transfer)
-        //get Transfers
-        val completetransfers = transferDao.getTransfers()
-        //get pending Transfers
-        val pendingtransfer = mutableListOf<TransferEntity>() // initialize list
-        completetransfers.map {
-            it.map {
-                if (it.ispending == true){ //entity is pending
-                    //added into list
-                    pendingtransfer.add(it)
-                }
-            }
-        }
-
-        var deleteEntity: TransferEntity? = null
-
-        //go through pendinglist
-        pendingtransfer.map {
-            //get res hash
-            val pendhash = it.blockNum
-            //go through transferlist
-            //if the same x then delete mock transfer
-
-            completetransfers.map {
-                it.reversed().map {
-                    Log.d("complete tx", "map")
-                    if (it.ispending == true && (it.blockNum != pendhash)) {
-                        Log.d("pending tx found", "update ${it.blockNum} , ${pendhash})")
-                        deleteEntity = it
-                    }
-
-                }
-            }
-            if (deleteEntity != null){
-                //transferDao.deleteTransfer(transfer)
-
-            }
-        }
-
-
-
-
-        //Delete mock from both list
-
-
-        Log.d("deleteTransfer", "update started")
+    override suspend fun deleteTransfer(
+        chainId: Int,
+        value: Double,
+        ispending: Boolean,
+        userIsSender: Boolean,
+        toaddress: String
+    ){
+        transferDao.deleteTransfer(
+            chainId,
+            value,
+            ispending,
+            userIsSender,
+            toaddress
+        )
     }
 }

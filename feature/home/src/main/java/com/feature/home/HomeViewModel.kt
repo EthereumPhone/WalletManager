@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
+import com.core.database.model.TransferEntity
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -42,6 +44,7 @@ class HomeViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    private val alchemyTransferRepository: AlchemyTransferRepository // for pending transfers
 ): ViewModel() {
 
     val userData = userDataRepository.userData
@@ -129,6 +132,38 @@ class HomeViewModel @Inject constructor(
 
 
 
+    fun deletePendingTransfer(
+        tx: TransferItem
+    ) = viewModelScope.launch{
+        alchemyTransferRepository.deleteTransfer(
+            chainId = tx.chainId,
+            value = tx.value.toDouble(),
+            userIsSender = tx.userSent,
+            ispending = tx.ispending,
+            toaddress = tx.to
+        )
+        //Log.d("deletePendingTransfer pending","delte")
+//        //viewModelScope.launch{
+//            //get TransferEntity
+//            //get tranferDao
+//            //viewModelScope.launch {
+//            try {
+//                if (transfer != null) {
+//                    //alchemyTransferRepository.deleteTransfer(transfer)
+//                }
+//                Log.d("deleteTx succes","delte")
+//            } catch (e: Exception) {
+//                Log.d("deleteTx failed","delte")
+//            }
+//
+//            //}
+//            //insert TransferEntity into Dao
+//            Log.d("deleteTx","delte")
+//        //}
+    }
+
+
+
 
 //    fun addTransaction(tx: TransferItem){
 //        when(_transferState.value) {
@@ -188,6 +223,8 @@ fun assetUiState(
                 is Result.Error -> {
                     AssetUiState.Error
                 }
+
+
             }
         }
 }

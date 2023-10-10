@@ -172,8 +172,10 @@ fun SendRoute(
 
                 CoroutineScope(Dispatchers.IO).launch {
 
+                    //------------
                     //TODO: add Transfer into db
                     try {
+                        Log.d("insert tx", "itas in ")
                         viewModel.insertPendingTransfer(
                             transfer = TransferEntity(
                                 uniqueId = (0..100).random().toString(),
@@ -183,14 +185,14 @@ fun SendRoute(
                                 category =  "external",
                                 erc1155Metadata = emptyList(),
                                 erc721TokenId = "",
-                                from = userAddress,
+                                fromaddress = userAddress,
                                 hash =  (200..300).random().toString(),
                                 rawContract = RawContract(
                                     address = "",
                                     decimal = "",
                                     value = ""
                                 ),
-                                to = address,
+                                toaddress = address,
                                 tokenId =  "",
                                 value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
                                 blockTimestamp = Clock.System.now(),
@@ -212,6 +214,8 @@ fun SendRoute(
 
 
                     viewModel.changeTxComplete()
+
+            //------------
 
 
 
@@ -304,12 +308,6 @@ fun SendRoute(
 
 
 
-//                    viewModel.send(
-//                        to = address,
-//                        chainId = chainid,
-//                        amount = amount
-//                    )
-//                }
 
             } else {
                 (context as Activity).runOnUiThread {

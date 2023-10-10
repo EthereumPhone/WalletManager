@@ -31,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.database.model.TransferEntity
+import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.model.UserData
@@ -42,10 +44,7 @@ import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDateTime
-import org.ethereumphone.walletsdk.WalletSDK
-import org.web3j.protocol.Web3j
-import org.web3j.protocol.http.HttpService
+import kotlin.reflect.KFunction1
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -85,7 +84,16 @@ internal fun HomeRoute(
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
         onRefresh = viewModel::refreshData,
+        onDelete = { tx ->
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    //Deletes pending tx out of database
+                    viewModel.deletePendingTransfer(tx)
+                }
+
+        },
         modifier = modifier
+
     )
 }
 
@@ -105,6 +113,7 @@ internal fun HomeScreen(
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     onRefresh: () -> Unit,
+    onDelete: (TransferItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -203,6 +212,7 @@ internal fun HomeScreen(
             },
             onRefresh = { onRefresh() } ,
             userAddress= userData.walletAddress,
+            onDelete =  onDelete
 //            currencyPrice = currencyPrice,
 //            onCurrencyChange = onCurrencyChange
 
@@ -252,39 +262,40 @@ private fun copyTextToClipboard(context: Context, text: String) {
 @Preview
 @Composable
 fun PreviewHomeScreen() {
-    HomeScreen(
-        userData = UserData("0x123...123"),
-        transfersUiState = TransfersUiState.Loading,
-        assetsUiState = AssetUiState.Success(
-
-            listOf(
-                    TokenAsset(
-                        address = "String",
-                        chainId =  5,
-                        symbol=  "ETH",
-                        name= "Ether",
-                        balance= 0.00000245
-                    ),
-                    TokenAsset(
-                        address = "yuooyvyuv",
-                        chainId =  10,
-                        symbol=  "ETH",
-                        name= "Ether",
-                        balance= 0.00000245
-                    )
-                )
-
-
-        ),
-        refreshState = false,
-        onAddressClick = { },
-        navigateToReceive = { },
-        navigateToSend = { },
-        navigateToSwap = { },
-        onRefresh = { },
-        onCurrencyChange = {},
-        currencyPrice = "1650.00",
-        currentChain = 1,
-        getCurrentChain = {}
-    )
+//    HomeScreen(
+//        userData = UserData("0x123...123"),
+//        transfersUiState = TransfersUiState.Loading,
+//        assetsUiState = AssetUiState.Success(
+//
+//            listOf(
+//                    TokenAsset(
+//                        address = "String",
+//                        chainId =  5,
+//                        symbol=  "ETH",
+//                        name= "Ether",
+//                        balance= 0.00000245
+//                    ),
+//                    TokenAsset(
+//                        address = "yuooyvyuv",
+//                        chainId =  10,
+//                        symbol=  "ETH",
+//                        name= "Ether",
+//                        balance= 0.00000245
+//                    )
+//                )
+//
+//
+//        ),
+//        refreshState = false,
+//        onAddressClick = { },
+//        navigateToReceive = { },
+//        navigateToSend = { },
+//        navigateToSwap = { },
+//        onRefresh = { },
+//        onDelete = {},
+//        onCurrencyChange = {},
+//        currencyPrice = "1650.00",
+//        currentChain = 1,
+//        getCurrentChain = {}
+//    )
 }

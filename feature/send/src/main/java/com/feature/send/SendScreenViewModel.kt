@@ -109,16 +109,7 @@ class SendViewModel @Inject constructor(
         //insert TransferEntity into Dao
     }
 
-    /**
-    * Inserts Values for pending transfer into TransferDAO
-    */
-    suspend fun deletePendingTransfer(
-        transfer: TransferEntity
-    ){
-        //get TransferEntity
-        //get tranferDao
-        alchemyTransferRepository.deleteTransfer(transfer)
-    }
+
 
     fun send(
         to: String,

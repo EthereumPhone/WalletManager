@@ -62,7 +62,7 @@ data class TransferDto(
                 )
             } ?: emptyList(),
             erc721TokenId = erc721TokenId.orEmpty(),
-            from = from,
+            fromaddress = from,
             hash = hash,
             rawContract = rawContract.run {
                 com.core.database.model.RawContract(
@@ -71,7 +71,7 @@ data class TransferDto(
                     value = value.orEmpty()
                 )
             },
-            to = to,
+            toaddress = to,
             tokenId = tokenId?: "",
             uniqueId = uniqueId,
             value = value?.toDoubleOrNull() ?: 0.0,
