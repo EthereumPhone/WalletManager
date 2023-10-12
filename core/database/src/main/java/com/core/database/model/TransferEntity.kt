@@ -6,6 +6,9 @@ import com.core.model.EntryCategory
 import com.core.model.Transfer
 import kotlinx.datetime.Instant
 
+/**
+ * TABLE: Tranfer
+ */
 @Entity("transfer")
 data class TransferEntity(
     @PrimaryKey
@@ -16,14 +19,15 @@ data class TransferEntity(
     val category: String,
     val erc1155Metadata: List<Erc1155MetadataObject>,
     val erc721TokenId: String,
-    val from: String,
+    val fromaddress: String,
     val hash: String,
     val rawContract: RawContract,
-    val to: String,
+    val toaddress: String,
     val tokenId: String,
     val value: Double,
     val blockTimestamp: Instant,
-    val userIsSender: Boolean
+    val userIsSender: Boolean,
+    val ispending: Boolean
 )
 
 data class Erc1155MetadataObject(
@@ -57,7 +61,7 @@ fun TransferEntity.asExternalModel() = Transfer(
         )
     },
     erc721TokenId,
-    from,
+    fromaddress,
     rawContract.run {
         Transfer.RawContract(
             address = address.orEmpty(),
@@ -65,10 +69,11 @@ fun TransferEntity.asExternalModel() = Transfer(
             value = value.orEmpty()
         )
     },
-    to,
+    toaddress,
     tokenId,
     value,
     blockTimestamp,
     userIsSender,
-    txHash = hash
+    txHash = hash,
+    ispending = ispending
 )

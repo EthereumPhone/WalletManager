@@ -53,6 +53,7 @@ dependencies {
     implementation libs.androidx.appcompat
 
     implementation "androidx.compose.material3:material3:1.1.1"
+    implementation project(path: ':core:database')
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

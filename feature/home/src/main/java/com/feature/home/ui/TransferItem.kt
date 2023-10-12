@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.Cached
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,6 +69,13 @@ internal fun TransferListItem(
             modifier = modifier.padding(12.dp)
         ) {
 
+            //Color of Icon
+            var icontint = if(transfer.ispending){
+                Color(0xFF24303D)
+            }else{
+                if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
+
+            }
             Box (
                 contentAlignment = Alignment.Center,
                 modifier = modifier
@@ -75,10 +83,17 @@ internal fun TransferListItem(
                     .background(Color.White)
                     .size(42.dp)
             ){
+
+                var icon = if(transfer.ispending){
+                    Icons.Rounded.Cached
+                }else{
+                    if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
+                }
+
                 Icon(
-                    imageVector = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward,
+                    imageVector = icon,
                     contentDescription = "Send",
-                    tint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)//Color(0xFF24303D)
+                    tint = icontint
                 )
             }
             Column (
@@ -131,6 +146,7 @@ internal fun TransferListItem(
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
+
                             Text(
                                 text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
                                 fontSize = 18.sp,
@@ -138,10 +154,15 @@ internal fun TransferListItem(
                             )
 
 
-
                             val date = transfer.timeStamp//compareDate(transfer.timeStamp)
+//
+                            var ispendingtext = if (transfer.ispending){
+                                "Pending..."
+                            }else{
+                                date
+                            }
                             Text(
-                                    text = date
+                                    text = ispendingtext
 
                                 ,color = Color(0xFF9FA2A5)
                             )
@@ -229,7 +250,8 @@ fun TransferItemPreview() {
             value = "2.24",
             timeStamp = "10-19-01",//Clock.System.now().toString(),
             userSent = true,
-            txHash= "pfpfnopjfpfn"
+            txHash= "pfpfnopjfpfn",
+            ispending = true
         ),
         onCardClick = {}
     )
