@@ -29,6 +29,7 @@ data class TransferDto(
     val uniqueId: String,
     val value: String?,
     val metadata: TransferMetadata,
+    val ispending: Boolean
 ) {
     data class RawContract(
         val address: String?,
@@ -61,7 +62,7 @@ data class TransferDto(
                 )
             } ?: emptyList(),
             erc721TokenId = erc721TokenId.orEmpty(),
-            from = from,
+            fromaddress = from,
             hash = hash,
             rawContract = rawContract.run {
                 com.core.database.model.RawContract(
@@ -70,12 +71,13 @@ data class TransferDto(
                     value = value.orEmpty()
                 )
             },
-            to = to,
+            toaddress = to,
             tokenId = tokenId?: "",
             uniqueId = uniqueId,
             value = value?.toDoubleOrNull() ?: 0.0,
             blockTimestamp = Instant.parse(metadata.blockTimestamp),
-            userIsSender = userIsSender
+            userIsSender = userIsSender,
+            ispending = ispending // not pending
         )
     }
 }

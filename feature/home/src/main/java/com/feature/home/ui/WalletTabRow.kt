@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.core.database.model.TransferEntity
 import com.core.designsystem.theme.placeHolder
 import com.core.designsystem.theme.primary
 import com.core.designsystem.theme.primaryVariant
@@ -81,11 +82,9 @@ internal fun WalletTabRow(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
+    onDelete: (TransferItem) -> Unit,
     onTxOpen: (TransferItem) -> Unit,
     userAddress: String,
-//    currencyPrice: String,
-//    onCurrencyChange: (String) -> Unit,
-    //showDialog: : () -> Unit
 ) {
 
 
@@ -99,7 +98,9 @@ internal fun WalletTabRow(
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
-        onRefresh = { onRefresh() }
+        onRefresh = {
+            onRefresh()
+        }
     )
 
     TabRow(
@@ -127,7 +128,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
+                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress, onDelete = onDelete)
                 TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
@@ -193,14 +194,22 @@ fun formatString(input: String): String {
 private fun TransferList(
     transfersUiState: TransfersUiState,
     onTxOpen: (TransferItem) -> Unit,
+    onDelete: (TransferItem) -> Unit,
     userAddress: String,
 ) {
     val scrollState = rememberScrollState()//Scrollstate for fading edges
 
+
     when (transfersUiState) {
         is TransfersUiState.Success ->
-            if(transfersUiState.transfers.isNotEmpty()) {
 
+
+
+
+            if(transfersUiState.transfers.isNotEmpty()) {
+                //deletes Pending Txs from database
+                deletePendingTransfers(transfersUiState.transfers, onDelete)
+                //Log.d("deletependingTransfer ", "itas in ")
                 LazyColumn(
                     modifier = Modifier
                         .verticalFadingEdge(
@@ -214,6 +223,7 @@ private fun TransferList(
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
                              transfer.userSent = userAddress.equals(transfer.from,true)
+                            Log.e("Tx Pending", "Pending ${transfer.ispending}, tranfer val: ${transfer.value}")
                             TransferListItem(
                                 transfer = transfer,
 
@@ -222,7 +232,7 @@ private fun TransferList(
                                     onTxOpen(
                                         transfer
                                     )
-                                    //showTransferInfoDialog.value = true
+
 
                                 }
                             )
@@ -247,6 +257,52 @@ private fun TransferList(
         else -> {}
     }
 }
+
+fun deletePendingTransfers(
+    transfers: List<TransferItem>,
+    onDelete: (TransferItem) -> Unit,
+    ){
+    Log.d("deletependingTx ", "itas in ")
+
+    val completetransfers = transfers
+    //get pending Transfers
+    val completeTxafter = mutableListOf<TransferItem>()
+    completetransfers.reversed().map {
+        Log.d(" beforepending.tx) ", "${it.txHash} ${it.to} ${it.value} ")
+        if (it.ispending){ //if entity is pending
+            Log.d("pending.tx) ", "${it.txHash} ${it.to} ${it.value} ")
+            //compare current Entity completed tx after that entity
+            if (completeTxafter.isNotEmpty()){//if not empty
+                //if .it is the same to a completed tx
+                val pendingTx = it
+                completeTxafter.reversed().map{
+                    //compare with to, value, chainid, sent
+                    if (pendingTx.userSent &&
+                        pendingTx.to == it.to &&
+                        pendingTx.value == it.value &&
+                        pendingTx.chainId == it.chainId){
+
+                        Log.d("deleteTransfer ", "normal ${it.txHash} - ${it.to} - ${it.value} - ${it.chainId} - sent ${it.userSent}")
+                        Log.d("deleteTransfer ", "pending ${pendingTx.txHash} - ${pendingTx.to} - ${pendingTx.value} - ${pendingTx.chainId} - time ${pendingTx.userSent} ")
+                        //transferDao.deleteTransfer(it)//if the same -> delete pending transfer
+                        onDelete(pendingTx)
+                    }
+                }
+            } else {
+
+            }
+
+
+        }else{
+            //if not get complete txs after pending tx
+            Log.d("completeTxafter.add(it) ", "add ${it.txHash} ${it.to} ${it.value} ")
+            completeTxafter.add(it)
+        }
+
+    }
+
+}
+
 
 /**
  * Own Modifier for fading edges

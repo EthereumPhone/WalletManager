@@ -65,6 +65,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.util.chainToApiKey
+import com.core.database.model.RawContract
 import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
@@ -96,6 +97,10 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.text.DecimalFormat
 import java.util.Currency
+import com.core.database.model.TransferEntity
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import java.util.Random
 
 
 @Composable
@@ -167,6 +172,9 @@ fun SendRoute(
 
 
                 CoroutineScope(Dispatchers.IO).launch {
+
+
+
                     val web3jInstance = Web3j.build(HttpService(rpcurl))
 
                     val wallet = WalletSDK(
@@ -196,14 +204,51 @@ fun SendRoute(
 
                     Log.e("Test",res)
                     //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-                    //println(res)
+                    println(res)
                     if(res != "decline" && res != "error"){
                         //onBackClick()
                         (context as Activity).runOnUiThread {
+                            //TODO: Snackbar
                             Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
                         }
+
+                        //TODO: put pending transfer into db
+                        try {
+                            Log.d("insert tx", "itas in ")
+                            viewModel.insertPendingTransfer(
+                                transfer = TransferEntity(
+                                    uniqueId = (0..100).random().toString(),
+                                    asset = "",
+                                    chainId = chainid,
+                                    blockNum = (100..200).random().toString(),
+                                    category =  "external",
+                                    erc1155Metadata = emptyList(),
+                                    erc721TokenId = "",
+                                    fromaddress = userAddress,
+                                    hash =  (200..300).random().toString(),
+                                    rawContract = RawContract(
+                                        address = "",
+                                        decimal = "",
+                                        value = ""
+                                    ),
+                                    toaddress = address,
+                                    tokenId =  "",
+                                    value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
+                                    blockTimestamp = Clock.System.now(),
+                                    userIsSender =  true,
+                                    ispending = true
+
+                                )
+                            )
+
+                        }catch (exception: NullPointerException) {
+//                        "error"
+                        }
+
+
+
+
                         viewModel.changeTxComplete()
-                        //Log.e("complete","$txComplete")
 
                     }
                     if (res == "error") {
@@ -217,33 +262,24 @@ fun SendRoute(
                         }
                     }
 
+
+
                 }
 
-//                    viewModel.send(
-//                        to = address,
-//                        chainId = chainid,
-//                        amount = amount
-//                    )
-//                }
+
+
+
 
             } else {
                 (context as Activity).runOnUiThread {
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
                 }
             }
-
-            //onBackClick()
         },
-        //userAddress = userAddress,
-        //toAddress = toAddress,
         txComplete = txComplete,
         selectedToken = selectedToken
-//        onAddressClick = {
-//            copyTextToClipboard(localContext, userAddress)
-//        }
     )
 
-    //SendScreen()
 
 
 }
@@ -292,11 +328,6 @@ fun SendScreen(
     //initalize values
 
 
-
-
-
-
-
     var test by remember { mutableStateOf(tokeninfo) }
 
 
@@ -305,14 +336,6 @@ fun SendScreen(
     var enableButton by remember { mutableStateOf(false) }
     //var amountColor by remember { mutableStateOf(Color.White) }
     var network by remember { mutableStateOf(test.chainId) }
-
-
-
-
-
-
-
-
 
 
     val context = LocalContext.current
@@ -391,11 +414,6 @@ fun SendScreen(
             onBackClick()
         }
     }
-
-
-
-    //Values
-
 
 
 
@@ -778,7 +796,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
+                                enabled = true,//value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
                                 text = "Send"
                             )
                         }

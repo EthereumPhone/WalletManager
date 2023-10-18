@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 import android.util.Log
+import androidx.annotation.WorkerThread
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import com.core.data.remote.TransfersApi
 import com.core.data.util.chainToApiKey
@@ -12,6 +13,7 @@ import com.core.model.Transfer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -84,5 +86,41 @@ class AlchemyTransferRepository @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Deletes pending transfers from db if they are completed
+     */
+
+    /**
+     * inserts transfer into db
+     * transfer - TransferEntity
+     */
+    @Suppress("RedundantSuspendModifier")
+    @WorkerThread
+    override suspend fun insertTransfer(transfer: TransferEntity){
+        transferDao.insertTransfer(transfer)
+    }
+
+
+
+    /**
+     * delete transfers from db
+     * transfer - TransferEntity
+     */
+    override suspend fun deleteTransfer(
+        chainId: Int,
+        value: Double,
+        ispending: Boolean,
+        userIsSender: Boolean,
+        toaddress: String
+    ){
+        transferDao.deleteTransfer(
+            chainId,
+            value,
+            ispending,
+            userIsSender,
+            toaddress
+        )
     }
 }
