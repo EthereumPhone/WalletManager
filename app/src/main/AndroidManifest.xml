@@ -19,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WalletManager"
         android:fitsSystemWindows="true"
+        android:screenOrientation="portrait"
         tools:targetApi="33"
         android:debuggable="true"
         tools:ignore="HardcodedDebugMode">
