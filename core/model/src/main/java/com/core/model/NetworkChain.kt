@@ -28,6 +28,11 @@ enum class NetworkChain(
         chainId = 42161,
         chainName = "arb-mainnet",
         rpc = "https://rpc.ankr.com/arbitrum",
+    ),
+    BASE(
+        chainId = 84531,
+        chainName = "base-mainnet",
+        rpc = "https://rpc.ankr.com/base"
     );
 
     companion object {
