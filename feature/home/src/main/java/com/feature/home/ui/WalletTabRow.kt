@@ -160,7 +160,7 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
             }
         }
         is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
+            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
 
             Box(
                 modifier = Modifier
