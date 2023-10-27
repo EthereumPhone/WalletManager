@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -277,37 +276,4 @@ object SwipeButtonDefaults {
         horizontal = horizontalPadding,
         vertical = verticalPadding
     )
-}
-@OptIn(ExperimentalMaterialApi::class)
-@Preview
-@Composable
-private fun PreviewSwipeButton() {
-    Surface(
-        color = Color.Black
-    ) {
-        val coroutineScope = rememberCoroutineScope()
-        val (isComplete, setIsComplete) = remember {
-            mutableStateOf(false)
-        }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-            ,
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            SwipeButton(
-                modifier = Modifier,
-                icon = Icons.Filled.ArrowForward,
-                completeIcon = Icons.Filled.Check,
-                text = "Swipe",
-                //enabled = true,
-            ) { coroutineScope.launch {
-                setIsComplete(true)
-            }
-            }
-            //Text(text=isComplete.toString(), color = Color.Red)
-        }
-    }
 }

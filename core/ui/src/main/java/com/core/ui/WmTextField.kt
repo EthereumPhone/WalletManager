@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -63,19 +62,6 @@ fun WmTextField(
         shape = RoundedCornerShape(8.dp),
         placeholder = placeholder,
         keyboardOptions = keyboardOptions
-    )
-
-
-}
-
-@Preview
-@Composable
-fun PreviewWmTextField() {
-    var text by remember { mutableStateOf("") }
-
-    WmTextField(
-        value = text,
-        onChange = { text = it },
     )
 
 
