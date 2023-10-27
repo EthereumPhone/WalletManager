@@ -134,378 +134,220 @@ fun TransferDialog(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    if(!transfer.ispending){
-                        //From txhash
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
+                    //From txhash
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            text = "Tx Hash",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = transfer.txHash,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9FA2A5),
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.Normal,
+                        )
+                    }
+
+
+                    //Amount
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            text = "Amount",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (transfer.chainId != 5) {
                             Text(
-                                text = "Tx Hash",
+                                text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
+                                        "${if (currencyPrice != "") "($${currencyPrice.toFloat() * transfer.value.toFloat()})" else ""}",
                                 fontSize = 16.sp,
-                                color = Color.White,
+                                color = Color(0xFF9FA2A5),
                                 textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Normal,
                             )
+                        } else {
                             Text(
-                                text = transfer.txHash,
+                                text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
+                                        "($0.0)",
                                 fontSize = 16.sp,
                                 color = Color(0xFF9FA2A5),
                                 textAlign = TextAlign.Left,
                                 fontWeight = FontWeight.Normal,
                             )
                         }
-
-
-                        //Amount
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Amount",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            if (transfer.chainId != 5) {
-                                Text(
-                                    text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
-                                            "${if (currencyPrice != "") "($${currencyPrice.toFloat() * transfer.value.toFloat()})" else ""}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            } else {
-                                Text(
-                                    text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
-                                            "($0.0)",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            }
-
-                        }
-
-
-                        //From address
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = if (transfer.userSent) "To" else "From",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = if (transfer.userSent) transfer.to else transfer.from,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5),
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.Normal,
-                            )
-                        }
-
-
-                        //Network
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Network",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = network,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5),
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.Normal,
-                            )
-                        }
-
-
-                        //Time
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Time",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            val year = transfer.timeStamp.substring(0, 4)
-                            val month = transfer.timeStamp.substring(5, 7)
-                            val day = transfer.timeStamp.substring(8, 10)
-                            val txdate = "${month}-${day}-${year}"
-                            val txtime = transfer.timeStamp.takeLast(8)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "${txdate}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                                Text(
-                                    text = " at ",
-                                    fontSize = 16.sp,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                                Text(
-                                    text = "${txtime}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            }
-
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            EtherscanButton(
-                                onClickChange = {
-                                    //Log.e("tag","URL IS "+url.value.text)
-                                    val urlIntent = when (transfer.chainId) {
-                                        1 -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://etherscan.io/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-
-                                        5 -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://goerli.etherscan.io/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-
-                                        10 -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://optimistic.etherscan.io/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-
-                                        137 -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://polygonscan.com/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-
-                                        42161 -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://arbiscan.io/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-
-                                        else -> Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse(
-                                                "https://etherscan.io/tx/${transfer.txHash}"
-
-                                            )
-                                        )
-                                    }
-                                    context.startActivity(urlIntent)
-
-                                }
-                            )
-
-                        }
-                    }else{
-                        //From txhash
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Tx Hash",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = transfer.txHash,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5),
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.Normal,
-                            )
-                        }
-
-
-                        //Amount
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Amount",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            if (transfer.chainId != 5) {
-                                Text(
-                                    text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
-                                            "${if (currencyPrice != "") "($${currencyPrice.toFloat() * transfer.value.toFloat()})" else ""}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            } else {
-                                Text(
-                                    text = "${BigDecimal(transfer.value)} ${transfer.asset.uppercase()} " +
-                                            "($0.0)",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            }
-
-                        }
-
-
-                        //address
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = if (transfer.userSent) "To" else "From",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = if (transfer.userSent) transfer.to else transfer.from,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5),
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.Normal,
-                            )
-                        }
-
-
-                        //Network
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Network",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = network,
-                                fontSize = 16.sp,
-                                color = Color(0xFF9FA2A5),
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.Normal,
-                            )
-                        }
-
-
-                        //Time
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.Start,
-                        ) {
-                            Text(
-                                text = "Time",
-                                fontSize = 16.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            val year = transfer.timeStamp.substring(0, 4)
-                            val month = transfer.timeStamp.substring(5, 7)
-                            val day = transfer.timeStamp.substring(8, 10)
-                            val txdate = "${month}-${day}-${year}"
-                            val txtime = transfer.timeStamp.takeLast(8)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "${txdate}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                                Text(
-                                    text = " at ",
-                                    fontSize = 16.sp,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                                Text(
-                                    text = "${txtime}",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9FA2A5),
-                                    textAlign = TextAlign.Left,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            }
-
-                        }
-
-
 
                     }
 
 
+                    //From address
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            text = if (transfer.userSent) "To" else "From",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = if (transfer.userSent) transfer.to else transfer.from,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9FA2A5),
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.Normal,
+                        )
+                    }
+
+
+                    //Network
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            text = "Network",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = network,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9FA2A5),
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.Normal,
+                        )
+                    }
+
+
+                    //Time
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text(
+                            text = "Time",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Left,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        val year = transfer.timeStamp.substring(0, 4)
+                        val month = transfer.timeStamp.substring(5, 7)
+                        val day = transfer.timeStamp.substring(8, 10)
+                        val txdate = "${month}-${day}-${year}"
+                        val txtime = transfer.timeStamp.takeLast(8)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${txdate}",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                            Text(
+                                text = " at ",
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                            Text(
+                                text = "${txtime}",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9FA2A5),
+                                textAlign = TextAlign.Left,
+                                fontWeight = FontWeight.Normal,
+                            )
+                        }
+
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        EtherscanButton(
+                            onClickChange = {
+                                //Log.e("tag","URL IS "+url.value.text)
+                                val urlIntent = when (transfer.chainId) {
+                                    1 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+
+                                    5 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://goerli.etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+
+                                    10 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://optimistic.etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+
+                                    137 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://polygonscan.com/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+
+                                    42161 -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://arbiscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+
+                                    else -> Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                            "https://etherscan.io/tx/${transfer.txHash}"
+
+                                        )
+                                    )
+                                }
+                                context.startActivity(urlIntent)
+
+                            }
+                        )
+
+                    }
 
 
 
