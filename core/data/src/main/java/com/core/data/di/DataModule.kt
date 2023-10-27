@@ -7,6 +7,7 @@ import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
 import com.core.data.util.MoshiAdapters
+import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -40,7 +41,7 @@ object DataModule {
     @Provides
     fun provideWeb3j(): Web3j {
         return Web3j.build(
-            HttpService(NetworkChain.MAIN.rpc)
+            HttpService("https://${NetworkChain.MAIN.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAIN.chainName)}")
         )
     }
 
@@ -99,7 +100,7 @@ object DataModule {
     fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
         return UniswapRoutingSDK(
             context = context,
-            web3RPC = NetworkChain.MAIN.rpc
+            web3RPC = "https://${NetworkChain.MAIN.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAIN.chainName)}"
         )
     }
 
