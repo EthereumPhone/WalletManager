@@ -143,7 +143,6 @@ fun SendRoute(
             val amount = sendData.amount.toString()
             var address = sendData.address
             val chainid = sendData.chainId
-            //TODO: Replace with actual method to get rpcUrl
             val chainName = when(chainid) {
                 1 -> "eth-mainnet"
                 5 -> "eth-goerli"
