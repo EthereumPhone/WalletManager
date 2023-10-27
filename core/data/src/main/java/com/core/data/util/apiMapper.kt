@@ -8,5 +8,6 @@ fun chainToApiKey(networkName: String): String = when(networkName) {
     "opt-mainnet" -> BuildConfig.OPTIMISM_API
     "arb-mainnet" -> BuildConfig.ARBITRUM_API
     "polygon-mainnet" -> BuildConfig.POLYGON_API
+    "base-mainnet" -> BuildConfig.BASE_API
     else -> ""
 }

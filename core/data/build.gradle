@@ -23,6 +23,7 @@ android {
         buildConfigField "String", "ARBITRUM_API", "\"${properties.getProperty("ARBITRUM_API")}\""
         buildConfigField "String", "OPTIMISM_API", "\"${properties.getProperty("OPTIMISM_API")}\""
         buildConfigField "String", "POLYGON_API", "\"${properties.getProperty("POLYGON_API")}\""
+        buildConfigField "String", "BASE_API", "\"${properties.getProperty("BASE_API")}\""
 
 
     }
