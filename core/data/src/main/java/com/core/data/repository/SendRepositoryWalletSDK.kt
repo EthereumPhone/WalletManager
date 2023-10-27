@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,7 +25,7 @@ class SendRepositoryWalletSDK @Inject constructor(
         withContext(Dispatchers.IO) {
             val decimalValue = BigDecimal(value.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
             if(chainId != walletSDK.getChainId()) {
-                val rpc = NetworkChain.getNetworkByChainId(chainId)?.rpc
+                val rpc = "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
@@ -47,7 +48,7 @@ class SendRepositoryWalletSDK @Inject constructor(
         amount: BigDecimal,
         chainId: Int
     ): String = withContext(Dispatchers.IO) {
-        val rpc = NetworkChain.getNetworkByChainId(chainId)?.rpc
+        val rpc =  "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
         val web3j = Web3j.build(HttpService(rpc))
         val gas = web3j.ethGasPrice().sendAsync().get().gasPrice
         val gasEther = Convert.fromWei(gas.toString(), Convert.Unit.ETHER)
