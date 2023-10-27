@@ -15,7 +15,7 @@ private const val BASE_URL = "https://data.binance.com"
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
     .build()
-val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC)
+val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
 val client: OkHttpClient = OkHttpClient.Builder()
     .addInterceptor(logging)
