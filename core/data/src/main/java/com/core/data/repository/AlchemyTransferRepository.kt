@@ -45,7 +45,9 @@ class AlchemyTransferRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
-            networks.map { network ->
+            networks
+                .filter { it != NetworkChain.BASE }
+                .map { network ->
                 val apiKey = chainToApiKey(network.chainName)
                 async {
                     val transfers = transfersApi.getTransfers(

@@ -55,7 +55,8 @@ class SeedUniswapTokensWorker @AssistedInject constructor(
                             name = it.name,
                             symbol = it.symbol,
                             logo = it.logoURI,
-                            chainId = it.chainId
+                            chainId = it.chainId,
+                            swappable = true
                         )
                     }
                 )
