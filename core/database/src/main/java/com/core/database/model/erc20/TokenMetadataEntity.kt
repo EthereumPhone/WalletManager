@@ -12,12 +12,13 @@ data class TokenMetadataEntity(
     val name: String,
     val symbol: String,
     val logo: String?,
-    val chainId: Int
+    val chainId: Int,
+    val swappable: Boolean = false
 )
 
 
 fun TokenMetadataEntity.asExternalModel(): TokenMetadata {
     return TokenMetadata(
-        contractAddress, decimals, name, symbol, logo, chainId
+        contractAddress, decimals, name, symbol, logo, chainId, swappable
     )
 }
