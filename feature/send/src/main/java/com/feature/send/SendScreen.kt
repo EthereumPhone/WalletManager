@@ -373,7 +373,7 @@ fun SendScreen(
                 showInfoDialog.value = false
             },
             title = "Send crypto",
-            text = "Here you can send crypto to any address or ENS domain."
+            text = "Send Crypto to any address or ENS on mainnet or various L2s."
         )
     }
 

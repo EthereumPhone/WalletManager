@@ -44,17 +44,19 @@ fun SelectedNetworkButton(
         137 -> Color(0xFF442fb2)//Polygon
         10 -> Color(0xFFc82e31)//Optimum
         42161 -> Color(0xFF2b88b8)//Arbitrum
+        8453 -> Color(0xFF344afb)//Base
         else -> {
             Color(0xFF24303D)
         }
     }
-    var network = when(chainId){
+    val network = when(chainId){
         1 -> "Mainnet"
-                                5 -> "Görli"
-                                10 -> "Optimism"
-                                137 -> "Polygon"
-                                42161 -> "Arbitrum"
-                                else -> "Select Network"
+        5 -> "Görli"
+        10 -> "Optimism"
+        137 -> "Polygon"
+        42161 -> "Arbitrum"
+        8453 -> "Base"
+        else -> "Select Network"
     }
         Button(
             onClick = onClickChange,

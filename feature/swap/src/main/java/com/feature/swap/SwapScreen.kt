@@ -127,7 +127,7 @@ internal fun SwapScreen(
                 showInfoDialog.value = false
             },
             title = "Swap crypto",
-            text = "Here you can swap from one crypto into another."
+            text = "Swap ERC-20 tokens on mainnet within your wallet."
         )
     }
 
