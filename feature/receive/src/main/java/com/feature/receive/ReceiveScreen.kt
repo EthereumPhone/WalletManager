@@ -160,7 +160,7 @@ fun ReceiveScreen(
             ){
                 val space  = 42.dp
                 Text(
-                    text = "Scan me!",
+                    text = "My address",
                     fontSize = 36.sp,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
