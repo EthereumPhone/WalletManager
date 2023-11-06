@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Card
 import androidx.compose.material.DismissValue
@@ -159,7 +160,7 @@ fun ReceiveScreen(
             ){
                 val space  = 42.dp
                 Text(
-                    text = "Scan me!",
+                    text = "My address",
                     fontSize = 36.sp,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
@@ -188,14 +189,16 @@ fun ReceiveScreen(
 
                 //Address
                 //TODO: Address or ENS
-                Text(
-                    modifier = modifier.width(175.dp),
-                    fontSize = 12.sp,
-                    color = Color(0xFF9FA2A5),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Normal,
-                    text = userData.walletAddress
-                )
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(0.8f),
+                        fontSize = 20.sp,
+                        color = Color(0xFF9FA2A5),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Normal,
+                        text = userData.walletAddress
+                    )
+                }
             }
         }
 }
