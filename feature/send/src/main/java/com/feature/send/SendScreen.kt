@@ -119,8 +119,7 @@ fun SendRoute(
     val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
-    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
-
+    val currencyprice = ""
 
 
 
@@ -147,11 +146,7 @@ fun SendRoute(
                 else -> "eth-mainnet"
             }
 
-            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
-
-            if (chainid == 137) {
-                rpcurl = "https://rpc.ankr.com/polygon"
-            }
+            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
 
             println("RPC: $rpcurl")
 
@@ -458,8 +453,9 @@ fun SendScreen(
                                 if (address.endsWith(".eth")) {
                                     if (ENSName(address).isPotentialENSDomain()) {
                                         // It is ENS
+                                        println("Checking ENS")
                                         CompletableFuture.runAsync {
-                                            val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+                                            val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
                                             validSendAddress = true
@@ -633,7 +629,7 @@ fun SendScreen(
                                         if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
-                                                    "$${"0.0".toFloat() * "0.0".toFloat()}"
+                                                    ""
                                                 } else {
                                                     "$${formatDouble((value.toFloat() * currencyPrice.toFloat()).toDouble())}"
                                                 },//"$${value.toFloat()}",
