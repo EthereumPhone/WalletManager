@@ -773,7 +773,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
+                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0) && isValidEthereumAddress(address),
                                 text = "Send"
                             )
                         }
@@ -840,6 +840,14 @@ fun SendScreen(
 
 
 
+}
+
+fun isValidEthereumAddress(address: String): Boolean {
+    return try {
+        WalletUtils.isValidAddress(address)
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun formatDouble(input: Double): String {
