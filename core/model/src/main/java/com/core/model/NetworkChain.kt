@@ -26,7 +26,7 @@ enum class NetworkChain(
         chainName = "arb-mainnet",
     ),
     BASE(
-        chainId = 84531,
+        chainId = 8453,
         chainName = "base-mainnet",
     );
 

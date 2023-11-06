@@ -119,8 +119,7 @@ fun SendRoute(
     val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
-    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
-
+    val currencyprice = ""
 
 
 
@@ -147,11 +146,7 @@ fun SendRoute(
                 else -> "eth-mainnet"
             }
 
-            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
-
-            if (chainid == 137) {
-                rpcurl = "https://rpc.ankr.com/polygon"
-            }
+            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
 
             println("RPC: $rpcurl")
 
@@ -378,7 +373,7 @@ fun SendScreen(
                 showInfoDialog.value = false
             },
             title = "Send crypto",
-            text = "Here you can send crypto to any address or ENS domain."
+            text = "Send Crypto to any address or ENS on mainnet or various L2s."
         )
     }
 
@@ -458,8 +453,9 @@ fun SendScreen(
                                 if (address.endsWith(".eth")) {
                                     if (ENSName(address).isPotentialENSDomain()) {
                                         // It is ENS
+                                        println("Checking ENS")
                                         CompletableFuture.runAsync {
-                                            val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
+                                            val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
                                             val ensAddr = ens.getAddress(ENSName(address))
                                             address = ensAddr?.hex.toString()
                                             validSendAddress = true
@@ -633,7 +629,7 @@ fun SendScreen(
                                         if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
-                                                    "$${"0.0".toFloat() * "0.0".toFloat()}"
+                                                    ""
                                                 } else {
                                                     "$${formatDouble((value.toFloat() * currencyPrice.toFloat()).toDouble())}"
                                                 },//"$${value.toFloat()}",
@@ -777,7 +773,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
+                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0) && isValidEthereumAddress(address),
                                 text = "Send"
                             )
                         }
@@ -844,6 +840,14 @@ fun SendScreen(
 
 
 
+}
+
+fun isValidEthereumAddress(address: String): Boolean {
+    return try {
+        WalletUtils.isValidAddress(address)
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun formatDouble(input: Double): String {
