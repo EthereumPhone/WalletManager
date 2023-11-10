@@ -1,5 +1,7 @@
 package com.feature.home.ui
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,23 +34,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.UserData
 import com.core.ui.SelectedNetworkButton
+import com.feature.home.WalletDataUiState
 import java.time.LocalTime
 import java.util.Calendar
 
 @Composable
 internal fun AddressBar(
-    userData: UserData,
+    walletDataUiState: WalletDataUiState,
     onclick: () -> Unit,
     icon: @Composable () -> Unit,
-    currentChain: Int,
     modifier: Modifier = Modifier
 ) {
+    val localContext = LocalContext.current
+
 
     Column (
         horizontalAlignment = Alignment.CenterHorizontally
@@ -75,10 +81,21 @@ internal fun AddressBar(
                 modifier = Modifier
                     .clickable { onclick() },
             ){
+                val address = when(walletDataUiState) {
+                    is WalletDataUiState.Loading -> {
+                        "..."
+                    }
+                    is WalletDataUiState.Success -> {
+                        walletDataUiState.userData.walletAddress
+                    }
+                }
+
                 Text(
                     modifier = Modifier
-                        .clickable { onclick() },
-                    text = truncateText(userData.walletAddress),
+                        .clickable {
+                            copyTextToClipboard(localContext, address)
+                        },
+                    text = truncateText(address),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF9FA2A5)
@@ -87,23 +104,24 @@ internal fun AddressBar(
             icon()
         }
         //Networkpill
-        val chainName = when(currentChain) {
-            1 -> "Mainnet"
-            5 -> "Goerli"
-            10 -> "Optimism"
-            137 -> "Polygon"
-            42161 -> "Arbitrum"
-            else -> "Mainnet"
-        }
         Surface (
             modifier = Modifier
                 .clip(CircleShape),
             color = Color(0xFF24303D),
             contentColor = Color.White
         ) {
+            val network = when(walletDataUiState) {
+                is WalletDataUiState.Loading -> {
+                    "..."
+                }
+                is WalletDataUiState.Success -> {
+                    walletDataUiState.userData.walletNetwork
+                }
+            }
+
             Text(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                text = chainName,
+                text = chainName(network),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
@@ -120,11 +138,27 @@ private fun truncateText(text: String): String {
     return text
 }
 
+private fun chainName(chainId: String) = when(chainId) {
+    "1" -> "Mainnet"
+    "5" -> "Görli"
+    "10" -> "Optimism"
+    "137" -> "Polygon"
+    "8453" -> "Base"
+    "42161" -> "Arbitrum"
+    else -> "Loading..."
+}
+
+@SuppressLint("ServiceCast")
+private fun copyTextToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboardManager.setText(AnnotatedString(text))
+}
+
 @Preview
 @Composable
 fun previewAddressBar() {
     AddressBar(
-        UserData("0x123123123123123123"),
+        WalletDataUiState.Success(UserData("","")),
         { },
         icon = {
             IconButton(
@@ -141,7 +175,5 @@ fun previewAddressBar() {
                 )
             }
         },
-        currentChain = 5
-
     )
 }

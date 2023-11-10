@@ -13,7 +13,8 @@ class WmPreferencesDataSource @Inject constructor(
     val userData = userPreferences.data
         .map {
             UserData(
-                walletAddress = it.walletAddress
+                walletAddress = it.walletAddress,
+                walletNetwork = it.walletNetwork
             )
         }
 
@@ -21,6 +22,13 @@ class WmPreferencesDataSource @Inject constructor(
         userPreferences.updateData {
             it.copy {
                 this.walletAddress = address
+            }
+        }
+    }
+    suspend fun setWalletNetwork(network: String) {
+        userPreferences.updateData {
+            it.copy {
+                this.walletNetwork = network
             }
         }
     }

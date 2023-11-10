@@ -17,6 +17,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,11 +58,10 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
+    val walletData: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val localContext = LocalContext.current
     val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
     val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
@@ -74,17 +74,14 @@ internal fun HomeRoute(
     }
 
     HomeScreen(
-        userData = userData,
+        walletData = walletData,
         currentChain = currentChain,
-        //getCurrentChain = viewModel::getCurrentChain,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         currencyPrice = currencyPrice,
         onCurrencyChange = viewModel::getExchange,
         onAddressClick = {
-            // had to do it here because I need the local context.
-            copyTextToClipboard(localContext, userData.walletAddress)
         },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
@@ -97,7 +94,7 @@ internal fun HomeRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
-    userData: UserData,
+    walletData: WalletDataUiState,
     currentChain: Int,
     //getCurrentChain: (Context) -> Unit,
     transfersUiState: TransfersUiState,
@@ -132,32 +129,7 @@ internal fun HomeScreen(
     }
 
 
-    var showTransferInfoDialog = remember { mutableStateOf(false) }
-    var txInfo =  remember { mutableStateOf(
-        TransferItem(
-            chainId = 1,
-            from="",
-            to="",
-            asset = "",
-            value = "",
-            timeStamp = "",
-            userSent = true,
-            txHash = ""
-        )
-    ) }
 
-    if(showTransferInfoDialog.value){
-        TransferDialog(
-            setShowDialog = {
-                showTransferInfoDialog.value = false
-            },
-            //title = "Transfer",
-            transfer = txInfo.value,
-            currencyPrice = currencyPrice,
-            onCurrencyChange = onCurrencyChange
-
-        )
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -169,7 +141,7 @@ internal fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
         AddressBar(
-            userData,
+            walletData,
             onAddressClick,
             icon = {
                 IconButton(
@@ -187,28 +159,8 @@ internal fun HomeScreen(
                     )
                 }
             },
-            currentChain
         )
 
-//        Column (
-//            modifier = modifier.fillMaxWidth(),
-//            horizontalAlignment = Alignment.CenterHorizontally,
-//        ){
-//            Text(
-//                text = "Balance",
-//                fontWeight = FontWeight.Normal,
-//                fontSize = 16.sp,
-//                color = Color(0xFF9FA2A5)
-//            )
-//            Text(
-//                text = "2.45 ETH",
-//                fontWeight = FontWeight.SemiBold,
-//                color = Color.White,
-//                fontSize = 56.sp,
-//                textAlign = TextAlign.Center
-//
-//            )
-//        }
         FunctionsRow(
             navigateToSwap,
             navigateToSend,
@@ -216,18 +168,10 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
-            transfersUiState,
-            assetsUiState,
-            refreshState,
-            onTxOpen = {
-                txInfo.value = it
-                showTransferInfoDialog.value = true
-            },
+            transfersUiState = transfersUiState,
+            assetsUiState = assetsUiState,
+            refreshState = refreshState,
             onRefresh = { onRefresh() } ,
-            userAddress= userData.walletAddress,
-//            currencyPrice = currencyPrice,
-//            onCurrencyChange = onCurrencyChange
-
         )
 
 
@@ -265,17 +209,11 @@ internal fun HomeScreen(
     }
 }
 
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
-}
-
 @Preview
 @Composable
 fun PreviewHomeScreen() {
     HomeScreen(
-        userData = UserData("0x123...123"),
+        walletData = WalletDataUiState.Success(UserData("0x123...123", "12")),
         transfersUiState = TransfersUiState.Loading,
         assetsUiState = AssetUiState.Success(
 

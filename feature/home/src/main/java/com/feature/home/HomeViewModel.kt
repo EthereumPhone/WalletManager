@@ -1,7 +1,10 @@
 package com.feature.home
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
@@ -39,17 +42,17 @@ class HomeViewModel @Inject constructor(
     getTransfersUseCase: GetTransfersUseCase,
     getGroupedTokenAssets: GetGroupedTokenAssets,
     private val updateTokensUseCase: UpdateTokensUseCase,
-    userDataRepository: UserDataRepository,
+    private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
 ): ViewModel() {
 
-    val userData = userDataRepository.userData
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UserData("")
-
+    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
+        WalletDataUiState.Success(it)
+    }.stateIn(
+        scope = viewModelScope,
+        initialValue = WalletDataUiState.Loading,
+        started = SharingStarted.WhileSubscribed(5_000)
     )
 
     val tokenAssetState: StateFlow<AssetUiState> =
@@ -82,31 +85,15 @@ class HomeViewModel @Inject constructor(
     val currentChain: Flow<Int> = _currentChain
 
 
-
-    fun getCurrentChain(context: Context) {
-        viewModelScope.launch {
-            try {
-                val wallet = WalletSDK(
-                    context = context,
-                )
-                _currentChain.value = wallet.getChainId()
-            } catch (e: Exception) {
-                _currentChain.value = 0
-            }
-            _currentChain.value = 1
-        }
-    }
-
     fun refreshData() {
         Log.d("refresh Started", "update started")
 
         viewModelScope.launch {
             _refreshState.value = true
-
+            val address = userDataRepository.userData.first()
             try {
-                val address = userData.first().walletAddress
-                transferRepository.refreshTransfers(address)
-                updateTokensUseCase(address)
+                transferRepository.refreshTransfers(address.walletAddress)
+                updateTokensUseCase(address.walletAddress)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -125,17 +112,6 @@ class HomeViewModel @Inject constructor(
 
         }
     }
-
-
-//    fun addTransaction(tx: TransferItem){
-//        when(_transferState.value) {
-//            is TransfersUiState.Loading -> {}
-//            is TransfersUiState.Success -> {
-//                _transferState.value = TransfersUiState.Success(tx)
-//            }
-//            else -> {}
-//        }
-//    }
 }
 
 
@@ -201,5 +177,15 @@ sealed interface AssetUiState {
 sealed interface TransfersUiState {
     object Loading: TransfersUiState
     data class Success(val transfers: List<TransferItem>): TransfersUiState
+}
 
+sealed interface WalletDataUiState {
+    object Loading: WalletDataUiState
+    data class Success(val userData: UserData): WalletDataUiState
+}
+
+@SuppressLint("ServiceCast")
+private fun copyTextToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboardManager.setText(AnnotatedString(text))
 }

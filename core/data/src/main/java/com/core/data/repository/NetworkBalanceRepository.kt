@@ -11,4 +11,9 @@ interface NetworkBalanceRepository {
         toAddress: String,
         chainIds: List<Int> = NetworkChain.getAllNetworkChains().map { it.chainId }
     )
+
+    suspend fun refreshNetworkBalanceByNetwork(
+        toAddress: String,
+        networkChain: NetworkChain
+    )
 }

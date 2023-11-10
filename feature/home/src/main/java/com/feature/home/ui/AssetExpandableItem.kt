@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.core.designsystem.theme.primary
 import com.core.model.TokenAsset
 import com.core.ui.ExpandableListItem
+import com.core.ui.util.formatDouble
 import com.feature.home.R
 import java.text.DecimalFormat
 
@@ -101,10 +102,7 @@ fun AssetExpandableItem(
     )
 }
 
-fun formatDouble(input: Double): String {
-    val decimalFormat = DecimalFormat("#.#####")
-    return decimalFormat.format(input)
-}
+
 
 @Composable
 private fun IndividualAssetItem(

@@ -81,8 +81,6 @@ internal fun WalletTabRow(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
     //showDialog: : () -> Unit
@@ -127,7 +125,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
+                TabItems.TRANSFERS -> TransferList(transfersUiState)
                 TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
@@ -192,8 +190,6 @@ fun formatString(input: String): String {
 @Composable
 private fun TransferList(
     transfersUiState: TransfersUiState,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
 ) {
     val scrollState = rememberScrollState()//Scrollstate for fading edges
 
@@ -213,16 +209,10 @@ private fun TransferList(
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
-                             transfer.userSent = userAddress.equals(transfer.from,true)
                             TransferListItem(
                                 transfer = transfer,
 
                                 onCardClick = {
-
-                                    onTxOpen(
-                                        transfer
-                                    )
-                                    //showTransferInfoDialog.value = true
 
                                 }
                             )

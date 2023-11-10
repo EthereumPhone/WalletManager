@@ -1,5 +1,6 @@
 package org.ethereumphone.walletmanager.utils
 
+import android.util.Log
 import com.core.data.repository.UserDataRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,11 +28,12 @@ class SystemWalletAddressUpdater @Inject constructor(
             coroutineScope.launch {
                 while (isUpdating) {
                     val addressCheck = walletSDK.getAddress()
+                    val network = walletSDK.getChainId()
 
                     if (addressCheck.isNotEmpty()) {
                         userDataRepository.setWalletAddress(addressCheck)
                     }
-
+                    userDataRepository.setWalletNetwork(network.toString())
                     delay(500)
                 }
             }

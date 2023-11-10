@@ -66,4 +66,25 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             }
         }
     }
+
+    override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, networkChain: NetworkChain) {
+        withContext(Dispatchers.IO) {
+            async {
+                val newNetworkBalance = networkBalanceApi
+                    .getNetworkCurrency(
+                        toAddress,
+                        "https://${networkChain.chainName}.g.alchemy.com/v2/${chainToApiKey(networkChain.chainName)}"
+                    )
+                tokenBalanceDao.upsertTokenBalances(
+                    listOf(
+                        TokenBalanceEntity(
+                            contractAddress = networkChain.chainId.toString(),
+                            chainId = networkChain.chainId,
+                            tokenBalance = newNetworkBalance
+                        )
+                    )
+                )
+            }
+        }
+    }
 }
