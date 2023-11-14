@@ -6,6 +6,7 @@ import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import javax.inject.Inject
 import kotlin.math.pow
 
@@ -14,10 +15,10 @@ class GetTokenAssetsByNetwork @Inject constructor(
     private val tokenBalanceRepository: TokenBalanceRepository
 ) {
 
-    operator fun invoke(networkChain: NetworkChain): Flow<List<TokenAsset>> =
+    operator fun invoke(chainId: Int = 0): Flow<List<TokenAsset>> =
         combine(
-            tokenBalanceRepository.getTokensBalances(networkChain.chainId),
-            tokenMetadataRepository.getTokensMetadata(networkChain.chainId)
+            tokenBalanceRepository.getTokensBalances(),
+            tokenMetadataRepository.getTokensMetadata()
         ) { balance, metadata ->
             val pairedList = balance.mapNotNull { tokenBalance ->
                 metadata.find {
@@ -26,7 +27,8 @@ class GetTokenAssetsByNetwork @Inject constructor(
                     Pair(tokenBalance, tokenMetadata)
                 }
             }
-            pairedList.map { (tokenBalance, tokenMetadata) ->
+            val tokenAssets = pairedList
+                .map { (tokenBalance, tokenMetadata) ->
                 TokenAsset(
                     address = tokenBalance.contractAddress,
                     chainId = tokenBalance.chainId,
@@ -37,5 +39,14 @@ class GetTokenAssetsByNetwork @Inject constructor(
                     decimals = tokenMetadata.decimals
                 )
             }
+
+            if(chainId != 0) {
+                tokenAssets.filter {
+                    it.chainId == chainId
+                }
+            } else {
+                tokenAssets
+            }
+
         }
 }

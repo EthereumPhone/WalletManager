@@ -14,5 +14,5 @@ interface TransferRepository {
     ): Flow<List<Transfer>>
 
     suspend fun refreshTransfers(address: String)
-    suspend fun refreshTransfersByNetwork(address: String, network: NetworkChain)
+    suspend fun refreshTransfersByNetwork(address: String, chainId: Int)
 }

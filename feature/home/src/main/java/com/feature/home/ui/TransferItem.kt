@@ -86,45 +86,40 @@ internal fun TransferListItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    modifier = modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+
+                Column(
+                    horizontalAlignment = Alignment.Start,
+
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
+                    Text(
 
-                    ) {
-                        Text(
+                        text = if(transfer.userSent) transfer.to else transfer.from,
+                        color = Color.White,//(0xFF9FA2A5),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Normal,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        modifier = Modifier.width(125.dp)
+                    )
+                    Text(
+                        text = chainToNetworkName(transfer.chainId),
+                        color = Color(0xFF9FA2A5)
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    val date = transfer.timeStamp//compareDate(transfer.timeStamp)
+                    Text(
+                            text = date
 
-                            text = if(transfer.userSent) transfer.to else transfer.from,
-                            color = Color.White,//(0xFF9FA2A5),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Normal,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            modifier = Modifier.width(125.dp)
-                        )
-                        Text(
-                            text = chainToNetworkName(transfer.chainId),
-                            color = Color(0xFF9FA2A5)
-                        )
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        Text(
-                            text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        val date = transfer.timeStamp//compareDate(transfer.timeStamp)
-                        Text(
-                                text = date
-
-                            ,color = Color(0xFF9FA2A5)
-                        )
-                    }
+                        ,color = Color(0xFF9FA2A5)
+                    )
                 }
             }
         }

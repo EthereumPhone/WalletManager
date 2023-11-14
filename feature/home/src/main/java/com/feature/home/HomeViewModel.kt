@@ -12,8 +12,11 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
 import com.core.domain.GetGroupedTokenAssets
+import com.core.domain.GetTokenAssetsByNetwork
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
+import com.core.domain.GetTransfersByNetwork
 import com.core.domain.GetTransfersUseCase
+import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -22,26 +25,32 @@ import com.core.model.UserData
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
-    getTransfersUseCase: GetTransfersUseCase,
-    getGroupedTokenAssets: GetGroupedTokenAssets,
-    private val updateTokensUseCase: UpdateTokensUseCase,
+    getTokenAssetsByNetwork: GetTokenAssetsByNetwork,
+    getTransfersByNetwork: GetTransfersByNetwork,
+    private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
@@ -49,7 +58,8 @@ class HomeViewModel @Inject constructor(
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
-    }.stateIn(
+    }
+        .stateIn(
         scope = viewModelScope,
         initialValue = WalletDataUiState.Loading,
         started = SharingStarted.WhileSubscribed(5_000)
@@ -57,16 +67,20 @@ class HomeViewModel @Inject constructor(
 
     val tokenAssetState: StateFlow<AssetUiState> =
         assetUiState(
-            getTokenBalancesWithMetadataUseCase,
-            networkBalanceRepository
+            getTokenAssetsByNetwork,
+            networkBalanceRepository,
+            userDataRepository
         ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AssetUiState.Loading
         )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val transferState: StateFlow<TransfersUiState> =
-        getTransfersUseCase()
+        userDataRepository.userData.flatMapLatest {
+            getTransfersByNetwork(it.walletNetwork.toInt())
+        }
             .map(TransfersUiState::Success)
             .stateIn(
                 scope = viewModelScope,
@@ -74,95 +88,81 @@ class HomeViewModel @Inject constructor(
                 initialValue = TransfersUiState.Loading
         )
 
-
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
-    private val _exchange = MutableStateFlow("")
-    val exchange: Flow<String> = _exchange
-
-    private val _currentChain = MutableStateFlow(0)
-    val currentChain: Flow<Int> = _currentChain
-
-
     fun refreshData() {
-        Log.d("refresh Started", "update started")
-
         viewModelScope.launch {
             _refreshState.value = true
-            val address = userDataRepository.userData.first()
+
             try {
-                transferRepository.refreshTransfers(address.walletAddress)
-                updateTokensUseCase(address.walletAddress)
+                withContext(Dispatchers.IO) {
+                    val userData = userDataRepository.userData.first()
+                    transferRepository.refreshTransfersByNetwork(userData.walletAddress, userData.walletNetwork.toInt())
+                    updateTokensByNetworkUseCase(userData.walletAddress, userData.walletNetwork.toInt())
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+                // Handle exceptions if needed
             }
+
             _refreshState.value = false
-        }
-    }
-
-    fun getExchange(symbol: String?) {
-        viewModelScope.launch {
-            try {
-                val listResult = ExchangeApi.retrofitService.getExchange(symbol)
-                _exchange.value = listResult.price
-            } catch (e: Exception) {
-                _exchange.value =  "Error: ${e.message}"
-            }
-
         }
     }
 }
 
 
-fun assetUiState(
-    getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
-    networkBalanceRepository: NetworkBalanceRepository
+  fun assetUiState(
+    getTokenAssetsByNetwork: GetTokenAssetsByNetwork,
+    networkBalanceRepository: NetworkBalanceRepository,
+    userDataRepository: UserDataRepository
 ): Flow<AssetUiState> {
+
     // observe erc20 tokens
-    val erc20Tokens: Flow<List<TokenAsset>> =
-        getTokenBalancesWithMetadataUseCase()
+    val erc20Tokens: Flow<List<TokenAsset>> = getTokenAssetsByNetwork()
+
 
     // observe network currency
-    val networkToken: Flow<List<TokenAsset>> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = if(name.contains("POLYGON")) "matic" else "eth",
-                        name = if(name.contains("POLYGON")) "matic" else "eth",
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
-            }
+      val networkToken: Flow<List<TokenAsset>> =
+          networkBalanceRepository.getNetworksBalance()
+              .map { balances ->
+                  balances.map {
+                      val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                      val isPolygon = name.contains("POLYGON")
+                      TokenAsset(
+                          address = it.contractAddress,
+                          chainId = it.chainId,
+                          symbol = if (isPolygon) "matic" else "eth",
+                          name = if (isPolygon) "matic" else "eth",
+                          balance = it.tokenBalance.toDouble(),
+                          decimals = 18
+                      )
+                  }
+              }
+
     return combine(
-        erc20Tokens,
-        networkToken,
-        ::Pair
-    ).asResult()
-        .map { tokenToTokeResult ->
-            when(tokenToTokeResult) {
-                is Result.Success -> {
-                    val (tokens, networkTokens) = tokenToTokeResult.data
-                    val filteredAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }
-                    if(filteredAssets.isEmpty()) {
-                        AssetUiState.Empty
-                    } else {
-                        AssetUiState.Success(filteredAssets)
+            erc20Tokens,
+            networkToken,
+            userDataRepository.userData,
+            ::Triple
+        ).asResult()
+            .mapLatest { tokenToTokeResult ->
+                when(tokenToTokeResult) {
+                    is Result.Success -> {
+                        val (tokens, networkTokens, userData) = tokenToTokeResult.data
+                        val allAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }
+                        val filteredAssets = allAssets.filter { it.chainId == userData.walletNetwork.toInt() }
+                        if(filteredAssets.isEmpty()) {
+                            AssetUiState.Empty
+                        } else {
+                            AssetUiState.Success(filteredAssets)
+                        }
                     }
-                }
-                is Result.Loading -> {
-                    AssetUiState.Loading
-                }
-                is Result.Error -> {
-                    AssetUiState.Error
+                    is Result.Loading -> AssetUiState.Loading
+                    is Result.Error -> AssetUiState.Error
                 }
             }
-        }
+
 }
 
 sealed interface AssetUiState {
@@ -175,6 +175,7 @@ sealed interface AssetUiState {
 }
 
 sealed interface TransfersUiState {
+    object Empty: TransfersUiState
     object Loading: TransfersUiState
     data class Success(val transfers: List<TransferItem>): TransfersUiState
 }
@@ -182,10 +183,4 @@ sealed interface TransfersUiState {
 sealed interface WalletDataUiState {
     object Loading: WalletDataUiState
     data class Success(val userData: UserData): WalletDataUiState
-}
-
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
 }

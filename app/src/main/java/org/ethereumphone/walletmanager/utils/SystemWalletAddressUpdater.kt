@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
@@ -25,15 +26,30 @@ class SystemWalletAddressUpdater @Inject constructor(
     fun startPeriodicUpdate() {
         if (!isUpdating) {
             isUpdating = true
+
             coroutineScope.launch {
                 while (isUpdating) {
                     val addressCheck = walletSDK.getAddress()
-                    val network = walletSDK.getChainId()
+                    val networkCheck = walletSDK.getChainId()
 
-                    if (addressCheck.isNotEmpty()) {
+                    val userData = userDataRepository.userData.first()
+
+                    if(userData.walletAddress != addressCheck) {
                         userDataRepository.setWalletAddress(addressCheck)
+                        Log.d("updater", "updated address")
                     }
-                    userDataRepository.setWalletNetwork(network.toString())
+
+                    if(userData.walletAddress == "") {
+                        userDataRepository.setWalletNetwork(networkCheck.toString())
+                    } else {
+                        if(userData.walletNetwork.toInt() != networkCheck) {
+                            userDataRepository.setWalletNetwork(networkCheck.toString())
+                            Log.d("updater", "updated network")
+                        }
+                    }
+
+
+
                     delay(500)
                 }
             }

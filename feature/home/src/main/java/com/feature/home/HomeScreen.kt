@@ -17,7 +17,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,12 +57,11 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val walletData: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+    val userData: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
-    val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
+    val localContext = LocalContext.current
 
     var updater by remember {mutableStateOf(true)}
 
@@ -74,15 +72,10 @@ internal fun HomeRoute(
     }
 
     HomeScreen(
-        walletData = walletData,
-        currentChain = currentChain,
+        userData = userData,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
         refreshState = refreshState,
-        currencyPrice = currencyPrice,
-        onCurrencyChange = viewModel::getExchange,
-        onAddressClick = {
-        },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
@@ -91,31 +84,18 @@ internal fun HomeRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
-    walletData: WalletDataUiState,
-    currentChain: Int,
-    //getCurrentChain: (Context) -> Unit,
+    userData: WalletDataUiState,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
     refreshState: Boolean,
-    currencyPrice: String,
-    onCurrencyChange: (String) -> Unit,
-    onAddressClick: () -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-
-
-    var showSheet by remember { mutableStateOf(false) }
-    val modalSheetState = rememberModalBottomSheetState(true)
-    // Declaring Coroutine scope
-    val coroutineScope = rememberCoroutineScope()
 
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
@@ -129,8 +109,6 @@ internal fun HomeScreen(
     }
 
 
-
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.spacedBy(56.dp),
@@ -141,8 +119,7 @@ internal fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
         AddressBar(
-            walletData,
-            onAddressClick,
+            userData,
             icon = {
                 IconButton(
                     onClick = {
@@ -168,44 +145,11 @@ internal fun HomeScreen(
         )
 
         WalletTabRow(
-            transfersUiState = transfersUiState,
-            assetsUiState = assetsUiState,
-            refreshState = refreshState,
+            transfersUiState,
+            assetsUiState,
+            refreshState,
             onRefresh = { onRefresh() } ,
         )
-
-
-        if(showSheet) {
-            ModalBottomSheet(
-                containerColor= Color(0xFF24303D),
-                contentColor= Color.White,
-
-                onDismissRequest = {
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
-                    }
-                },
-                sheetState = modalSheetState
-            ) {
-
-//                NetworkPickerSheet(
-//                    balancesState = balances,
-//                    onSelectAsset = {
-//                        //onChangeAssetClicked(it)
-//                        //hides ModelBottomSheet
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-//                )
-            }
-        }
-
-
     }
 }
 
@@ -213,7 +157,7 @@ internal fun HomeScreen(
 @Composable
 fun PreviewHomeScreen() {
     HomeScreen(
-        walletData = WalletDataUiState.Success(UserData("0x123...123", "12")),
+        userData = WalletDataUiState.Success(UserData("0x123...123", "TEst")),
         transfersUiState = TransfersUiState.Loading,
         assetsUiState = AssetUiState.Success(
 
@@ -237,14 +181,9 @@ fun PreviewHomeScreen() {
 
         ),
         refreshState = false,
-        onAddressClick = { },
         navigateToReceive = { },
         navigateToSend = { },
         navigateToSwap = { },
         onRefresh = { },
-        onCurrencyChange = {},
-        currencyPrice = "1650.00",
-        currentChain = 1,
-        //getCurrentChain = {}
     )
 }

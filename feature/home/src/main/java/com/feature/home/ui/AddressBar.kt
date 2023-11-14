@@ -49,7 +49,6 @@ import java.util.Calendar
 @Composable
 internal fun AddressBar(
     walletDataUiState: WalletDataUiState,
-    onclick: () -> Unit,
     icon: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -79,7 +78,6 @@ internal fun AddressBar(
             }
             Box(
                 modifier = Modifier
-                    .clickable { onclick() },
             ){
                 val address = when(walletDataUiState) {
                     is WalletDataUiState.Loading -> {
@@ -159,7 +157,6 @@ private fun copyTextToClipboard(context: Context, text: String) {
 fun previewAddressBar() {
     AddressBar(
         WalletDataUiState.Success(UserData("","")),
-        { },
         icon = {
             IconButton(
                 onClick = {

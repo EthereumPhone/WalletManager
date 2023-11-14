@@ -11,13 +11,12 @@ import javax.inject.Inject
 
 class GetTransfersByNetwork @Inject constructor(
     private val transferRepository: TransferRepository
-
 ) {
-    operator fun invoke(networkChain: NetworkChain): Flow<List<TransferItem>> =
-        transferRepository.getTransfers(networkChain.chainId)
+    operator fun invoke(chainId: Int): Flow<List<TransferItem>> =
+        transferRepository.getTransfers()
             .map { items ->
                 val sortedItems = items.sortedBy { it.blockTimestamp }
-                sortedItems.map {
+                val transferItems = sortedItems.map {
                     val networkCurrency = if (it.chainId == 137) "MATIC" else "ETH"
                     val timeStamp = it.blockTimestamp
                         .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -32,6 +31,14 @@ class GetTransfersByNetwork @Inject constructor(
                         userSent = it.userIsSender,
                         txHash = it.txHash
                     )
+                }
+
+                if(chainId != 0) {
+                    transferItems.filter {
+                        it.chainId == chainId
+                    }
+                } else {
+                    transferItems
                 }
             }
 }
