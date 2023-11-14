@@ -49,6 +49,7 @@ class AlchemyTransferRepository @Inject constructor(
                 .filter { it != NetworkChain.BASE }
                 .map { network ->
                 val apiKey = chainToApiKey(network.chainName)
+                    // outbound transactions
                 async {
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
@@ -67,6 +68,7 @@ class AlchemyTransferRepository @Inject constructor(
                     transferDao.insertTransfers(transfers)
                 }
 
+                    // inbound transactions
                 async {
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
@@ -85,6 +87,52 @@ class AlchemyTransferRepository @Inject constructor(
                     transferDao.insertTransfers(transfers)
                 }
             }
+        }
+    }
+
+    override suspend fun refreshTransfersByNetwork(address: String, chainId: Int) {
+        val network = NetworkChain.getNetworkByChainId(chainId)
+        val apiKey = network?.let { chainToApiKey(it.chainName) }
+
+        withContext(Dispatchers.IO) {
+
+            // inbound transactions
+            async {
+                val transfers = transfersApi.getTransfers(
+                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
+                    requestBody = NetworkTransferRequestBody(
+                        params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                            fromAddress = address,
+                            category = listOf("external")
+                        ))
+                    )
+                ).result.transfers.map {
+                    it.asEntity(
+                        chainId = network.chainId,
+                        userIsSender = address.equals(it.from,true),
+                    )
+                }
+                transferDao.insertTransfers(transfers)
+            }
+            // outbound transactions
+            async {
+                val transfers = transfersApi.getTransfers(
+                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
+                    requestBody = NetworkTransferRequestBody(
+                        params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                            toAddress = address,
+                            category = listOf("external")
+                        ))
+                    )
+                ).result.transfers.map {
+                    it.asEntity(
+                        chainId = network!!.chainId,
+                        userIsSender = address.equals(it.from,true),
+                    )
+                }
+                transferDao.insertTransfers(transfers)
+            }
+
         }
     }
 }

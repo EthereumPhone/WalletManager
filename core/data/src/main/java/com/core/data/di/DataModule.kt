@@ -61,10 +61,10 @@ object DataModule {
         moshi: Moshi
     ): TokenBalanceApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
 
         val client: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+            //.addInterceptor(logging)
             .build()
 
         return Retrofit.Builder()
@@ -87,10 +87,10 @@ object DataModule {
         moshi: Moshi
     ): TokenMetadataApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
 
         val client: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+            //.addInterceptor(logging)
             .build()
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -106,10 +106,10 @@ object DataModule {
         moshi: Moshi
     ): TransfersApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
 
         val client: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+            //.addInterceptor(logging)
             .build()
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -81,11 +82,6 @@ internal fun WalletTabRow(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
-//    currencyPrice: String,
-//    onCurrencyChange: (String) -> Unit,
-    //showDialog: : () -> Unit
 ) {
 
 
@@ -127,7 +123,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress)
+                TabItems.TRANSFERS -> TransferList(transfersUiState)
                 TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
@@ -160,47 +156,30 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
             }
         }
         is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-//                Card(
-//                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
-//                ) {
-                    LazyColumn {
-                        groupedAssets.forEach { (assetName, assetList) ->
-                            item(key = assetName) {
-                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-                        }
+                LazyColumn {
+                    items(assetsUiState.assets) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        AssetItem(asset = it)
                     }
-                //}
+                }
             }
         }
-
-        else -> {}
     }
-}
-
-fun formatString(input: String): String {
-    return input.uppercase()
 }
 
 @Composable
 private fun TransferList(
     transfersUiState: TransfersUiState,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
 ) {
     val scrollState = rememberScrollState()//Scrollstate for fading edges
 
     when (transfersUiState) {
         is TransfersUiState.Success ->
-            if(transfersUiState.transfers.isNotEmpty()) {
-
                 LazyColumn(
                     modifier = Modifier
                         .verticalFadingEdge(
@@ -213,38 +192,33 @@ private fun TransferList(
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
-                             transfer.userSent = userAddress.equals(transfer.from,true)
                             TransferListItem(
                                 transfer = transfer,
 
                                 onCardClick = {
 
-                                    onTxOpen(
-                                        transfer
-                                    )
-                                    //showTransferInfoDialog.value = true
-
                                 }
                             )
                         }
                     }
-                }
-            } else {
-                LazyColumn {
-                    item { Box(
-                        modifier = Modifier
-                            .fillParentMaxSize()
+            }
+        is TransfersUiState.Loading -> {  }
+        is TransfersUiState.Empty -> {
+            LazyColumn {
+                item {
+                    Box(
+                    modifier = Modifier
+                        .fillParentMaxSize()
                     ) {
                         Text(
                             text = "No Transfers found",
                             color = Color(0xFF9FA2A5),
                             modifier = Modifier.align(Alignment.Center)
                         )
-                    } }
+                    }
                 }
             }
-        is TransfersUiState.Loading -> {  }
-        else -> {}
+        }
     }
 }
 
