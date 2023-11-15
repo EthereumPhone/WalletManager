@@ -71,6 +71,7 @@ import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Float.min
 import kotlin.math.roundToInt
@@ -80,9 +81,14 @@ import kotlin.math.roundToInt
 internal fun WalletTabRow(
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
-    refreshState: Boolean,
     onRefresh: () -> Unit,
 ) {
+
+    var refreshState by remember {
+        mutableStateOf(false)
+    }
+
+    val refreshScope = rememberCoroutineScope()
 
 
     val tabItems = remember { TabItems.values().toList() }
@@ -95,7 +101,14 @@ internal fun WalletTabRow(
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
-        onRefresh = { onRefresh() }
+        onRefresh = {
+            refreshScope.launch {
+                refreshState = true
+                delay(1000)
+                onRefresh()
+                refreshState = false
+            }
+        }
     )
 
     TabRow(

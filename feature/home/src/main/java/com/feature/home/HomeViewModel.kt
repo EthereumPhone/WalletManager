@@ -88,12 +88,9 @@ class HomeViewModel @Inject constructor(
                 initialValue = TransfersUiState.Loading
         )
 
-    private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
     fun refreshData() {
         viewModelScope.launch {
-            _refreshState.value = true
 
             try {
                 withContext(Dispatchers.IO) {
@@ -106,7 +103,6 @@ class HomeViewModel @Inject constructor(
                 // Handle exceptions if needed
             }
 
-            _refreshState.value = false
         }
     }
 }

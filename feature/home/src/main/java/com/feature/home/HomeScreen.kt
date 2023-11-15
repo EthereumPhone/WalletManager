@@ -60,7 +60,6 @@ internal fun HomeRoute(
     val userData: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
 
     var updater by remember {mutableStateOf(true)}
@@ -75,7 +74,6 @@ internal fun HomeRoute(
         userData = userData,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
-        refreshState = refreshState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
@@ -89,7 +87,6 @@ internal fun HomeScreen(
     userData: WalletDataUiState,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
-    refreshState: Boolean,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
@@ -147,7 +144,6 @@ internal fun HomeScreen(
         WalletTabRow(
             transfersUiState,
             assetsUiState,
-            refreshState,
             onRefresh = { onRefresh() } ,
         )
     }
@@ -180,7 +176,6 @@ fun PreviewHomeScreen() {
 
 
         ),
-        refreshState = false,
         navigateToReceive = { },
         navigateToSend = { },
         navigateToSwap = { },
