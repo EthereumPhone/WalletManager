@@ -175,7 +175,7 @@ fun ReceiveScreen(
 
                 ) {
                     Image(
-                        painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+                        painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
                         contentDescription = "wallet address QR",
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
@@ -214,7 +214,7 @@ fun TestQr() {
 
     ) {
         Image(
-            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+            painter = rememberQrBitmapPainter(content = "ethereum:fake_addr"),
             contentDescription = "wallet address QR",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.size(135.dp),
