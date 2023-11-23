@@ -51,16 +51,17 @@ import java.util.Calendar
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun AddressBar(
-    userData: UserData,
-    onclick: () -> Unit,
+//    userData: UserData,
+//    onclick: () -> Unit,
     icon: @Composable () -> Unit,
-    currentChain: Int,
-    getCurrentChain: (Context) -> Unit,
+//    currentChain: Int,
+//    getCurrentChain: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     Column (
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ){
         //Address
         Row (
@@ -82,15 +83,15 @@ internal fun AddressBar(
             }
             Box(
                 modifier = Modifier
-                    .clickable { onclick() },
+//                    .clickable { onclick() },
             ){
                 Text(
-                    modifier = Modifier
-                        .clickable { onclick() },
-                    text = truncateText(userData.walletAddress),
-                    fontSize = 20.sp,
+                    modifier = Modifier,
+//                        .clickable { onclick() },
+                    text = "Wallet", //truncateText(userData.walletAddress),
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF9FA2A5)
+                    color = Color.White//(0xFF9FA2A5)
                 )
             }
             icon()
@@ -98,10 +99,10 @@ internal fun AddressBar(
 
 
         //gets current Chain
-        getCurrentChain(LocalContext.current)
+//        getCurrentChain(LocalContext.current)
 
         //Networkpill
-        var chainName = when(currentChain) {
+        var chainName = when(5) {//(currentChain) {
             1 -> "Mainnet"
             5 -> "Goerli"
             10 -> "Optimism"
@@ -109,19 +110,47 @@ internal fun AddressBar(
             42161 -> "Arbitrum"
             else -> "Mainnet"
         }
+
+        var chainColor = when(5) {
+            1 -> Color(0xFF5667FF)
+            5 -> Color(0xFFF0EAD6)
+            10 -> Color(0xFFE53939)
+            137 -> Color(0xFF7418F2)
+            42161 -> Color(0xFF49A9F2)
+            else -> Color(0xFF5667FF)
+        }
         Surface (
             modifier = Modifier
                 .clip(CircleShape),
-            color = Color(0xFF24303D),
+            color = Color(0xFF262626),
             contentColor = Color.White
         ) {
-            Text(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                text = chainName,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
+            Row (
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier.padding(4.dp,4.dp)
+            ){
+                Box(
+                    modifier = modifier.clip(CircleShape)
+                        .size(24.dp)
+                        .background(chainColor)
+
+                ){}
+                Text(
+                    text = chainName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+                Text(
+                    modifier = modifier.padding(end=12.dp),
+                    text = truncateText("0x9b3454195c85b2865A0c456FBAa7CE01b4f29381"),//userData.walletAddress),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
         }
     }
 
@@ -129,7 +158,7 @@ internal fun AddressBar(
 
 private fun truncateText(text: String): String {
     if (text.length > 19) {
-        return text.substring(0, 5) + "..." + text.takeLast(3) + " "
+        return text.substring(0, 5) + "..." //+ text.takeLast(3) + " "
     }
     return text
 }
@@ -138,8 +167,8 @@ private fun truncateText(text: String): String {
 @Composable
 fun previewAddressBar() {
     AddressBar(
-        UserData("0x123123123123123123"),
-        { },
+//        UserData("0x123123123123123123"),
+//        { },
         icon = {
             IconButton(
                 onClick = {
@@ -155,10 +184,10 @@ fun previewAddressBar() {
                 )
             }
         },
-        currentChain = 5,
-        getCurrentChain = {
-
-        }
+//        currentChain = 5,
+//        getCurrentChain = {
+//
+//        }
 
     )
 }

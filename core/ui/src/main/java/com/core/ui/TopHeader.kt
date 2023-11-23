@@ -72,7 +72,7 @@ fun TopHeader(
             modifier = modifier.weight(1f),
             textAlign = TextAlign.Center,
             text = title,
-            fontSize = 20.sp,
+            fontSize = 28.sp,
             color = Color.White,
             fontWeight = FontWeight.SemiBold
         )
@@ -98,7 +98,7 @@ fun TopHeader(
 //                    }
 //
 //            )
-            icon()
+            //icon()
         }
     }
 }

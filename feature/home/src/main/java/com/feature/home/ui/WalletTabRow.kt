@@ -1,5 +1,6 @@
 package com.feature.home.ui
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -9,12 +10,14 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 
 
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -75,361 +78,194 @@ import kotlinx.coroutines.launch
 import java.lang.Float.min
 import kotlin.math.roundToInt
 
+@SuppressLint("SuspiciousIndentation")
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 internal fun WalletTabRow(
-    transfersUiState: TransfersUiState,
-    assetsUiState: AssetUiState,
-    refreshState: Boolean,
-    onRefresh: () -> Unit,
-    onDelete: (TransferItem) -> Unit,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
+//    transfersUiState: TransfersUiState,
+//    assetsUiState: AssetUiState,
+//    refreshState: Boolean,
+//    onRefresh: () -> Unit,
+//    onDelete: (TransferItem) -> Unit,
+//    onTxOpen: (TransferItem) -> Unit,
+//    userAddress: String,
 ) {
 
 
-    val tabItems = remember { TabItems.values().toList() }
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        initialPageOffsetFraction = 0f
-    ) {
-        tabItems.size
-    }
+//    val tabItems = remember { TabItems.values().toList() }
+//    val pagerState = rememberPagerState(
+//        initialPage = 0,
+//        initialPageOffsetFraction = 0f
+//    ) {
+//        tabItems.size
+//    }
 
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = refreshState,
-        onRefresh = {
-            onRefresh()
-        }
+//    val pullRefreshState = rememberPullRefreshState(
+//        refreshing = refreshState,
+//        onRefresh = {
+//            onRefresh()
+//        }
+//    )
+
+
+    val assets = mutableListOf(
+        AssetItem(
+            "Ether",
+            mutableListOf(
+                Asset(
+                    1,
+                    0.1,
+                    201.51
+                )
+            ),
+            "ETH"
+        ),
+        AssetItem(
+            "DAI",
+            mutableListOf(
+                Asset(
+                    1,
+                    1234.56 ,
+                    1234.56
+                )
+            ),
+            "DAI"
+        ),
+        AssetItem(
+            "Dogecoin",
+            mutableListOf(
+                Asset(
+                    1,
+                    50000.0,
+                    3896.67
+                )
+            ),
+            "DOGE"
+        ),
+        AssetItem(
+            "WETH",
+            mutableListOf(
+                Asset(
+                    1,
+                    0.41,
+                    826.20
+                ),
+                Asset(
+                    2,
+                    0.2,
+                    403.02
+                )
+
+            ),
+            "WETH"
+        )
     )
 
-    TabRow(
-        modifier = Modifier
-            .clip(RoundedCornerShape(30.dp))
-            .background(primaryVariant),
-        backgroundColor = primaryVariant,
-        selectedTabIndex = pagerState.currentPage,
-        indicator = { tabPositions ->
-            WmTabIndicator(tabPositions, pagerState)
-        }
-    ) {
-        tabItems.forEachIndexed { index, title ->
-            TabRowItem(
-                index = index,
-                tabName = title.name,
-                pagerState = pagerState
-            )
-        }
-    }
 
-    Box {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.pullRefresh(pullRefreshState)
-        ) { page ->
-            when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress, onDelete = onDelete)
-                TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
-            }
-        }
-
-        PullRefreshIndicator(
-            refreshing = refreshState,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
+        AssetList(
+//            assetsUiState
+            assets
         )
-    }
+
+//        PullRefreshIndicator(
+//            refreshing = refreshState,
+//            state = pullRefreshState,
+//            modifier = Modifier.align(Alignment.TopCenter)
+//        )
+
 }
 
-@Composable
-private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, onCurrencyChange: (String) -> Unit) {
-    when (assetsUiState) {
-        is AssetUiState.Loading -> {  }
-        is AssetUiState.Error -> {  }
-        is AssetUiState.Empty -> {
-            Box(
-                modifier = Modifier
-                    //.background(primaryVariant)
-                    .fillMaxSize()
-            ) {
-                Text(
-                    text = "No assets found",
-                    color = placeHolder,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-        is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
+ data class Asset(
+    val chain: Int,
+    val amount: Double,
+    val fiatAmount: Double,
 
-            Box(
+)
+
+ data class AssetItem(
+    val assetname: String,
+    val assets: List<Asset>,
+    val abbriviation: String
+)
+
+@Composable
+private fun AssetList(
+//    assetsUiState: AssetUiState,
+    list: List<AssetItem>
+){
+                Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
             ) {
 //                Card(
 //                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
 //                ) {
-                    LazyColumn {
-                        groupedAssets.forEach { (assetName, assetList) ->
-                            item(key = assetName) {
-                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
+                    LazyColumn(
+                        modifier = Modifier,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        list.forEach { item ->
+                            item(key = item.assetname) {
+
+                                AssetListItem(title = item.abbriviation, assets = item.assets)
+                                //AssetExpandableItem(title = formatString(assetName), assets = assetAmount)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
                 //}
             }
-        }
 
-        else -> {}
-    }
+
+//, currencyPrice: String, onCurrencyChange: (String) -> Unit) {
+//    when (assetsUiState) {
+//        is AssetUiState.Loading -> {  }
+//        is AssetUiState.Error -> {  }
+//        is AssetUiState.Empty -> {
+//            Box(
+//                modifier = Modifier
+//                    //.background(primaryVariant)
+//                    .fillMaxSize()
+//            ) {
+//                Text(
+//                    text = "No assets found",
+//                    color = placeHolder,
+//                    textAlign = TextAlign.Center,
+//                    modifier = Modifier.align(Alignment.Center)
+//                )
+//            }
+//        }
+//        is AssetUiState.Success -> {
+//            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//            ) {
+////                Card(
+////                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
+////                ) {
+//                    LazyColumn {
+//                        groupedAssets.forEach { (assetName, assetList) ->
+//                            item(key = assetName) {
+//                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
+//                                Spacer(modifier = Modifier.height(8.dp))
+//                            }
+//                        }
+//                    }
+//                //}
+//            }
+//        }
+//
+//        else -> {}
+//    }
 }
 
 fun formatString(input: String): String {
     return input.uppercase()
 }
 
-@Composable
-private fun TransferList(
-    transfersUiState: TransfersUiState,
-    onTxOpen: (TransferItem) -> Unit,
-    onDelete: (TransferItem) -> Unit,
-    userAddress: String,
-) {
-    val scrollState = rememberScrollState()//Scrollstate for fading edges
 
-
-    when (transfersUiState) {
-        is TransfersUiState.Success ->
-
-
-
-
-            if(transfersUiState.transfers.isNotEmpty()) {
-                //deletes Pending Txs from database
-                deletePendingTransfers(transfersUiState.transfers, onDelete)
-                //Log.d("deletependingTransfer ", "itas in ")
-                LazyColumn(
-                    modifier = Modifier
-                        .verticalFadingEdge(
-                            scrollState,
-                            25.dp,
-                            Color(0xFF1E2730)
-                        )
-                        .fillMaxSize()
-                ) {
-                    transfersUiState.transfers.reversed().forEach { transfer ->
-                        item(key = transfer.timeStamp) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                             transfer.userSent = userAddress.equals(transfer.from,true)
-                            Log.e("Tx Pending", "Pending ${transfer.ispending}, tranfer val: ${transfer.value}")
-                            TransferListItem(
-                                transfer = transfer,
-
-                                onCardClick = {
-
-                                    onTxOpen(
-                                        transfer
-                                    )
-
-
-                                }
-                            )
-                        }
-                    }
-                }
-            } else {
-                LazyColumn {
-                    item { Box(
-                        modifier = Modifier
-                            .fillParentMaxSize()
-                    ) {
-                        Text(
-                            text = "No Transfers found",
-                            color = Color(0xFF9FA2A5),
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    } }
-                }
-            }
-        is TransfersUiState.Loading -> {  }
-        else -> {}
-    }
-}
-
-fun deletePendingTransfers(
-    transfers: List<TransferItem>,
-    onDelete: (TransferItem) -> Unit,
-    ){
-    Log.d("deletependingTx ", "itas in ")
-
-    val completetransfers = transfers
-    //get pending Transfers
-    val completeTxafter = mutableListOf<TransferItem>()
-    completetransfers.reversed().map {
-        Log.d(" beforepending.tx) ", "${it.txHash} ${it.to} ${it.value} ")
-        if (it.ispending){ //if entity is pending
-            Log.d("pending.tx) ", "${it.txHash} ${it.to} ${it.value} ")
-            //compare current Entity completed tx after that entity
-            if (completeTxafter.isNotEmpty()){//if not empty
-                //if .it is the same to a completed tx
-                val pendingTx = it
-                completeTxafter.reversed().map{
-                    //compare with to, value, chainid, sent
-                    if (pendingTx.userSent &&
-                        pendingTx.to == it.to &&
-                        pendingTx.value == it.value &&
-                        pendingTx.chainId == it.chainId){
-
-                        Log.d("deleteTransfer ", "normal ${it.txHash} - ${it.to} - ${it.value} - ${it.chainId} - sent ${it.userSent}")
-                        Log.d("deleteTransfer ", "pending ${pendingTx.txHash} - ${pendingTx.to} - ${pendingTx.value} - ${pendingTx.chainId} - time ${pendingTx.userSent} ")
-                        //transferDao.deleteTransfer(it)//if the same -> delete pending transfer
-                        onDelete(pendingTx)
-                    }
-                }
-            } else {
-
-            }
-
-
-        }else{
-            //if not get complete txs after pending tx
-            Log.d("completeTxafter.add(it) ", "add ${it.txHash} ${it.to} ${it.value} ")
-            completeTxafter.add(it)
-        }
-
-    }
-
-}
-
-
-/**
- * Own Modifier for fading edges
- */
-fun Modifier.verticalFadingEdge(
-    scrollState: ScrollState,
-    length: Dp,
-    edgeColor: Color? = null,
-) = composed(
-    debugInspectorInfo {
-        name = "length"
-        value = length
-    }
-) {
-    val color = edgeColor ?: MaterialTheme.colors.surface
-
-    drawWithContent {
-        val lengthValue = length.toPx()
-        val scrollFromTop  by derivedStateOf { scrollState.value }
-        val scrollFromBottom by derivedStateOf { scrollState.maxValue - scrollState.value }
-
-        val topFadingEdgeStrength = lengthValue * (scrollFromTop / lengthValue).coerceAtMost(1f)
-
-        val bottomFadingEdgeStrength = lengthValue * (scrollFromBottom / lengthValue).coerceAtMost(1f)
-
-
-
-        drawContent()
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    color,
-                    Color.Transparent,
-                ),
-                startY = 0f,
-                endY = topFadingEdgeStrength,
-            ),
-            size = Size(
-                this.size.width,
-                topFadingEdgeStrength
-            ),
-        )
-
-
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    color,
-                ),
-                startY = size.height - bottomFadingEdgeStrength,
-                endY = size.height,
-            ),
-            topLeft = Offset(x = 0f, y = size.height - bottomFadingEdgeStrength),
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun TabRowItem(
-    index: Int,
-    tabName: String,
-    pagerState: PagerState
-) {
-    val coroutineScope = rememberCoroutineScope()
-
-    val isSelected = index == pagerState.currentPage
-
-    val color by animateColorAsState(
-        targetValue = if(isSelected) primaryVariant else primary,
-        animationSpec = tween(durationMillis = 300),
-        label = ""
-    )
-
-    Tab(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .zIndex(2f),
-        text = {
-            Text(
-                text = tabName,
-                color = color
-            )
-        },
-        selected = isSelected,
-        onClick = {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(index)
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun WmTabIndicator(
-    tabPositions: List<TabPosition>,
-    pagerState: PagerState
-) {
-
-
-    val offsetTransition by animateDpAsState(
-        targetValue = tabPositions[pagerState.currentPage].left,
-        label = ""
-    )
-    val offsetPx = with(LocalDensity.current) { offsetTransition.toPx() }
-
-    Box(
-        Modifier
-            .offset {
-                IntOffset(offsetPx.roundToInt(), 0)
-            }
-            .wrapContentSize(align = Alignment.BottomStart)
-            .width(tabPositions[pagerState.currentPage].width)
-            .padding(2.dp)
-            .fillMaxSize()
-            .background(color = Color(0xFFFFFFFF), RoundedCornerShape(50))
-            .border(BorderStroke(2.dp, Color(0xFFFFFFFF)), RoundedCornerShape(50))
-            .zIndex(1f)
-    )
-}
-
-enum class TabItems {
-    TRANSFERS,
-    ASSETS
-}
 
 @Composable
 @Preview
@@ -456,53 +292,66 @@ fun PreviewWalletTabRow() {
 //            }
 //        )
 //    }
+
+    val assets = mutableListOf(
+        AssetItem(
+            "Ether",
+            mutableListOf(
+                Asset(
+                    1,
+                    0.1,
+                    201.51
+                )
+            ),
+            "ETH"
+        ),
+        AssetItem(
+            "DAI",
+            mutableListOf(
+                Asset(
+                    1,
+                    1234.56 ,
+                    1234.56
+                )
+            ),
+            "DAI"
+        ),
+        AssetItem(
+            "Dogecoin",
+            mutableListOf(
+                Asset(
+                    1,
+                    50000.0,
+                    3896.67
+                )
+            ),
+            "DOGE"
+        ),
+        AssetItem(
+            "WETH",
+            mutableListOf(
+                Asset(
+                    1,
+                    0.41,
+                    826.20
+                ),
+                Asset(
+                    2,
+                    0.2,
+                    403.02
+                )
+
+            ),
+            "WETH"
+        )
+    )
+
+    Box {
+        AssetList(
+//            assetsUiState
+            assets
+        )
+    }
+
 }
 
-@Composable
-@Preview
-fun PreviewEmptyWalletTabRow() {
-
-//    var txInfo by remember { mutableStateOf(
-//        TransferItem(
-//            chainId = 1,
-//            address = "",
-//            asset = "",
-//            value = "",
-//            timeStamp = "",
-//            userSent = true
-//        )
-//    ) }
-//
-//    Column(
-//        modifier = Modifier.fillMaxSize()
-//    ) {
-//        WalletTabRow(
-//            TransfersUiState.Success(
-//                listOf(
-//                    TransferItem(
-//                        1,
-//                        "0x123123123123123123123123",
-//                        "ETH",
-//                        "1.5445",
-//                        "12:12:12",
-//                        true
-//                    ),
-//                            TransferItem(
-//                            137,
-//                    "0x123123123123123123123123",
-//                    "MATIC",
-//                    "1.00",
-//                    "12:12:12",
-//                    true
-//                )
-//                )
-//            ),
-//            AssetUiState.Empty,
-//            false,
-//            {},
-//            onTxOpen = {
-//                txInfo = it
-//            }
-//        )
-//    }
-}

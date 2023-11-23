@@ -147,11 +147,11 @@ internal fun TransferListItem(
                             horizontalAlignment = Alignment.End
                         ) {
 
-                            Text(
-                                text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+//                            Text(
+//                                text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
+//                                fontSize = 18.sp,
+//                                fontWeight = FontWeight.SemiBold
+//                            )
 
 
                             val date = transfer.timeStamp//compareDate(transfer.timeStamp)

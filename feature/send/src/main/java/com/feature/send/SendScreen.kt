@@ -75,7 +75,7 @@ import com.example.ethoscomponents.components.NumPad
 import com.feature.send.ui.NetworkPickerSheet
 import com.core.ui.SelectedNetworkButton
 import com.feature.send.ui.TextToggleButton
-import com.feature.send.ui.ethOSTextField
+
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
 import kotlinx.coroutines.CoroutineScope
@@ -98,6 +98,7 @@ import java.math.BigInteger
 import java.text.DecimalFormat
 import java.util.Currency
 import com.core.database.model.TransferEntity
+import com.feature.send.ui.ethOSCenterTextField
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import java.util.Random
@@ -131,153 +132,153 @@ fun SendRoute(
 
     SendScreen(
         modifier = Modifier,
-        onBackClick = onBackClick,
-        initialAddress = initialAddress,
-        balances = balances,
-        currencyPrice = currencyprice,
-        onChangeAssetClicked = viewModel::changeSelectedAsset,
-        onToAddressChanged= viewModel::changeToAddress,
-        onCurrencyChange = viewModel::getExchange,
-        sendTransaction = { sendData ->
-
-            val amount = sendData.amount.toString()
-            var address = sendData.address
-            val chainid = sendData.chainId
-            //TODO: Replace with actual method to get rpcUrl
-            val chainName = when(chainid) {
-                1 -> "eth-mainnet"
-                5 -> "eth-goerli"
-                10 -> "opt-mainnet"
-                137 -> "polygon-mainnet"
-                42161 -> "arb-mainnet"
-                else -> "eth-mainnet"
-            }
-
-            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
-
-            if (chainid == 137) {
-                rpcurl = "https://rpc.ankr.com/polygon"
-            }
-
-            println("RPC: $rpcurl")
-
-            Log.e("not complete","$txComplete")
-            // Check if phone is connected to internet using NetworkManager
-            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
-            val activeNetwork = connectivityManager?.activeNetwork
-            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
-            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-
-            if(hasInternet) {
-
-
-                CoroutineScope(Dispatchers.IO).launch {
-
-
-
-                    val web3jInstance = Web3j.build(HttpService(rpcurl))
-
-                    val wallet = WalletSDK(
-                        context = context,
-                        web3jInstance = web3jInstance
-                    )
-
-                    if(wallet.getChainId() != chainid){
-                        wallet.changeChain(chainid,rpcurl)
-                    }
-
-                    // TODO: Find out why polygon transaction is underpriced
-                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
-
-
-                    var res = try {
-                         wallet.sendTransaction(
-                            to = address,
-                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-                            data = "",
-                            gasPrice = gasPrice.toString()
-                         )
-                    } catch (exception: NullPointerException) {
-                        "error"
-                    }
-
-                    Log.e("Test",res)
-                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-                    println(res)
-                    if(res != "decline" && res != "error"){
-                        //onBackClick()
-                        (context as Activity).runOnUiThread {
-                            //TODO: Snackbar
-                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
-                        }
-
-                        //TODO: put pending transfer into db
-                        try {
-                            Log.d("insert tx", "itas in ")
-                            viewModel.insertPendingTransfer(
-                                transfer = TransferEntity(
-                                    uniqueId = (0..100).random().toString(),
-                                    asset = "",
-                                    chainId = chainid,
-                                    blockNum = (100..200).random().toString(),
-                                    category =  "external",
-                                    erc1155Metadata = emptyList(),
-                                    erc721TokenId = "",
-                                    fromaddress = userAddress,
-                                    hash =  (200..300).random().toString(),
-                                    rawContract = RawContract(
-                                        address = "",
-                                        decimal = "",
-                                        value = ""
-                                    ),
-                                    toaddress = address,
-                                    tokenId =  "",
-                                    value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
-                                    blockTimestamp = Clock.System.now(),
-                                    userIsSender =  true,
-                                    ispending = true
-
-                                )
-                            )
-
-                        }catch (exception: NullPointerException) {
+//        onBackClick = onBackClick,
+//        initialAddress = initialAddress,
+//        balances = balances,
+//        currencyPrice = currencyprice,
+//        onChangeAssetClicked = viewModel::changeSelectedAsset,
+//        onToAddressChanged= viewModel::changeToAddress,
+//        onCurrencyChange = viewModel::getExchange,
+//        sendTransaction = { sendData ->
+//
+//            val amount = sendData.amount.toString()
+//            var address = sendData.address
+//            val chainid = sendData.chainId
+//            //TODO: Replace with actual method to get rpcUrl
+//            val chainName = when(chainid) {
+//                1 -> "eth-mainnet"
+//                5 -> "eth-goerli"
+//                10 -> "opt-mainnet"
+//                137 -> "polygon-mainnet"
+//                42161 -> "arb-mainnet"
+//                else -> "eth-mainnet"
+//            }
+//
+//            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
+//
+//            if (chainid == 137) {
+//                rpcurl = "https://rpc.ankr.com/polygon"
+//            }
+//
+//            println("RPC: $rpcurl")
+//
+//            Log.e("not complete","$txComplete")
+//            // Check if phone is connected to internet using NetworkManager
+//            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
+//            val activeNetwork = connectivityManager?.activeNetwork
+//            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+//            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+//
+//            if(hasInternet) {
+//
+//
+//                CoroutineScope(Dispatchers.IO).launch {
+//
+//
+//
+//                    val web3jInstance = Web3j.build(HttpService(rpcurl))
+//
+//                    val wallet = WalletSDK(
+//                        context = context,
+//                        web3jInstance = web3jInstance
+//                    )
+//
+//                    if(wallet.getChainId() != chainid){
+//                        wallet.changeChain(chainid,rpcurl)
+//                    }
+//
+//                    // TODO: Find out why polygon transaction is underpriced
+//                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
+//                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
+//
+//
+//                    var res = try {
+//                         wallet.sendTransaction(
+//                            to = address,
+//                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
+//                            data = "",
+//                            gasPrice = gasPrice.toString()
+//                         )
+//                    } catch (exception: NullPointerException) {
 //                        "error"
-                        }
-
-
-
-
-                        viewModel.changeTxComplete()
-
-                    }
-                    if (res == "error") {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
-                        }
-                    }
-
-
-
-                }
-
-
-
-
-
-            } else {
-                (context as Activity).runOnUiThread {
-                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
-                }
-            }
-        },
-        txComplete = txComplete,
-        selectedToken = selectedToken
+//                    }
+//
+//                    Log.e("Test",res)
+//                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
+//                    println(res)
+//                    if(res != "decline" && res != "error"){
+//                        //onBackClick()
+//                        (context as Activity).runOnUiThread {
+//                            //TODO: Snackbar
+//                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
+//                        }
+//
+//                        //TODO: put pending transfer into db
+//                        try {
+//                            Log.d("insert tx", "itas in ")
+//                            viewModel.insertPendingTransfer(
+//                                transfer = TransferEntity(
+//                                    uniqueId = (0..100).random().toString(),
+//                                    asset = "",
+//                                    chainId = chainid,
+//                                    blockNum = (100..200).random().toString(),
+//                                    category =  "external",
+//                                    erc1155Metadata = emptyList(),
+//                                    erc721TokenId = "",
+//                                    fromaddress = userAddress,
+//                                    hash =  (200..300).random().toString(),
+//                                    rawContract = RawContract(
+//                                        address = "",
+//                                        decimal = "",
+//                                        value = ""
+//                                    ),
+//                                    toaddress = address,
+//                                    tokenId =  "",
+//                                    value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
+//                                    blockTimestamp = Clock.System.now(),
+//                                    userIsSender =  true,
+//                                    ispending = true
+//
+//                                )
+//                            )
+//
+//                        }catch (exception: NullPointerException) {
+////                        "error"
+//                        }
+//
+//
+//
+//
+//                        viewModel.changeTxComplete()
+//
+//                    }
+//                    if (res == "error") {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
+//                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
+//                        }
+//                    }
+//
+//
+//
+//                }
+//
+//
+//
+//
+//
+//            } else {
+//                (context as Activity).runOnUiThread {
+//                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
+//                }
+//            }
+//        },
+//        txComplete = txComplete,
+//        selectedToken = selectedToken
     )
 
 
@@ -288,29 +289,29 @@ fun SendRoute(
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit,
-    initialAddress: String,
-    balances:  AssetUiState,
-    currencyPrice: String,
-    onChangeAssetClicked: (TokenAsset) -> Unit,
-    onToAddressChanged: (String) -> Unit,
-    onCurrencyChange: (String) -> Unit,
-    sendTransaction: (SendData) -> Unit,
-    selectedToken: SelectedTokenUiState,
-    txComplete: TxCompleteUiState
+//    onBackClick: () -> Unit,
+//    initialAddress: String,
+//    balances:  AssetUiState,
+//    currencyPrice: String,
+//    onChangeAssetClicked: (TokenAsset) -> Unit,
+//    onToAddressChanged: (String) -> Unit,
+//    onCurrencyChange: (String) -> Unit,
+//    sendTransaction: (SendData) -> Unit,
+//    selectedToken: SelectedTokenUiState,
+//    txComplete: TxCompleteUiState
     //toAddress: String,
     //onAddressClick: () -> Unit,
 ) {
 
-    var address by remember { mutableStateOf(initialAddress) }
-    if (ENSName(initialAddress).isPotentialENSDomain()) {
-        CompletableFuture.runAsync {
-            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
-            val ens = ENS(HttpEthereumRPC(rpcurl))
-            val ensAddr = ens.getAddress(ENSName(initialAddress))
-            address = ensAddr?.hex.toString()
-        }
-    }
+    var address by remember { mutableStateOf("")}//initialAddress) }
+//    if (ENSName(initialAddress).isPotentialENSDomain()) {
+//        CompletableFuture.runAsync {
+//            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+//            val ens = ENS(HttpEthereumRPC(rpcurl))
+//            val ensAddr = ens.getAddress(ENSName(initialAddress))
+//            address = ensAddr?.hex.toString()
+//        }
+//    }
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -406,14 +407,14 @@ fun SendScreen(
         )
     }
 
-    when (txComplete) {
-        is TxCompleteUiState.UnComplete -> {
-
-        }
-        is TxCompleteUiState.Complete -> {
-            onBackClick()
-        }
-    }
+//    when (txComplete) {
+//        is TxCompleteUiState.UnComplete -> {
+//
+//        }
+//        is TxCompleteUiState.Complete -> {
+//            onBackClick()
+//        }
+//    }
 
 
 
@@ -421,12 +422,12 @@ fun SendScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF1E2730))
+                .background(Color.Black)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
             //Breadcrumb w/ backbutton
             TopHeader(
-                onBackClick = onBackClick,
+                onBackClick = {},//onBackClick,
                 title = "Send",
                 icon = {
                     IconButton(
@@ -446,417 +447,19 @@ fun SendScreen(
                     }
                 }
             )
-            Spacer(modifier = modifier.height(12.dp))
 
-            Column (
-                modifier = Modifier
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ){
-                //AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
+            ethOSCenterTextField(
+                text = address,
+                title = "To",
+                label = "(Enter address or ENS)",
+                modifier = Modifier.fillMaxWidth(),
+                center = true,
+                onTextChanged = { text -> address = text }
+            )
 
 
 
-                // Creating a values and variables to remember
-                // focus requester, manager and state
-                val focusRequester = remember { FocusRequester() }
-                val focusManager = LocalFocusManager.current
 
-                    //Textfield
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                    ){
-
-                        ethOSTextField(
-                            text = address,
-                            label = "Address or ENS",
-                            focusRequester = focusRequester,
-                            onTextChanged = {
-                                address = it.lowercase()
-                                if (address.endsWith(".eth")) {
-                                    if (ENSName(address).isPotentialENSDomain()) {
-                                        // It is ENS
-                                        CompletableFuture.runAsync {
-                                            val ens = ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-                                            val ensAddr = ens.getAddress(ENSName(address))
-                                            address = ensAddr?.hex.toString()
-                                            validSendAddress = true
-                                            focusManager.clearFocus()
-                                        }
-                                    } else {
-                                        if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
-                                        focusManager.clearFocus()
-                                    }
-                                    if(address.isEmpty()) {
-                                        validSendAddress = false
-                                        focusManager.clearFocus()
-                                    }
-                                }
-
-                                onToAddressChanged(address)
-
-                            },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = { showDialog.value = true },
-
-                                    ) {
-
-                                    Icon(
-                                        imageVector = Icons.Rounded.QrCode,
-                                        contentDescription = "Address by QR",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-//                                .onFocusChanged {
-//
-//                                    if (ENSName(address).isPotentialENSDomain()) {
-//                                        // It is ENS
-//                                        CompletableFuture.runAsync {
-//                                            val ens =
-//                                                ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-//                                            val ensAddr = ens.getAddress(ENSName(address))
-//                                            address = ensAddr?.hex.toString()
-//                                        }
-//                                        focusManager.clearFocus()
-//                                    } else {
-//                                        if (address.isNotEmpty()) validSendAddress =
-//                                            isValidAddress(address)
-//                                    }
-//                                    if (address.isEmpty()) validSendAddress = true
-//
-//                                }
-                        )
-                    }
-                    Spacer(modifier = Modifier
-                        .height(16.dp)
-                    )
-
-
-
-                        //Amount Section
-                        Column (
-                            modifier = modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-
-                            //Max Amount Section
-                            Column (
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-
-                                when (selectedToken) {
-                                    is SelectedTokenUiState.Unselected -> {
-                                        val maxed = remember { mutableStateOf(false) }
-                                        TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                                        }, enabled = false)
-
-                                        Text(
-                                            text = "",//"${walletAmount.ethAmount} ETH",
-                                            fontWeight = FontWeight.Normal,
-                                            fontSize = 16.sp,
-                                            color = Color(0xFF9FA2A5)
-                                        )
-                                    }
-                                    is SelectedTokenUiState.Selected -> {
-
-                                        val maxed = remember { mutableStateOf(false) }
-                                        TextToggleButton(text = "MAX", selected = maxed, onClickChange = {
-                                            maxed.value = !maxed.value
-
-                                            //If max
-                                            if(maxed.value){
-                                                prevAmount = value // save previous amount
-                                                value = selectedToken.tokenAsset.balance.toString() // replace maxAmount with current value
-                                                enableButton = false
-                                            }else{//if switches bck
-                                                value = prevAmount // replace value w/ maxAmount w/ prevAmount
-                                                enableButton = true
-                                            }
-                                        }, enabled = true)
-
-                                        Text(
-                                            text = "Available: ${formatDouble(selectedToken.tokenAsset.balance)} "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",//"${walletAmount.ethAmount} ETH",
-                                            fontWeight = FontWeight.Normal,
-                                            fontSize = 16.sp,
-                                            color = Color(0xFF9FA2A5)
-                                        )
-                                    }
-                                }
-
-
-                            }
-
-                            //Amount
-                            Column (horizontalAlignment = Alignment.CenterHorizontally){
-
-                                when (selectedToken) {
-                                    is SelectedTokenUiState.Unselected -> {
-                                        Text(
-                                            text = "0.0 ETH"
-                                             ,
-                                            //check if value over maxamount
-
-                                            color = Color(0xFF9FA2A5),//"${walletAmount.ethAmount} ETH",
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = amountfontSize,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                    is SelectedTokenUiState.Selected -> {
-                                        Text(
-                                            text = //"0.0 ETH",
-                                            if (value == "") {
-                                                "0.0 "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
-                                            } else {
-                                                // If value has more than 7 decimals, show the string with less decimals
-                                                if (value.contains(".")) {
-                                                    val decimals = value.split(".")[1]
-                                                    if (decimals.length > 5) {
-                                                        value.split(".")[0] + "." + decimals.substring(0, 5)
-                                                    } else {
-                                                        value
-                                                    }
-                                                } else {
-                                                    value
-                                                } + " " + if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
-                                            },
-                                            //check if value over maxamount
-
-                                            color = if (value == "") {
-                                                Color.White
-                                            } else {
-                                                if(value.toDouble() > selectedToken.tokenAsset.balance){
-                                                    Color.Red
-                                                }else{
-                                                    Color.White
-                                                }
-                                                //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
-                                            },//"${walletAmount.ethAmount} ETH",
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = amountfontSize,
-                                            textAlign = TextAlign.Center
-                                        )
-
-
-
-
-                                            //Log.e("currenccy",currencyPrice)
-                                        if(selectedToken.tokenAsset.chainId != 5){
-                                            Text(
-                                                text = if (value == "" || value == "0." || currencyPrice=="" ) {
-                                                    "$${"0.0".toFloat() * "0.0".toFloat()}"
-                                                } else {
-                                                    "$${formatDouble((value.toFloat() * currencyPrice.toFloat()).toDouble())}"
-                                                },//"$${value.toFloat()}",
-                                                fontWeight = FontWeight.Normal,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF9FA2A5)
-                                            )
-                                        }else{
-                                            Text(
-                                                text = "$0.0",//$${value.toFloat()},
-                                                fontWeight = FontWeight.Normal,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF9FA2A5)
-                                            )
-                                        }
-
-
-
-                                    }
-
-                                    else -> {}
-                                }
-                                //max amount
-
-
-
-                            }
-
-                            //select network
-                            //var id by remember {mutableStateOf(1) }
-                            //different network -> different color
-                            when (selectedToken) {
-                                is SelectedTokenUiState.Unselected -> {
-                                    SelectedNetworkButton(
-                                        chainId = 1,
-                                        onClickChange = {
-                                            showSheet = true
-                                            focusManager.clearFocus()
-                                        },
-                                    )
-                                }
-                                is SelectedTokenUiState.Selected -> {
-                                    SelectedNetworkButton(
-                                        chainId = selectedToken.tokenAsset.chainId,
-                                        onClickChange = {
-                                            showSheet = true
-                                            focusManager.clearFocus()
-
-                                        },
-
-                                        )
-                                }
-
-                                else -> {}
-                            }
-
-
-
-
-                        }
-
-
-                Spacer(modifier = Modifier
-                    .height(16.dp)
-                )
-                //Input Section
-                Column (horizontalAlignment = Alignment.CenterHorizontally){
-                    if (selectedToken is SelectedTokenUiState.Unselected) {
-                        // Select eth token as default
-                        if (balances is AssetUiState.Success) {
-                            try {
-                                val ethMainnet = balances.assets.filter { it.address == "1" }[0]
-                                onChangeAssetClicked(
-                                    ethMainnet
-                                )
-                            } catch (
-                                exception: IndexOutOfBoundsException
-                            ) {
-                                onChangeAssetClicked(
-                                    TokenAsset(
-                                        address = "1",
-                                        balance = 0.0,
-                                        name = "Ethereum",
-                                        symbol = "ETH",
-                                        chainId = 1
-                                    )
-                                )
-                            }
-
-                        }
-
-                    }
-                    var activeNumpad = when (selectedToken) {
-                        is SelectedTokenUiState.Unselected -> {
-                            false
-                        }
-                        is SelectedTokenUiState.Selected -> {
-                            true
-                        }
-                    }
-                    NumPad(
-                            value = value,
-                            modifier = Modifier,
-                            onValueChange = {
-                                value = it
-                                focusManager.clearFocus()
-
-                            },
-                            enabled = activeNumpad
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-
-
-
-
-
-
-
-                    when (selectedToken) {
-                        is SelectedTokenUiState.Unselected -> {
-
-                            ethOSButton(
-                                onClick = {
-                                },
-                                enabled = false,
-                                text = "Send"
-                            )
-                        }
-                        is SelectedTokenUiState.Selected -> {
-                            //var test = if(value.toDouble() > selectedToken.tokenAsset.balance && value != "") true else false
-                            ethOSButton(
-                                onClick = {
-
-                                    sendTransaction(
-                                            SendData(
-                                                amount = value.toFloat(),
-                                                address = address,
-                                                chainId = selectedToken.tokenAsset.chainId
-                                            )
-                                        )
-
-
-                                },
-                                enabled = true,//value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0),
-                                text = "Send"
-                            )
-                        }
-                    }
-
-                    }
-
-            }
-
-            if(showSheet) {
-                ModalBottomSheet(
-                    containerColor= Color(0xFF24303D),
-                    contentColor= Color.White,
-
-                    onDismissRequest = {
-                        coroutineScope.launch {
-                            modalSheetState.hide()
-                        }.invokeOnCompletion {
-                            if(!modalSheetState.isVisible) showSheet = false
-                        }
-                    },
-                    sheetState = modalSheetState
-                ) {
-
-                    NetworkPickerSheet(
-                        balancesState = balances,
-                        onSelectAsset = {
-
-
-                            onChangeAssetClicked(it)
-                            var currencychange = when(it.chainId){
-                                137 -> "MATICUSDT"
-                                else -> "ETHUSDT"
-                            }
-                            onCurrencyChange(currencychange)
-
-                            //maxAmount = it.balance
-
-//                            network = when(it.chainId) {
-//                                1 -> "Mainnet"
-//                                5 -> "Görli"
-//                                10 -> "Optimism"
-//                                137 -> "Polygon"
-//                                42161 -> "Arbitrum"
-//                                else -> ""
-//                            }
-
-                            //network =  it.chainId
-
-
-                            //hides ModelBottomSheet
-                            coroutineScope.launch {
-                                modalSheetState.hide()
-                            }.invokeOnCompletion {
-                                if(!modalSheetState.isVisible) showSheet = false
-                            }
-                        }
-                    )
-                }
-            }
 
 
         }
@@ -991,5 +594,5 @@ fun qrCodeDialog(
 @Preview
 @Composable
 fun PreviewSendScreen() {
-    //endScreen()
+    SendScreen()
 }

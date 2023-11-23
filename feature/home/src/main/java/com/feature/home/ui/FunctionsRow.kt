@@ -18,28 +18,28 @@ import com.core.ui.WmIconButton
 
 @Composable
 internal fun FunctionsRow(
-    navigateToSwap: () -> Unit,
-    navigateToSend: () -> Unit,
-    navigateToReceive: () -> Unit
+//    navigateToSwap: () -> Unit,
+//    navigateToSend: () -> Unit,
+//    navigateToReceive: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         WmIconButton(
-            onClick = { navigateToSend() },
+            onClick = { }, //navigateToSend() },
             icon = Icons.Rounded.NorthEast,
             contentDescription = "Send"
         )
 
         WmIconButton(
-            onClick = { navigateToReceive() },
+            onClick = { }, //navigateToReceive() },
             icon = Icons.Rounded.ArrowDownward,
             contentDescription = "Receive"
         )
 
         WmIconButton(
-            onClick = { navigateToSwap() },
+            onClick = { }, //navigateToSwap() },
             icon = Icons.Rounded.SwapVert,
             contentDescription = "Swap"
         )
@@ -50,8 +50,8 @@ internal fun FunctionsRow(
 @Composable
 private fun previewFunctionsRow() {
     FunctionsRow(
-        {},
-        {},
-        {}
+//        {},
+//        {},
+//        {}
     )
 }

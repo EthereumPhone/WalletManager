@@ -2,6 +2,7 @@ package org.ethereumphone.walletmanager.ui
 
 import android.content.Intent
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.BottomNavigation
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
@@ -18,8 +19,15 @@ fun WmApp(
     appState: WmAppState = rememberWmAppState(),
 ) {
 
+    val navController = appState.navController
     Scaffold(
-        containerColor = background
+        containerColor = background,
+        //bottombar
+        bottomBar = {
+//            WmBottomNavigation(){
+//
+//            }
+        }
     ) { paddingValues ->
         paddingValues
 

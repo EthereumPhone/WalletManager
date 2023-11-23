@@ -31,14 +31,14 @@ fun WmIconButton(
 ) {
     IconButton(
         onClick = onClick,
-        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White),
-        modifier = Modifier.size(64.dp)
+        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent),
+        modifier = Modifier.size(48.dp)
     ) {
         Icon(
             imageVector = icon,
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(32.dp),
             contentDescription = contentDescription,
-            tint = Color(0xFF24303D)//background
+            tint = Color.White//(0xFF24303D)//background
         )
     }
     if (contentDescription != null) {
@@ -46,8 +46,7 @@ fun WmIconButton(
             text = contentDescription,
             color = Color.White,
             modifier = Modifier.padding(top = 4.dp),
-            lineHeight = 14.08.sp,
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Medium
         )
     }
