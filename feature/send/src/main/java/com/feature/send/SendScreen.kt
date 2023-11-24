@@ -6,34 +6,32 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.QrCode
-import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -47,16 +45,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -64,44 +59,19 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.data.util.chainToApiKey
-import com.core.database.model.RawContract
-import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
-import com.example.ethoscomponents.components.NumPad
-import com.feature.send.ui.NetworkPickerSheet
-import com.core.ui.SelectedNetworkButton
-import com.feature.send.ui.TextToggleButton
 
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import java.util.concurrent.CompletableFuture
 
-import kotlinx.coroutines.launch
 import org.ethereumphone.walletsdk.WalletSDK
-import org.kethereum.eip137.model.ENSName
-import org.kethereum.ens.ENS
-import org.kethereum.ens.isPotentialENSDomain
-import org.kethereum.rpc.HttpEthereumRPC
-import org.web3j.crypto.WalletUtils
-import org.web3j.crypto.WalletUtils.isValidAddress
-import org.web3j.protocol.Web3j
-import org.web3j.protocol.http.HttpService
-import java.lang.NullPointerException
-import java.math.BigDecimal
-import java.math.BigInteger
 import java.text.DecimalFormat
-import java.util.Currency
-import com.core.database.model.TransferEntity
-import com.feature.send.ui.ethOSCenterTextField
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import java.util.Random
+import com.core.ui.ethOSTextField
+import com.core.ui.ethOSCenterTextField
+import kotlin.math.max
 
 
 @Composable
@@ -420,12 +390,16 @@ fun SendScreen(
 
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
             //Breadcrumb w/ backbutton
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             TopHeader(
                 onBackClick = {},//onBackClick,
                 title = "Send",
@@ -447,15 +421,120 @@ fun SendScreen(
                     }
                 }
             )
+            Column(
+                horizontalAlignment =  Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .width(250.dp)
 
-            ethOSCenterTextField(
-                text = address,
-                title = "To",
-                label = "(Enter address or ENS)",
-                modifier = Modifier.fillMaxWidth(),
-                center = true,
-                onTextChanged = { text -> address = text }
+
+            ) {
+                Text(
+                    text = "To",
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF9FA2A5),
+                    fontSize = 20.sp
+                )
+                ethOSCenterTextField(
+                    text = address,
+                    label = "(Enter address or ENS)",
+                    modifier = Modifier
+                        .weight(1f)
+                        ,
+
+                    onTextChanged = { text -> address = text },
+                    size = 18
+                )
+            }
+        }
+
+
+
+
+
+        Column(
+            horizontalAlignment =  Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+
+
+        ) {
+            Row(
+
+
+            ){
+
+                Row (
+                    modifier = Modifier.widthIn(0.dp,300.dp),
+                    horizontalArrangement = Arrangement.Center
+                ){
+                    ethOSTextField(
+                        text = value,
+                        label = "0",
+                        singleLine = true,
+                        onTextChanged = { text -> value = text },
+                        size = 64,
+                        maxChar = 10
+
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+
+
+
+                    Text(
+                        text = "ETH",
+                        fontSize = calculateFontSize(value.length,64),
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.width(IntrinsicSize.Min)
+                    )
+                }
+
+            }
+            Text(
+                text = "${value.length} ETH available",
+                fontSize = 20.sp,
+                color = Color(0xFF9FA2A5),
+                fontWeight = FontWeight.SemiBold
             )
+
+            Spacer(modifier = modifier.height(64.dp))
+
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ){
+                Box(
+                    modifier = modifier
+                        .clip(CircleShape)
+                        .size(18.dp)
+                        .background(Color.Red)
+                ){}
+                Text(
+                    text = "Optimism",
+                    fontSize = 20.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Icon(
+                    imageVector = Icons.Rounded.ArrowDropDown,
+                    contentDescription = "",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+
+
+        ethOSButton(text = "Send", enabled = true, onClick = { /*TODO*/ })
+
+
+
+
 
 
 
@@ -464,6 +543,62 @@ fun SendScreen(
 
         }
 
+
+
+//    if(showSheet) {
+//        ModalBottomSheet(
+//            containerColor= Color(0xFF24303D),
+//            contentColor= Color.White,
+//
+//            onDismissRequest = {
+//                coroutineScope.launch {
+//                    modalSheetState.hide()
+//                }.invokeOnCompletion {
+//                    if(!modalSheetState.isVisible) showSheet = false
+//                }
+//            },
+//            sheetState = modalSheetState
+//        ) {
+//
+//            NetworkPickerSheet(
+//                balancesState = balances,
+//                onSelectAsset = {
+//
+//
+//                    onChangeAssetClicked(it)
+//                    var currencychange = when(it.chainId){
+//                        137 -> "MATICUSDT"
+//                        else -> "ETHUSDT"
+//                    }
+//                    onCurrencyChange(currencychange)
+//
+//                    //maxAmount = it.balance
+//
+////                            network = when(it.chainId) {
+////                                1 -> "Mainnet"
+////                                5 -> "Görli"
+////                                10 -> "Optimism"
+////                                137 -> "Polygon"
+////                                42161 -> "Arbitrum"
+////                                else -> ""
+////                            }
+//
+//                    //network =  it.chainId
+//
+//
+//                    //hides ModelBottomSheet
+//                    coroutineScope.launch {
+//                        modalSheetState.hide()
+//                    }.invokeOnCompletion {
+//                        if(!modalSheetState.isVisible) showSheet = false
+//                    }
+//                }
+//            )
+//        }
+//    }
+//
+//
+//}
 
 
 }
@@ -479,6 +614,49 @@ private fun getBalance(assetsUiState: AssetUiState, chainid: Int): TokenAsset {
 
     return info
 }
+
+
+
+fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
+    val defaultFontSize = defaultSize.sp
+    val maxChars = 2
+    val scaleFactor = 0.8
+
+    var adjustedSize = if (length > maxChars) {
+        val scaledSize = (defaultFontSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        result.sp
+    } else {
+        defaultFontSize
+    }
+
+    if (length > maxChars*2) {
+        val scaledSize = (adjustedSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        adjustedSize = result.sp
+        Log.e("Length: ", "${ adjustedSize }")
+    }
+
+    if (length > maxChars*3) {
+        val scaledSize = (adjustedSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        adjustedSize = result.sp
+        Log.e("Length: ", "${ adjustedSize }")
+    }
+
+//    if (length > (maxChars*2) - 15) {
+//        val scaledSize = (adjustedSize * scaleFactor).value
+//        val minValue = 12f // Minimum font size
+//        val result = max(scaledSize, minValue)
+//        adjustedSize = result.sp
+//    }
+    return adjustedSize
+}
+
+
 
 @Composable
 fun qrCodeDialog(

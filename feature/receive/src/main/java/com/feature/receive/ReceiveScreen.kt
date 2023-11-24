@@ -27,6 +27,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonColors
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.DismissValue
 import androidx.compose.material.Icon
@@ -38,6 +41,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -96,42 +100,43 @@ internal fun ReceiveRoute(
     val userData by viewModel.userData.collectAsStateWithLifecycle()
 
     ReceiveScreen(
-        userData = userData,
-        modifier = modifier,
-        onBackClick = onBackClick
+//        userData = userData,
+//        modifier = modifier,
+//        onBackClick = onBackClick
     )
 
 }
 
 @Composable
 fun ReceiveScreen(
-    userData: UserData,
+//    userData: UserData,
     modifier: Modifier=Modifier,
-    onBackClick: () -> Unit
+//    onBackClick: () -> Unit
 ) {
 
     val showInfoDialog =  remember { mutableStateOf(false) }
-    if(showInfoDialog.value){
-        InfoDialog(
-            setShowDialog = {
-                showInfoDialog.value = false
-            },
-            title = "Receive crypto",
-            text = "Receive crypto to your system-level wallet."
-        )
-    }
+//    if(showInfoDialog.value){
+//        InfoDialog(
+//            setShowDialog = {
+//                showInfoDialog.value = false
+//            },
+//            title = "Receive crypto",
+//            text = "Receive crypto to your system-level wallet."
+//        )
+//    }
 
 
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxSize()
-                .background(Color(0xFF1E2730))
+                .background(Color.Black)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ){
 
         TopHeader(
-            onBackClick = onBackClick,
+            onBackClick = {},//onBackClick,
             title = "Receive",
             icon = {
                 IconButton(
@@ -155,25 +160,19 @@ fun ReceiveScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .fillMaxSize()
+
             ){
-                val space  = 42.dp
-                Text(
-                    text = "Scan me!",
-                    fontSize = 36.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = modifier.height(space))
 
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color.White)
                         .padding(10.dp)
+                        .size(200.dp)
 
                 ) {
                     Image(
+                        //TODO: Change Address
                         painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
                         contentDescription = "wallet address QR",
                         contentScale = ContentScale.FillBounds,
@@ -183,20 +182,67 @@ fun ReceiveScreen(
                     )
                 }
 
-                Spacer(modifier = modifier.height(space))
 
+                Spacer(modifier = Modifier.height(48.dp))
 
                 //Address
                 //TODO: Address or ENS
-                Text(
-                    modifier = modifier.width(175.dp),
-                    fontSize = 12.sp,
-                    color = Color(0xFF9FA2A5),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Normal,
-                    text = userData.walletAddress
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        modifier = modifier.width(175.dp),
+                        fontSize = 18.sp,
+                        color = Color(0xFF9FA2A5),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Normal,
+                        text = "Address"//userData.walletAddress
+                    )
+                    //TODO: Make reveil compasable
+                    Text(
+                        modifier = modifier.width(250.dp),
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold,
+                        text = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"//userData.walletAddress
+                    )
+
+
+                }
+
             }
+
+
+        Row (
+            modifier = Modifier.padding(bottom = 18.dp)
+        ){
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Color.Transparent,
+                    contentColor =  Color.White,
+                ),
+                onClick = {}
+            ){
+                Row {
+                    Icon(
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copy ethereum address",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Copy address",
+                        fontSize = 18.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
         }
 }
 
@@ -303,5 +349,5 @@ fun BitmapImage(
 @Composable
 fun PreviewReceiveScreen() {
     val address = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-    //ReceiveScreen(address)
+    ReceiveScreen()
 }

@@ -50,6 +50,7 @@ import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
+import com.core.ui.ethOSButton
 //import com.core.ui.WmButton
 import com.feature.home.AssetUiState
 import com.feature.swap.ui.ExchangeRateRow
@@ -76,19 +77,19 @@ internal fun SwapRoute(
 
     SwapScreen(
         modifier = modifier,
-        swapTokenUiState = swapTokenUiState,
-        exchangeUiState = exchangeUiState,
-        amountsUiState = amountsUiState,
-        assetsUiState = assetsUiState,
-        isSyncing = isSyncing,
-        searchQuery = searchQuery,
-        onQueryChange = viewModel::updateSearchQuery,
-        switchTokens = viewModel::switchTokens,
-        onTextFieldSelected = viewModel::setSelectedTextField,
-        onAmountChange = viewModel::updateAmount,
-        onSelectAsset = viewModel::selectAsset,
-        onSwapClicked = { viewModel.swap(it) },
-        onBackClick = onBackClick
+//        swapTokenUiState = swapTokenUiState,
+//        exchangeUiState = exchangeUiState,
+//        amountsUiState = amountsUiState,
+//        assetsUiState = assetsUiState,
+//        isSyncing = isSyncing,
+//        searchQuery = searchQuery,
+//        onQueryChange = viewModel::updateSearchQuery,
+//        switchTokens = viewModel::switchTokens,
+//        onTextFieldSelected = viewModel::setSelectedTextField,
+//        onAmountChange = viewModel::updateAmount,
+//        onSelectAsset = viewModel::selectAsset,
+//        onSwapClicked = { viewModel.swap(it) },
+//        onBackClick = onBackClick
     )
 }
 
@@ -97,19 +98,19 @@ internal fun SwapRoute(
 internal fun SwapScreen(
 
     modifier: Modifier = Modifier,
-    swapTokenUiState: SwapTokenUiState,
-    exchangeUiState: Double,
-    amountsUiState: AmountsUiState,
-    assetsUiState: AssetsUiState,
-    isSyncing: Boolean,
-    searchQuery: String,
-    onQueryChange: (String) -> Unit,
-    switchTokens: () -> Unit,
-    onTextFieldSelected: (TextFieldSelected) -> Unit,
-    onAmountChange: (TextFieldSelected, String) -> Unit,
-    onSelectAsset: (TokenAsset) -> Unit,
-    onSwapClicked: ((String) -> Unit) -> Unit,
-    onBackClick: () -> Unit
+//    swapTokenUiState: SwapTokenUiState,
+//    exchangeUiState: Double,
+//    amountsUiState: AmountsUiState,
+//    assetsUiState: AssetsUiState,
+//    isSyncing: Boolean,
+//    searchQuery: String,
+//    onQueryChange: (String) -> Unit,
+//    switchTokens: () -> Unit,
+//    onTextFieldSelected: (TextFieldSelected) -> Unit,
+//    onAmountChange: (TextFieldSelected, String) -> Unit,
+//    onSelectAsset: (TokenAsset) -> Unit,
+//    onSwapClicked: ((String) -> Unit) -> Unit,
+//    onBackClick: () -> Unit
 
 ) {
 
@@ -133,14 +134,15 @@ internal fun SwapScreen(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1E2730))
+            .background(Color.Black)
             .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
 
         TopHeader(
-            onBackClick = onBackClick
+            onBackClick = {}//onBackClick
                           ,
             title = "Swap",
             icon = {
@@ -164,113 +166,146 @@ internal fun SwapScreen(
         Spacer(modifier = modifier.height(12.dp))
 
         TokenSelector(
-            amountsUiState = amountsUiState,
-            assetsUiState = assetsUiState,
-            switchTokens = switchTokens,
-            isSyncing = isSyncing,
-            onAmountChange = { selectedTextField, amount ->
-                onTextFieldSelected(selectedTextField)
-                try {
-                    if (amount == "") {
-                        onAmountChange(selectedTextField, amount)
-                    } else {
-                        val bigDc = BigDecimal(amount.replace(",", "."))
-                        onAmountChange(selectedTextField, amount)
-                    }
-                } catch (e: NumberFormatException) {
-                    // Catch the error and do nothing
-                }
-            },
-            onPickAssetClicked = {
-                showSheet = true
-                onTextFieldSelected(it)
-            }
+//            amountsUiState = amountsUiState,
+//            assetsUiState = assetsUiState,
+//            switchTokens = switchTokens,
+//            isSyncing = isSyncing,
+//            onAmountChange = { selectedTextField, amount ->
+//                onTextFieldSelected(selectedTextField)
+//                try {
+//                    if (amount == "") {
+//                        onAmountChange(selectedTextField, amount)
+//                    } else {
+//                        val bigDc = BigDecimal(amount.replace(",", "."))
+//                        onAmountChange(selectedTextField, amount)
+//                    }
+//                } catch (e: NumberFormatException) {
+//                    // Catch the error and do nothing
+//                }
+//            },
+//            onPickAssetClicked = {
+//                showSheet = true
+//                onTextFieldSelected(it)
+//            }
         )
         Spacer(modifier = modifier.height(8.dp))
 
         Column (
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(36.dp)
 
         ){
-            ExchangeRateRow(
-                assetsUiState = assetsUiState,
-                exchangeUiState = exchangeUiState,
-                isSyncing = isSyncing
-            )
+//            ExchangeRateRow(
+//                assetsUiState = assetState,
+//                exchangeUiState = 0.1,
+//                isSyncing = true
+//            )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ){
 
 
                 Text(
-                    text = "Swap fee (0.5%)",
-                    fontSize = 16.sp,
+                    text = "Swap fee",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color= Color.White
+                )
+                Text(
+                    text = "0.5% per transaction",
+                    fontSize = 18.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+//        Column (
+//            modifier = modifier.fillMaxWidth(),
+//            horizontalAlignment = Alignment.Start,
+//            verticalArrangement = Arrangement.spacedBy(8.dp)
+//
+//        ){
+//            ExchangeRateRow(
+//                assetsUiState = assetsUiState,
+//                exchangeUiState = exchangeUiState,
+//                isSyncing = isSyncing
+//            )
+//
+//            Row(
+//                horizontalArrangement = Arrangement.spacedBy(4.dp),
+//                verticalAlignment = Alignment.CenterVertically
+//            ){
+//
+//
+//                Text(
+//                    text = "Swap fee (0.5%)",
+//                    fontSize = 16.sp,
+//                    color= Color(0xFF9FA2A5)
+//                )
+//            }
+//        }
+
+//        Spacer(modifier = Modifier.weight(1f))
         val context = LocalContext.current
-        SwipeButton(
-            text = "Swipe to swap",
-            icon = Icons.Rounded.ArrowForward,
-            //enabled = true,
-            onSwipe = {
-                onSwapClicked {
-                    if (it.length == 66 && isEthereumTransactionHash(it)) {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
-                        }
-                    } else if (it == "decline") {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
-                        }
-                    } else {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                    onBackClick()
+//        SwipeButton(
+//            text = "Swipe to swap",
+//            icon = Icons.Rounded.ArrowForward,
+//            //enabled = true,
+//            onSwipe = {
+//                onSwapClicked {
+//                    if (it.length == 66 && isEthereumTransactionHash(it)) {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
+//                        }
+//                    } else if (it == "decline") {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
+//                        }
+//                    } else {
+//                        (context as Activity).runOnUiThread {
+//                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
+//                        }
+//                    }
+//                    onBackClick()
+//
+//
+//                }
+//            }
+//        )
 
+//        if(showSheet) {
+//            ModalBottomSheet(
+//                containerColor= Color(0xFF24303D),
+//                contentColor= Color.White,
+//
+//                onDismissRequest = {
+//                    coroutineScope.launch {
+//                        modalSheetState.hide()
+//                    }.invokeOnCompletion {
+//                        if(!modalSheetState.isVisible) showSheet = false
+//                    }
+//                },
+//                sheetState = modalSheetState
+//            ) {
+//                TokenPickerSheet(
+//                    swapTokenUiState = swapTokenUiState,
+//                    searchQuery = searchQuery,
+//                    onQueryChange = onQueryChange,
+//                    onSelectAsset = {
+//                        onSelectAsset(it)
+//                        coroutineScope.launch {
+//                            modalSheetState.hide()
+//                        }.invokeOnCompletion {
+//                            if(!modalSheetState.isVisible) showSheet = false
+//                        }
+//                    }
+//                )
+//            }
+//        }
 
-                }
-            }
-        )
-
-        if(showSheet) {
-            ModalBottomSheet(
-                containerColor= Color(0xFF24303D),
-                contentColor= Color.White,
-
-                onDismissRequest = {
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
-                    }
-                },
-                sheetState = modalSheetState
-            ) {
-                TokenPickerSheet(
-                    swapTokenUiState = swapTokenUiState,
-                    searchQuery = searchQuery,
-                    onQueryChange = onQueryChange,
-                    onSelectAsset = {
-                        onSelectAsset(it)
-                        coroutineScope.launch {
-                            modalSheetState.hide()
-                        }.invokeOnCompletion {
-                            if(!modalSheetState.isVisible) showSheet = false
-                        }
-                    }
-                )
-            }
-        }
+        ethOSButton(text = "Swap", enabled = true, onClick = { /*TODO*/ })
     }
 }
 
@@ -282,7 +317,7 @@ fun isEthereumTransactionHash(input: String): Boolean {
 @Preview
 @Composable
 fun PreviewSwapScreen() {
-    //SwapScreen()
+    SwapScreen()
 }
 
 

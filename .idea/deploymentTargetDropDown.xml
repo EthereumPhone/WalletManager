@@ -5,7 +5,13 @@
       <entry key="PreviewHomeScreen">
         <State />
       </entry>
+      <entry key="PreviewSendScreen">
+        <State />
+      </entry>
       <entry key="PreviewTextField">
+        <State />
+      </entry>
+      <entry key="PreviewTokenSelector">
         <State />
       </entry>
       <entry key="app">
