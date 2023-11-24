@@ -34,6 +34,7 @@ web3j = "4.8.8-android"
 workRuntimeKtx = "2.5.0"
 headlong = "9.4.0"
 fasterxml = "2.12.5"
+material = "1.10.0"
 
 
 
@@ -122,6 +123,7 @@ headlong = {group = "com.esaulpaugh", name = "headlong", version.ref = "headlong
 
 # fasterxml
 fasterxml = {group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "fasterxml"}
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 
 
