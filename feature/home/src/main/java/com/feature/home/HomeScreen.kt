@@ -368,72 +368,77 @@ fun AssetScreen(
 fun AssetDetailScreen(
     modifier: Modifier = Modifier
 ){
-    Column(
-        horizontalAlignment = Alignment.Start,
-
+    Column (
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
-    ) {
-
-        //Header
+    ){
         Row (
             modifier = modifier
-                .fillMaxWidth()
-               ,
+                .fillMaxWidth().padding(start = 12.dp,end = 24.dp,top = 24.dp)
+            ,
             //.background(Color.Red),
             Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ){
 
 
-                IconButton(
-                    onClick = {
-                        //onBackClick()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Go back",
-                        tint = Color.White
-                    )
+            IconButton(
+                onClick = {
+                    //onBackClick()
                 }
-
-
-
-                    Text(
-                        text = "Home",
-                        color = Color.White,
-                        fontSize = 18.sp,
-
-                        )
-
-        }
-
-        Spacer(modifier = modifier.height(64.dp))
-
-        Text(text = "WETH",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
-
-        Spacer(modifier = modifier.height(84.dp))
-
-        val token = TokenAsset(
-            address = "",
-            chainId = 1,
-            symbol = "ETH",
-            name = "Mainnet",
-            balance = 0.61
-        )
-
-        LazyColumn (
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ){
-            items(3){
-                AssetListItem(token, false)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBackIosNew,
+                    contentDescription = "Go back",
+                    tint = Color.White
+                )
             }
 
+
+
+            Text(
+                text = "Assets",
+                color = Color.White,
+                fontSize = 18.sp,
+
+                )
+
+        }
+        Column(
+            horizontalAlignment = Alignment.Start,
+
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+        ) {
+
+            Spacer(modifier = modifier.height(64.dp))
+
+            Text(text = "WETH",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+
+            Spacer(modifier = modifier.height(84.dp))
+
+            val token = TokenAsset(
+                address = "",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Mainnet",
+                balance = 0.61
+            )
+
+            LazyColumn (
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ){
+                items(3){
+                    AssetListItem(token, false)
+                }
+
+            }
         }
     }
+
 }
 
 @Composable
@@ -460,11 +465,11 @@ fun AssetListItem(
                     verticalAlignment = Alignment.CenterVertically,
 
                     ){
-                    Text("${tokenAsset.balance}", color = Color.White)
+                    Text("${tokenAsset.balance}", color = Color.White, fontWeight = FontWeight.Medium)
 
-                    Text(tokenAsset.symbol, color = Color.White)
+                    Text(tokenAsset.symbol, color = Color.White, fontWeight = FontWeight.Medium)
                 }
-                Text("$0.00", color = Color(0xFF9FA2A5), )
+                Text("$0.00", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
             }
             if(withMoreDetail){
                 IconButton(
@@ -647,78 +652,6 @@ fun TransactionScreen(
     }
 }
 
-@Composable
-fun TransactionDetailScreen(
-    modifier: Modifier = Modifier
-){
-    Column(
-        horizontalAlignment = Alignment.Start,
-
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
-    ) {
-
-        //Header
-        Row (
-            modifier = modifier
-                .fillMaxWidth()
-            ,
-            //.background(Color.Red),
-            Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
-        ){
-
-
-            IconButton(
-                onClick = {
-                    //onBackClick()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBackIosNew,
-                    contentDescription = "Go back",
-                    tint = Color.White
-                )
-            }
-
-
-
-            Text(
-                text = "Home",
-                color = Color.White,
-                fontSize = 18.sp,
-
-                )
-
-        }
-
-        Spacer(modifier = modifier.height(64.dp))
-
-        Text(text = "WETH",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
-
-        Spacer(modifier = modifier.height(84.dp))
-
-        val token = TokenAsset(
-            address = "",
-            chainId = 1,
-            symbol = "ETH",
-            name = "Mainnet",
-            balance = 0.61
-        )
-
-        LazyColumn (
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ){
-            items(3){
-                AssetListItem(token, false)
-            }
-
-        }
-    }
-}
-
 
 fun getMonth(month: Int): String {
     var res = "This month"
@@ -734,19 +667,15 @@ fun getMonth(month: Int): String {
 fun TransctionDetailScreen(
     modifier: Modifier = Modifier
 ){
-    Column(
-        horizontalAlignment = Alignment.Start,
-
+    Column (
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
-    ) {
-
+    ){
         //Header
         Row (
             modifier = modifier
-                .fillMaxWidth()
+                .fillMaxWidth().padding(start = 12.dp,end = 24.dp,top = 24.dp)
             ,
             //.background(Color.Red),
             Arrangement.Start,
@@ -776,49 +705,59 @@ fun TransctionDetailScreen(
                 )
 
         }
+        Column(
+            horizontalAlignment = Alignment.Start,
 
-        Spacer(modifier = modifier.height(64.dp))
-
-        Text(text = "Sent ETH",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
-
-        Spacer(modifier = modifier.height(84.dp))
-
-        val token = TokenAsset(
-            address = "",
-            chainId = 1,
-            symbol = "ETH",
-            name = "Mainnet",
-            balance = 0.61
-        )
-
-        Column (
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ){
-            TransactionDetailItem("Date","Hallo")
-            TransactionDetailItem("Address","Hallo")
-            TransactionDetailItem("Chain","Hallo")
-            TransactionDetailItem("Amount","Hallo")
-        }
-
-        Spacer(modifier = Modifier.height(56.dp))
-        Button(
-            onClick = { /*TODO*/ },
-           colors = ButtonDefaults.buttonColors(
-               containerColor = Color.Transparent,
-               contentColor = Color.White,
-           ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(horizontal = 24.dp)
         ) {
-            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+
+            Spacer(modifier = modifier.height(64.dp))
+
+            Text(text = "Sent ETH",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+
+            Spacer(modifier = modifier.height(84.dp))
+
+            val token = TokenAsset(
+                address = "",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Mainnet",
+                balance = 0.61
+            )
+
+            Column (
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ){
+                TransactionDetailItem("Date","Hallo")
+                TransactionDetailItem("Address","Hallo")
+                TransactionDetailItem("Chain","Hallo")
+                TransactionDetailItem("Amount","Hallo")
+            }
+
+            Spacer(modifier = Modifier.height(96.dp))
+            Button(
+                onClick = { /*TODO*/ },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
+
 }
 
 
 @Preview
 @Composable
 fun PreviewHomeScreen() {
-    TransctionDetailScreen()
+    AssetDetailScreen()
     //HomeScreen()
 //    HomeScreen(
 //        userData = UserData("0x123...123"),
