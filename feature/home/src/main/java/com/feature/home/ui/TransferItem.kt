@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material.icons.rounded.Cached
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material3.Card
@@ -46,27 +48,13 @@ import java.util.Date
 internal fun TransferListItem(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
-
     onCardClick: () -> Unit
 ) {
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors =  CardDefaults.cardColors(
-            containerColor= Color(0xFF1E2730),//primaryVariant,
-            contentColor= Color.White,
-        ),
-        shape = RoundedCornerShape(12.dp),
-        onClick = {
-            //Show Dialog w/ more info
-            onCardClick()
-        }
-    ) {
         Row (
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = modifier.padding(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
 
             //Color of Icon
@@ -80,7 +68,7 @@ internal fun TransferListItem(
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
+                    .background(Color.Transparent)
                     .size(42.dp)
             ){
 
@@ -93,7 +81,8 @@ internal fun TransferListItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = "Send",
-                    tint = icontint
+                    tint = icontint,
+                    modifier = Modifier.size(28.dp)
                 )
             }
             Column (
@@ -124,49 +113,55 @@ internal fun TransferListItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.Start,
-
-                        ) {
+                        Column {
                             Text(
 
-                                text = if(transfer.userSent) transfer.to else transfer.from,
+                                text = if(transfer.userSent) "Sent ${"ETH"}" else "Received ${"ETH"}",
                                 color = Color.White,//(0xFF9FA2A5),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Normal,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 modifier = Modifier.width(125.dp)
                             )
-                            Text(
-                                text = chainToNetworkName(transfer.chainId),
-                                color = Color(0xFF9FA2A5)
-                            )
+                            Text(transfer.timeStamp, color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
                         }
-                        Column(
-                            horizontalAlignment = Alignment.End
-                        ) {
 
-//                            Text(
-//                                text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
-//                                fontSize = 18.sp,
-//                                fontWeight = FontWeight.SemiBold
-//                            )
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.Center
+                            ){
+                                Row (
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
 
+                                    ){
+                                    Text("0.0", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
 
-                            val date = transfer.timeStamp//compareDate(transfer.timeStamp)
-//
-                            var ispendingtext = if (transfer.ispending){
-                                "Pending..."
-                            }else{
-                                date
+                                    Text("ETH", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
+                                }
+                                Text("$0.00", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
                             }
-                            Text(
-                                    text = ispendingtext
 
-                                ,color = Color(0xFF9FA2A5)
-                            )
+                            IconButton(
+                                onClick = onCardClick,
+                                modifier = Modifier.size(32.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowForwardIos,
+                                    contentDescription = "Go back",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+
                         }
+
+
+
 
                     }
 
@@ -188,7 +183,7 @@ internal fun TransferListItem(
         }
 
 
-    }
+
 }
 
 fun compareDate(transfer: String): String{//date1: String, date2:String) {
@@ -251,7 +246,7 @@ fun TransferItemPreview() {
             timeStamp = "10-19-01",//Clock.System.now().toString(),
             userSent = true,
             txHash= "pfpfnopjfpfn",
-            ispending = true
+            ispending = false
         ),
         onCardClick = {}
     )

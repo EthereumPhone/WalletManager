@@ -163,7 +163,7 @@ internal fun SwapScreen(
                 }
             }
         )
-        Spacer(modifier = modifier.height(12.dp))
+
 
         TokenSelector(
 //            amountsUiState = amountsUiState,

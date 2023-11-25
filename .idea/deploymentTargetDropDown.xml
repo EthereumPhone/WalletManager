@@ -2,16 +2,22 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
+      <entry key="PreviewAssetListItem">
+        <State />
+      </entry>
+      <entry key="PreviewAssetNetworkDetail">
+        <State />
+      </entry>
       <entry key="PreviewHomeScreen">
         <State />
       </entry>
-      <entry key="PreviewSendScreen">
-        <State />
-      </entry>
-      <entry key="PreviewTextField">
+      <entry key="PreviewSwapScreen">
         <State />
       </entry>
       <entry key="PreviewTokenSelector">
+        <State />
+      </entry>
+      <entry key="PreviewTransactionScreen">
         <State />
       </entry>
       <entry key="app">
