@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -48,7 +50,7 @@ fun AssetScreen(
 ){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
+
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
@@ -57,76 +59,27 @@ fun AssetScreen(
 
         //Header
 
-        Row (
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(bottom=24.dp),
-            //.background(Color.Red),
-            Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ){
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier
-                    .width(100.dp)
-            ) {
-
+        TopHeader(
+            onBackClick = {},//onBackClick ,
+            title = "My Assets",
+            icon = {
                 androidx.compose.material.IconButton(
                     onClick = {
-                        //onBackClick()
+                        //opens InfoDialog
+//                        showInfoDialog.value = true
                     }
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Go back",
-                        tint = Color.White
+                    androidx.compose.material.Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Information",
+                        tint = Color(0xFF9FA2A5),
+                        modifier = modifier
+                            .clip(CircleShape)
+
                     )
                 }
-
-
-//                    Text(
-//                        text = "Home",
-//                        color = Color.White,
-//                        fontSize = 18.sp,
-//
-//                        )
             }
-
-            //Header title
-            Text(
-                modifier = modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                text = "title",
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            //Warning or info
-
-            Box (
-                contentAlignment = Alignment.CenterEnd,
-                modifier = modifier
-                    .width(100.dp)
-            ){
-//            Icon(
-//                imageVector = Icons.Outlined.Info,
-//                contentDescription = "Information",
-//                tint = Color(0xFF9FA2A5),
-//                modifier = modifier
-//                    .clip(CircleShape)
-//                    //.background(Color.Red)
-//                    .clickable {
-//                        //opens InfoDialog
-//                        //showDialog.value = true
-//                        openOnClick
-//                    }
-//
-//            )
-                //icon()
-            }
-        }
-
+        )
         val token = TokenAsset(
             address = "",
             chainId = 1,
@@ -135,7 +88,63 @@ fun AssetScreen(
             balance = 0.61
         )
 
-        AssetListItem(token)
+        LazyColumn (
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ){
+            items(3){
+                AssetListItem(token, true)
+            }
+
+        }
+
+    }
+}
+
+@Composable
+fun AssetListItem(
+    tokenAsset: TokenAsset,
+    withMoreDetail: Boolean=false,
+    linkTo: () -> Unit = {},
+){
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Text(tokenAsset.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center
+            ){
+                Row (
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+
+                    ){
+                    Text("${tokenAsset.balance}", color = Color.White, fontWeight = FontWeight.Medium)
+
+                    Text(tokenAsset.symbol, color = Color.White, fontWeight = FontWeight.Medium)
+                }
+                Text("$0.00", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
+            }
+            if(withMoreDetail){
+                androidx.compose.material.IconButton(
+                    onClick = linkTo,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    androidx.compose.material.Icon(
+                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        contentDescription = "Go back",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+        }
     }
 }
 
