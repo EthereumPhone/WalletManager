@@ -25,6 +25,15 @@ import com.core.model.TransferItem
 import com.example.transactions.ui.TransactionDetailItem
 import com.example.transactions.ui.TransferListItem
 
+@Composable
+fun TransactionRoute(
+    modifier: Modifier = Modifier,
+//    onBackClick: () -> Unit,
+//    initialAddress: String = "",
+//    viewModel: SendViewModel = hiltViewModel()
+) {
+    TransactionScreen()
+}
 
 @Composable
 fun TransactionScreen(

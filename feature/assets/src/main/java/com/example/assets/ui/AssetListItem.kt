@@ -1,5 +1,6 @@
 package com.example.assets.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,10 +22,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.TokenAsset
+import java.text.DecimalFormat
 
 @Composable
 fun AssetListItem(
-    tokenAsset: TokenAsset,
+    title: String,
+    assets: List<TokenAsset>,
     withMoreDetail: Boolean=false,
     linkTo: () -> Unit = {},
 ){
@@ -33,7 +36,7 @@ fun AssetListItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ){
-        Text(tokenAsset.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text(title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -46,10 +49,11 @@ fun AssetListItem(
                     verticalAlignment = Alignment.CenterVertically,
 
                     ){
-                    Text("${tokenAsset.balance}", color = Color.White, fontWeight = FontWeight.Medium)
+                    Text("${formatDouble(assets.sumOf { it.balance })}", color = Color.White, fontWeight = FontWeight.Medium)
 
-                    Text(tokenAsset.symbol, color = Color.White, fontWeight = FontWeight.Medium)
+                    Text(assets.get(0).symbol, color = Color.White, fontWeight = FontWeight.Medium)
                 }
+                //
                 Text("$0.00", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
             }
             if(withMoreDetail){
@@ -70,10 +74,17 @@ fun AssetListItem(
     }
 }
 
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
 
+
+@SuppressLint("SuspiciousIndentation")
 @Composable
 @Preview
 fun PreviewAssetListItem(){
+
 
     val token = TokenAsset(
         address = "",
@@ -83,7 +94,13 @@ fun PreviewAssetListItem(){
         balance = 0.61
     )
 
-    AssetListItem(token)
+    val list = listOf(
+        token,
+        token,
+        token
+    )
+
+        AssetListItem("Ether",list, true, {})
 
 
 }

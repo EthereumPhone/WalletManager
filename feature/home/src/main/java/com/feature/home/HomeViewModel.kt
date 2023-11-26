@@ -126,7 +126,6 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 _exchange.value =  "Error: ${e.message}"
             }
-
         }
     }
 

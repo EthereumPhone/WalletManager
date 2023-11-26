@@ -7,24 +7,24 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.assets.AssetRoute
 
-const val assetGraphRoutePattern = "asset_graph"
-const val assetRoute = "asset_route"
+const val assetDetailGraphRoutePattern = "assetdetail_graph"
+const val assetDetailRoute = "assetdetail_route"
 
-fun NavController.navigateToAsset(navOptions: NavOptions? = null) {
-    this.navigate(assetGraphRoutePattern, navOptions)
+fun NavController.navigateToAssetDetail(navOptions: NavOptions? = null) {
+    this.navigate(assetDetailGraphRoutePattern, navOptions)
 }
 
-fun NavGraphBuilder.assetGraph(
-    navigateToAssetDetail: () -> Unit,
+fun NavGraphBuilder.assetDetailGraph(
+    navigateToAsset: () -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {
     navigation(
-        route = assetGraphRoutePattern,
-        startDestination = assetRoute
+        route = assetDetailGraphRoutePattern,
+        startDestination = assetDetailRoute
     ) {
-        composable(route = assetRoute) {
+        composable(route = assetDetailRoute) {
             AssetRoute(
-                navigateToAssetDetail = navigateToAssetDetail
+                navigateToAsset = navigateToAsset
 //                navigateToSwap = navigateToSwap,
 //                navigateToSend = navigateToSend,
 //                navigateToReceive = navigateToReceive

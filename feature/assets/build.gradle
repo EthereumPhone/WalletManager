@@ -1,12 +1,12 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias libs.plugins.android.library
+    alias libs.plugins.kotlin.android
     alias libs.plugins.hilt.android
     alias libs.plugins.kotlin.kapt
 }
 
 android {
-    namespace 'com.example.assets'
+    namespace 'com.feature.assets'
     compileSdk 34
 
     defaultConfig {
@@ -28,6 +28,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+
+
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion "1.4.0"
     }
 }
 
