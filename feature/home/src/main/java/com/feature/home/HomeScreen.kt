@@ -5,30 +5,16 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.ArrowForwardIos
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,32 +27,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.database.model.TransferEntity
-import com.core.model.SendData
-import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
-import com.core.ui.TopHeader
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
-import com.feature.home.ui.TransferDialog
-import com.feature.home.ui.TransferListItem
 import com.feature.home.ui.WalletTabRow
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.reflect.KFunction1
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -98,7 +73,7 @@ internal fun HomeRoute(
 //        currentChain = currentChain,
 //        getCurrentChain = viewModel::getCurrentChain,
 //        transfersUiState = transfersUiState,
-//        assetsUiState = assetsUiState,
+        assetsUiState = assetsUiState,
 //        refreshState = refreshState,
 //        currencyPrice = currencyPrice,
 //        onCurrencyChange = viewModel::getExchange,
@@ -106,9 +81,9 @@ internal fun HomeRoute(
 //            // had to do it here because I need the local context.
 //            copyTextToClipboard(localContext, userData.walletAddress)
 //        },
-//        navigateToSwap = navigateToSwap,
-//        navigateToSend = navigateToSend,
-//        navigateToReceive = navigateToReceive,
+        navigateToSwap = navigateToSwap,
+        navigateToSend = navigateToSend,
+        navigateToReceive = navigateToReceive,
 //        onRefresh = viewModel::refreshData,
 //        onDelete = { tx ->
 //
@@ -130,14 +105,14 @@ internal fun HomeScreen(
 //    currentChain: Int,
 //    getCurrentChain: (Context) -> Unit,
 //    transfersUiState: TransfersUiState,
-//    assetsUiState: AssetUiState,
+        assetsUiState: AssetUiState,
 //    refreshState: Boolean,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
 //    onAddressClick: () -> Unit,
-//    navigateToSwap: () -> Unit,
-//    navigateToSend: () -> Unit,
-//    navigateToReceive: () -> Unit,
+    navigateToSwap: () -> Unit,
+    navigateToSend: () -> Unit,
+    navigateToReceive: () -> Unit,
 //    onRefresh: () -> Unit,
 //    onDelete: (TransferItem) -> Unit,
     modifier: Modifier = Modifier
@@ -243,13 +218,13 @@ internal fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(56.dp)
         ){
             FunctionsRow(
-//            navigateToSwap,
-//            navigateToSend,
-//            navigateToReceive
+            navigateToSwap,
+            navigateToSend,
+            navigateToReceive
             )
             WalletTabRow(
 //            transfersUiState,
-//            assetsUiState,
+            assetsUiState,
 //            refreshState,
 //            onTxOpen = {
 //                txInfo.value = it
@@ -323,7 +298,7 @@ private fun copyTextToClipboard(context: Context, text: String) {
 @Preview
 @Composable
 fun PreviewHomeScreen() {
-    HomeScreen()
+//    HomeScreen()
     //HomeScreen()
 //    HomeScreen(
 //        userData = UserData("0x123...123"),

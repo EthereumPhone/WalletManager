@@ -27,7 +27,7 @@ fun WmListItem(
         colors = ListItemDefaults.colors(
             headlineColor = primary,
             supportingColor = Color(0xFF9FA2A5),
-            containerColor = Color.Transparent
+            containerColor = Color.Black
         )
     )
 }

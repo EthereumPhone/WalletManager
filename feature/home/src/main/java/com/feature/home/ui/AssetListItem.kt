@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 fun AssetListItem(
     //modifier: Modifier = Modifier,
     title: String,
-    assets: List<Asset>,
+    value: Double,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
 ) {
@@ -32,8 +32,8 @@ fun AssetListItem(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = title,  fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(0.4f), color = Color.White)
-        Text(text = "$${getTotalAssetFiatAmount(assets)}", fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color(0xFF9FA2A5))
-        Text(text = "${getTotalAssetAmount(assets)}", fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color.White )
+        Text(text = "$0.0-", fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color(0xFF9FA2A5))
+        Text(text = "${value}", fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color.White )
     }
 }
 
@@ -121,7 +121,7 @@ fun PreviewAssetListItem() {
     LazyColumn(){
         assets.forEach { item ->
             item(key=item.assetname){
-                AssetListItem(item.abbriviation,item.assets)
+                //AssetListItem(item.abbriviation,item.assets)
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }

@@ -86,7 +86,7 @@ fun TokenPickerSheet(
             placeholder = {
                 Text(
                     text = "Search tokens",
-                    color = Color(0xFF9FA2A5)
+                    color = Color.Black
                 )
             }
         )
@@ -158,6 +158,8 @@ fun TokenPickerSheet(
                 is SwapTokenUiState.Error -> {
 
                 }
+
+                else -> {}
             }
 
 

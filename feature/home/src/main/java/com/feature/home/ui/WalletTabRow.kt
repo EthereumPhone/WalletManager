@@ -61,11 +61,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.core.database.model.TransferEntity
 import com.core.designsystem.theme.placeHolder
@@ -83,7 +85,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun WalletTabRow(
 //    transfersUiState: TransfersUiState,
-//    assetsUiState: AssetUiState,
+    assetsUiState: AssetUiState,
 //    refreshState: Boolean,
 //    onRefresh: () -> Unit,
 //    onDelete: (TransferItem) -> Unit,
@@ -108,63 +110,9 @@ internal fun WalletTabRow(
 //    )
 
 
-    val assets = mutableListOf(
-        AssetItem(
-            "Ether",
-            mutableListOf(
-                Asset(
-                    1,
-                    0.1,
-                    201.51
-                )
-            ),
-            "ETH"
-        ),
-        AssetItem(
-            "DAI",
-            mutableListOf(
-                Asset(
-                    1,
-                    1234.56 ,
-                    1234.56
-                )
-            ),
-            "DAI"
-        ),
-        AssetItem(
-            "Dogecoin",
-            mutableListOf(
-                Asset(
-                    1,
-                    50000.0,
-                    3896.67
-                )
-            ),
-            "DOGE"
-        ),
-        AssetItem(
-            "WETH",
-            mutableListOf(
-                Asset(
-                    1,
-                    0.41,
-                    826.20
-                ),
-                Asset(
-                    2,
-                    0.2,
-                    403.02
-                )
-
-            ),
-            "WETH"
-        )
-    )
-
-
         AssetList(
-//            assetsUiState
-            assets
+            assetsUiState
+//            assets
         )
 
 //        PullRefreshIndicator(
@@ -190,29 +138,42 @@ internal fun WalletTabRow(
 
 @Composable
 private fun AssetList(
-//    assetsUiState: AssetUiState,
-    list: List<AssetItem>
+    assetsUiState: AssetUiState,
+//    list: List<AssetItem>
 ){
                 Box(
+                    contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-//                Card(
-//                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
-//                ) {
-                    LazyColumn(
-                        modifier = Modifier,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        list.forEach { item ->
-                            item(key = item.assetname) {
 
-                                AssetListItem(title = item.abbriviation, assets = item.assets)
-                                //AssetExpandableItem(title = formatString(assetName), assets = assetAmount)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
-                                Spacer(modifier = Modifier.height(8.dp))
+                    when(assetsUiState){
+                        is AssetUiState.Empty ->{
+                            Text(text = "No assets", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        is AssetUiState.Loading -> {
+                            Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                        }
+                        is AssetUiState.Success -> {
+                            val assets = assetsUiState.assets.take(5)
+                            LazyColumn(
+                                modifier = Modifier,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                assets.forEach { item ->
+                                    item(key = item.address) {
+
+                                        AssetListItem(title = item.symbol, value = item.balance)
+                                        //AssetExpandableItem(title = formatString(assetName), assets = assetAmount)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                }
                             }
                         }
+
+                        else -> {}
                     }
+
                 //}
             }
 
@@ -347,10 +308,10 @@ fun PreviewWalletTabRow() {
     )
 
     Box {
-        AssetList(
-//            assetsUiState
-            assets
-        )
+//        AssetList(
+////            assetsUiState
+////            assets
+//        )
     }
 
 }

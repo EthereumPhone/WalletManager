@@ -3,11 +3,7 @@ package com.feature.home.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.NorthEast
-import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.SwapVert
@@ -18,28 +14,28 @@ import com.core.ui.WmIconButton
 
 @Composable
 internal fun FunctionsRow(
-//    navigateToSwap: () -> Unit,
-//    navigateToSend: () -> Unit,
-//    navigateToReceive: () -> Unit
+    navigateToSwap: () -> Unit,
+    navigateToSend: () -> Unit,
+    navigateToReceive: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         WmIconButton(
-            onClick = { }, //navigateToSend() },
+            onClick = { navigateToSend() },
             icon = Icons.Rounded.NorthEast,
             contentDescription = "Send"
         )
 
         WmIconButton(
-            onClick = { }, //navigateToReceive() },
+            onClick = { navigateToReceive() },
             icon = Icons.Rounded.ArrowDownward,
             contentDescription = "Receive"
         )
 
         WmIconButton(
-            onClick = { }, //navigateToSwap() },
+            onClick = { navigateToSwap() },
             icon = Icons.Rounded.SwapVert,
             contentDescription = "Swap"
         )
@@ -49,9 +45,5 @@ internal fun FunctionsRow(
 @Preview
 @Composable
 private fun previewFunctionsRow() {
-    FunctionsRow(
-//        {},
-//        {},
-//        {}
-    )
+    //FunctionsRow(navigateToSwap, navigateToSend, navigateToReceive)
 }

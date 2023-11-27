@@ -77,19 +77,19 @@ internal fun SwapRoute(
 
     SwapScreen(
         modifier = modifier,
-//        swapTokenUiState = swapTokenUiState,
-//        exchangeUiState = exchangeUiState,
-//        amountsUiState = amountsUiState,
-//        assetsUiState = assetsUiState,
-//        isSyncing = isSyncing,
-//        searchQuery = searchQuery,
-//        onQueryChange = viewModel::updateSearchQuery,
-//        switchTokens = viewModel::switchTokens,
-//        onTextFieldSelected = viewModel::setSelectedTextField,
-//        onAmountChange = viewModel::updateAmount,
-//        onSelectAsset = viewModel::selectAsset,
-//        onSwapClicked = { viewModel.swap(it) },
-//        onBackClick = onBackClick
+        swapTokenUiState = swapTokenUiState,
+        exchangeUiState = exchangeUiState,
+        amountsUiState = amountsUiState,
+        assetsUiState = assetsUiState,
+        isSyncing = isSyncing,
+        searchQuery = searchQuery,
+        onQueryChange = viewModel::updateSearchQuery,
+        switchTokens = viewModel::switchTokens,
+        onTextFieldSelected = viewModel::setSelectedTextField,
+        onAmountChange = viewModel::updateAmount,
+        onSelectAsset = viewModel::selectAsset,
+        onSwapClicked = { viewModel.swap(it) },
+        onBackClick = onBackClick
     )
 }
 
@@ -98,19 +98,19 @@ internal fun SwapRoute(
 internal fun SwapScreen(
 
     modifier: Modifier = Modifier,
-//    swapTokenUiState: SwapTokenUiState,
-//    exchangeUiState: Double,
-//    amountsUiState: AmountsUiState,
-//    assetsUiState: AssetsUiState,
-//    isSyncing: Boolean,
-//    searchQuery: String,
-//    onQueryChange: (String) -> Unit,
-//    switchTokens: () -> Unit,
-//    onTextFieldSelected: (TextFieldSelected) -> Unit,
-//    onAmountChange: (TextFieldSelected, String) -> Unit,
-//    onSelectAsset: (TokenAsset) -> Unit,
-//    onSwapClicked: ((String) -> Unit) -> Unit,
-//    onBackClick: () -> Unit
+    swapTokenUiState: SwapTokenUiState,
+    exchangeUiState: Double,
+    amountsUiState: AmountsUiState,
+    assetsUiState: AssetsUiState,
+    isSyncing: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    switchTokens: () -> Unit,
+    onTextFieldSelected: (TextFieldSelected) -> Unit,
+    onAmountChange: (TextFieldSelected, String) -> Unit,
+    onSelectAsset: (TokenAsset) -> Unit,
+    onSwapClicked: ((String) -> Unit) -> Unit,
+    onBackClick: () -> Unit
 
 ) {
 
@@ -166,27 +166,27 @@ internal fun SwapScreen(
 
 
         TokenSelector(
-//            amountsUiState = amountsUiState,
-//            assetsUiState = assetsUiState,
-//            switchTokens = switchTokens,
-//            isSyncing = isSyncing,
-//            onAmountChange = { selectedTextField, amount ->
-//                onTextFieldSelected(selectedTextField)
-//                try {
-//                    if (amount == "") {
-//                        onAmountChange(selectedTextField, amount)
-//                    } else {
-//                        val bigDc = BigDecimal(amount.replace(",", "."))
-//                        onAmountChange(selectedTextField, amount)
-//                    }
-//                } catch (e: NumberFormatException) {
-//                    // Catch the error and do nothing
-//                }
-//            },
-//            onPickAssetClicked = {
-//                showSheet = true
-//                onTextFieldSelected(it)
-//            }
+            amountsUiState = amountsUiState,
+            assetsUiState = assetsUiState,
+            switchTokens = switchTokens,
+            isSyncing = isSyncing,
+            onAmountChange = { selectedTextField, amount ->
+                onTextFieldSelected(selectedTextField)
+                try {
+                    if (amount == "") {
+                        onAmountChange(selectedTextField, amount)
+                    } else {
+                        val bigDc = BigDecimal(amount.replace(",", "."))
+                        onAmountChange(selectedTextField, amount)
+                    }
+                } catch (e: NumberFormatException) {
+                    // Catch the error and do nothing
+                }
+            },
+            onPickAssetClicked = {
+                showSheet = true
+                onTextFieldSelected(it)
+            }
         )
         Spacer(modifier = modifier.height(8.dp))
 
@@ -221,89 +221,36 @@ internal fun SwapScreen(
             }
         }
 
-//        Column (
-//            modifier = modifier.fillMaxWidth(),
-//            horizontalAlignment = Alignment.Start,
-//            verticalArrangement = Arrangement.spacedBy(8.dp)
-//
-//        ){
-//            ExchangeRateRow(
-//                assetsUiState = assetsUiState,
-//                exchangeUiState = exchangeUiState,
-//                isSyncing = isSyncing
-//            )
-//
-//            Row(
-//                horizontalArrangement = Arrangement.spacedBy(4.dp),
-//                verticalAlignment = Alignment.CenterVertically
-//            ){
-//
-//
-//                Text(
-//                    text = "Swap fee (0.5%)",
-//                    fontSize = 16.sp,
-//                    color= Color(0xFF9FA2A5)
-//                )
-//            }
-//        }
 
-//        Spacer(modifier = Modifier.weight(1f))
-        val context = LocalContext.current
-//        SwipeButton(
-//            text = "Swipe to swap",
-//            icon = Icons.Rounded.ArrowForward,
-//            //enabled = true,
-//            onSwipe = {
-//                onSwapClicked {
-//                    if (it.length == 66 && isEthereumTransactionHash(it)) {
-//                        (context as Activity).runOnUiThread {
-//                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
-//                        }
-//                    } else if (it == "decline") {
-//                        (context as Activity).runOnUiThread {
-//                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
-//                        }
-//                    } else {
-//                        (context as Activity).runOnUiThread {
-//                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
-//                        }
-//                    }
-//                    onBackClick()
-//
-//
-//                }
-//            }
-//        )
+        if(showSheet) {
+            ModalBottomSheet(
+                containerColor= Color(0xFF24303D),
+                contentColor= Color.White,
 
-//        if(showSheet) {
-//            ModalBottomSheet(
-//                containerColor= Color(0xFF24303D),
-//                contentColor= Color.White,
-//
-//                onDismissRequest = {
-//                    coroutineScope.launch {
-//                        modalSheetState.hide()
-//                    }.invokeOnCompletion {
-//                        if(!modalSheetState.isVisible) showSheet = false
-//                    }
-//                },
-//                sheetState = modalSheetState
-//            ) {
-//                TokenPickerSheet(
-//                    swapTokenUiState = swapTokenUiState,
-//                    searchQuery = searchQuery,
-//                    onQueryChange = onQueryChange,
-//                    onSelectAsset = {
-//                        onSelectAsset(it)
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-//                )
-//            }
-//        }
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }.invokeOnCompletion {
+                        if(!modalSheetState.isVisible) showSheet = false
+                    }
+                },
+                sheetState = modalSheetState
+            ) {
+                TokenPickerSheet(
+                    swapTokenUiState = swapTokenUiState,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    onSelectAsset = {
+                        onSelectAsset(it)
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    }
+                )
+            }
+        }
 
         ethOSButton(text = "Swap", enabled = true, onClick = { /*TODO*/ })
     }
@@ -317,7 +264,7 @@ fun isEthereumTransactionHash(input: String): Boolean {
 @Preview
 @Composable
 fun PreviewSwapScreen() {
-    SwapScreen()
+//    SwapScreen()
 }
 
 
