@@ -40,11 +40,13 @@ import java.util.Date
 internal fun TransferListItem(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
-    onCardClick: () -> Unit
+    onCardClick: (String) -> Unit
 ) {
 
         Row (
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -72,7 +74,7 @@ internal fun TransferListItem(
 
                 Icon(
                     imageVector = icon,
-                    contentDescription = "Send",
+                    contentDescription = if (transfer.userSent) "Send" else "Receive",
                     tint = icontint,
                     modifier = Modifier.size(28.dp)
                 )
@@ -108,7 +110,7 @@ internal fun TransferListItem(
                         Column {
                             Text(
 
-                                text = if(transfer.userSent) "Sent ${"ETH"}" else "Received ${"ETH"}",
+                                text = if(transfer.userSent) "Sent ${transfer.asset}" else "Received ${transfer.asset}",
                                 color = Color.White,//(0xFF9FA2A5),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
@@ -131,15 +133,15 @@ internal fun TransferListItem(
                                     verticalAlignment = Alignment.CenterVertically,
 
                                     ){
-                                    Text("0.0", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
+                                    Text(transfer.value, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
 
-                                    Text("ETH", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
+                                    Text(transfer.asset, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
                                 }
-                                Text("$0.00", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
+                                Text("$0.00-", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
                             }
 
                             IconButton(
-                                onClick = onCardClick,
+                                onClick = { onCardClick },
                                 modifier = Modifier.size(32.dp),
                             ) {
                                 Icon(

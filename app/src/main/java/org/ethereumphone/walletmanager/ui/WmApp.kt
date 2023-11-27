@@ -16,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,13 +29,8 @@ import com.example.transactions.navigation.transactionRoute
 import com.feature.send.navigation.navigateToSend
 import com.feature.send.navigation.sendRoute
 import org.ethereumphone.walletmanager.navigation.WmNavHost
+import org.ethereumphone.walletmanager.utils.Screen
 
-
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Home : Screen(homeRoute, "Overview", Icons.Rounded.Home)
-    object Assets : Screen(assetRoute, "Assets", Icons.Rounded.Dataset)
-    object Transaction : Screen(transactionRoute, "Transactions", Icons.Rounded.Article)
-}
 
 @Composable
 fun WmApp(
@@ -41,40 +38,16 @@ fun WmApp(
 ) {
 
     val listScreens = listOf(Screen.Home,Screen.Assets,Screen.Transaction)
-    val navController = appState.navController
     Scaffold(
         containerColor = background,
         //bottombar
         bottomBar = {
-
-            BottomNavigation {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-
-                listScreens.forEach { screen ->
-                    BottomNavigationItem(
-                        icon = { Icon( screen.icon, contentDescription = null) },
-                        label = { Text(screen.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        selectedContentColor = Color.White,
-                        unselectedContentColor = Color(0xFF9FA2A5),
-                        onClick = {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
-                            navController.popBackStack(
-                                navController.graph.findStartDestination().id,
-                                false
-                            )
-
-                            // Navigate to the start destination of the selected tab
-                            navController.navigate(screen.route)
-                        }
-                    )
-                }
-
-
-
-            }
+            EthOSBottomBar(
+                destinations = listScreens,//all screens
+                onNavigateToDestination = appState::navigateToTopLevelDestination,
+                currentDestination = appState.currentDestination,
+            )
+//
         }
     ) { paddingValues ->
 
@@ -87,3 +60,61 @@ fun WmApp(
 
     }
 }
+
+
+@Composable
+private fun EthOSBottomBar(
+    destinations: List<Screen>,
+    onNavigateToDestination: (Screen) -> Unit,
+    currentDestination: NavDestination?,
+    modifier: Modifier = Modifier,
+) {
+
+    BottomNavigation (
+        modifier = modifier
+    ){
+
+        destinations.forEach { destination ->
+            val selected = currentDestination.isTopLevelDestinationInHierarchy(destination)
+            BottomNavigationItem(
+                icon = {
+                    Icon(
+                        destination.icon,
+                        contentDescription = null
+                    )
+                       },
+                label = { Text(destination.label) },
+                selected = selected,
+                selectedContentColor = Color.White,
+                unselectedContentColor = Color(0xFF9FA2A5),
+                onClick = {
+                    onNavigateToDestination(destination)
+                }
+            )
+
+        }
+//                listScreens.forEach { screen ->
+//                    BottomNavigationItem(
+//                        icon = { Icon( screen.icon, contentDescription = null) },
+//                        label = { Text(screen.label) },
+//                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+//                        selectedContentColor = Color.White,
+//                        unselectedContentColor = Color(0xFF9FA2A5),
+//                        onClick = {
+//                            appStatenavigateToTopLevelDestination
+//
+//                        }
+//                    )
+//                }
+
+
+
+            }
+
+
+}
+
+private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: Screen) =
+    this?.hierarchy?.any {
+        it.route?.contains(destination.route, true) ?: false
+    } ?: false

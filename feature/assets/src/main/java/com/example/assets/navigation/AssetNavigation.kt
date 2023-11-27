@@ -15,7 +15,7 @@ fun NavController.navigateToAsset(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.assetGraph(
-    navigateToAssetDetail: () -> Unit,
+    navigateToAssetDetail: (String) -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {
     navigation(
@@ -25,9 +25,6 @@ fun NavGraphBuilder.assetGraph(
         composable(route = assetRoute) {
             AssetRoute(
                 navigateToAssetDetail = navigateToAssetDetail
-//                navigateToSwap = navigateToSwap,
-//                navigateToSend = navigateToSend,
-//                navigateToReceive = navigateToReceive
             )
         }
         nestedGraphs()

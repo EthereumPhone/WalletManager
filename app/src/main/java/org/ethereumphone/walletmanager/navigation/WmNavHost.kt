@@ -6,6 +6,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.assets.navigation.assetDetailScreen
+import com.example.assets.navigation.assetGraph
+import com.example.assets.navigation.navigateToAssetDetail
+import com.example.transactions.navigation.navigateToTransactionDetail
+import com.example.transactions.navigation.transactionDetailScreen
+import com.example.transactions.navigation.transactionGraph
 import com.feature.home.navigation.homeGraph
 import com.feature.home.navigation.homeGraphRoutePattern
 import com.feature.home.navigation.homeRoute
@@ -47,6 +53,23 @@ fun WmNavHost(
                 sendScreen(navController::popBackStack)
                 receiveScreen(navController::popBackStack)
             }
+        )
+        assetGraph(
+            navigateToAssetDetail = navController::navigateToAssetDetail,
+            nestedGraphs = {
+                assetDetailScreen(
+                    onBackClick = navController::popBackStack
+                )
+            }
+        )
+        transactionGraph(
+            navigateToTxDetail = navController::navigateToTransactionDetail,
+            nestedGraphs = {
+                transactionDetailScreen(
+                    onBackClick = navController::popBackStack
+                )
+            }
+
         )
     }
 }

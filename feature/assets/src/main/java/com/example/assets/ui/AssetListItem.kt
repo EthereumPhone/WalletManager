@@ -49,21 +49,21 @@ fun AssetListItem(
                     verticalAlignment = Alignment.CenterVertically,
 
                     ){
-                    Text("${formatDouble(assets.sumOf { it.balance })}", color = Color.White, fontWeight = FontWeight.Medium)
+                    Text(formatDouble(assets.sumOf { it.balance }), color = Color.White, fontWeight = FontWeight.Medium)
 
                     Text(assets.get(0).symbol, color = Color.White, fontWeight = FontWeight.Medium)
                 }
                 //
-                Text("$0.00", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
+                Text("$0.00-", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
             }
             if(withMoreDetail){
-                androidx.compose.material.IconButton(
+                IconButton(
                     onClick = linkTo,
                     modifier = Modifier.size(32.dp),
                 ) {
-                    androidx.compose.material.Icon(
+                    Icon(
                         imageVector = Icons.Rounded.ArrowForwardIos,
-                        contentDescription = "Go back",
+                        contentDescription = "Forward",
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )

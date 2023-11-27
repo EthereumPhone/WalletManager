@@ -35,15 +35,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.CurrentState
 import com.core.model.TokenAsset
 import com.core.model.UserData
 import com.example.assets.ui.AssetListItem
+import com.example.assets.ui.formatDouble
+import org.ethereumphone.walletmanager.ui.WmAppState
+import org.ethereumphone.walletmanager.ui.rememberWmAppState
+import java.text.DecimalFormat
 
 @Composable
 fun AssetRoute(
     modifier: Modifier = Modifier,
-    navigateToAssetDetail: () -> Unit,
-    viewModel: AssetViewModel = hiltViewModel()
+    navigateToAssetDetail: (String) -> Unit,
+    viewModel: AssetViewModel = hiltViewModel(),
+//    appState: WmAppState = rememberWmAppState()
 ) {
 
     val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
@@ -65,7 +71,12 @@ fun AssetRoute(
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         onRefresh = viewModel::refreshData,
-        toAssetDetail = navigateToAssetDetail,
+//        toAssetDetail = {
+//            appState.setCurrentState(it)
+//        },
+        navigateToAssetDetail = navigateToAssetDetail
+
+
     )
 }
 
@@ -76,46 +87,58 @@ internal fun AssetScreen(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
-    toAssetDetail: () -> Unit,
+//    toAssetDetail: (CurrentState) -> Unit,
+    navigateToAssetDetail: (String) -> Unit,
 ){
 
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = refreshState,
-        onRefresh = {
-            onRefresh()
+
+    when(assetsUiState){
+        is AssetUiState.Loading -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
-    )
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 18.dp)
-    ) {
-
-        //Header
-
-        Row (
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(bottom=24.dp),
-            //.background(Color.Red),
-            Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ){
-
-
-            //Header title
-            Text(
-                textAlign = TextAlign.Center,
-                text = "Assets",
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
+        is AssetUiState.Success -> {
+            val pullRefreshState = rememberPullRefreshState(
+                refreshing = refreshState,
+                onRefresh = {
+                    onRefresh()
+                }
             )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
 
-            //Warning or info
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .padding(horizontal = 24.dp, vertical = 18.dp)
+            ) {
+
+                //Header
+
+                Row (
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    //.background(Color.Red),
+                    Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ){
+
+
+                    //Header title
+                    Text(
+                        textAlign = TextAlign.Center,
+                        text = "Assets",
+                        fontSize = 28.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    //Warning or info
 
 
 //            Icon(
@@ -132,60 +155,84 @@ internal fun AssetScreen(
 //                    }
 //
 //            )
-                //icon()
+                    //icon()
 
-        }
-
-        Box{
-            when (assetsUiState){
-                is AssetUiState.Loading -> {  }
-                is AssetUiState.Error -> {  }
-                is AssetUiState.Empty -> {
-                    Box(
-                        modifier = Modifier
-                            //.background(primaryVariant)
-                            .fillMaxSize()
-                    ) {
-                        Text(
-                            text = "No assets found",
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            fontSize = 24.sp,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
                 }
-                is AssetUiState.Success -> {
-                    val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        LazyColumn {
-                            groupedAssets.forEach { (assetName, assetList) ->
-                                item(key = assetName) {
-                                    AssetListItem(assetName,assetList, true,toAssetDetail)
+                Box{
+                    when (assetsUiState){
+                        is AssetUiState.Loading -> {  }
+                        is AssetUiState.Error -> {  }
+                        is AssetUiState.Empty -> {
+                            Box(
+                                modifier = Modifier
+                                    //.background(primaryVariant)
+                                    .fillMaxSize()
+                            ) {
+                                Text(
+                                    text = "No assets found",
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 24.sp,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                        }
+                        is AssetUiState.Success -> {
+                            val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+                                LazyColumn {
+                                    groupedAssets.forEach { (assetName, assetList) ->
+                                        item(key = assetName) {
+                                            AssetListItem(assetName,assetList,
+                                                true
+                                            ) {
+                                                //set currentState
+//                                        toAssetDetail(
+//                                            CurrentState(
+//                                                address = "",
+//                                                symbol = assetList[0].symbol,
+//                                                name = assetName,
+//                                                balance = formatDouble(assetList.sumOf { it.balance }).toDouble(),// get  sum of all assets in different networks
+//                                                assets = assetList
+//                                            )
+//                                        )
+
+                                                //navigate to detailscreen
+                                                navigateToAssetDetail(assetList[0].symbol)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+                        else -> {}
                     }
+
+                    PullRefreshIndicator(
+                        refreshing = refreshState,
+                        state = pullRefreshState,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
                 }
 
 
-                else -> {}
-            }
 
-            PullRefreshIndicator(
-                refreshing = refreshState,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+            }
         }
 
-
-
+        else -> {}
     }
+
+}
+
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
 }
 
 @Composable
@@ -261,6 +308,16 @@ fun PreviewAssetScreen(){
 
         ),
         refreshState = false,
-        onRefresh = {}
-    ) {}
+        onRefresh = {},
+        navigateToAssetDetail ={},
+//        toAssetDetail= {
+//            CurrentState(
+//                address = "",
+//                symbol = "ETH",
+//                name = "assetName",
+//                balance = 0.0,
+//                assets = emptyList()
+//            )
+//        }
+    )
 }

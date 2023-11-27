@@ -15,9 +15,7 @@ fun NavController.navigateToTransaction(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.transactionGraph(
-    navigateToSwap: () -> Unit,
-    navigateToSend: () -> Unit,
-    navigateToReceive: () -> Unit,
+    navigateToTxDetail: (String) -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {
     navigation(
@@ -25,7 +23,9 @@ fun NavGraphBuilder.transactionGraph(
         startDestination = transactionRoute
     ) {
         composable(transactionRoute){
-            TransactionRoute()
+            TransactionRoute(
+                navigateToTxDetail = navigateToTxDetail
+            )
         }
         nestedGraphs()
     }
