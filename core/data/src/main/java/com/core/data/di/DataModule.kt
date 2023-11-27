@@ -1,6 +1,8 @@
 package com.core.data.di
 
 import android.content.Context
+import com.core.data.remote.EnsApi
+import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
@@ -141,6 +143,24 @@ object DataModule {
             web3j,
             uniswapRoutingSDK
         )
+    }
+
+    @Singleton
+    @Provides
+    fun provideErc20TransferApi(
+        walletSDK: WalletSDK,
+        web3j: Web3j
+    ): Erc20TransferApi {
+        return Erc20TransferApi(
+            walletSDK,
+            web3j
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideEnsApi(): EnsApi {
+        return EnsApi()
     }
 
 }
