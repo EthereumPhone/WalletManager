@@ -40,10 +40,12 @@ fun TransctionDetailRoute(
 ) {
 
     val txUiState: TransactionDetailUiState by viewModel.currentTxState.collectAsStateWithLifecycle()
-
+    val txHash = viewModel.txHash
     TransctionDetailScreen(
         txUiState = txUiState,
-        navigateToTransaction = navigateToTransaction
+        navigateToTransaction = navigateToTransaction,
+        txHash = txHash
+
     )
 }
 
@@ -52,7 +54,8 @@ fun TransctionDetailRoute(
 fun TransctionDetailScreen(
     modifier: Modifier = Modifier,
     txUiState: TransactionDetailUiState,
-    navigateToTransaction: () -> Unit
+    navigateToTransaction: () -> Unit,
+    txHash: String
 
 ){
     when(txUiState){
@@ -66,7 +69,9 @@ fun TransctionDetailScreen(
         }
 
         is TransactionDetailUiState.Success -> {
-            var tx = txUiState.tx
+            val txs = txUiState.txs // all txs
+            val tx = txs.filter { it.txHash == txHash }[0] // get Tx with specific tx hash
+
             Column (
                 modifier = Modifier
                     .fillMaxSize()

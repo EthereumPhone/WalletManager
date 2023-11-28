@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.domain.GetTokenAssetsBySymbolUseCase
 import com.core.model.TokenAsset
+import com.core.domain.GetTransfersUseCase
 import com.core.model.TransferItem
 import com.example.transactions.navigation.TxArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,17 +19,16 @@ import javax.inject.Inject
 @HiltViewModel
 class TransactionDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    //private val txByHashUseCase: GetTxByHashUseCaseUseCase,
+    private val getTransfersUseCase: GetTransfersUseCase
 ): ViewModel() {
 
     private val assetDetailArgs: TxArgs = TxArgs(savedStateHandle)
 
-    val tx = assetDetailArgs.tx
+    val txHash = assetDetailArgs.tx
 
     val currentTxState: StateFlow<TransactionDetailUiState> =
-        txByHashUseCase(
-            symbol = assetDetailArgs.tx
-        )
+        getTransfersUseCase()
+            .map(TransactionDetailUiState::Success)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -36,10 +36,11 @@ class TransactionDetailViewModel @Inject constructor(
             )
 
 
+
 }
 
 sealed interface TransactionDetailUiState {
     object Loading: TransactionDetailUiState
-    data class Success(val tx: TransferItem): TransactionDetailUiState
+    data class Success(val txs: List<TransferItem>): TransactionDetailUiState
 
 }

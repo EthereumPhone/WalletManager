@@ -40,8 +40,6 @@ import com.core.model.TokenAsset
 import com.core.model.UserData
 import com.example.assets.ui.AssetListItem
 import com.example.assets.ui.formatDouble
-import org.ethereumphone.walletmanager.ui.WmAppState
-import org.ethereumphone.walletmanager.ui.rememberWmAppState
 import java.text.DecimalFormat
 
 @Composable
@@ -49,7 +47,6 @@ fun AssetRoute(
     modifier: Modifier = Modifier,
     navigateToAssetDetail: (String) -> Unit,
     viewModel: AssetViewModel = hiltViewModel(),
-//    appState: WmAppState = rememberWmAppState()
 ) {
 
     val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()

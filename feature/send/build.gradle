@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'com.feature.send'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdk 33
@@ -46,7 +46,6 @@ dependencies {
     implementation project(path: ':core:common')
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
-    implementation project(path: ':feature:receive')
 
 
     implementation libs.androidx.core
