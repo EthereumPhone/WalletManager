@@ -402,7 +402,7 @@ fun SendScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .padding(horizontal = 24.dp, vertical = 18.dp)
+                .padding(horizontal = 32.dp, vertical = 32.dp)
         ){
             //Breadcrumb w/ backbutton
         Column(
@@ -446,10 +446,8 @@ fun SendScreen(
                 ethOSCenterTextField(
                     text = address,
                     label = "(Enter address or ENS)",
-                    modifier = Modifier
-                        .weight(1f)
-                        ,
-
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
                     onTextChanged = { text -> address = text },
                     size = 18
                 )
@@ -468,27 +466,6 @@ fun SendScreen(
 
 
         ) {
-//            ethOSTextField(
-//                text = value,
-//                label = "0",
-//                singleLine = true,
-//                onTextChanged = { text -> value = text },
-//                size = 64,
-//                maxChar = 10
-//
-//            )
-//            Spacer(modifier = Modifier.width(12.dp))
-//
-//
-//
-//            Text(
-//                text = if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",
-//                fontSize = calculateFontSize(value.length,64),
-//                color = Color.White,
-//                fontWeight = FontWeight.SemiBold,
-//                modifier = Modifier.width(IntrinsicSize.Min)
-//            )
-
             when (selectedToken) {
                 is SelectedTokenUiState.Unselected -> {
                     Row(
@@ -500,12 +477,13 @@ fun SendScreen(
                         ){
 
                             ethOSTextField(
-                                text = "",
+                                text = value,
                                 label = "0",
                                 singleLine = true,
                                 onTextChanged = { text -> value = text },
                                 size = 64,
-                                maxChar = 10
+                                maxChar = 10,
+                                numberInput = true
 
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -523,11 +501,12 @@ fun SendScreen(
 
                     }
                     Text(
-                        text = "",
+                        text = "0 ETH available",
                         fontSize = 20.sp,
                         color = Color(0xFF9FA2A5),
                         fontWeight = FontWeight.SemiBold
                     )
+
 
                 }
                 is SelectedTokenUiState.Selected -> {
@@ -540,25 +519,25 @@ fun SendScreen(
                         ){
 
                                         ethOSTextField(
-                text = value,
-                label = "0",
-                singleLine = true,
-                onTextChanged = { text -> value = text },
-                size = 64,
-                maxChar = 10
+                                            text = value,
+                                            label = "0",
+                                            singleLine = true,
+                                            onTextChanged = { text -> value = text },
+                                            size = 64,
+                                            maxChar = 10
 
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+                                        )
+                            Spacer(modifier = Modifier.width(12.dp))
 
 
 
-            Text(
-                text = if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",
-                fontSize = calculateFontSize(value.length,64),
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.width(IntrinsicSize.Min)
-            )
+                                Text(
+                                    text = if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",
+                                    fontSize = calculateFontSize(value.length,64),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.width(IntrinsicSize.Min)
+                                )
                         }
 
                     }
@@ -572,13 +551,11 @@ fun SendScreen(
             }
 
 
-            Spacer(modifier = modifier.height(64.dp))
-
 
             when (selectedToken) {
                 is SelectedTokenUiState.Unselected -> {
                     SelectedNetworkButton(
-                        chainId = 1,
+                        chainId = 0,
                         onClickChange = {
                             showSheet = true
                         },
@@ -589,38 +566,11 @@ fun SendScreen(
                         chainId = selectedToken.tokenAsset.chainId,
                         onClickChange = {
                             showSheet = true
-
-
                         },
                         )
                 }
 
                 else -> {}
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ){
-                Box(
-                    modifier = modifier
-                        .clip(CircleShape)
-                        .size(18.dp)
-                        .background(Color.Red)
-                ){}
-                Text(
-                    text = "Optimism",
-                    fontSize = 20.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Icon(
-                    imageVector = Icons.Rounded.ArrowDropDown,
-                    contentDescription = "",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
             }
         }
 
@@ -671,7 +621,7 @@ fun SendScreen(
 
     if(showSheet) {
         ModalBottomSheet(
-            containerColor= Color(0xFF24303D),
+            containerColor= Color(0xFF1A1A1A),
             contentColor= Color.White,
 
             onDismissRequest = {

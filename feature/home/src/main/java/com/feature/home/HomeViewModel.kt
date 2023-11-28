@@ -2,6 +2,7 @@ package com.feature.home
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.AlchemyTransferRepository
@@ -85,6 +86,8 @@ class HomeViewModel @Inject constructor(
     val currentChain: Flow<Int> = _currentChain
 
 
+    init {
+    }
 
     fun getCurrentChain(context: Context) {
         viewModelScope.launch {

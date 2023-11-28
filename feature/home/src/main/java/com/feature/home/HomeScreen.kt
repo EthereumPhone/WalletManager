@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.model.UserData
 import com.core.ui.InfoDialog
@@ -58,6 +59,7 @@ internal fun HomeRoute(
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
+
     val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
     var updater by remember {mutableStateOf(true)}
@@ -69,18 +71,18 @@ internal fun HomeRoute(
     }
 
     HomeScreen(
-//        userData = userData,
-//        currentChain = currentChain,
-//        getCurrentChain = viewModel::getCurrentChain,
+        userData = userData,
+        currentChain = currentChain,
+        getCurrentChain = viewModel::getCurrentChain,
 //        transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
 //        refreshState = refreshState,
 //        currencyPrice = currencyPrice,
 //        onCurrencyChange = viewModel::getExchange,
-//        onAddressClick = {
-//            // had to do it here because I need the local context.
-//            copyTextToClipboard(localContext, userData.walletAddress)
-//        },
+        onAddressClick = {
+            // had to do it here because I need the local context.
+            copyTextToClipboard(localContext, userData.walletAddress)
+        },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
@@ -101,15 +103,15 @@ internal fun HomeRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
-//    userData: UserData,
-//    currentChain: Int,
-//    getCurrentChain: (Context) -> Unit,
+    userData: UserData,
+   currentChain: Int,
+    getCurrentChain: (Context) -> Unit,
 //    transfersUiState: TransfersUiState,
-        assetsUiState: AssetUiState,
+    assetsUiState: AssetUiState,
 //    refreshState: Boolean,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
-//    onAddressClick: () -> Unit,
+    onAddressClick: () -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
@@ -165,6 +167,32 @@ internal fun HomeScreen(
 //        )
 //    }
 
+    val fiatBalance = when(assetsUiState){
+        is AssetUiState.Loading -> {
+            emptyList<TokenAsset>()
+        }
+        is AssetUiState.Empty -> {
+            0.0
+        }
+        is AssetUiState.Error -> {
+            emptyList<TokenAsset>()
+        }
+        is AssetUiState.Success -> {
+            val assetsbalance = assetsUiState.assets.filter { it.balance > 0.0 }
+
+            var res = 0.0
+
+            assetsbalance.forEach {
+                res += it.balance
+                //get fiat value
+            }
+
+            res
+
+
+        }
+    }
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -176,8 +204,8 @@ internal fun HomeScreen(
             .padding(horizontal = 32.dp, vertical = 32.dp)
     ) {
         AddressBar(
-//            userData,
-//            onAddressClick,
+            userData,
+            onAddressClick,
             icon = {
                 IconButton(
                     onClick = {
@@ -194,8 +222,8 @@ internal fun HomeScreen(
                     )
                 }
             },
-//            currentChain,
-//            getCurrentChain
+            currentChain,
+            getCurrentChain
         )
 
 
@@ -207,7 +235,7 @@ internal fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
-            Text(text = "$${7600.35}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+            Text(text = "$${fiatBalance}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
         }
 
         //, fontWeight = FontWeight.Medium, fontSize = 16.sp, Color.White)

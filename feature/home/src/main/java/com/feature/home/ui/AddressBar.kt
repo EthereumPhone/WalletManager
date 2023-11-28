@@ -51,13 +51,14 @@ import java.util.Calendar
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun AddressBar(
-//    userData: UserData,
-//    onclick: () -> Unit,
+    userData: UserData,
+    onclick: () -> Unit,
     icon: @Composable () -> Unit,
-//    currentChain: Int,
-//    getCurrentChain: (Context) -> Unit,
+    currentChain: Int,
+    getCurrentChain: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    getCurrentChain(LocalContext.current)
 
     Column (
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -99,10 +100,18 @@ internal fun AddressBar(
 
 
         //gets current Chain
-//        getCurrentChain(LocalContext.current)
 
-        //Networkpill
-        var chainName = when(5) {//(currentChain) {
+        var chainColor = when(currentChain) {
+            1 -> Color(0xFF32CD32)
+            5 -> Color(0xFFF0EAD6)
+            137 -> Color(0xFF442fb2)//Polygon
+            10 -> Color(0xFFc82e31)//Optimum
+            42161 -> Color(0xFF2b88b8)//Arbitrum
+            else -> {
+                Color(0xFF030303)
+            }
+        }
+        var chainName = when(currentChain) {
             1 -> "Mainnet"
             5 -> "Goerli"
             10 -> "Optimism"
@@ -111,40 +120,36 @@ internal fun AddressBar(
             else -> "Mainnet"
         }
 
-        var chainColor = when(5) {
-            1 -> Color(0xFF5667FF)
-            5 -> Color(0xFFF0EAD6)
-            10 -> Color(0xFFE53939)
-            137 -> Color(0xFF7418F2)
-            42161 -> Color(0xFF49A9F2)
-            else -> Color(0xFF5667FF)
-        }
         Surface (
             modifier = Modifier
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .clickable {
+                    onclick()
+                },
             color = Color(0xFF262626),
             contentColor = Color.White
         ) {
             Row (
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier.padding(4.dp,4.dp)
+                modifier = modifier.padding(12.dp,8.dp)//(4.dp,4.dp)
             ){
-                Box(
-                    modifier = modifier.clip(CircleShape)
-                        .size(24.dp)
-                        .background(chainColor)
-
-                ){}
-                Text(
-                    text = chainName,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
+                //Add later
+//                Box(
+//                    modifier = modifier.clip(CircleShape)
+//                        .size(24.dp)
+//                        .background(chainColor)
+//
+//                ){}
+//                Text(
+//                    text = chainName,
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = Color.White
+//                )
                 Text(
                     modifier = modifier.padding(end=12.dp),
-                    text = truncateText("0x9b3454195c85b2865A0c456FBAa7CE01b4f29381"),//userData.walletAddress),
+                    text = truncateText(userData.walletAddress),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
@@ -166,28 +171,28 @@ private fun truncateText(text: String): String {
 @Preview
 @Composable
 fun previewAddressBar() {
-    AddressBar(
-//        UserData("0x123123123123123123"),
-//        { },
-        icon = {
-            IconButton(
-                onClick = {
-                    //opens InfoDialog
-                    //showInfoDialog.value = true
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Information",
-                    tint = Color(0xFF9FA2A5),
-
-                )
-            }
-        },
-//        currentChain = 5,
-//        getCurrentChain = {
+//    AddressBar(
+////        UserData("0x123123123123123123"),
+////        { },
+//        icon = {
+//            IconButton(
+//                onClick = {
+//                    //opens InfoDialog
+//                    //showInfoDialog.value = true
+//                }
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Outlined.Info,
+//                    contentDescription = "Information",
+//                    tint = Color(0xFF9FA2A5),
 //
-//        }
-
-    )
+//                )
+//            }
+//        },
+////        currentChain = 5,
+////        getCurrentChain = {
+////
+////        }
+//
+//    )
 }

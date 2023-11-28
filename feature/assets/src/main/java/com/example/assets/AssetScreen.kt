@@ -58,19 +58,16 @@ fun AssetRoute(
     //For refresher
     var updater by remember { mutableStateOf(true) }
 
-    if(updater) {
-        Log.d("automatic updater", "TEST")
-        viewModel.refreshData()
-        updater = false
-    }
+//    if(updater) {
+//        Log.d("automatic updater", "TEST")
+//        viewModel.refreshData()
+//        updater = false
+//    }
 
     AssetScreen(
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         onRefresh = viewModel::refreshData,
-//        toAssetDetail = {
-//            appState.setCurrentState(it)
-//        },
         navigateToAssetDetail = navigateToAssetDetail
 
 
@@ -84,10 +81,30 @@ internal fun AssetScreen(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
-//    toAssetDetail: (CurrentState) -> Unit,
     navigateToAssetDetail: (String) -> Unit,
 ){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
 
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(horizontal = 32.dp, vertical = 32.dp)
+    ) {
+        Row (
+            //modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
+        ){
+            Text(
+                modifier = modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                text = "Assets",
+                fontSize = 28.sp,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+    }
 
     when(assetsUiState){
         is AssetUiState.Loading -> {
@@ -98,6 +115,22 @@ internal fun AssetScreen(
                 Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
             }
         }
+        is AssetUiState.Empty -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+        is AssetUiState.Error -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                Text(text = "Error...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
         is AssetUiState.Success -> {
             val pullRefreshState = rememberPullRefreshState(
                 refreshing = refreshState,
@@ -105,110 +138,46 @@ internal fun AssetScreen(
                     onRefresh()
                 }
             )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Box{
 
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .padding(horizontal = 24.dp, vertical = 18.dp)
-            ) {
+                    if(assetsUiState.assets.size > 0){
+                        val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
 
-                //Header
-
-                Row (
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    //.background(Color.Red),
-                    Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ){
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            LazyColumn {
+                                groupedAssets.forEach { (assetName, assetList) ->
+                                    item(key = assetName) {
+                                        AssetListItem(assetName,assetList,
+                                            true
+                                        ) {
+                                            //set currentState
 
 
-                    //Header title
-                    Text(
-                        textAlign = TextAlign.Center,
-                        text = "Assets",
-                        fontSize = 28.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    //Warning or info
-
-
-//            Icon(
-//                imageVector = Icons.Outlined.Info,
-//                contentDescription = "Information",
-//                tint = Color(0xFF9FA2A5),
-//                modifier = modifier
-//                    .clip(CircleShape)
-//                    //.background(Color.Red)
-//                    .clickable {
-//                        //opens InfoDialog
-//                        //showDialog.value = true
-//                        openOnClick
-//                    }
-//
-//            )
-                    //icon()
-
-                }
-
-                Box{
-                    when (assetsUiState){
-                        is AssetUiState.Loading -> {  }
-                        is AssetUiState.Error -> {  }
-                        is AssetUiState.Empty -> {
-                            Box(
-                                modifier = Modifier
-                                    //.background(primaryVariant)
-                                    .fillMaxSize()
-                            ) {
-                                Text(
-                                    text = "No assets found",
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 24.sp,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-                        }
-                        is AssetUiState.Success -> {
-                            val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                LazyColumn {
-                                    groupedAssets.forEach { (assetName, assetList) ->
-                                        item(key = assetName) {
-                                            AssetListItem(assetName,assetList,
-                                                true
-                                            ) {
-                                                //set currentState
-//                                        toAssetDetail(
-//                                            CurrentState(
-//                                                address = "",
-//                                                symbol = assetList[0].symbol,
-//                                                name = assetName,
-//                                                balance = formatDouble(assetList.sumOf { it.balance }).toDouble(),// get  sum of all assets in different networks
-//                                                assets = assetList
-//                                            )
-//                                        )
-
-                                                //navigate to detailscreen
-                                                navigateToAssetDetail(assetList[0].symbol)
-                                            }
+                                            //navigate to detailscreen
+                                            navigateToAssetDetail(assetList[0].symbol)
                                         }
                                     }
                                 }
                             }
                         }
-                        else -> {}
+                    }else{
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                        }
                     }
+
+
+
+
+
 
                     PullRefreshIndicator(
                         refreshing = refreshState,
@@ -219,10 +188,13 @@ internal fun AssetScreen(
 
 
 
-            }
+
         }
 
-        else -> {}
+        else -> {
+            Text(text = "Else...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+
+        }
     }
 
 }

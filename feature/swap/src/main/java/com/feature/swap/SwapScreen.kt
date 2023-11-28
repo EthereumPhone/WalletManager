@@ -6,9 +6,11 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,14 +71,14 @@ internal fun SwapRoute(
     val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
 
-    val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
+    //val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
-        swapTokenUiState = swapTokenUiState,
+        //swapTokenUiState = swapTokenUiState,
         exchangeUiState = exchangeUiState,
         amountsUiState = amountsUiState,
         assetsUiState = assetsUiState,
@@ -97,7 +99,7 @@ internal fun SwapRoute(
 internal fun SwapScreen(
 
     modifier: Modifier = Modifier,
-    swapTokenUiState: SwapTokenUiState,
+//    swapTokenUiState: SwapTokenUiState,
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
@@ -112,7 +114,6 @@ internal fun SwapScreen(
     onBackClick: () -> Unit
 
 ) {
-
 
     // Create a BottomSheetScaffoldState
     var showSheet by remember { mutableStateOf(false) }
@@ -137,12 +138,12 @@ internal fun SwapScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 18.dp)
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
 
         TopHeader(
-            onBackClick = {}//onBackClick
-                          ,
+            onBackClick = onBackClick
+            ,
             title = "Swap",
             icon = {
                 IconButton(
@@ -208,13 +209,13 @@ internal fun SwapScreen(
 
                 Text(
                     text = "Swap fee",
-                    fontSize = 24.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color= Color.White
                 )
                 Text(
                     text = "0.5% per transaction",
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
@@ -223,7 +224,7 @@ internal fun SwapScreen(
 
         if(showSheet) {
             ModalBottomSheet(
-                containerColor= Color(0xFF24303D),
+                containerColor= Color(0xFF262626),
                 contentColor= Color.White,
 
                 onDismissRequest = {
@@ -235,24 +236,31 @@ internal fun SwapScreen(
                 },
                 sheetState = modalSheetState
             ) {
-                TokenPickerSheet(
-                    swapTokenUiState = swapTokenUiState,
-                    searchQuery = searchQuery,
-                    onQueryChange = onQueryChange,
-                    onSelectAsset = {
-                        onSelectAsset(it)
-                        coroutineScope.launch {
-                            modalSheetState.hide()
-                        }.invokeOnCompletion {
-                            if(!modalSheetState.isVisible) showSheet = false
-                        }
-                    }
-                )
+                Box(modifier = Modifier.height(200.dp)){
+                    Text("Tokens")
+                }
+//                TokenPickerSheet(
+//                    swapTokenUiState = swapTokenUiState,
+//                    searchQuery = searchQuery,
+//                    onQueryChange = onQueryChange,
+//                    onSelectAsset = {
+//                        onSelectAsset(it)
+//                        coroutineScope.launch {
+//                            modalSheetState.hide()
+//                        }.invokeOnCompletion {
+//                            if(!modalSheetState.isVisible) showSheet = false
+//                        }
+//                    }
+//                )
             }
         }
 
         ethOSButton(text = "Swap", enabled = true, onClick = { /*TODO*/ })
     }
+
+
+
+
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {

@@ -1,5 +1,6 @@
 package com.core.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,8 +44,9 @@ fun InfoDialog(
     Dialog(onDismissRequest = { setShowDialog() }) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF24303D),
+            color = Color.Black,
             contentColor = Color.White,
+            border = BorderStroke(1.dp,Color.White),
             tonalElevation = 4.dp
         ) {
             Box(
@@ -65,7 +67,7 @@ fun InfoDialog(
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "",
-                            tint = Color(0xFF24303D),
+                            tint = Color.Transparent,
                             modifier = Modifier
                                 .width(30.dp)
                                 .height(30.dp)
@@ -82,7 +84,7 @@ fun InfoDialog(
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Close",
-                            tint = Color(0xFF24303D),//Color.White,
+                            tint = Color.Transparent,//(0xFF9FA2A5),//Color.White,
                             modifier = Modifier
                                 .width(30.dp)
                                 .height(30.dp)

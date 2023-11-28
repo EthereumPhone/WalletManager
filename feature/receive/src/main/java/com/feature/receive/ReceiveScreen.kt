@@ -1,6 +1,8 @@
 package com.feature.receive
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent.getActivity
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -63,6 +65,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -98,20 +101,32 @@ internal fun ReceiveRoute(
     onBackClick: () -> Unit
 ) {
     val userData by viewModel.userData.collectAsStateWithLifecycle()
-
+    val context = LocalContext.current
+    
     ReceiveScreen(
-//        userData = userData,
+        userData = userData,
 //        modifier = modifier,
-//        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onCopyClick = {
+            copyTextToClipboard(context, userData.walletAddress)
+        }
     )
 
 }
 
+@SuppressLint("ServiceCast")
+private fun copyTextToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboardManager.setText(AnnotatedString(text))
+}
+
 @Composable
 fun ReceiveScreen(
-//    userData: UserData,
+    userData: UserData,
     modifier: Modifier=Modifier,
-//    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onCopyClick: () -> Unit,
+
 ) {
 
     val showInfoDialog =  remember { mutableStateOf(false) }
@@ -132,11 +147,11 @@ fun ReceiveScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .padding(horizontal = 24.dp, vertical = 18.dp)
+                .padding(horizontal = 32.dp, vertical = 32.dp)
         ){
 
         TopHeader(
-            onBackClick = {},//onBackClick,
+            onBackClick = onBackClick,
             title = "Receive",
             icon = {
                 IconButton(
@@ -168,16 +183,17 @@ fun ReceiveScreen(
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color.White)
                         .padding(10.dp)
-                        .size(200.dp)
+                        .size(200.dp),
+                    contentAlignment = Alignment.Center
 
                 ) {
                     Image(
                         //TODO: Change Address
-                        painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+                        painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
                         contentDescription = "wallet address QR",
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
+                            .fillMaxWidth(1f)
                             .aspectRatio(1f)
                     )
                 }
@@ -197,7 +213,7 @@ fun ReceiveScreen(
                         color = Color(0xFF9FA2A5),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Normal,
-                        text = "Address"//userData.walletAddress
+                        text = "Address"
                     )
                     //TODO: Make reveil compasable
                     Text(
@@ -206,7 +222,7 @@ fun ReceiveScreen(
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold,
-                        text = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"//userData.walletAddress
+                        text = userData.walletAddress
                     )
 
 
@@ -223,7 +239,7 @@ fun ReceiveScreen(
                     backgroundColor = Color.Transparent,
                     contentColor =  Color.White,
                 ),
-                onClick = {}
+                onClick = onCopyClick
             ){
                 Row {
                     Icon(
@@ -349,5 +365,5 @@ fun BitmapImage(
 @Composable
 fun PreviewReceiveScreen() {
     val address = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-    ReceiveScreen()
+    //ReceiveScreen()
 }

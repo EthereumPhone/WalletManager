@@ -126,23 +126,23 @@ fun TokenSelector(
                     color= Color(0xFF9FA2A5),
                 )
 
-                if (fromBalance != "") {
-                    Text(
-                        modifier = Modifier.clickable {
-                            onAmountChange(TextFieldSelected.FROM, fromBalance)
-                        },
-                        text = "Balance: $fromBalance",
-                        fontSize = 16.sp,
-                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
-                    )
-                }
+//                if (fromBalance != "") {
+//                    Text(
+//                        modifier = Modifier.clickable {
+//                            onAmountChange(TextFieldSelected.FROM, fromBalance)
+//                        },
+//                        text = "Balance: $fromBalance",
+//                        fontSize = 16.sp,
+//                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
+//                    )
+//                }
             }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ){
                 Row (
-                    modifier = Modifier.weight(0.7f),
+                    modifier = Modifier.weight(0.6f),
                     verticalAlignment = Alignment.CenterVertically
                 ){
                         ethOSTextField(
@@ -170,7 +170,7 @@ fun TokenSelector(
                     onClick = {
                         onPickAssetClicked(TextFieldSelected.FROM)
                     },
-                    modifier = Modifier.weight(0.3f)
+                    modifier = Modifier.weight(0.4f)
                 ) {
 
                     val fromtext = when(assetsUiState.fromAsset) {
@@ -179,10 +179,12 @@ fun TokenSelector(
                         else -> {""}
                     }
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+
+
                         ) {
-                            Text(text = fromtext, fontSize = 26.sp)
+                            Text(text = fromtext, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                             Icon(
                                 imageVector = Icons.Rounded.ArrowDropDown,
                                 contentDescription = "",
@@ -262,13 +264,13 @@ fun TokenSelector(
                     color = Color(0xFF9FA2A5),
                 )
 
-                if (toBalance != "") {
-                    Text(
-                        text = "Balance: ${toBalance}",
-                        fontSize = 16.sp,
-                        color = if (toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
-                    )
-                }
+//                if (toBalance != "") {
+//                    Text(
+//                        text = "Balance: ${toBalance}",
+//                        fontSize = 16.sp,
+//                        color = if (toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
+//                    )
+//                }
             }
 
             //Amount
@@ -276,7 +278,7 @@ fun TokenSelector(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.weight(0.7f),
+                    modifier = Modifier.weight(0.6f),
                     verticalAlignment = Alignment.CenterVertically
 
                 ) {
@@ -297,10 +299,10 @@ fun TokenSelector(
                     onClick = {
                         onPickAssetClicked(TextFieldSelected.TO)
                     },
-                    modifier = Modifier.weight(0.3f),
+                    modifier = Modifier.weight(0.4f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
                     ),
                 ) {
 
@@ -318,10 +320,18 @@ fun TokenSelector(
                         }
                     }
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = totext, fontSize = 14.sp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
 
+
+                        ) {
+                        Text(text = totext, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowDropDown,
+                            contentDescription = "",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
             }

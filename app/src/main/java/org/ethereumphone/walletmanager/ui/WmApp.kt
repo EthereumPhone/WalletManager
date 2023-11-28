@@ -75,7 +75,7 @@ private fun EthOSBottomBar(
 
     BottomNavigation (
         modifier = modifier,
-        backgroundColor = Color.Black,
+        backgroundColor = Color.Black,//Color(0xFF262626)
         contentColor = Color.White
     ){
 

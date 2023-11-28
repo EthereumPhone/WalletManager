@@ -51,6 +51,31 @@ fun TransactionScreen(
     transfersUIState: TransfersUiState,
     navigateToTxDetail: (String) -> Unit,
 ){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(horizontal = 32.dp, vertical = 32.dp)
+    ) {
+
+        //Header
+
+        Row(
+            //modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
+        ) {
+            Text(
+                modifier = modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                text = "Transactions",
+                fontSize = 28.sp,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+    }
     when(transfersUIState){
         is TransfersUiState.Loading -> {
             Box(
@@ -63,37 +88,17 @@ fun TransactionScreen(
         is TransfersUiState.Success -> {
 
             val transfers = transfersUIState.transfers
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
 
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .padding(horizontal = 24.dp, vertical = 18.dp)
-            ) {
-
-                //Header
-
-                Row (
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
-
-                ){
-                    Text(
-                        modifier = modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                        text = "Transactions",
-                        fontSize = 28.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
                 Spacer(modifier = Modifier.height(32.dp))
 
 
+            if (transfers.size > 0){
                 LazyColumn (
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ){
                     var month = ""
+
+
                     transfers.reversed().forEach { transfer ->
                         item {
                             //TODO: Month sections
@@ -113,8 +118,18 @@ fun TransactionScreen(
                         }
                     }
                 }
-
+            }else{
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                }
             }
+
+
+
+
         }
     }
 
