@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 
 
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -145,14 +146,15 @@ private fun AssetList(
                     contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .fillMaxHeight(0.45f)
             ) {
 
                     when(assetsUiState){
                         is AssetUiState.Empty ->{
-                            Text(text = "No assets", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
                         }
                         is AssetUiState.Loading -> {
-                            Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
                         }
                         is AssetUiState.Success -> {
                             val assets = assetsUiState.assets.take(5)

@@ -244,7 +244,7 @@ internal fun HomeScreen(
 
         if(showSheet) {
             ModalBottomSheet(
-                containerColor = Color(0xFF24303D),
+                containerColor = Color.Black,
                 contentColor = Color.White,
 
                 onDismissRequest = {

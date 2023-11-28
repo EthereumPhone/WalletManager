@@ -1,6 +1,7 @@
 package org.ethereumphone.walletmanager.ui
 
 import android.content.Intent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -17,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.core.designsystem.theme.background
+import com.core.designsystem.theme.secondary
 import com.feature.home.navigation.homeGraphRoutePattern
 import com.feature.home.navigation.homeRoute
 import com.example.assets.navigation.assetRoute
@@ -71,7 +74,9 @@ private fun EthOSBottomBar(
 ) {
 
     BottomNavigation (
-        modifier = modifier
+        modifier = modifier,
+        backgroundColor = Color.Black,
+        contentColor = Color.White
     ){
 
         destinations.forEach { destination ->
@@ -80,10 +85,11 @@ private fun EthOSBottomBar(
                 icon = {
                     Icon(
                         destination.icon,
-                        contentDescription = null
+                        contentDescription = null,
+                        tint = if (selected) Color.White else secondary
                     )
                        },
-                label = { Text(destination.label) },
+                label = { Text(destination.label, color = if (selected) Color.White else secondary) },
                 selected = selected,
                 selectedContentColor = Color.White,
                 unselectedContentColor = Color(0xFF9FA2A5),

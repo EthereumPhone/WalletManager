@@ -1,5 +1,6 @@
 package org.ethereumphone.walletmanager
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,6 +8,9 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -52,9 +56,14 @@ class MainActivity : ComponentActivity() {
             // theme
             val systemUiController = rememberSystemUiController()
             systemUiController.setStatusBarColor(
+                darkIcons = false,
                 color = background
-
             )
+            systemUiController.setNavigationBarColor(
+                darkIcons = false,
+                color = background
+            )
+
 
             WmApp()
         }

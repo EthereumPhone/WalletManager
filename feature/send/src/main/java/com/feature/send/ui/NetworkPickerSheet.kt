@@ -37,7 +37,7 @@ fun NetworkPickerSheet(
                 topEnd = 12.dp
             ))
             
-            .background(Color(0xFF24303D))
+            .background(Color.Black)
     ) {
 
         LazyColumn {
