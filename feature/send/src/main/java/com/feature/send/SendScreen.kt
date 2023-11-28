@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Close
@@ -375,15 +377,15 @@ fun SendScreen(
 
 
     val showInfoDialog =  remember { mutableStateOf(false) }
-    if(showInfoDialog.value){
-        InfoDialog(
-            setShowDialog = {
-                showInfoDialog.value = false
-            },
-            title = "Send crypto",
-            text = "Here you can send crypto to any address or ENS domain."
-        )
-    }
+//    if(showInfoDialog.value){
+//        InfoDialog(
+//            setShowDialog = {
+//                showInfoDialog.value = false
+//            },
+//            title = "Send crypto",
+//            text = "Here you can send crypto to any address or ENS domain."
+//        )
+//    }
 
     when (txComplete) {
         is TxCompleteUiState.UnComplete -> {
@@ -415,15 +417,16 @@ fun SendScreen(
                     IconButton(
                         onClick = {
                             //opens InfoDialog
-                            showInfoDialog.value = true
+                            showDialog.value = true
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = "Information",
-                            tint = Color(0xFF9FA2A5),
+                            imageVector = Icons.Filled.QrCodeScanner,
+                            contentDescription = "QR Code",
+                            tint = Color.White,//(0xFF9FA2A5),
                             modifier = modifier
                                 .clip(CircleShape)
+                                .size(32.dp)
 
                         )
                     }
@@ -445,11 +448,11 @@ fun SendScreen(
                 )
                 ethOSCenterTextField(
                     text = address,
-                    label = "(Enter address or ENS)",
+                    label = "(Enter address, ENS or QR scan)",
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     onTextChanged = { text -> address = text },
-                    size = 18
+                    size = 16
                 )
             }
         }

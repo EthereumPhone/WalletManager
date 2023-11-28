@@ -157,13 +157,13 @@ fun ReceiveScreen(
                 IconButton(
                     onClick = {
                         //opens InfoDialog
-                        showInfoDialog.value = true
+                        //showInfoDialog.value = true
                     }
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
                         contentDescription = "Information",
-                        tint = Color(0xFF9FA2A5),
+                        tint = Color.Transparent,//(0xFF9FA2A5),
                         modifier = modifier
                             .clip(CircleShape)
                     )
