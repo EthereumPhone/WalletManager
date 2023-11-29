@@ -41,9 +41,7 @@ fun AssetDetailRoute(
     navigateToAsset: () -> Unit,
     viewModel: AssetDetailViewModel = hiltViewModel(),
 ) {
-
     val assetDetailUiState: AssetUiState by viewModel.currentState.collectAsStateWithLifecycle()
-
     AssetDetailScreen(
         assetDetailUiState = assetDetailUiState,
         navigateToAsset = navigateToAsset

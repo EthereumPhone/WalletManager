@@ -1,16 +1,21 @@
 package com.example.transactions
 
+import android.content.Intent
+import android.net.Uri
 import android.view.SurfaceControl.Transaction
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
@@ -23,9 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
@@ -58,6 +65,8 @@ fun TransctionDetailScreen(
     txHash: String
 
 ){
+    val context = LocalContext.current
+
     when(txUiState){
         is TransactionDetailUiState.Loading -> {
             Box(
@@ -83,29 +92,37 @@ fun TransctionDetailScreen(
                         .fillMaxWidth()
                         .padding(start = 12.dp, end = 24.dp, top = 24.dp)
                     ,
-                    //.background(Color.Red),
                     Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically,
                 ){
 
 
-                    IconButton(
+                    Button(
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor=  Color.Transparent,
+                            contentColor = Color.White
+                        ),
+                        contentPadding = PaddingValues(0.dp,0.dp,16.dp,0.dp),
                         onClick = navigateToTransaction
                     ) {
-                        Row {
+                        Row (
+                            modifier = modifier,
+                            Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ){
                             Icon(
                                 imageVector = Icons.Rounded.ArrowBackIosNew,
                                 contentDescription = "Go back",
                                 tint = Color.White
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                    text = "Transactions",
-                            color = Color.White,
-                            fontSize = 18.sp,
-
+                                text = "Transactions",
+                                color = Color.White,
+                                fontSize = 18.sp,
                             )
                         }
-
                     }
 
                 }
@@ -137,7 +154,12 @@ fun TransctionDetailScreen(
 
                     Spacer(modifier = Modifier.height(96.dp))
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            //send intent to etherscann
+                            val intent = Intent(Intent.ACTION_VIEW,
+                                Uri.parse("https://etherscan.io/tx/${txHash}"))
+                            startActivity(context, intent, null)
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
                             contentColor = Color.White,
