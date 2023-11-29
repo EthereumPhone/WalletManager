@@ -12,7 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-
+import androidx.compose.foundation.layout.Column
 
 
 import androidx.compose.foundation.layout.Spacer
@@ -108,75 +108,38 @@ private fun AssetList(assetsUiState: AssetUiState) {
             .fillMaxWidth()
             .fillMaxHeight(0.45f)
     ) {
-        when(assetsUiState){
-            is AssetUiState.Empty ->{
-                Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
-            }
-            is AssetUiState.Loading -> {
-                Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-            }
-            is AssetUiState.Success -> {
-                val assets = assetsUiState.assets
-                LazyColumn(
-                    modifier = Modifier,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    assets.forEach { item ->
-                        item(key = item.address) {
+        Column (
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(text = "Overview", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            when(assetsUiState){
+                is AssetUiState.Empty ->{
+                    Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                }
+                is AssetUiState.Loading -> {
+                    Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                }
+                is AssetUiState.Success -> {
+                    val assets = assetsUiState.assets
+                    LazyColumn(
+                        modifier = Modifier,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        assets.forEach { item ->
+                            item(key = item.address) {
 
-                            AssetListItem(title = item.symbol, value = item.balance)
-                            Spacer(modifier = Modifier.height(8.dp))
+                                AssetListItem(title = item.symbol, value = item.balance)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
+                is AssetUiState.Error -> { }
             }
-            is AssetUiState.Error -> { }
         }
     }
-
-
-//, currencyPrice: String, onCurrencyChange: (String) -> Unit) {
-//    when (assetsUiState) {
-//        is AssetUiState.Loading -> {  }
-//        is AssetUiState.Error -> {  }
-//        is AssetUiState.Empty -> {
-//            Box(
-//                modifier = Modifier
-//                    //.background(primaryVariant)
-//                    .fillMaxSize()
-//            ) {
-//                Text(
-//                    text = "No assets found",
-//                    color = placeHolder,
-//                    textAlign = TextAlign.Center,
-//                    modifier = Modifier.align(Alignment.Center)
-//                )
-//            }
-//        }
-//        is AssetUiState.Success -> {
-//            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
-//
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//            ) {
-////                Card(
-////                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
-////                ) {
-//                    LazyColumn {
-//                        groupedAssets.forEach { (assetName, assetList) ->
-//                            item(key = assetName) {
-//                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
-//                                Spacer(modifier = Modifier.height(8.dp))
-//                            }
-//                        }
-//                    }
-//                //}
-//            }
-//        }
-//
-//        else -> {}
-//    }
 }
 
 fun formatString(input: String): String {

@@ -163,7 +163,7 @@ internal fun HomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
         ){
             TopHeader(
-                onBackClick = {  },
+
                 title = "Wallet",
                 onClick = {
                     //opens InfoDialog
