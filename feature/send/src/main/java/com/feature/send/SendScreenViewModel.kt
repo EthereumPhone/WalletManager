@@ -69,7 +69,13 @@ class SendViewModel @Inject constructor(
                 val assets = balances.map {
 
                     val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(it.contractAddress,it.chainId,name,name,it.tokenBalance.toDouble())
+
+                    TokenAsset(
+                        it.contractAddress,
+                        it.chainId,
+                        if(name == "GOERLI") "GÖRLI" else name,
+                        if(name == "GOERLI") "GÖRLI" else name,
+                        it.tokenBalance.toDouble())
                 }
                 AssetUiState.Success(assets)
             }.stateIn(

@@ -37,37 +37,25 @@ class UniswapRoutingSDK(
 
 
         CompletableFuture.runAsync {
-            val params = StringBuilder()
-            params.append("?inputTokenChainId=${inputToken.chainId}")
-            params.append("&inputTokenAddress=${inputToken.address}")
-            params.append("&inputTokenDecimals=${inputToken.decimals}")
-            params.append("&inputTokenSymbol=${inputToken.symbol}")
-            params.append("&inputTokenName=${inputToken.name}")
+            val inputAddress = if (inputToken.address == "ETH") "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" else inputToken.address
+            val outputAddress = if (outputToken.address == "ETH") "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" else outputToken.address
+            val tokenPriceURL = "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${inputAddress},${outputAddress}&vs_currencies=usd"
 
-            params.append("&outputTokenChainId=${outputToken.chainId}")
-            params.append("&outputTokenAddress=${outputToken.address}")
-            params.append("&outputTokenDecimals=${outputToken.decimals}")
-            params.append("&outputTokenSymbol=${outputToken.symbol}")
-            params.append("&outputTokenName=${outputToken.name}")
-
-            params.append("&amount=${amountIn}")
-            params.append("&receiverAddress=${receiverAddress}")
-
-            println("Doing request")
-
-            val response = URL("https://getquote-dey2ouq2ya-uc.a.run.app/${params}").readText()
-
-            println("Response: ${response}")
-            val responseObj = JSONObject(response)
             try {
-                val outputDouble: Double = responseObj.getString("result").toDouble()
-                println("Completing future")
-                completableFuture.complete(outputDouble)
+                val jsonObj = JSONObject(URL(tokenPriceURL).readText())
+
+                println("OUTPUT: $jsonObj")
+
+                val inputTokenPrice = jsonObj.getJSONObject(inputAddress.lowercase()).getDouble("usd")
+                val outputTokenPrice = jsonObj.getJSONObject(outputAddress.lowercase()).getDouble("usd")
+                if (inputTokenPrice == 0.0) {
+                    throw IllegalArgumentException("Input token price cannot be zero")
+                }
+                completableFuture.complete(inputTokenPrice / outputTokenPrice)
             } catch (e: Exception) {
                 e.printStackTrace()
                 completableFuture.complete(0.0)
             }
-
         }
 
 

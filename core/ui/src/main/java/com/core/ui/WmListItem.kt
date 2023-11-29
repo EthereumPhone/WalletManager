@@ -1,7 +1,10 @@
 package com.core.ui
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,9 +38,22 @@ fun WmListItem(
 @Preview
 @Composable
 fun PreviewWmListItem() {
-    var text by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf("123123") }
 
-    //WmListItem()
+    WmListItem(
+        {
+            Row {
+                Text(
+                    text = text,
+                    modifier = Modifier.weight(1f)
+                )
+                Column {
 
+                }
 
+                Text(text)
+            }
+
+        },
+    )
 }

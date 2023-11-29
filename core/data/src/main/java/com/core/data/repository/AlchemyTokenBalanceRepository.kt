@@ -56,4 +56,24 @@ class AlchemyTokenBalanceRepository @Inject constructor(
             }
         }
     }
+
+    override suspend fun refreshTokensBalancesByNetwork(toAddress: String, chainId: Int) {
+        val network = NetworkChain.getNetworkByChainId(chainId)
+
+
+        withContext(Dispatchers.IO) {
+            val apiKey = chainToApiKey(network!!.chainName)
+            async {
+                val results = tokenBalanceApi.getTokenBalances(
+                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
+                    TokenBalanceRequestBody.allErc20Tokens(toAddress)
+                ).result.tokenBalances.map {
+
+                    it.asEntity(network!!.chainId)
+                }
+                tokenBalanceDao.upsertTokenBalances(results)
+            }
+        }
+    }
+
 }

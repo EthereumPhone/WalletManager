@@ -27,7 +27,6 @@ class UpdateTokensUseCase @Inject constructor(
     suspend operator fun invoke(
         toAddress: String
     ) {
-        Log.d("UpdateUseCase", toAddress)
         tokenBalanceRepository.refreshTokensBalances(toAddress)
         networkBalanceRepository.refreshNetworkBalance(toAddress)
 

@@ -44,9 +44,12 @@ class GetSwapTokens @Inject constructor(
                     symbol = tokenMetadata.symbol,
                     name = tokenMetadata.name,
                     balance = (truncatedValue?.div(scale))?.toDouble() ?: 0.0,
-                    decimals = tokenMetadata.decimals
+                    decimals = tokenMetadata.decimals, 
+                    swappable = tokenMetadata.swappable
                 )
             }
+                .filter { it.swappable }
+                .distinctBy { it.address }
             if(query.isEmpty()) {
                 listOf(networkAsset) + erc20Assets
             } else {

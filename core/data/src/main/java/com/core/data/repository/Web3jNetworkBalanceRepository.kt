@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 import com.core.data.remote.NetworkBalanceApi
+import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.asExternalModule
@@ -50,7 +51,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     val newNetworkBalance = networkBalanceApi
                         .getNetworkCurrency(
                             toAddress,
-                            it.rpc
+                            "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
                         )
                     tokenBalanceDao.upsertTokenBalances(
                         listOf(
@@ -62,6 +63,30 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                         )
                     )
                 }
+            }
+        }
+    }
+
+    override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, chainId: Int) {
+        val network = NetworkChain.getNetworkByChainId(chainId)
+
+
+        withContext(Dispatchers.IO) {
+            async {
+                val newNetworkBalance = networkBalanceApi
+                    .getNetworkCurrency(
+                        toAddress,
+                        "https://${network!!.chainName}.g.alchemy.com/v2/${chainToApiKey(network!!.chainName)}"
+                    )
+                tokenBalanceDao.upsertTokenBalances(
+                    listOf(
+                        TokenBalanceEntity(
+                            contractAddress = network!!.chainId.toString(),
+                            chainId = network!!.chainId,
+                            tokenBalance = newNetworkBalance
+                        )
+                    )
+                )
             }
         }
     }

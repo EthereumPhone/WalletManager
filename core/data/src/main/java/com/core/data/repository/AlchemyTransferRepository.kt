@@ -1,7 +1,6 @@
 package com.core.data.repository
 
 import android.util.Log
-import androidx.annotation.WorkerThread
 import com.core.data.model.requestBody.NetworkTransferRequestBody
 import com.core.data.remote.TransfersApi
 import com.core.data.util.chainToApiKey
@@ -13,7 +12,6 @@ import com.core.model.Transfer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -47,8 +45,11 @@ class AlchemyTransferRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
-            networks.map { network ->
+            networks
+                .filter { it != NetworkChain.BASE }
+                .map { network ->
                 val apiKey = chainToApiKey(network.chainName)
+                    // outbound transactions
                 async {
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
@@ -67,6 +68,7 @@ class AlchemyTransferRepository @Inject constructor(
                     transferDao.insertTransfers(transfers)
                 }
 
+                    // inbound transactions
                 async {
                     val transfers = transfersApi.getTransfers(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
@@ -88,39 +90,49 @@ class AlchemyTransferRepository @Inject constructor(
         }
     }
 
-    /**
-     * Deletes pending transfers from db if they are completed
-     */
+    override suspend fun refreshTransfersByNetwork(address: String, chainId: Int) {
+        val network = NetworkChain.getNetworkByChainId(chainId)
+        val apiKey = network?.let { chainToApiKey(it.chainName) }
 
-    /**
-     * inserts transfer into db
-     * transfer - TransferEntity
-     */
-    @Suppress("RedundantSuspendModifier")
-    @WorkerThread
-    override suspend fun insertTransfer(transfer: TransferEntity){
-        transferDao.insertTransfer(transfer)
-    }
+        withContext(Dispatchers.IO) {
 
+            // inbound transactions
+            async {
+                val transfers = transfersApi.getTransfers(
+                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
+                    requestBody = NetworkTransferRequestBody(
+                        params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                            fromAddress = address,
+                            category = listOf("external")
+                        ))
+                    )
+                ).result.transfers.map {
+                    it.asEntity(
+                        chainId = network.chainId,
+                        userIsSender = address.equals(it.from,true),
+                    )
+                }
+                transferDao.insertTransfers(transfers)
+            }
+            // outbound transactions
+            async {
+                val transfers = transfersApi.getTransfers(
+                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
+                    requestBody = NetworkTransferRequestBody(
+                        params = listOf(NetworkTransferRequestBody.NetworkTransferRequestParams(
+                            toAddress = address,
+                            category = listOf("external")
+                        ))
+                    )
+                ).result.transfers.map {
+                    it.asEntity(
+                        chainId = network!!.chainId,
+                        userIsSender = address.equals(it.from,true),
+                    )
+                }
+                transferDao.insertTransfers(transfers)
+            }
 
-
-    /**
-     * delete transfers from db
-     * transfer - TransferEntity
-     */
-    override suspend fun deleteTransfer(
-        chainId: Int,
-        value: Double,
-        ispending: Boolean,
-        userIsSender: Boolean,
-        toaddress: String
-    ){
-        transferDao.deleteTransfer(
-            chainId,
-            value,
-            ispending,
-            userIsSender,
-            toaddress
-        )
+        }
     }
 }
