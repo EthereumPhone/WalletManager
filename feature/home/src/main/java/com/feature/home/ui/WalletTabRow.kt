@@ -116,15 +116,23 @@ private fun AssetList(assetsUiState: AssetUiState) {
             Text(text = "Overview", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
             when(assetsUiState){
                 is AssetUiState.Empty ->{
-                    Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                    Box(modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center){
+                        Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+
+                    }
                 }
                 is AssetUiState.Loading -> {
-                    Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                    Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center){
+                        Text(text = "Loading...", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+
+                    }
                 }
                 is AssetUiState.Success -> {
                     val assets = assetsUiState.assets
                     LazyColumn(
-                        modifier = Modifier,
+                        modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         assets.forEach { item ->

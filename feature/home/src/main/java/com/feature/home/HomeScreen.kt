@@ -48,6 +48,7 @@ import com.core.ui.TopHeader
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.WalletTabRow
+
 import kotlinx.coroutines.launch
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -177,11 +178,32 @@ internal fun HomeScreen(
         }
 
 
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
             Text(text = "$${fiatBalance}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+            when(userData) {
+                is WalletDataUiState.Loading -> {
+
+                }
+                is WalletDataUiState.Success -> {
+                    val network = when(userData.userData.walletNetwork) {
+                        "1" -> "Mainnet"
+                        "5" -> "Goerli"
+                        "137" -> "Polygon" // Polygon
+                        "10" -> "Optimism" // Optimum
+                        "42161" -> "Arbitrum" // Arbitrum
+                        "84531" -> "Base" // Base
+                        else -> {
+                            "Color(0xFF030303)"
+                        }
+                    }
+                    Text(text = "(${network})",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 14.sp)
+
+                }
+            }
         }
 
         Column (
