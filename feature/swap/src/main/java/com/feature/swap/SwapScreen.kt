@@ -145,23 +145,13 @@ internal fun SwapScreen(
             onBackClick = onBackClick
             ,
             title = "Swap",
-            icon = {
-                IconButton(
-                    onClick = {
-                        //opens InfoDialog
-                        showInfoDialog.value = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Information",
-                        tint = Color(0xFF9FA2A5),
-                        modifier = modifier
-                            .clip(CircleShape)
+            imageVector = Icons.Outlined.Info,
+            onClick = {
+                //opens InfoDialog
+                showInfoDialog.value = true
+            },
+            onlyTitle = false
 
-                    )
-                }
-            }
         )
 
 

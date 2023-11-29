@@ -97,11 +97,6 @@ internal fun AddressBar(
         }
     }
 
-    Column (
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ){
-
         Surface (
             modifier = Modifier.clip(CircleShape),
             color = Color(0xFF262626),
@@ -135,7 +130,7 @@ internal fun AddressBar(
             }
 
         }
-    }
+
 
 }
 

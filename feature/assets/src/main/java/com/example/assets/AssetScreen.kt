@@ -6,13 +6,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -38,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.CurrentState
 import com.core.model.TokenAsset
 import com.core.model.UserData
+import com.core.ui.TopHeader
 import com.example.assets.ui.AssetListItem
 import com.example.assets.ui.formatDouble
 import java.text.DecimalFormat
@@ -91,79 +96,60 @@ internal fun AssetScreen(
             .background(Color.Black)
             .padding(horizontal = 32.dp, vertical = 32.dp)
     ) {
-        Row (
-            //modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
-        ){
-            Text(
-                modifier = modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                text = "Assets",
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        TopHeader(title = "Assets")
+        Spacer(modifier = Modifier.height(48.dp))
 
-    }
-
-    when(assetsUiState){
-        is AssetUiState.Loading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-        is AssetUiState.Empty -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
-            }
-        }
-        is AssetUiState.Error -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                Text(text = "Error...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-        is AssetUiState.Success -> {
-            val pullRefreshState = rememberPullRefreshState(
-                refreshing = refreshState,
-                onRefresh = {
-                    onRefresh()
+        when(assetsUiState){
+            is AssetUiState.Loading -> {
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 }
-            )
-            Box{
+            }
+            is AssetUiState.Empty -> {
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+            is AssetUiState.Error -> {
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(text = "Error...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            is AssetUiState.Success -> {
+                val pullRefreshState = rememberPullRefreshState(
+                    refreshing = refreshState,
+                    onRefresh = {
+                        onRefresh()
+                    }
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ){
 
                     if(assetsUiState.assets.isNotEmpty()){
                         val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
 
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            LazyColumn {
-                                groupedAssets.forEach { (assetName, assetList) ->
-                                    item(key = assetName) {
-                                        AssetListItem(assetName,assetList,
-                                            true
-                                        ) {
-                                            //set currentState
-
-
-                                            //navigate to detailscreen
-                                            navigateToAssetDetail(assetList[0].symbol)
-                                        }
+                        LazyColumn {
+                            groupedAssets.forEach { (assetName, assetList) ->
+                                item(key = assetName) {
+                                    AssetListItem(assetName,assetList,) {
+                                        //navigate to detailscreen
+                                        navigateToAssetDetail(assetList[0].symbol)
                                     }
                                 }
                             }
                         }
+
                     }else{
                         Box(
                             contentAlignment = Alignment.Center,
@@ -189,13 +175,16 @@ internal fun AssetScreen(
 
 
 
-        }
+            }
 
-        else -> {
-            Text(text = "Else...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            else -> {
+                Text(text = "Else...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
 
+            }
         }
     }
+
+
 
 }
 
@@ -204,53 +193,6 @@ fun formatDouble(input: Double): String {
     return decimalFormat.format(input)
 }
 
-@Composable
-fun AssetListItem(
-    tokenAsset: TokenAsset,
-    withMoreDetail: Boolean=false,
-    linkTo: () -> Unit = {},
-){
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ){
-        Text(tokenAsset.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
-            ){
-                Row (
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-
-                    ){
-                    Text("${tokenAsset.balance}", color = Color.White, fontWeight = FontWeight.Medium)
-
-                    Text(tokenAsset.symbol, color = Color.White, fontWeight = FontWeight.Medium)
-                }
-                Text("$0.00", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
-            }
-            if(withMoreDetail){
-                IconButton(
-                    onClick = linkTo,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowForwardIos,
-                        contentDescription = "Go back",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-
-        }
-    }
-}
 
 @Composable
 @Preview

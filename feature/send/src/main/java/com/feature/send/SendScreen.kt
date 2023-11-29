@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -415,25 +418,17 @@ fun SendScreen(
             TopHeader(
                 onBackClick = onBackClick,
                 title = "Send",
-                icon = {
-                    IconButton(
-                        onClick = {
-                            //opens InfoDialog
-                            showDialog.value = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.QrCodeScanner,
-                            contentDescription = "QR Code",
-                            tint = Color.White,//(0xFF9FA2A5),
-                            modifier = modifier
-                                .clip(CircleShape)
-                                .size(32.dp)
+                onClick = {
+                    //opens InfoDialog
+                    showDialog.value = true
+                },
+                imageVector = Icons.Filled.QrCodeScanner,
+                onlyTitle = false,
+                trailIcon = true
 
-                        )
-                    }
-                }
             )
+            Spacer(modifier = Modifier.height(24.dp))
+
             Column(
                 horizontalAlignment =  Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -549,8 +544,17 @@ fun SendScreen(
                                             singleLine = true,
                                             onTextChanged = { text -> value = text },
                                             size = 64,
-                                            maxChar = 10
-
+                                            maxChar = 10,
+                                            color = if(value.isNotEmpty()){
+                                                if(value.toFloat() < selectedToken.tokenAsset.balance){
+                                                    Color.White
+                                                }else{
+                                                    Color(0xFFc82e31)
+                                                }
+                                            }else {
+                                                Color.White
+                                            },
+                                            numberInput = true
                                         )
                             Spacer(modifier = Modifier.width(12.dp))
 
@@ -567,7 +571,7 @@ fun SendScreen(
 
                     }
                     Text(
-                        text = "${value.length} ${if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"} available",
+                        text = "${selectedToken.tokenAsset.balance} ${if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"} available",
                         fontSize = 20.sp,
                         color = Color(0xFF9FA2A5),
                         fontWeight = FontWeight.SemiBold
@@ -618,26 +622,21 @@ fun SendScreen(
                     text = "Send",
                     enabled = true,
                     onClick = {
-                        sendTransaction(
-                            SendData(
-                                amount = value.toFloat(),
-                                address = address,
-                                chainId = selectedToken.tokenAsset.chainId
+                        if(value.toFloat() < selectedToken.tokenAsset.balance){
+                            sendTransaction(
+                                SendData(
+                                    amount = value.toFloat(),
+                                    address = address,
+                                    chainId = selectedToken.tokenAsset.chainId
+                                )
                             )
-                        )
+                        }
+
                     }
                 )
             }
 
         }
-
-
-
-
-
-
-
-
 
 
 
@@ -647,9 +646,9 @@ fun SendScreen(
 
     if(showSheet) {
         ModalBottomSheet(
-            containerColor= Color(0xFF1A1A1A),
+            containerColor= Color(0xFF262626),
             contentColor= Color.White,
-
+            modifier = Modifier.defaultMinSize(minHeight = 300.dp),
             onDismissRequest = {
                 coroutineScope.launch {
                     modalSheetState.hide()
@@ -663,8 +662,6 @@ fun SendScreen(
             NetworkPickerSheet(
                 balancesState = balances,
                 onSelectAsset = {
-
-
                     onChangeAssetClicked(it)
                     var currencychange = when(it.chainId){
                         137 -> "MATICUSDT"
