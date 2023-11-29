@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,9 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.assets.ui.AssetListDetailItem
 
 @Composable
 fun AssetDetailRoute(
@@ -71,31 +76,39 @@ fun AssetDetailScreen(
                     Row (
                         modifier = modifier
                             .fillMaxWidth()
-                            .padding(start = 12.dp, end = 24.dp, top = 24.dp)
+                            .padding(start = 24.dp, end = 24.dp, bottom = 0.dp, top = 24.dp)
                         ,
                         //.background(Color.Red),
                         Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
                     ){
-
-
-                        IconButton(
+                        Button(
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor=  Color.Transparent,
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(0.dp,0.dp,16.dp,0.dp),
                             onClick = navigateToAsset
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.ArrowBackIosNew,
-                                contentDescription = "Go back",
-                                tint = Color.White
-                            )
+                            Row (
+                                modifier = modifier,
+                                Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowBackIosNew,
+                                    contentDescription = "Go back",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Assets",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                )
+                            }
                         }
-
-                        Text(
-                            text = "Assets",
-                            color = Color.White,
-                            fontSize = 18.sp,
-
-                            )
-
                     }
                     Column(
                         horizontalAlignment = Alignment.Start,
@@ -103,12 +116,12 @@ fun AssetDetailScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.Black)
-                            .padding(horizontal = 24.dp, vertical = 24.dp)
+                            .padding(horizontal = 24.dp, vertical = 0.dp)
                     ) {
 
                         Spacer(modifier = modifier.height(64.dp))
 
-                        Text(text = asset.get(0).symbol,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+                        Text(text = asset.get(0).symbol.uppercase(),fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
 
                         Spacer(modifier = modifier.height(84.dp))
 
@@ -119,7 +132,7 @@ fun AssetDetailScreen(
                         ){
                             asset.forEach {
                                 item {
-                                    AssetListItem(it, false)
+                                    AssetListDetailItem(it)
                                 }
 
                             }

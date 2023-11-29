@@ -1,11 +1,14 @@
 package com.example.assets.ui
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForwardIos
@@ -28,7 +31,6 @@ import java.text.DecimalFormat
 fun AssetListItem(
     title: String,
     assets: List<TokenAsset>,
-    withMoreDetail: Boolean=false,
     linkTo: () -> Unit = {},
 ){
     Row(
@@ -36,7 +38,7 @@ fun AssetListItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ){
-        Text(title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text(title.uppercase(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -49,14 +51,15 @@ fun AssetListItem(
                     verticalAlignment = Alignment.CenterVertically,
 
                     ){
-                    Text(formatDouble(assets.sumOf { it.balance }), color = Color.White, fontWeight = FontWeight.Medium)
+                    Text(formatDouble(assets.sumOf { it.balance }), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
 
-                    Text(assets.get(0).symbol, color = Color.White, fontWeight = FontWeight.Medium)
+                    Text(assets.get(0).symbol.uppercase(), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
-                //
-                Text("$0.00-", color = Color(0xFF9FA2A5),fontWeight = FontWeight.Medium )
+                //TODO: Dollar Amount
+                Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp, fontWeight = FontWeight.Medium )
             }
-            if(withMoreDetail){
+            Spacer(modifier = Modifier.width(24.dp))
+
                 IconButton(
                     onClick = linkTo,
                     modifier = Modifier.size(32.dp),
@@ -68,11 +71,55 @@ fun AssetListItem(
                         modifier = Modifier.size(16.dp)
                     )
                 }
+
+
+        }
+    }
+}
+
+
+@Composable
+fun AssetListDetailItem(
+    tokenAsset: TokenAsset,
+){
+    val networkname = when(tokenAsset.chainId){
+        1 -> "Mainnet"
+        5 -> "Görli"
+        10 -> "Optimism"
+        137 -> "Polygon"
+        8453 -> "Base"
+        42161 -> "Arbitrum"
+        else -> { ""}
+    }
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Text(networkname, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center
+            ){
+                Row (
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+
+                    ){
+                    Text("${tokenAsset.balance}", color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
+
+                    Text(tokenAsset.symbol.uppercase(), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
+                Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp,fontWeight = FontWeight.Medium )
             }
 
         }
     }
 }
+
 
 fun formatDouble(input: Double): String {
     val decimalFormat = DecimalFormat("#.#####")
@@ -100,7 +147,7 @@ fun PreviewAssetListItem(){
         token
     )
 
-        AssetListItem("Ether",list, true, {})
+        AssetListItem("Ether",list, {})
 
 
 }
