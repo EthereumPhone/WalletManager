@@ -153,22 +153,7 @@ fun ReceiveScreen(
         TopHeader(
             onBackClick = onBackClick,
             title = "Receive",
-            icon = {
-                IconButton(
-                    onClick = {
-                        //opens InfoDialog
-                        //showInfoDialog.value = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Information",
-                        tint = Color.Transparent,//(0xFF9FA2A5),
-                        modifier = modifier
-                            .clip(CircleShape)
-                    )
-                }
-            }
+            onlyTitle = false
         )
 
             Column (

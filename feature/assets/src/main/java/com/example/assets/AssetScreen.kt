@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -40,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.CurrentState
 import com.core.model.TokenAsset
 import com.core.model.UserData
+import com.core.ui.TopHeader
 import com.example.assets.ui.AssetListItem
 import com.example.assets.ui.formatDouble
 import java.text.DecimalFormat
@@ -93,19 +96,9 @@ internal fun AssetScreen(
             .background(Color.Black)
             .padding(horizontal = 32.dp, vertical = 32.dp)
     ) {
-        Row (
-            //modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
-        ){
-            Text(
-                modifier = modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                text = "Assets",
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        Spacer(modifier = modifier.height(48.dp).background(Color.Red))
+        TopHeader(title = "Assets")
+        Spacer(modifier = Modifier.height(48.dp))
+
         when(assetsUiState){
             is AssetUiState.Loading -> {
                 Box(

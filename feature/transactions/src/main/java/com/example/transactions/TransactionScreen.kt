@@ -27,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
+import com.core.ui.TopHeader
 import com.example.transactions.ui.TransactionDetailItem
 import com.example.transactions.ui.TransferListItem
 
@@ -63,46 +64,34 @@ fun TransactionScreen(
 
         //Header
 
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                modifier = modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                text = "Transactions",
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-    }
-    when(transfersUIState){
-        is TransfersUiState.Loading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+        TopHeader(title = "Transaction")
+        Spacer(modifier = Modifier.height(48.dp))
+        when(transfersUIState){
+            is TransfersUiState.Loading -> {
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
-        }
-        is TransfersUiState.Success -> {
+            is TransfersUiState.Success -> {
 
-            val transfers = transfersUIState.transfers
+                val transfers = transfersUIState.transfers
 
                 Spacer(modifier = Modifier.height(32.dp))
 
 
-            if (transfers.size > 0){
-                LazyColumn (
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ){
-                    var month = ""
+                if (transfers.size > 0){
+                    LazyColumn (
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ){
+                        var month = ""
 
 
-                    transfers.reversed().forEach { transfer ->
-                        item {
-                            //TODO: Month sections
+                        transfers.reversed().forEach { transfer ->
+                            item {
+                                //TODO: Month sections
 //                            Log.e("Month", month)
 //                            if (transfer.timeStamp.substring(0,2) != month){
 //                                month = transfer.timeStamp.substring(0,2)
@@ -110,29 +99,31 @@ fun TransactionScreen(
 //                                Text(text = monthtext,color = Color(0xFF9FA2A5))
 //
 //                            }
-                            TransferListItem(
-                                transfer = transfer ,
-                                onCardClick = {
-                                    navigateToTxDetail(transfer.txHash)
-                                }
-                            )
+                                TransferListItem(
+                                    transfer = transfer ,
+                                    onCardClick = {
+                                        navigateToTxDetail(transfer.txHash)
+                                    }
+                                )
+                            }
                         }
                     }
+                }else{
+                    Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    }
                 }
-            }else{
-                Box(
-                    modifier = modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ){
-                    Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
-                }
+
+
+
+
             }
-
-
-
-
         }
     }
+
 
 }
 
