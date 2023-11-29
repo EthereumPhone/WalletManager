@@ -1,7 +1,5 @@
 package com.feature.swap.ui
 
-import android.graphics.Paint.Align
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,13 +9,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.SwapVert
-import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +46,6 @@ import com.core.model.TokenAsset
 import com.core.ui.TextToggleButton
 import com.core.ui.WmTextField
 import com.core.ui.ethOSButton
-import com.core.ui.ethOSTextField
 import com.feature.swap.AmountsUiState
 import com.feature.swap.AssetsUiState
 import com.feature.swap.SelectedTokenUiState
@@ -70,8 +65,7 @@ fun TokenSelector(
     onAmountChange: (TextFieldSelected, String) -> Unit
 ) {
 
-    var fromBalance by remember { mutableStateOf("") }
-        when(assetsUiState.fromAsset) {
+    val fromBalance = when(assetsUiState.fromAsset) {
         is SelectedTokenUiState.Unselected -> { "" }
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
@@ -79,10 +73,12 @@ fun TokenSelector(
 
         else -> {""}
     }
-//
+//    val fromSymbol = when(assetsUiState.fromAsset) {
+//        is SelectedTokenUiState.Unselected -> { "" }
+//        is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
+//    }
 
-    var toBalance by remember { mutableStateOf("") }
-        when(assetsUiState.toAsset) {
+    val toBalance = when(assetsUiState.toAsset) {
         is SelectedTokenUiState.Unselected -> { "" }
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.toAsset.tokenAsset.balance)
@@ -106,14 +102,13 @@ fun TokenSelector(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        //From
         Column(
-//            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(bottom = 36.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val fromAmountTooHigh = amountsUiState.fromAmount.isNotBlank() &&
                     (assetsUiState.fromAsset is SelectedTokenUiState.Selected) &&
                     (assetsUiState.fromAsset.tokenAsset.balance < amountsUiState.fromAmount.toDouble())
-
 
             Row (
                 modifier = modifier.fillMaxWidth(),
@@ -123,110 +118,39 @@ fun TokenSelector(
                     text = "From",
                     fontWeight= FontWeight.SemiBold,
                     fontSize = 18.sp,
-                    color= Color(0xFF9FA2A5),
+                    color= Color.White
                 )
 
-//                if (fromBalance != "") {
-//                    Text(
-//                        modifier = Modifier.clickable {
-//                            onAmountChange(TextFieldSelected.FROM, fromBalance)
-//                        },
-//                        text = "Balance: $fromBalance",
-//                        fontSize = 16.sp,
-//                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
-//                    )
-//                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Row (
-                    modifier = Modifier.weight(0.6f),
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                        ethOSTextField(
-                            text = fromBalance,
-                            label = "0",
-                            singleLine = true,
-                            onTextChanged = { text -> fromBalance = text },
-                            size = 64,
-                            maxChar = 9,
-                            sizeCut = 6,
-                            numberInput = true
-
-
-
-
-                            )
-                    }
-
-                Button(
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                    onClick = {
-                        onPickAssetClicked(TextFieldSelected.FROM)
-                    },
-                    modifier = Modifier.weight(0.4f)
-                ) {
-
-                    val fromtext = when(assetsUiState.fromAsset) {
-                        is SelectedTokenUiState.Unselected -> { "Select Token" }
-                        is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
-                        else -> {""}
-                    }
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-
-
-                        ) {
-                            Text(text = fromtext, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                            Icon(
-                                imageVector = Icons.Rounded.ArrowDropDown,
-                                contentDescription = "",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                    }
-            }
-
-            Row(
-                modifier = modifier.fillMaxWidth() ,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(
-                    text = "\$000.00-",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color= Color(0xFF9FA2A5)
-                )
-                Button(
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                    onClick = {
-                        onPickAssetClicked(TextFieldSelected.FROM)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "MAX", fontSize = 14.sp)
-
-                    }
-
+                if (fromBalance != "") {
+                    Text(
+                        modifier = Modifier.clickable {
+                            onAmountChange(TextFieldSelected.FROM, fromBalance)
+                        },
+                        text = "Balance: $fromBalance",
+                        fontSize = 16.sp,
+                        color= if(fromAmountTooHigh) Color(0xFFF1847E) else  Color(0xFF9FA2A5)
+                    )
                 }
             }
+            SwapTextField(
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                trailingIcon = {
+                    TokenAssetIcon(assetsUiState.fromAsset) {
+                        onPickAssetClicked(TextFieldSelected.FROM)
+                        //fromEnabled = true
+                    }
+                },
+                value = amountsUiState.fromAmount,
+                onChange = {
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.FROM, amountText)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = "Amount",
+                isError = fromAmountTooHigh
+            )
         }
+
 
         //Token Switch
         IconButton(
@@ -236,136 +160,92 @@ fun TokenSelector(
             ),
             onClick = {
                 switchTokens()
-                      },
+            },
             content = {
                 Icon(
                     imageVector = Icons.Outlined.SwapVert,
-                    tint = Color.Black,
+                    tint = Color(0xFF24303D),
                     contentDescription = "Swap Tokens"
                 )
             }
         )
 
+        val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
+                (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
 
-        //To
-
-        Column {
-            val toAmountTooHigh = false
-            //Title
-            Row(
+        Column (
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ){
+            Row (
                 modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
+            ){
+
                 Text(
                     text = "To",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 18.sp,
-                    color = Color(0xFF9FA2A5),
+                    color= Color.White
                 )
 
-//                if (toBalance != "") {
-//                    Text(
-//                        text = "Balance: ${toBalance}",
-//                        fontSize = 16.sp,
-//                        color = if (toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
-//                    )
-//                }
-            }
-
-            //Amount
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(0.6f),
-                    verticalAlignment = Alignment.CenterVertically
-
-                ) {
-                    ethOSTextField(
-                        text = toBalance,
-                        label = "0",
-                        singleLine = true,
-                        onTextChanged = { text -> toBalance = text },
-                        size = 64,
-                        maxChar = 9,
-                        sizeCut = 6,
-                        numberInput = true
+                if (toBalance != "") {
+                    Text(
+                        text = "Balance: ${toBalance}",
+                        fontSize = 16.sp,
+                        color= if(toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
                     )
                 }
-
-                Button(
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    onClick = {
+            }
+            SwapTextField(
+                value = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
+                onChange = {
+                    val amountText = if (it == ".") "0$it" else it
+                    onAmountChange(TextFieldSelected.TO, amountText)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                trailingIcon = {
+                    TokenAssetIcon(assetsUiState.toAsset) {
                         onPickAssetClicked(TextFieldSelected.TO)
-                    },
-                    modifier = Modifier.weight(0.4f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                ) {
-
-                    val totext = when (assetsUiState.toAsset) {
-                        is SelectedTokenUiState.Unselected -> {
-                            "Select Token"
-                        }
-
-                        is SelectedTokenUiState.Selected -> {
-                            assetsUiState.toAsset.tokenAsset.symbol
-                        }
-
-                        else -> {
-                            ""
-                        }
+                        //toEnabled = true
                     }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-
-
-                        ) {
-                        Text(text = totext, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowDropDown,
-                            contentDescription = "",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            }
-
-            //Dollar Amount
-            Row(
-                modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "$000.00-",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF9FA2A5)
-                )
-                Button(
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                    onClick = { /*TODO*/ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "MAX", fontSize = 14.sp)
-                    }
-                }
-            }
+                },
+                placeholder = "Amount",
+                isError = amountsUiState.toAmount.isNotBlank() &&
+                        (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
+                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
+            )
         }
     }
 }
+
+@Composable
+private fun TokenAssetIcon(
+    tokenAsset: SelectedTokenUiState,
+    onClick: () -> Unit
+
+) {
+    val text = when(tokenAsset) {
+        is SelectedTokenUiState.Unselected -> { "Select Token" }
+        is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
+        else -> {""}
+    }
+    Button(
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF1E2730),
+            contentColor = Color.White
+        ),
+        shape = CircleShape,
+        content = {
+            Text(text)
+        }
+    )
+}
+
 
 
 
@@ -397,31 +277,31 @@ fun PreviewTokenSelector() {
     )
 
     Column {
-//        TokenSelector(
-////            amountsUiState = amount,
-////            assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
-////            isSyncing = false,
-//            modifier = Modifier.fillMaxWidth(),
-//            {},
-//            {textFieldSelected: TextFieldSelected -> clicked += 1 },
-//            {textFieldSelected: TextFieldSelected, text: String ->
-//                amount = when(textFieldSelected) {
-//                    TextFieldSelected.FROM -> {
-//                        amount.copy(
-//                            fromAmount = text
-//                        )
-//                    }
-//
-//                    TextFieldSelected.TO -> {
-//                        amount.copy(
-//                            toAmount = text
-//                        )
-//                    }
-//                }
-//
-//            }
-//        )
-        Spacer(modifier = Modifier.height(24.dp))
+        TokenSelector(
+            amountsUiState = amount,
+            assetsUiState = AssetsUiState(SelectedTokenUiState.Unselected, SelectedTokenUiState.Unselected),
+            isSyncing = false,
+            modifier = Modifier.fillMaxWidth(),
+            {},
+            {textFieldSelected: TextFieldSelected -> clicked += 1 },
+            {textFieldSelected: TextFieldSelected, text: String ->
+                amount = when(textFieldSelected) {
+                    TextFieldSelected.FROM -> {
+                        amount.copy(
+                            fromAmount = text
+                        )
+                    }
+
+                    TextFieldSelected.TO -> {
+                        amount.copy(
+                            toAmount = text
+                        )
+                    }
+                }
+
+            }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         //Text(text = "Test TEXT $clicked")
         Column (
             modifier = Modifier.fillMaxWidth(),
@@ -435,20 +315,15 @@ fun PreviewTokenSelector() {
                 isSyncing = true
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ){
 
 
                 Text(
-                    text = "Swap fee",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color= Color.White
-                )
-                Text(
-                    text = "0.5% per transaction",
-                    fontSize = 18.sp,
+                    text = "Swap fee (0.5%)",
+                    fontSize = 16.sp,
                     color= Color(0xFF9FA2A5)
                 )
             }
