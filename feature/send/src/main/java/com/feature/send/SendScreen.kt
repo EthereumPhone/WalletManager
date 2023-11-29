@@ -773,7 +773,7 @@ fun SendScreen(
 
 
                                 },
-                                enabled = value != "" && validSendAddress && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0) && isValidEthereumAddress(address),
+                                enabled = value != ""  && (value.toDouble() <= selectedToken.tokenAsset.balance) && (value.toDouble() != 0.0) && isValidEthereumAddress(address),
                                 text = "Send"
                             )
                         }
