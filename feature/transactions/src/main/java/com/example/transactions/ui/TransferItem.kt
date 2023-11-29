@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,7 +41,7 @@ import java.util.Date
 internal fun TransferListItem(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
-    onCardClick: (String) -> Unit
+    onCardClick: () -> Unit = {}
 ) {
 
         Row (
@@ -48,7 +49,7 @@ internal fun TransferListItem(
                 .fillMaxWidth()
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
 
             //Color of Icon
@@ -71,101 +72,68 @@ internal fun TransferListItem(
                     modifier = Modifier.size(28.dp)
                 )
             }
-            Column (
-                modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                Row(
-                    modifier = modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-//                    Text(
-//                        text = if (transfer.userSent) "Sent to" else "Received from",
-//                        fontSize = 20.sp,
-//                        fontWeight = FontWeight.SemiBold
-//                    )
-//                    Icon(imageVector = Icons.Rounded.MoreHoriz, contentDescription = "More Info")
-                 }
+
 
             Row(
                 modifier = modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+                horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
 
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
+                Column (
+                    modifier = modifier
+                ){
+                    Text(
 
-                                text = if(transfer.userSent) "Sent ${transfer.asset}" else "Received ${transfer.asset}",
-                                color = Color.White,//(0xFF9FA2A5),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                                modifier = Modifier.width(125.dp)
-                            )
-                            Text(transfer.timeStamp, color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                        }
+                        text = if(transfer.userSent) "Sent ${transfer.asset}" else "Received ${transfer.asset}",
+                        color = Color.White,//(0xFF9FA2A5),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        modifier = Modifier.width(125.dp)
+                    )
+                    Text(transfer.timeStamp.take(10), color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
 
+                Row (
+                    verticalAlignment = Alignment.CenterVertically,
+
+
+                ){
+                    Column(
+                        modifier = Modifier,
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Center
+                    ){
                         Row (
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Column(
-                                horizontalAlignment = Alignment.End,
-                                verticalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+
                             ){
-                                Row (
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                            Text(transfer.value, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
 
-                                    ){
-                                    Text(transfer.value, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
-
-                                    Text(transfer.asset, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
-                                }
-                                Text("$0.00-", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
-                            }
-
-                            IconButton(
-                                onClick = { onCardClick },
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ArrowForwardIos,
-                                    contentDescription = "Go back",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-
+                            Text(transfer.asset, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
                         }
-
-
-
-
+                        Text("$0.00-", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
                     }
 
+                    Spacer(modifier = Modifier.width(24.dp))
 
-
-
+                    IconButton(
+                        onClick = onCardClick,
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowForwardIos,
+                            contentDescription = "Go back",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
-//            Row (
-//                modifier = modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.End
-//            ) {
-////                Text(
-////                    text = networkName,
-////                    modifier = Modifier.weight(1f)
-////                )
-//
-//            }
-        }
+
+
         }
 
 
@@ -229,7 +197,7 @@ fun TransferItemPreview() {
             asset = "ETH",
             //address = "0x123123123123123123123123",
             value = "2.24",
-            timeStamp = "10-19-01",//Clock.System.now().toString(),
+            timeStamp = "1000-19-01 00:00:00",//Clock.System.now().toString(),
             userSent = true,
             txHash= "pfpfnopjfpfn",
         ),

@@ -148,9 +148,10 @@ fun TokenSelector(
                     onAmountChange(TextFieldSelected.FROM, amountText)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = "Amount",
+                placeholder = "0",
                 isError = fromAmountTooHigh,
-                size = 64
+                size = 56,
+                maxChar = 12
             )
         }
 
@@ -215,11 +216,12 @@ fun TokenSelector(
                         //toEnabled = true
                     }
                 },
-                placeholder = "Amount",
+                placeholder = "0",
                 isError = amountsUiState.toAmount.isNotBlank() &&
                         (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
                         (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble()),
-                size = 64
+                size = 56,
+                maxChar = 12
             )
         }
     }
@@ -246,7 +248,7 @@ private fun TokenAssetIcon(
         shape = CircleShape,
         content = {
             Row {
-                Text(text)
+                Text(text,fontWeight = FontWeight.SemiBold)
                 Icon(
                     imageVector = Icons.Rounded.ArrowDropDown,
                     contentDescription = "",
