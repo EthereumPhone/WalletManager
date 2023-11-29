@@ -37,7 +37,7 @@ fun AssetDetailRoute(
     viewModel: AssetDetailViewModel = hiltViewModel(),
 ) {
 
-    val assetDetailUiState: AssetDetailUiState by viewModel.currentState.collectAsStateWithLifecycle()
+    val assetDetailUiState: AssetUiState by viewModel.currentState.collectAsStateWithLifecycle()
 
     AssetDetailScreen(
         assetDetailUiState = assetDetailUiState,
@@ -47,11 +47,13 @@ fun AssetDetailRoute(
 @Composable
 fun AssetDetailScreen(
     modifier: Modifier = Modifier,
-    assetDetailUiState: AssetDetailUiState,
+    assetDetailUiState: AssetUiState,
     navigateToAsset: () -> Unit,
 ){
     when(assetDetailUiState){
-        is AssetDetailUiState.Loading -> {
+        is AssetUiState.Error -> { }
+        is AssetUiState.Empty -> { }
+        is AssetUiState.Loading -> {
             Box(
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -59,8 +61,8 @@ fun AssetDetailScreen(
                 Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        is AssetDetailUiState.Success -> {
-            var asset = assetDetailUiState.asset
+        is AssetUiState.Success -> {
+            var asset = assetDetailUiState.assets
                 Column (
                     modifier = Modifier
                         .fillMaxSize()

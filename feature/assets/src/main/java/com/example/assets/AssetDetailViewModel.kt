@@ -10,6 +10,7 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
 import com.core.domain.GetGroupedTokenAssets
+import com.core.domain.GetTokenAssetsByNetwork
 import com.core.domain.GetTokenAssetsBySymbolUseCase
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,59 +42,71 @@ import javax.inject.Inject
 class AssetDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val tokenAssetBySymbolUseCase: GetTokenAssetsBySymbolUseCase,
+    private val networkBalanceRepository: NetworkBalanceRepository
 ): ViewModel() {
 
     private val assetDetailArgs: SymbolArgs = SymbolArgs(savedStateHandle)
 
     val symbol = assetDetailArgs.symbol
 
-    val currentState: StateFlow<AssetDetailUiState> =
-        tokenAssetBySymbolUseCase(
-            symbol = assetDetailArgs.symbol
+    val currentState: StateFlow<AssetUiState> =
+        assetUiState(
+            tokenAssetBySymbolUseCase,
+            networkBalanceRepository,
+            assetDetailArgs.symbol
+        ).stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AssetUiState.Loading
         )
-            .map(AssetDetailUiState::Success)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetDetailUiState.Loading
-            )
 }
 
 
-private fun assetDetailUiState(
-    tokenAssetBySymbolUseCase: GetTokenAssetsBySymbolUseCase,
+fun assetUiState(
+    getTokenAssetsByNetwork: GetTokenAssetsBySymbolUseCase,
     networkBalanceRepository: NetworkBalanceRepository,
     symbol: String
-) {
-    // erc20
-    val erc20Tokens = tokenAssetBySymbolUseCase(symbol)
+): Flow<AssetUiState> {
 
-    // network token
+    // observe erc20 tokens
+    val erc20Tokens: Flow<List<TokenAsset>> = getTokenAssetsByNetwork(symbol)
+
+
+    // observe network currency
     val networkToken: Flow<List<TokenAsset>> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances ->
-                balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    val isPolygon = name.contains("POLYGON")
-
-
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = if (isPolygon) "matic" else "eth",
-                        name = if (isPolygon) "matic" else "eth",
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
+                balances
+                    .map {
+                        val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                        val isPolygon = name.contains("POLYGON")
+                        TokenAsset(
+                            address = it.contractAddress,
+                            chainId = it.chainId,
+                            symbol = if (isPolygon) "matic" else "eth",
+                            name = if (isPolygon) "matic" else "eth",
+                            balance = it.tokenBalance.toDouble(),
+                            decimals = 18
+                        )
+                    }
             }
 
+    return combine(
+        erc20Tokens,
+        networkToken,
+        ::Pair
+    ).asResult()
+        .mapLatest { tokenToTokeResult ->
+            when(tokenToTokeResult) {
+                is Result.Success -> {
+                    val (tokens, networkTokens) = tokenToTokeResult.data
+                    val filteredNetwork = networkTokens.filter { it.symbol == symbol }
+                    AssetUiState.Success(filteredNetwork + tokens)
+                }
+                is Result.Loading -> AssetUiState.Loading
+                is Result.Error -> AssetUiState.Error
+            }
+        }
 }
 
-
-sealed interface AssetDetailUiState {
-    object Loading: AssetDetailUiState
-    data class Success(val asset: List<TokenAsset>): AssetDetailUiState
-
-}
 
