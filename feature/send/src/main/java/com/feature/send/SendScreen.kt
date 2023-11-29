@@ -91,6 +91,7 @@ import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
+import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import java.math.BigDecimal
@@ -447,7 +448,27 @@ fun SendScreen(
                     label = "(Enter address, ENS or QR scan)",
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    onTextChanged = { text -> address = text },
+                    onTextChanged = {
+                        address = it.lowercase()
+                        if (address.endsWith(".eth")) {
+                            if (ENSName(address).isPotentialENSDomain()) {
+                                // It is ENS
+                                println("Checking ENS")
+                                CompletableFuture.runAsync {
+                                    val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
+                                    val ensAddr = ens.getAddress(ENSName(address))
+                                    address = ensAddr?.hex.toString()
+                                    validSendAddress = true
+                                }
+                            } else {
+                                if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
+                            }
+                            if(address.isEmpty()) {
+                                validSendAddress = false
+                            }
+                        }
+                        onToAddressChanged(address)
+                    },
                     size = 16
                 )
             }
