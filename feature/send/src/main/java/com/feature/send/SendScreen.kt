@@ -65,8 +65,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.util.chainToApiKey
-import com.core.database.model.RawContract
-import com.core.database.model.TransferEntity
 import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
@@ -210,6 +208,7 @@ fun SendRoute(
                         //TODO: put pending transfer into db
                         try {
                             Log.d("insert tx", "itas in ")
+                            /*
                             viewModel.insertPendingTransfer(
                                 transfer = TransferEntity(
                                     uniqueId = (0..100).random().toString(),
@@ -235,6 +234,8 @@ fun SendRoute(
 
                                 )
                             )
+
+                             */
 
                         }catch (exception: NullPointerException) {
 //                        "error"

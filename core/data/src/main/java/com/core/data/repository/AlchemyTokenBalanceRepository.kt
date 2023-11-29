@@ -6,6 +6,7 @@ import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenBalanceRequestBody
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.util.chainToApiKey
+import com.core.data.util.spamTokens
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.asExternalModule
@@ -47,10 +48,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                     val results = tokenBalanceApi.getTokenBalances(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                         TokenBalanceRequestBody.allErc20Tokens(toAddress)
-                    ).result.tokenBalances.map {
-
-                        it.asEntity(network.chainId)
-                    }
+                    ).result.tokenBalances
+                        .filter { it.contractAddress !in spamTokens }
+                        .map { it.asEntity(network.chainId) }
                     tokenBalanceDao.upsertTokenBalances(results)
                 }
             }
@@ -67,10 +67,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                 val results = tokenBalanceApi.getTokenBalances(
                     "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
                     TokenBalanceRequestBody.allErc20Tokens(toAddress)
-                ).result.tokenBalances.map {
-
-                    it.asEntity(network!!.chainId)
-                }
+                ).result.tokenBalances
+                    .filter { it.contractAddress !in spamTokens }
+                    .map { it.asEntity(network!!.chainId) }
                 tokenBalanceDao.upsertTokenBalances(results)
             }
         }

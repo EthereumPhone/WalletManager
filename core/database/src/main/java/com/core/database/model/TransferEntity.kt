@@ -27,7 +27,6 @@ data class TransferEntity(
     val value: Double,
     val blockTimestamp: Instant,
     val userIsSender: Boolean,
-    val ispending: Boolean
 )
 
 data class Erc1155MetadataObject(
@@ -75,5 +74,4 @@ fun TransferEntity.asExternalModel() = Transfer(
     blockTimestamp,
     userIsSender,
     txHash = hash,
-    ispending = ispending
 )

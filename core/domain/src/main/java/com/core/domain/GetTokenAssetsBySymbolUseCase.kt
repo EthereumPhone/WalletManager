@@ -1,5 +1,6 @@
 package com.core.domain
 
+import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.model.TokenAsset
@@ -12,7 +13,7 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val tokenBalanceRepository: TokenBalanceRepository
 ) {
-    operator fun invoke(symbol: String? = ""): Flow<List<TokenAsset>> =
+    operator fun invoke(symbol: String = ""): Flow<List<TokenAsset>> =
         combine(
             tokenBalanceRepository.getTokensBalances(),
             tokenMetadataRepository.getTokensMetadata()
@@ -39,7 +40,7 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
 
             if(symbol != "") {
                 tokenAssets.filter {
-                    it.symbol == symbol
+                    it.symbol.contains(symbol)
                 }
             } else {
                 tokenAssets

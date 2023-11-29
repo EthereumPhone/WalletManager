@@ -82,46 +82,9 @@ import java.lang.Float.min
 import kotlin.math.roundToInt
 
 @SuppressLint("SuspiciousIndentation")
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
-internal fun WalletTabRow(
-//    transfersUiState: TransfersUiState,
-    assetsUiState: AssetUiState,
-//    refreshState: Boolean,
-//    onRefresh: () -> Unit,
-//    onDelete: (TransferItem) -> Unit,
-//    onTxOpen: (TransferItem) -> Unit,
-//    userAddress: String,
-) {
-
-
-//    val tabItems = remember { TabItems.values().toList() }
-//    val pagerState = rememberPagerState(
-//        initialPage = 0,
-//        initialPageOffsetFraction = 0f
-//    ) {
-//        tabItems.size
-//    }
-
-//    val pullRefreshState = rememberPullRefreshState(
-//        refreshing = refreshState,
-//        onRefresh = {
-//            onRefresh()
-//        }
-//    )
-
-
-        AssetList(
-            assetsUiState
-//            assets
-        )
-
-//        PullRefreshIndicator(
-//            refreshing = refreshState,
-//            state = pullRefreshState,
-//            modifier = Modifier.align(Alignment.TopCenter)
-//        )
-
+internal fun WalletTabRow(assetsUiState: AssetUiState) {
+        AssetList(assetsUiState)
 }
 
  data class Asset(
@@ -138,46 +101,38 @@ internal fun WalletTabRow(
 )
 
 @Composable
-private fun AssetList(
-    assetsUiState: AssetUiState,
-//    list: List<AssetItem>
-){
-                Box(
-                    contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.45f)
-            ) {
-
-                    when(assetsUiState){
-                        is AssetUiState.Empty ->{
-                            Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
-                        }
-                        is AssetUiState.Loading -> {
-                            Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-                        }
-                        is AssetUiState.Success -> {
-                            val assets = assetsUiState.assets.take(5)
-                            LazyColumn(
-                                modifier = Modifier,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                assets.forEach { item ->
-                                    item(key = item.address) {
-
-                                        AssetListItem(title = item.symbol, value = item.balance)
-                                        //AssetExpandableItem(title = formatString(assetName), assets = assetAmount)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                    }
-                                }
-                            }
-                        }
-
-                        else -> {}
-                    }
-
-                //}
+private fun AssetList(assetsUiState: AssetUiState) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.45f)
+    ) {
+        when(assetsUiState){
+            is AssetUiState.Empty ->{
+                Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
             }
+            is AssetUiState.Loading -> {
+                Text(text = "Loading...", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+            }
+            is AssetUiState.Success -> {
+                val assets = assetsUiState.assets
+                LazyColumn(
+                    modifier = Modifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    assets.forEach { item ->
+                        item(key = item.address) {
+
+                            AssetListItem(title = item.symbol, value = item.balance)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+            is AssetUiState.Error -> { }
+        }
+    }
 
 
 //, currencyPrice: String, onCurrencyChange: (String) -> Unit) {

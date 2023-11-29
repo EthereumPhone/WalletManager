@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'com.feature.assets'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         minSdk 33
@@ -54,6 +54,7 @@ dependencies {
     implementation libs.androidx.appcompat
 
     implementation "androidx.compose.material3:material3:1.1.1"
+    implementation libs.material
 
 
     testImplementation 'junit:junit:4.13.2'

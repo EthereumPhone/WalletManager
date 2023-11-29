@@ -49,7 +49,7 @@ fun AssetRoute(
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
 
-    val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
+    val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
@@ -140,7 +140,7 @@ internal fun AssetScreen(
             )
             Box{
 
-                    if(assetsUiState.assets.size > 0){
+                    if(assetsUiState.assets.isNotEmpty()){
                         val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
 
                         Box(

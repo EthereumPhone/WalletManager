@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -37,7 +38,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AssetDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val tokenAssetBySymbolUseCase: GetTokenAssetsBySymbolUseCase,
 ): ViewModel() {
 
@@ -55,9 +56,39 @@ class AssetDetailViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = AssetDetailUiState.Loading
             )
+}
 
+
+private fun assetDetailUiState(
+    tokenAssetBySymbolUseCase: GetTokenAssetsBySymbolUseCase,
+    networkBalanceRepository: NetworkBalanceRepository,
+    symbol: String
+) {
+    // erc20
+    val erc20Tokens = tokenAssetBySymbolUseCase(symbol)
+
+    // network token
+    val networkToken: Flow<List<TokenAsset>> =
+        networkBalanceRepository.getNetworksBalance()
+            .map { balances ->
+                balances.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    val isPolygon = name.contains("POLYGON")
+
+
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = if (isPolygon) "matic" else "eth",
+                        name = if (isPolygon) "matic" else "eth",
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
+                    )
+                }
+            }
 
 }
+
 
 sealed interface AssetDetailUiState {
     object Loading: AssetDetailUiState

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,6 +76,9 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AssetUiState.Loading
         )
+
+    private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val transferState: StateFlow<TransfersUiState> =

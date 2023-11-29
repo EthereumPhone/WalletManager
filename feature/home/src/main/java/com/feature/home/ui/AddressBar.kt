@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.UserData
 import com.core.ui.SelectedNetworkButton
+import com.feature.home.WalletDataUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,81 +54,56 @@ import java.util.Calendar
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun AddressBar(
-    userData: UserData,
-    onclick: () -> Unit,
-    icon: @Composable () -> Unit,
-    currentChain: Int,
-    getCurrentChain: (Context) -> Unit,
+    userData: WalletDataUiState,
     modifier: Modifier = Modifier
 ) {
-    getCurrentChain(LocalContext.current)
+    val context = LocalContext.current
+
+    val address = when(userData) {
+        is WalletDataUiState.Loading -> {
+            "..."
+    }
+        is WalletDataUiState.Success -> {
+        truncateText(userData.userData.walletAddress)
+    }
+    }
+
+    val network = when(userData) {
+        is WalletDataUiState.Loading -> {
+            "..."
+        }
+        is WalletDataUiState.Success -> {
+            chainName(userData.userData.walletNetwork)
+        }
+    }
+
+    var chainColor = when(userData) {
+        is WalletDataUiState.Success -> {
+            val data = userData.userData
+            when(data.walletNetwork) {
+                "1" -> Color(0xFF32CD32)
+                "5" -> Color(0xFFF0EAD6)
+                "137" -> Color(0xFF442fb2) // Polygon
+                "10" -> Color(0xFFc82e31) // Optimum
+                "42161" -> Color(0xFF2b88b8) // Arbitrum
+                "84531" -> Color(0xFF053BCB) // Base
+                else -> {
+                    Color(0xFF030303)
+                }
+            }
+        }
+        is WalletDataUiState.Loading -> {
+            Color.Transparent
+        }
+    }
 
     Column (
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ){
-        //Address
-        Row (
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ){
-            IconButton(
-                onClick = {}
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Information",
-                    tint = Color.Transparent,
-                    modifier = modifier
-                        .clip(CircleShape)
-                    //.background(Color.Red)
-                )
-            }
-            Box(
-                modifier = Modifier
-//                    .clickable { onclick() },
-            ){
-                Text(
-                    modifier = Modifier,
-//                        .clickable { onclick() },
-                    text = "Wallet", //truncateText(userData.walletAddress),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White//(0xFF9FA2A5)
-                )
-            }
-            icon()
-        }
-
-
-        //gets current Chain
-
-        var chainColor = when(currentChain) {
-            1 -> Color(0xFF32CD32)
-            5 -> Color(0xFFF0EAD6)
-            137 -> Color(0xFF442fb2)//Polygon
-            10 -> Color(0xFFc82e31)//Optimum
-            42161 -> Color(0xFF2b88b8)//Arbitrum
-            else -> {
-                Color(0xFF030303)
-            }
-        }
-        var chainName = when(currentChain) {
-            1 -> "Mainnet"
-            5 -> "Goerli"
-            10 -> "Optimism"
-            137 -> "Polygon"
-            42161 -> "Arbitrum"
-            else -> "Mainnet"
-        }
 
         Surface (
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable {
-                    onclick()
-                },
+            modifier = Modifier.clip(CircleShape),
             color = Color(0xFF262626),
             contentColor = Color.White
         ) {
@@ -136,21 +113,21 @@ internal fun AddressBar(
                 modifier = modifier.padding(12.dp,8.dp)//(4.dp,4.dp)
             ){
                 //Add later
-//                Box(
-//                    modifier = modifier.clip(CircleShape)
-//                        .size(24.dp)
-//                        .background(chainColor)
-//
-//                ){}
-//                Text(
-//                    text = chainName,
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.SemiBold,
-//                    color = Color.White
-//                )
+                Box(
+                    modifier = modifier.clip(CircleShape)
+                        .size(24.dp)
+                        .background(chainColor)
+
+                )
+                Text(
+                    text = network,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+               )
                 Text(
                     modifier = modifier.padding(end=12.dp),
-                    text = truncateText(userData.walletAddress),
+                    text = truncateText(address),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
@@ -161,6 +138,23 @@ internal fun AddressBar(
     }
 
 }
+
+private fun chainName(chainId: String) = when(chainId) {
+    "1" -> "Mainnet"
+    "5" -> "Görli"
+    "10" -> "Optimism"
+    "137" -> "Polygon"
+    "8453" -> "Base"
+    "42161" -> "Arbitrum"
+    else -> "Loading..."
+}
+
+@SuppressLint("ServiceCast")
+private fun copyTextToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboardManager.setText(AnnotatedString(text))
+}
+
 
 private fun truncateText(text: String): String {
     if (text.length > 19) {

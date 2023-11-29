@@ -53,14 +53,12 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
+    val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
-    val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
-
-    val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
+    //val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
 
     var updater by remember {mutableStateOf(true)}
 
@@ -71,47 +69,27 @@ internal fun HomeRoute(
     }
 
     HomeScreen(
-        userData = userData,
-        currentChain = currentChain,
-        getCurrentChain = viewModel::getCurrentChain,
+        userData = walletDataUiState,
 //        transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
 //        refreshState = refreshState,
 //        currencyPrice = currencyPrice,
 //        onCurrencyChange = viewModel::getExchange,
-        onAddressClick = {
-            // had to do it here because I need the local context.
-            copyTextToClipboard(localContext, userData.walletAddress)
-        },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
-//        onRefresh = viewModel::refreshData,
-//        onDelete = { tx ->
-//
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    //Deletes pending tx out of database
-//                    viewModel.deletePendingTransfer(tx)
-//                }
-//
-//        },
-//        modifier = modifier
-
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
-    userData: UserData,
-   currentChain: Int,
-    getCurrentChain: (Context) -> Unit,
+    userData: WalletDataUiState,
 //    transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
 //    refreshState: Boolean,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
-    onAddressClick: () -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
@@ -139,34 +117,6 @@ internal fun HomeScreen(
     }
 
 
-    var showTransferInfoDialog = remember { mutableStateOf(false) }
-    var txInfo =  remember { mutableStateOf(
-        TransferItem(
-            chainId = 1,
-            from="",
-            to="",
-            asset = "",
-            value = "",
-            timeStamp = "",
-            userSent = true,
-            txHash = "",
-            ispending = false
-        )
-    ) }
-
-//    if(showTransferInfoDialog.value){
-//        TransferDialog(
-//            setShowDialog = {
-//                showTransferInfoDialog.value = false
-//            },
-//            //title = "Transfer",
-//            transfer = txInfo.value,
-//            currencyPrice = currencyPrice,
-//            onCurrencyChange = onCurrencyChange
-//
-//        )
-//    }
-
     val fiatBalance = when(assetsUiState){
         is AssetUiState.Loading -> {
             emptyList<TokenAsset>()
@@ -186,10 +136,7 @@ internal fun HomeScreen(
                 res += it.balance
                 //get fiat value
             }
-
             res
-
-
         }
     }
 
@@ -203,32 +150,7 @@ internal fun HomeScreen(
             .background(Color.Black)
             .padding(horizontal = 32.dp, vertical = 32.dp)
     ) {
-        AddressBar(
-            userData,
-            onAddressClick,
-            icon = {
-                IconButton(
-                    onClick = {
-                        //opens InfoDialog
-                        showInfoDialog.value = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Information",
-                        tint = Color(0xFF9FA2A5),
-                        modifier = modifier
-                            .clip(CircleShape)
-                    )
-                }
-            },
-            currentChain,
-            getCurrentChain
-        )
-
-
-
-
+        AddressBar(userData)
 
 
         Column(
@@ -237,10 +159,6 @@ internal fun HomeScreen(
             Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
             Text(text = "$${fiatBalance}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
         }
-
-        //, fontWeight = FontWeight.Medium, fontSize = 16.sp, Color.White)
-
-
 
         Column (
             verticalArrangement = Arrangement.spacedBy(56.dp)
@@ -304,11 +222,8 @@ internal fun HomeScreen(
     }
 }
 
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
-}
+
+
 
 
 

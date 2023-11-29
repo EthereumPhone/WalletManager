@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -36,16 +37,17 @@ class AssetViewModel @Inject constructor(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val updateTokensUseCase: UpdateTokensUseCase,
-    userDataRepository: UserDataRepository,
+    private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
 ): ViewModel() {
 
-    val userData = userDataRepository.userData
+    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
+        WalletDataUiState.Success(it)
+    }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UserData("")
-
+            initialValue = WalletDataUiState.Loading,
+            started = SharingStarted.WhileSubscribed(5_000)
         )
 
     val tokenAssetState: StateFlow<AssetUiState> =
@@ -86,10 +88,9 @@ class AssetViewModel @Inject constructor(
             _refreshState.value = true
 
             try {
-                val address = userData.first().walletAddress
-                transferRepository.refreshTransfers(address)
-
-                updateTokensUseCase(address)
+                val userData = userDataRepository.userData.first()
+                transferRepository.refreshTransfers(userData.walletAddress)
+                updateTokensUseCase(userData.walletAddress)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -136,7 +137,7 @@ fun assetUiState(
                     if(filteredAssets.isEmpty()) {
                         AssetUiState.Empty
                     } else {
-                        AssetUiState.Success(filteredAssets)
+                        AssetUiState.Success(filteredAssets.filter { it.chainId != 5 })
                     }
                 }
                 is Result.Loading -> {
@@ -145,8 +146,6 @@ fun assetUiState(
                 is Result.Error -> {
                     AssetUiState.Error
                 }
-
-
             }
         }
 }
@@ -158,4 +157,9 @@ sealed interface AssetUiState {
     data class Success(
         val assets: List<TokenAsset>
     ): AssetUiState
+}
+
+sealed interface WalletDataUiState {
+    object Loading: WalletDataUiState
+    data class Success(val userData: UserData): WalletDataUiState
 }

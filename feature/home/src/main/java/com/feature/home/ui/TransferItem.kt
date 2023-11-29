@@ -58,12 +58,9 @@ internal fun TransferListItem(
         ) {
 
             //Color of Icon
-            var icontint = if(transfer.ispending){
-                Color(0xFF24303D)
-            }else{
-                if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
+            var icontint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
 
-            }
+
             Box (
                 contentAlignment = Alignment.Center,
                 modifier = modifier
@@ -72,11 +69,8 @@ internal fun TransferListItem(
                     .size(42.dp)
             ){
 
-                var icon = if(transfer.ispending){
-                    Icons.Rounded.Cached
-                }else{
-                    if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
-                }
+                var icon = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
+
 
                 Icon(
                     imageVector = icon,
@@ -246,7 +240,6 @@ fun TransferItemPreview() {
             timeStamp = "10-19-01",//Clock.System.now().toString(),
             userSent = true,
             txHash= "pfpfnopjfpfn",
-            ispending = false
         ),
         onCardClick = {}
     )

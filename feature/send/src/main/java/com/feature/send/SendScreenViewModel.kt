@@ -11,11 +11,9 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
-import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
-import com.core.database.model.TransferEntity
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
@@ -106,6 +104,7 @@ class SendViewModel @Inject constructor(
     /**
      * Inserts Values for pending transfer into TransferDAO
      */
+    /*
     fun insertPendingTransfer(
         transfer: TransferEntity
     ) = viewModelScope.launch{
@@ -116,6 +115,8 @@ class SendViewModel @Inject constructor(
         //}
         //insert TransferEntity into Dao
     }
+
+     */
 
 
 
@@ -143,7 +144,7 @@ class SendViewModel @Inject constructor(
 //
 //            }
 
-                    sendRepository.sendTo(
+                    sendRepository.transferEth(
                         chainId = chainId,
                         toAddress = to,
                         data = "",
