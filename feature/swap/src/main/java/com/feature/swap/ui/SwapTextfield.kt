@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
@@ -40,10 +42,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.max
 
 @Composable
 fun SwapTextField(
@@ -51,37 +57,55 @@ fun SwapTextField(
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     trailingIcon: @Composable (() -> Unit)? = null,
-    placeholder: String="Placeholder",
+    placeholder: String="0",
     //placeholder: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     enabled: Boolean = true,
-    isError: Boolean = false
+    isError: Boolean = false,
+    color: Color = Color.White,
+    size: Int,
+    maxChar: Int = 42,
+    sizeCut: Int = 2,
+
     ) {
 
-    val textStyling = TextStyle(
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.SemiBold
-    )
-    val background = if(isError) Color(0xFFC63B3B)
-    else Color(0xFF24303D)
+    var fontSize by remember { mutableStateOf(size.sp) }
+
+//    val textStyling = TextStyle(
+//        color = Color.White,
+//        fontSize = 20.sp,
+//        fontWeight = FontWeight.SemiBold
+//    )
+//    else Color(0xFF24303D)
 
     BasicTextField(
         value = value,
-        onValueChange = onChange,
+        onValueChange = {
+            if(it.length < maxChar){
+                onChange(it)
+            }
+            fontSize = size.sp
+
+        },
         singleLine = true,
-        textStyle = textStyling,
+        minLines = 1,
+        maxLines = 2,
+        textStyle = LocalTextStyle.current.copy(
+            color = color,
+            fontSize = calculateFontSize(value.length,size,sizeCut),
+            fontWeight = FontWeight.SemiBold
+        ),
         enabled = enabled,
-        keyboardOptions = keyboardOptions,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         cursorBrush = SolidColor(Color.White),
         modifier = modifier
             .clip(RoundedCornerShape(10))
-            .background(background)
-            .height(64.dp)
+            .background(Color.Transparent)
+            .height(IntrinsicSize.Min)
             .padding(
-                horizontal = 16.dp,
+                horizontal = 0.dp,
                 vertical = 8.dp
             ),
 
@@ -97,9 +121,10 @@ fun SwapTextField(
                 if(value == "") {
                     Text(
                         text = placeholder,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = size.sp,
                         color = Color(0xFF9FA2A5),
-                        fontSize = 18.sp,
-                        fontWeight= FontWeight.Normal,
                         modifier = Modifier.align(Alignment.CenterStart)
                     )
                 }
@@ -111,19 +136,61 @@ fun SwapTextField(
                 trailingIcon()
             }
         }
+
     }
 
 
+
+}
+
+fun calculateFontSize(length: Int, defaultSize: Int, maxChar: Int ): TextUnit {
+    val defaultFontSize = defaultSize.sp
+    val maxChars = maxChar
+    val scaleFactor = 0.8
+
+    var adjustedSize = if (length > maxChars) {
+        val scaledSize = (defaultFontSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        result.sp
+    } else {
+        defaultFontSize
+    }
+
+    if (length > maxChars*2) {
+        val scaledSize = (adjustedSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        adjustedSize = result.sp
+        //Log.e("Length: ", "${ adjustedSize }")
+    }
+
+    if (length > maxChars*3) {
+        val scaledSize = (adjustedSize * scaleFactor).value
+        val minValue = 12f // Minimum font size
+        val result = max(scaledSize, minValue)
+        adjustedSize = result.sp
+        //Log.e("Length: ", "${ adjustedSize }")
+    }
+
+//    if (length > (maxChars*2) - 15) {
+//        val scaledSize = (adjustedSize * scaleFactor).value
+//        val minValue = 12f // Minimum font size
+//        val result = max(scaledSize, minValue)
+//        adjustedSize = result.sp
+//    }
+    return adjustedSize
 }
 
 @Preview
 @Composable
 fun PreviewWmTextField() {
-    var text by remember { mutableStateOf("bii b") }
+    var text by remember { mutableStateOf("") }
 
     SwapTextField(
         value = text,
         onChange = { text = it },
+        placeholder = "0",
         trailingIcon = {
             //TokenAssetIcon()
 //            Button(
@@ -150,7 +217,11 @@ fun PreviewWmTextField() {
 //                    modifier = Modifier.size(32.dp)
 //                )
 //            }
-        }
+        },
+        size = 64,
+        maxChar = 9,
+        sizeCut = 6,
+
     )
 }
 
@@ -165,6 +236,7 @@ fun previewErrorWmTextFiled() {
 //        leadingIcon = {
 //            //TokenAssetIcon()
 //        },
-        isError = text.contains("b")
+        isError = text.contains("b"),
+        size = 64
     )
 }

@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.SwapVert
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -147,7 +149,8 @@ fun TokenSelector(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = "Amount",
-                isError = fromAmountTooHigh
+                isError = fromAmountTooHigh,
+                size = 64
             )
         }
 
@@ -215,7 +218,8 @@ fun TokenSelector(
                 placeholder = "Amount",
                 isError = amountsUiState.toAmount.isNotBlank() &&
                         (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
-                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
+                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble()),
+                size = 64
             )
         }
     }
@@ -236,12 +240,20 @@ private fun TokenAssetIcon(
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = 12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF1E2730),
+            containerColor = Color.Transparent,
             contentColor = Color.White
         ),
         shape = CircleShape,
         content = {
-            Text(text)
+            Row {
+                Text(text)
+                Icon(
+                    imageVector = Icons.Rounded.ArrowDropDown,
+                    contentDescription = "",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     )
 }
