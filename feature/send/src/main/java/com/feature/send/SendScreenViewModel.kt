@@ -10,7 +10,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
-import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
@@ -123,7 +122,7 @@ class SendViewModel @Inject constructor(
 //
 //            }
 
-                    sendRepository.sendTo(
+                    sendRepository.transferEth(
                         chainId = chainId,
                         toAddress = to,
                         data = "",
