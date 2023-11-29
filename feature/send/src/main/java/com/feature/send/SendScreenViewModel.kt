@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
-import com.core.data.repository.SendRepositoryWalletSDK
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.ExchangeApi
@@ -69,7 +68,13 @@ class SendViewModel @Inject constructor(
                 val assets = balances.map {
 
                     val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(it.contractAddress,it.chainId,name,name,it.tokenBalance.toDouble())
+
+                    TokenAsset(
+                        it.contractAddress,
+                        it.chainId,
+                        if(name == "GOERLI") "GÖRLI" else name,
+                        if(name == "GOERLI") "GÖRLI" else name,
+                        it.tokenBalance.toDouble())
                 }
                 AssetUiState.Success(assets)
             }.stateIn(
@@ -137,7 +142,7 @@ class SendViewModel @Inject constructor(
 //
 //            }
 
-                    sendRepository.sendTo(
+                    sendRepository.transferEth(
                         chainId = chainId,
                         toAddress = to,
                         data = "",

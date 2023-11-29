@@ -56,13 +56,10 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val userData: UserData by viewModel.userData.collectAsStateWithLifecycle()
+    val userData: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val transfersUiState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
-    val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
-    val currentChain: Int by viewModel.currentChain.collectAsStateWithLifecycle(1)
 
     var updater by remember {mutableStateOf(true)}
 
@@ -74,17 +71,8 @@ internal fun HomeRoute(
 
     HomeScreen(
         userData = userData,
-        currentChain = currentChain,
-        getCurrentChain = viewModel::getCurrentChain,
         transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
-        refreshState = refreshState,
-        currencyPrice = currencyPrice,
-        onCurrencyChange = viewModel::getExchange,
-        onAddressClick = {
-            // had to do it here because I need the local context.
-            copyTextToClipboard(localContext, userData.walletAddress)
-        },
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
@@ -102,18 +90,11 @@ internal fun HomeRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
-    userData: UserData,
-    currentChain: Int,
-    getCurrentChain: (Context) -> Unit,
+    userData: WalletDataUiState,
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
-    refreshState: Boolean,
-    currencyPrice: String,
-    onCurrencyChange: (String) -> Unit,
-    onAddressClick: () -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
@@ -121,13 +102,6 @@ internal fun HomeScreen(
     onDelete: (TransferItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-
-
-    var showSheet by remember { mutableStateOf(false) }
-    val modalSheetState = rememberModalBottomSheetState(true)
-    // Declaring Coroutine scope
-    val coroutineScope = rememberCoroutineScope()
 
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
@@ -141,34 +115,6 @@ internal fun HomeScreen(
     }
 
 
-    var showTransferInfoDialog = remember { mutableStateOf(false) }
-    var txInfo =  remember { mutableStateOf(
-        TransferItem(
-            chainId = 1,
-            from="",
-            to="",
-            asset = "",
-            value = "",
-            timeStamp = "",
-            userSent = true,
-            txHash = "",
-            ispending = false
-        )
-    ) }
-
-    if(showTransferInfoDialog.value){
-        TransferDialog(
-            setShowDialog = {
-                showTransferInfoDialog.value = false
-            },
-            //title = "Transfer",
-            transfer = txInfo.value,
-            currencyPrice = currencyPrice,
-            onCurrencyChange = onCurrencyChange
-
-        )
-    }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.spacedBy(56.dp),
@@ -180,7 +126,6 @@ internal fun HomeScreen(
     ) {
         AddressBar(
             userData,
-            onAddressClick,
             icon = {
                 IconButton(
                     onClick = {
@@ -197,8 +142,6 @@ internal fun HomeScreen(
                     )
                 }
             },
-            currentChain,
-            getCurrentChain
         )
 
         FunctionsRow(
@@ -210,97 +153,7 @@ internal fun HomeScreen(
         WalletTabRow(
             transfersUiState,
             assetsUiState,
-            refreshState,
-            onTxOpen = {
-                txInfo.value = it
-                showTransferInfoDialog.value = true
-            },
             onRefresh = { onRefresh() } ,
-            userAddress= userData.walletAddress,
-            onDelete =  onDelete
-//            currencyPrice = currencyPrice,
-//            onCurrencyChange = onCurrencyChange
-
         )
-
-
-        if(showSheet) {
-            ModalBottomSheet(
-                containerColor = Color(0xFF24303D),
-                contentColor = Color.White,
-
-                onDismissRequest = {
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
-                    }
-                },
-                sheetState = modalSheetState
-            ) {
-
-//                NetworkPickerSheet(
-//                    balancesState = balances,
-//                    onSelectAsset = {
-//                        //onChangeAssetClicked(it)
-//                        //hides ModelBottomSheet
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-//                )
-            }
-        }
-
-
     }
-}
-
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
-}
-
-@Preview
-@Composable
-fun PreviewHomeScreen() {
-//    HomeScreen(
-//        userData = UserData("0x123...123"),
-//        transfersUiState = TransfersUiState.Loading,
-//        assetsUiState = AssetUiState.Success(
-//
-//            listOf(
-//                    TokenAsset(
-//                        address = "String",
-//                        chainId =  5,
-//                        symbol=  "ETH",
-//                        name= "Ether",
-//                        balance= 0.00000245
-//                    ),
-//                    TokenAsset(
-//                        address = "yuooyvyuv",
-//                        chainId =  10,
-//                        symbol=  "ETH",
-//                        name= "Ether",
-//                        balance= 0.00000245
-//                    )
-//                )
-//
-//
-//        ),
-//        refreshState = false,
-//        onAddressClick = { },
-//        navigateToReceive = { },
-//        navigateToSend = { },
-//        navigateToSwap = { },
-//        onRefresh = { },
-//        onDelete = {},
-//        onCurrencyChange = {},
-//        currencyPrice = "1650.00",
-//        currentChain = 1,
-//        getCurrentChain = {}
-//    )
 }

@@ -1,28 +1,32 @@
 package com.core.data.di
 
 import android.content.Context
+import com.core.data.remote.EnsApi
+import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
-import com.core.data.util.MoshiAdapters
 import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.ethereumphone.walletsdk.WalletSDK
+import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -58,9 +62,17 @@ object DataModule {
     fun provideTokenBalanceApi(
         moshi: Moshi
     ): TokenBalanceApi {
+        val logging = HttpLoggingInterceptor()
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+
+        val client: OkHttpClient = OkHttpClient.Builder()
+            //.addInterceptor(logging)
+            .build()
+
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .baseUrl("http://localhost/")
+            .client(client)
             .build()
             .create(TokenBalanceApi::class.java)
     }
@@ -76,9 +88,16 @@ object DataModule {
     fun provideTokenMetadataApi(
         moshi: Moshi
     ): TokenMetadataApi {
+        val logging = HttpLoggingInterceptor()
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+
+        val client: OkHttpClient = OkHttpClient.Builder()
+            //.addInterceptor(logging)
+            .build()
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .baseUrl("http://localhost/")
+            .client(client)
             .build()
             .create(TokenMetadataApi::class.java)
     }
@@ -88,9 +107,16 @@ object DataModule {
     fun provideTransferApi(
         moshi: Moshi
     ): TransfersApi {
+        val logging = HttpLoggingInterceptor()
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+
+        val client: OkHttpClient = OkHttpClient.Builder()
+            //.addInterceptor(logging)
+            .build()
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .baseUrl("http://localhost/")
+            .client(client)
             .build()
             .create(TransfersApi::class.java)
     }
@@ -117,6 +143,24 @@ object DataModule {
             web3j,
             uniswapRoutingSDK
         )
+    }
+
+    @Singleton
+    @Provides
+    fun provideErc20TransferApi(
+        walletSDK: WalletSDK,
+        web3j: Web3j
+    ): Erc20TransferApi {
+        return Erc20TransferApi(
+            walletSDK,
+            web3j
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideEnsApi(): EnsApi {
+        return EnsApi()
     }
 
 }

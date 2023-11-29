@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -71,6 +72,7 @@ import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
 import com.feature.home.AssetUiState
 import com.feature.home.TransfersUiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Float.min
 import kotlin.math.roundToInt
@@ -80,12 +82,14 @@ import kotlin.math.roundToInt
 internal fun WalletTabRow(
     transfersUiState: TransfersUiState,
     assetsUiState: AssetUiState,
-    refreshState: Boolean,
     onRefresh: () -> Unit,
-    onDelete: (TransferItem) -> Unit,
-    onTxOpen: (TransferItem) -> Unit,
-    userAddress: String,
 ) {
+
+    var refreshState by remember {
+        mutableStateOf(false)
+    }
+
+    val refreshScope = rememberCoroutineScope()
 
 
     val tabItems = remember { TabItems.values().toList() }
@@ -99,7 +103,12 @@ internal fun WalletTabRow(
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
         onRefresh = {
-            onRefresh()
+            refreshScope.launch {
+                refreshState = true
+                delay(1000)
+                onRefresh()
+                refreshState = false
+            }
         }
     )
 
@@ -128,7 +137,7 @@ internal fun WalletTabRow(
             modifier = Modifier.pullRefresh(pullRefreshState)
         ) { page ->
             when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState,onTxOpen = onTxOpen, userAddress= userAddress, onDelete = onDelete)
+                TabItems.TRANSFERS -> TransferList(transfersUiState)
                 TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
             }
         }
@@ -161,55 +170,31 @@ private fun AssetList(assetsUiState: AssetUiState){//, currencyPrice: String, on
             }
         }
         is AssetUiState.Success -> {
-            val groupedAssets = assetsUiState.assets.filter { it.chainId != 5 }.groupBy { it.symbol }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-//                Card(
-//                    colors = CardDefaults.cardColors(containerColor = primaryVariant)
-//                ) {
-                    LazyColumn {
-                        groupedAssets.forEach { (assetName, assetList) ->
-                            item(key = assetName) {
-                                AssetExpandableItem(title = formatString(assetName), assets = assetList)//, currencyPrice = currencyPrice,onCurrencyChange= onCurrencyChange)
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-                        }
+                LazyColumn {
+                    items(assetsUiState.assets) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        AssetItem(asset = it)
                     }
-                //}
+                }
             }
         }
-
-        else -> {}
     }
-}
-
-fun formatString(input: String): String {
-    return input.uppercase()
 }
 
 @Composable
 private fun TransferList(
     transfersUiState: TransfersUiState,
-    onTxOpen: (TransferItem) -> Unit,
-    onDelete: (TransferItem) -> Unit,
-    userAddress: String,
 ) {
     val scrollState = rememberScrollState()//Scrollstate for fading edges
 
 
     when (transfersUiState) {
         is TransfersUiState.Success ->
-
-
-
-
-            if(transfersUiState.transfers.isNotEmpty()) {
-                //deletes Pending Txs from database
-                deletePendingTransfers(transfersUiState.transfers, onDelete)
-                //Log.d("deletependingTransfer ", "itas in ")
                 LazyColumn(
                     modifier = Modifier
                         .verticalFadingEdge(
@@ -222,39 +207,33 @@ private fun TransferList(
                     transfersUiState.transfers.reversed().forEach { transfer ->
                         item(key = transfer.timeStamp) {
                             Spacer(modifier = Modifier.height(12.dp))
-                             transfer.userSent = userAddress.equals(transfer.from,true)
-                            Log.e("Tx Pending", "Pending ${transfer.ispending}, tranfer val: ${transfer.value}")
                             TransferListItem(
                                 transfer = transfer,
 
                                 onCardClick = {
 
-                                    onTxOpen(
-                                        transfer
-                                    )
-
-
                                 }
                             )
                         }
                     }
-                }
-            } else {
-                LazyColumn {
-                    item { Box(
-                        modifier = Modifier
-                            .fillParentMaxSize()
+            }
+        is TransfersUiState.Loading -> {  }
+        is TransfersUiState.Empty -> {
+            LazyColumn {
+                item {
+                    Box(
+                    modifier = Modifier
+                        .fillParentMaxSize()
                     ) {
                         Text(
                             text = "No Transfers found",
                             color = Color(0xFF9FA2A5),
                             modifier = Modifier.align(Alignment.Center)
                         )
-                    } }
+                    }
                 }
             }
-        is TransfersUiState.Loading -> {  }
-        else -> {}
+        }
     }
 }
 

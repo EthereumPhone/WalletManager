@@ -15,4 +15,7 @@ class ProtoUserDataRepository @Inject constructor(
     override suspend fun setWalletAddress(address: String) =
         wmPreferencesDataSource.setWalletAddress(address)
 
+    override suspend fun setWalletNetwork(network: String) =
+        wmPreferencesDataSource.setWalletNetwork(network)
+
 }

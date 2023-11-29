@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.designsystem.theme.primaryVariant
 import com.core.model.TransferItem
+import com.core.ui.util.formatDouble
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import java.text.SimpleDateFormat
@@ -46,10 +47,8 @@ import java.util.Date
 internal fun TransferListItem(
     modifier: Modifier = Modifier,
     transfer: TransferItem,
-
     onCardClick: () -> Unit
 ) {
-
     Card(
         modifier = modifier
             .fillMaxWidth(),
@@ -93,25 +92,9 @@ internal fun TransferListItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = "Send",
-                    tint = icontint
+                    tint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
                 )
             }
-            Column (
-                modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                Row(
-                    modifier = modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-//                    Text(
-//                        text = if (transfer.userSent) "Sent to" else "Received from",
-//                        fontSize = 20.sp,
-//                        fontWeight = FontWeight.SemiBold
-//                    )
-//                    Icon(imageVector = Icons.Rounded.MoreHoriz, contentDescription = "More Info")
-                 }
 
             Row(
                 modifier = modifier.fillMaxWidth(),
@@ -119,75 +102,42 @@ internal fun TransferListItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.Start,
+                Column(
+                    horizontalAlignment = Alignment.Start,
 
-                        ) {
-                            Text(
+                ) {
+                    Text(
 
-                                text = if(transfer.userSent) transfer.to else transfer.from,
-                                color = Color.White,//(0xFF9FA2A5),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Normal,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                                modifier = Modifier.width(125.dp)
-                            )
-                            Text(
-                                text = chainToNetworkName(transfer.chainId),
-                                color = Color(0xFF9FA2A5)
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.End
-                        ) {
+                        text = if(transfer.userSent) transfer.to else transfer.from,
+                        color = Color.White,//(0xFF9FA2A5),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Normal,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        modifier = Modifier.width(125.dp)
+                    )
+                    Text(
+                        text = chainToNetworkName(transfer.chainId),
+                        color = Color(0xFF9FA2A5)
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    val date = transfer.timeStamp//compareDate(transfer.timeStamp)
+                    Text(
+                            text = date
 
-                            Text(
-                                text = formatDouble(transfer.value.toDouble()) +" "+transfer.asset.uppercase(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-
-                            val date = transfer.timeStamp//compareDate(transfer.timeStamp)
-//
-                            var ispendingtext = if (transfer.ispending){
-                                "Pending..."
-                            }else{
-                                date
-                            }
-                            Text(
-                                    text = ispendingtext
-
-                                ,color = Color(0xFF9FA2A5)
-                            )
-                        }
-
-                    }
-
-
-
-
+                        ,color = Color(0xFF9FA2A5)
+                    )
+                }
             }
-//            Row (
-//                modifier = modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.End
-//            ) {
-////                Text(
-////                    text = networkName,
-////                    modifier = Modifier.weight(1f)
-////                )
-//
-//            }
         }
-        }
-
-
     }
 }
 
@@ -232,14 +182,6 @@ private fun chainToNetworkName(chainId: Int): String = when(chainId) {
 @Preview
 @Composable
 fun TransferItemPreview() {
-//    TransferItem(
-//        chainId = 5,
-//        asset = "ether",
-//        address = "0x123123",
-//        value = "2.24",
-//        timeStamp = Clock.System.now().toString(),
-//        userSent = true
-//    )
     TransferListItem(
         transfer = TransferItem(
             chainId = 5,

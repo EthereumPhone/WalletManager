@@ -1,6 +1,6 @@
 package com.core.data.repository
 
-import com.core.database.model.TransferEntity
+import com.core.model.NetworkChain
 import com.core.model.Transfer
 import kotlinx.coroutines.flow.Flow
 
@@ -14,14 +14,5 @@ interface TransferRepository {
     ): Flow<List<Transfer>>
 
     suspend fun refreshTransfers(address: String)
-
-
-    suspend fun insertTransfer(transfer: TransferEntity)
-    suspend fun deleteTransfer(
-        chainId: Int,
-        value: Double,
-        ispending: Boolean,
-        userIsSender: Boolean,
-        toaddress: String
-    )
+    suspend fun refreshTransfersByNetwork(address: String, chainId: Int)
 }

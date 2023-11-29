@@ -23,6 +23,7 @@ android {
         buildConfigField "String", "ARBITRUM_API", "\"${properties.getProperty("ARBITRUM_API")}\""
         buildConfigField "String", "OPTIMISM_API", "\"${properties.getProperty("OPTIMISM_API")}\""
         buildConfigField "String", "POLYGON_API", "\"${properties.getProperty("POLYGON_API")}\""
+        buildConfigField "String", "BASE_API", "\"${properties.getProperty("BASE_API")}\""
 
 
     }
@@ -69,6 +70,11 @@ dependencies {
 
     implementation libs.fasterxml
     implementation libs.headlong
+
+    // ENS resolving
+    implementation 'com.github.komputing.kethereum:ens:0.85.7'
+    implementation 'com.github.komputing.kethereum:rpc:0.85.7'
+    implementation 'com.github.komputing.kethereum:model:0.85.7'
 
 
 }

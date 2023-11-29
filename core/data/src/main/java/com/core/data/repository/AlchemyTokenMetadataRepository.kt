@@ -61,6 +61,25 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         }
     }
 
+    override suspend fun refreshTokensMetadataByNetwork(contractAddresses: List<String>, network: NetworkChain) {
+        val apiKey = chainToApiKey(network.chainName)
+
+        withContext(Dispatchers.IO) {
+            val metadataList = contractAddresses.map { address ->
+                tokenMetadataApi
+                    .getTokenMetadata(
+                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
+                        TokenMetadataRequestBody(params = listOf(address))
+                    ).result.asEntity(
+                        contractAddress = address,
+                        chainId = network.chainId
+                    )
+            }
+            tokenMetadataDao.upsertTokensMetadata(metadataList)
+        }
+    }
+
+
     override suspend fun insertTokenMetadata(tokensMetadata: List<TokenMetadataEntity>) = tokenMetadataDao.upsertTokensMetadata(tokensMetadata)
 
 }
