@@ -38,7 +38,8 @@ fun ethOSCenterTextField(
     modifier: Modifier = Modifier,
     label: String = "",
     singleLine: Boolean = false,//true,
-    onTextChanged: (String) -> Unit
+    onTextChanged: (String) -> Unit,
+    color: Color = Color.White
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
@@ -57,7 +58,7 @@ fun ethOSCenterTextField(
         minLines = 1,
         maxLines = 2,
         textStyle = LocalTextStyle.current.copy(
-            color = Color.White,
+            color = color,
             textAlign = TextAlign.Center,
             fontSize = fontSize,
             fontWeight = FontWeight.SemiBold
@@ -119,7 +120,8 @@ fun ethOSTextField(
     maxChar: Int = 42,
     sizeCut: Int = 2,
     numberInput: Boolean = false,
-    onTextChanged: (String) -> Unit
+    onTextChanged: (String) -> Unit,
+    color: Color = Color.White
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
@@ -142,7 +144,7 @@ fun ethOSTextField(
         minLines = 1,
         maxLines = 2,
         textStyle = LocalTextStyle.current.copy(
-            color = Color.White,
+            color = color,
             fontSize = calculateFontSize(text.length,size,sizeCut),
             fontWeight = FontWeight.SemiBold
         ),
@@ -241,12 +243,13 @@ fun PreviewTextField() {
             text = test,
             size = 64,
             label = "0",
+            onTextChanged = { value -> test = value }
 
 //                modifier = Modifier.fillMaxWidth(),
 
 
 
-        ) { value -> test = value }
+        )
         //TextField(value = test, onValueChange = {test = it})
     }
 

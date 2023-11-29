@@ -3,6 +3,8 @@ package com.feature.send.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -37,10 +39,11 @@ fun NetworkPickerSheet(
                 topEnd = 12.dp
             ))
             
-            .background(Color.Black)
+            .background(Color(0xFF262626))
     ) {
 
-        LazyColumn {
+        LazyColumn(
+        ) {
             when(balancesState) {
                 is AssetUiState.Loading -> {}
 
