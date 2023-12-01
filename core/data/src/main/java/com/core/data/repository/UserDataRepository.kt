@@ -8,4 +8,5 @@ interface UserDataRepository {
     val userData: Flow<UserData>
     suspend fun setWalletAddress(address: String)
     suspend fun setWalletNetwork(network: String)
+    suspend fun setOnboardingCompleted(completed: Boolean)
 }

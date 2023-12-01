@@ -18,4 +18,8 @@ class ProtoUserDataRepository @Inject constructor(
     override suspend fun setWalletNetwork(network: String) =
         wmPreferencesDataSource.setWalletNetwork(network)
 
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        wmPreferencesDataSource.setOnboardingCompleted(completed)
+    }
+
 }
