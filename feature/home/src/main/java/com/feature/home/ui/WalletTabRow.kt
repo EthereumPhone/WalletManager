@@ -47,7 +47,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.45f)
+            .fillMaxHeight(0.5f)
     ) {
         Column (
             modifier = Modifier.fillMaxSize(),
@@ -77,7 +77,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         assets.forEach { item ->
-                            item(key = item.address) {
+                            item(key = item.balance) {
 
                                 AssetListItem(title = item.symbol, value = item.balance)
                                 Spacer(modifier = Modifier.height(8.dp))
