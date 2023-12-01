@@ -3,16 +3,14 @@ package com.feature.send
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -22,24 +20,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -51,42 +37,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.util.chainToApiKey
 import com.core.model.SendData
 import com.core.model.TokenAsset
-import com.core.ui.InfoDialog
 import com.core.ui.SelectedNetworkButton
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
-
-import com.journeyapps.barcodescanner.CaptureManager
-import com.journeyapps.barcodescanner.CompoundBarcodeView
-
 import org.ethereumphone.walletsdk.WalletSDK
 import java.text.DecimalFormat
 import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
 import com.feature.send.ui.NetworkPickerSheet
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -107,14 +84,10 @@ fun SendRoute(
     initialAddress: String = "",
     viewModel: SendViewModel = hiltViewModel()
 ) {
-
-    var initialAddress = initialAddress
-
     val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
-
-    //val toAddress by viewModel.toAddress.collectAsStateWithLifecycle()
+    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
     val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val walletSDK = WalletSDK(context)
@@ -129,7 +102,7 @@ fun SendRoute(
     SendScreen(
         modifier = Modifier,
         onBackClick = onBackClick,
-        initialAddress = initialAddress,
+        toAddress = toAddress,
         balances = balances,
         currencyPrice = currencyprice,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
@@ -208,46 +181,6 @@ fun SendRoute(
                             //TODO: Snackbar
                             Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
                         }
-
-                        //TODO: put pending transfer into db
-                        try {
-                            Log.d("insert tx", "itas in ")
-                            /*
-                            viewModel.insertPendingTransfer(
-                                transfer = TransferEntity(
-                                    uniqueId = (0..100).random().toString(),
-                                    asset = "",
-                                    chainId = chainid,
-                                    blockNum = (100..200).random().toString(),
-                                    category =  "external",
-                                    erc1155Metadata = emptyList(),
-                                    erc721TokenId = "",
-                                    fromaddress = userAddress,
-                                    hash =  (200..300).random().toString(),
-                                    rawContract = RawContract(
-                                        address = "",
-                                        decimal = "",
-                                        value = ""
-                                    ),
-                                    toaddress = address,
-                                    tokenId =  "",
-                                    value = amount.toDouble(),//BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toDouble(), // 1 eth in wei
-                                    blockTimestamp = Clock.System.now(),
-                                    userIsSender =  true,
-                                    ispending = true
-
-                                )
-                            )
-
-                             */
-
-                        }catch (exception: NullPointerException) {
-//                        "error"
-                        }
-
-
-
-
                         viewModel.changeTxComplete()
 
                     }
@@ -261,15 +194,7 @@ fun SendRoute(
                             Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
                         }
                     }
-
-
-
                 }
-
-
-
-
-
             } else {
                 (context as Activity).runOnUiThread {
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
@@ -279,17 +204,14 @@ fun SendRoute(
         txComplete = txComplete,
         selectedToken = selectedToken
     )
-
-
-
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    initialAddress: String,
+    toAddress: String,
     balances:  AssetUiState,
     currencyPrice: String,
     onChangeAssetClicked: (TokenAsset) -> Unit,
@@ -300,20 +222,28 @@ fun SendScreen(
     txComplete: TxCompleteUiState
 
 ) {
+    var validSendAddress by remember { mutableStateOf(false) }
 
-    var address by remember { mutableStateOf("")}//initialAddress) }
-    if (ENSName(initialAddress).isPotentialENSDomain()) {
-        CompletableFuture.runAsync {
-            var rpcurl = "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
-            val ens = ENS(HttpEthereumRPC(rpcurl))
-            val ensAddr = ens.getAddress(ENSName(initialAddress))
-            address = ensAddr?.hex.toString()
+    if (toAddress.endsWith(".eth")) {
+        if (ENSName(toAddress.lowercase()).isPotentialENSDomain()) {
+            // It is ENS
+            println("Checking ENS")
+            CompletableFuture.runAsync {
+                val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
+                val ensAddr = ens.getAddress(ENSName(toAddress.lowercase()))
+                onToAddressChanged(ensAddr?.hex.toString())
+                validSendAddress = true
+            }
+        } else {
+            if (toAddress.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(toAddress.lowercase())
+        }
+        if(toAddress.isEmpty()) {
+            validSendAddress = false
         }
     }
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
-    var validSendAddress by remember { mutableStateOf(false) }
 
     var tokeninfo by remember { mutableStateOf(TokenAsset("",0,"","",7.0)) }
 
@@ -340,6 +270,16 @@ fun SendScreen(
     val context = LocalContext.current
     //val selectedNetwork = selectedNetworkState.value
 
+    val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            if(result.contents == null) {
+
+            } else {
+                onToAddressChanged(result.contents)
+            }
+        }
+    )
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -349,59 +289,21 @@ fun SendScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val launcher = rememberLauncherForActivityResult(
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCameraPermission = granted
+        onResult = { isGranted ->
+            if(isGranted) {
+                hasCameraPermission = isGranted
+            } else {
+                //TODO: Add
+            }
         }
     )
 
-    var amountfontSize by remember { mutableStateOf(68.sp) }
-
-
-
-
-
-
-
     LaunchedEffect(key1 = true) {
-        launcher.launch(Manifest.permission.CAMERA)
+        requestPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
-
-    val showDialog =  remember { mutableStateOf(false) }
-
-    if(showDialog.value)
-        qrCodeDialog(
-            context = context,
-            setShowDialog = {
-            showDialog.value = false
-        }) {
-            Log.i("HomePage","HomePage : $it")
-        }
-
-
-
-    val showInfoDialog =  remember { mutableStateOf(false) }
-//    if(showInfoDialog.value){
-//        InfoDialog(
-//            setShowDialog = {
-//                showInfoDialog.value = false
-//            },
-//            title = "Send crypto",
-//            text = "Here you can send crypto to any address or ENS domain."
-//        )
-//    }
-
-    when (txComplete) {
-        is TxCompleteUiState.UnComplete -> {
-
-        }
-        is TxCompleteUiState.Complete -> {
-            onBackClick()
-        }
-    }
-
-
 
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -420,7 +322,7 @@ fun SendScreen(
                 title = "Send",
                 onClick = {
                     //opens InfoDialog
-                    showDialog.value = true
+                    showCamera(barCodeLauncher)
                 },
                 imageVector = Icons.Filled.QrCodeScanner,
                 onlyTitle = false,
@@ -444,30 +346,29 @@ fun SendScreen(
                     fontSize = 20.sp
                 )
                 ethOSCenterTextField(
-                    text = address,
+                    text = toAddress,
                     label = "(Enter address, ENS or QR scan)",
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     onTextChanged = {
-                        address = it.lowercase()
-                        if (address.endsWith(".eth")) {
-                            if (ENSName(address).isPotentialENSDomain()) {
+                        if (toAddress.endsWith(".eth")) {
+                            if (ENSName(toAddress.lowercase()).isPotentialENSDomain()) {
                                 // It is ENS
                                 println("Checking ENS")
                                 CompletableFuture.runAsync {
                                     val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
-                                    val ensAddr = ens.getAddress(ENSName(address))
-                                    address = ensAddr?.hex.toString()
+                                    val ensAddr = ens.getAddress(ENSName(toAddress.lowercase()))
+                                    onToAddressChanged(ensAddr?.hex.toString())
                                     validSendAddress = true
                                 }
                             } else {
-                                if (address.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(address)
+                                if (toAddress.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(toAddress.lowercase())
                             }
-                            if(address.isEmpty()) {
+                            if(toAddress.isEmpty()) {
                                 validSendAddress = false
                             }
                         }
-                        onToAddressChanged(address)
+                        onToAddressChanged(toAddress)
                     },
                     size = 16
                 )
@@ -626,7 +527,7 @@ fun SendScreen(
                             sendTransaction(
                                 SendData(
                                     amount = value.toFloat(),
-                                    address = address,
+                                    address = toAddress,
                                     chainId = selectedToken.tokenAsset.chainId
                                 )
                             )
@@ -754,117 +655,17 @@ fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
 }
 
 
-
-@Composable
-fun qrCodeDialog(
-    context: Context,
-    setShowDialog: () -> Unit,
-    onDecoded: (String) -> Unit
+fun showCamera(
+    cameraLauncher: ManagedActivityResultLauncher<ScanOptions, ScanIntentResult>
 ) {
-    var scanFlag by remember { mutableStateOf(false) }
-    val compoundBarcodeView = remember {
-        CompoundBarcodeView(context).apply {
-            val capture = CaptureManager(context as Activity, this)
-            capture.initializeFromIntent(context.intent, null)
-            this.setStatusText("")
-            this.resume()
-            capture.decode()
-            this.decodeContinuous { result ->
-                if(scanFlag){
-                    return@decodeContinuous
-                }
-                scanFlag = true
-                result.text?.let { barCodeOrQr->
-                    //Do something and when you finish this something
-                    //put scanFlag = false to scan another item
-                    onDecoded(barCodeOrQr)
-                    scanFlag = true
-                }
-                //If you don't put this scanFlag = false, it will never work again.
-                //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning
-
-            }
-        }
-    }
-
-
-    Dialog(onDismissRequest = { setShowDialog() }) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.Black,
-            border= BorderStroke(1.dp, Color.White),
-            contentColor = Color.White,
-            tonalElevation = 4.dp
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-
-                    horizontalAlignment = Alignment.CenterHorizontally
-
-                ) {
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "",
-                            tint = Color.Transparent,
-                            modifier = Modifier
-//                                .width(30.dp)
-//                                .height(30.dp)
-
-                        )
-                        Text(
-                            text = "Scan QR Code",
-                            style = TextStyle(
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily.Default,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                        IconButton(
-                            modifier = Modifier
-                                .width(30.dp)
-                                .height(30.dp),
-                            onClick = {
-                                setShowDialog()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Close",
-                                tint = Color(0xFF9FA2A5),
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(36.dp))
-
-                    //TODO: QRCode
-                    Box (
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .height(400.dp)
-                            .width(300.dp),
-                        contentAlignment = Alignment.Center
-                    ){
-                        AndroidView(
-                            modifier = Modifier,
-                            factory = { compoundBarcodeView },
-                        )
-                    }
-
-                }
-            }
-        }
-    }
+    val options = ScanOptions()
+    options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+    options.setPrompt("Scan QR Code")
+    options.setCameraId(0)
+    options.setBeepEnabled(false)
+    options.setOrientationLocked(false)
+    cameraLauncher.launch(options)
 }
-
 
 
 @Preview

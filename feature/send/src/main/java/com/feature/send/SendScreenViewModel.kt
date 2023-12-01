@@ -57,15 +57,10 @@ class SendViewModel @Inject constructor(
             initialValue = ""
         )
 
-    val inputAddress: StateFlow<String> = MutableStateFlow("").asStateFlow()
-
-
     val networkBalanceState: StateFlow<AssetUiState> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances  ->
-
                 val assets = balances.map {
-
                     val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
 
                     TokenAsset(
@@ -89,7 +84,7 @@ class SendViewModel @Inject constructor(
     val amount: Flow<String> = _amount .asStateFlow()
 
     private val _toAddress = MutableStateFlow("")
-    val toAddress: Flow<String> = _toAddress .asStateFlow()
+    val toAddress: Flow<String> = _toAddress.asStateFlow()
 
     private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
     val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
@@ -100,59 +95,19 @@ class SendViewModel @Inject constructor(
     private val _exchange = MutableStateFlow("")
     val exchange: Flow<String> = _exchange
 
-
-    /**
-     * Inserts Values for pending transfer into TransferDAO
-     */
-    /*
-    fun insertPendingTransfer(
-        transfer: TransferEntity
-    ) = viewModelScope.launch{
-        //get TransferEntity
-        //get tranferDao
-        //viewModelScope.launch {
-        alchemyTransferRepository.insertTransfer(transfer)
-        //}
-        //insert TransferEntity into Dao
-    }
-
-     */
-
-
-
     fun send(
         to: String,
         chainId: Int,
         amount: String
     ){
-
-
         viewModelScope.launch {
-//            when(selectedAsset.value) {
-//                is SelectedTokenUiState.Selected -> {
-//                    sendRepository.sendTo(
-//                        chainId = (selectedAsset.value as SelectedTokenUiState.Selected).tokenAsset.chainId,
-//                        toAddress = toAddress.toString(),
-//                        data = "",
-//                        value = amount.toString()
-//                    )
-//                }
-//
-//                is SelectedTokenUiState.Unselected -> {
-//                    //_selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
-//                }
-//
-//            }
-
-                    sendRepository.transferEth(
-                        chainId = chainId,
-                        toAddress = to,
-                        data = "",
-                        value = amount
-                    )
-
-           }
-
+            sendRepository.transferEth(
+                chainId = chainId,
+                toAddress = to,
+                data = "",
+                value = amount
+            )
+        }
     }
 
     fun getExchange(symbol: String?) {
@@ -163,11 +118,11 @@ class SendViewModel @Inject constructor(
             } catch (e: Exception) {
                 _exchange.value =  "Error: ${e.message}"
             }
-
         }
     }
 
     fun changeToAddress(address: String) {
+        Log.d("Wowser", address)
         _toAddress.value = address
     }
 
