@@ -37,6 +37,7 @@ import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
+import java.util.prefs.Preferences
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -52,6 +53,10 @@ internal fun HomeRoute(
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     //val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
+
+
+
+    // At the top level of your kotlin file:
 
     var updater by remember {mutableStateOf(true)}
 
@@ -71,6 +76,7 @@ internal fun HomeRoute(
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
+        //setOnboarding= viewModel.
     )
 }
 
@@ -90,11 +96,16 @@ internal fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
+    val onboarding = when(userData) {
+        is WalletDataUiState.Success -> {
+            userData.userData.onboardingCompleted
+        }
 
+        else -> {true}
+    }
 
-    var showSheet by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(onboarding) }
     val modalSheetState = rememberModalBottomSheetState(true)
-    // Declaring Coroutine scope
     val coroutineScope = rememberCoroutineScope()
 
     val showInfoDialog =  remember { mutableStateOf(false) }

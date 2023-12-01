@@ -101,6 +101,12 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    fun setOnboardingComplete(onboardingComplete: Boolean){
+        viewModelScope.launch {
+            userDataRepository.setOnboardingCompleted(onboardingComplete)
+        }
+    }
 }
 
 sealed interface AssetUiState {
