@@ -77,7 +77,7 @@ private fun AssetList(assetsUiState: AssetUiState) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         assets.forEach { item ->
-                            item(key = item.balance) {
+                            item(key = item.address) {
 
                                 AssetListItem(title = item.symbol, value = item.balance)
                                 Spacer(modifier = Modifier.height(8.dp))
