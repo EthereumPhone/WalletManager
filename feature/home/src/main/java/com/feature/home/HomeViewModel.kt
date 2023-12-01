@@ -12,6 +12,7 @@ import com.core.model.TokenAsset
 import com.core.model.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,12 +34,14 @@ class HomeViewModel @Inject constructor(
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
-    }
-        .stateIn(
+    }.stateIn(
         scope = viewModelScope,
         initialValue = WalletDataUiState.Loading,
         started = SharingStarted.WhileSubscribed(5_000)
     )
+
+    val shouldShowOnboarding: Flow<Boolean> =
+        userDataRepository.userData.map { !it.onboardingCompleted }
 
     val tokenAssetState: StateFlow<AssetUiState> =
         networkBalanceRepository.getNetworksBalance()

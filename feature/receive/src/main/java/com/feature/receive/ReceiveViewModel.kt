@@ -25,7 +25,7 @@ class ReceiveViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UserData("","",false)
+            initialValue = UserData("","",false, "USD")
         )
 
 }

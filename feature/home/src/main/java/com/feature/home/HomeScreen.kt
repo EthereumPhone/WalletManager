@@ -49,6 +49,7 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    //val onboardingUiState  by viewModel.on
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -102,14 +103,18 @@ internal fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
+    //val isOnboardingLoading = userData is WalletDataUiState.Loading
+
+
+
 
     val onboardingComplete = when(userData) {
         is WalletDataUiState.Success -> {
-            userData.userData.onboardingCompleted
+            !userData.userData.onboardingCompleted
         }
 
         is WalletDataUiState.Loading -> {
-
+            false
         }
 
         else -> {
@@ -117,8 +122,6 @@ internal fun HomeScreen(
         }
     }
 
-
-    var showSheet by remember { mutableStateOf(onboardingComplete) }
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
 
@@ -231,16 +234,13 @@ internal fun HomeScreen(
         }
 
 
-
-
-
-        if(!showSheet) {
+        if(onboardingComplete) {
             OnboardingModalBottomSheet(
                 onDismiss = {
                     coroutineScope.launch {
                         modalSheetState.hide()
                     }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = true
+
                     }
                     setOnboardingComplete(true)
                 },
