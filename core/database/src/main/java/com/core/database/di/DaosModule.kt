@@ -2,6 +2,7 @@ package com.core.database.di
 
 import com.core.database.WmDatabase
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TransferDao
 import dagger.Module
@@ -28,4 +29,9 @@ object DaosModule {
     fun provideTokenBalanceDao(
         database: WmDatabase
     ): TokenBalanceDao = database.tokenBalanceDao
+
+    @Provides
+    fun provideTokenExchangeDao(
+        database: WmDatabase
+    ): TokenExchangeDao = database.tokenExchangeDao
 }

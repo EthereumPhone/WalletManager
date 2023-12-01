@@ -16,7 +16,8 @@ class WmPreferencesDataSource @Inject constructor(
             UserData(
                 walletAddress = it.walletAddress,
                 walletNetwork = it.walletNetwork,
-                onboardingCompleted = it.onboardingCompleted
+                onboardingCompleted = it.onboardingCompleted,
+                preferredCurrency = it.preferredCurrency
             )
         }
 
@@ -39,6 +40,14 @@ class WmPreferencesDataSource @Inject constructor(
         userPreferences.updateData {
             it.copy {
                 this.onboardingCompleted = completed
+            }
+        }
+    }
+
+    suspend fun setPreferredCurrency(currency: String) {
+        userPreferences.updateData {
+            it.copy {
+                this.preferredCurrency = currency
             }
         }
     }

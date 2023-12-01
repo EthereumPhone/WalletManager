@@ -22,4 +22,7 @@ class ProtoUserDataRepository @Inject constructor(
         wmPreferencesDataSource.setOnboardingCompleted(completed)
     }
 
+    override suspend fun setPreferredCurrency(currency: String) {
+    }
+
 }

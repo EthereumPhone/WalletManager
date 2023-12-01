@@ -9,4 +9,5 @@ interface UserDataRepository {
     suspend fun setWalletAddress(address: String)
     suspend fun setWalletNetwork(network: String)
     suspend fun setOnboardingCompleted(completed: Boolean)
+    suspend fun setPreferredCurrency(currency: String)
 }
