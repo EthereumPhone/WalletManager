@@ -241,6 +241,7 @@ fun SendScreen(
             validSendAddress = false
         }
     }
+
     var value by remember { mutableStateOf("") }
     //var showDialog by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -351,24 +352,24 @@ fun SendScreen(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     onTextChanged = {
-                        if (toAddress.endsWith(".eth")) {
-                            if (ENSName(toAddress.lowercase()).isPotentialENSDomain()) {
+                        if (it.endsWith(".eth")) {
+                            if (ENSName(it.lowercase()).isPotentialENSDomain()) {
                                 // It is ENS
                                 println("Checking ENS")
                                 CompletableFuture.runAsync {
                                     val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
-                                    val ensAddr = ens.getAddress(ENSName(toAddress.lowercase()))
+                                    val ensAddr = ens.getAddress(ENSName(it.lowercase()))
                                     onToAddressChanged(ensAddr?.hex.toString())
                                     validSendAddress = true
                                 }
                             } else {
-                                if (toAddress.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(toAddress.lowercase())
+                                if (it.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(it.lowercase())
                             }
-                            if(toAddress.isEmpty()) {
+                            if(it.isEmpty()) {
                                 validSendAddress = false
                             }
                         }
-                        onToAddressChanged(toAddress)
+                        onToAddressChanged(it)
                     },
                     size = 16
                 )
