@@ -1,6 +1,7 @@
 package com.core.data.di
 
 import android.content.Context
+import com.core.data.remote.CoinbaseTokenExchangeApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
@@ -119,6 +120,18 @@ object DataModule {
             .client(client)
             .build()
             .create(TransfersApi::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideCoinbaseTokenExchangeApi(
+        moshi: Moshi
+    ): CoinbaseTokenExchangeApi {
+        return Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("https://api.coinbase.com/")
+            .build()
+            .create(CoinbaseTokenExchangeApi::class.java)
     }
 
     @Singleton

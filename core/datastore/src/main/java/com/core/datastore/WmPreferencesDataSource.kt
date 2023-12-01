@@ -15,7 +15,8 @@ class WmPreferencesDataSource @Inject constructor(
         .map {
             UserData(
                 walletAddress = it.walletAddress,
-                walletNetwork = it.walletNetwork
+                walletNetwork = it.walletNetwork,
+                onboardingCompleted = it.onboardingCompleted
             )
         }
 
@@ -30,6 +31,14 @@ class WmPreferencesDataSource @Inject constructor(
         userPreferences.updateData {
             it.copy {
                 this.walletNetwork = network
+            }
+        }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        userPreferences.updateData {
+            it.copy {
+                this.onboardingCompleted = completed
             }
         }
     }

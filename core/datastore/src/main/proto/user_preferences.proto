@@ -6,4 +6,5 @@ option java_multiple_files = true;
 message UserPreferences {
     string wallet_address = 1;
     string wallet_network = 2;
+    bool onboarding_completed = 3;
 }

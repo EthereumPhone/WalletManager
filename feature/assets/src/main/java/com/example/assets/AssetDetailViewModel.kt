@@ -8,7 +8,6 @@ import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
-import com.core.data.util.ExchangeApi
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenAssetsByNetwork
 import com.core.domain.GetTokenAssetsBySymbolUseCase
