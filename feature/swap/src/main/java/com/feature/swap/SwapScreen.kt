@@ -226,9 +226,6 @@ internal fun SwapScreen(
                 },
                 sheetState = modalSheetState
             ) {
-                Box(modifier = Modifier.height(200.dp)){
-                    Text("Tokens")
-                }
                 TokenPickerSheet(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
@@ -245,12 +242,33 @@ internal fun SwapScreen(
             }
         }
 
-        ethOSButton(text = "Swap", enabled = true, onClick = { /*TODO*/ })
+        val context = LocalContext.current
+
+        SwipeButton(
+            text = "Swipe to swap",
+            icon = Icons.Rounded.ArrowForward,
+            //enabled = true,
+            onSwipe = {
+                onSwapClicked {
+                    if (it.length == 66 && isEthereumTransactionHash(it)) {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
+                        }
+                    } else if (it == "decline") {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    onBackClick()
+
+                }
+            }
+        )
     }
-
-
-
-
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {
