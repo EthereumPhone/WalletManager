@@ -71,14 +71,14 @@ internal fun SwapRoute(
     val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
 
-    //val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
+    val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
-        //swapTokenUiState = swapTokenUiState,
+        swapTokenUiState = swapTokenUiState,
         exchangeUiState = exchangeUiState,
         amountsUiState = amountsUiState,
         assetsUiState = assetsUiState,
@@ -99,7 +99,7 @@ internal fun SwapRoute(
 internal fun SwapScreen(
 
     modifier: Modifier = Modifier,
-//    swapTokenUiState: SwapTokenUiState,
+    swapTokenUiState: SwapTokenUiState,
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
@@ -229,19 +229,19 @@ internal fun SwapScreen(
                 Box(modifier = Modifier.height(200.dp)){
                     Text("Tokens")
                 }
-//                TokenPickerSheet(
-//                    swapTokenUiState = swapTokenUiState,
-//                    searchQuery = searchQuery,
-//                    onQueryChange = onQueryChange,
-//                    onSelectAsset = {
-//                        onSelectAsset(it)
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-//                )
+                TokenPickerSheet(
+                    swapTokenUiState = swapTokenUiState,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    onSelectAsset = {
+                        onSelectAsset(it)
+                        coroutineScope.launch {
+                            modalSheetState.hide()
+                        }.invokeOnCompletion {
+                            if(!modalSheetState.isVisible) showSheet = false
+                        }
+                    }
+                )
             }
         }
 
