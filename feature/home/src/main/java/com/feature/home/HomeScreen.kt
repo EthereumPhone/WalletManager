@@ -67,6 +67,8 @@ internal fun HomeRoute(
         updater = false
     }
 
+
+
     HomeScreen(
         userData = walletDataUiState,
 //        transfersUiState = transfersUiState,
@@ -77,7 +79,8 @@ internal fun HomeRoute(
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
-        //setOnboarding= viewModel.
+        setOnboardingComplete= viewModel::setOnboardingComplete,
+        //onboardingComplete = onboardingComplete
     )
 }
 
@@ -92,26 +95,30 @@ internal fun HomeScreen(
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
+    setOnboardingComplete: (Boolean) -> Unit,
+    //onboardingComplete:  Boolean,
 //    onRefresh: () -> Unit,
 //    onDelete: (TransferItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
-<<<<<<< Updated upstream
-    val onboarding = when(userData) {
+
+    val onboardingComplete = when(userData) {
         is WalletDataUiState.Success -> {
             userData.userData.onboardingCompleted
         }
 
-        else -> {true}
+        is WalletDataUiState.Loading -> {
+
+        }
+
+        else -> {
+            false
+        }
     }
 
-    var showSheet by remember { mutableStateOf(onboarding) }
-=======
-    val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-    val showWelcomeSheet = sharedPreferences.getBoolean("show_welcome_sheet", true)
-    var showSheet by remember { mutableStateOf(showWelcomeSheet) }
->>>>>>> Stashed changes
+
+    var showSheet by remember { mutableStateOf(onboardingComplete) }
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
 
@@ -227,17 +234,18 @@ internal fun HomeScreen(
 
 
 
-        if(showSheet) {
+        if(!showSheet) {
             OnboardingModalBottomSheet(
                 onDismiss = {
                     coroutineScope.launch {
                         modalSheetState.hide()
                     }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
+                        if(!modalSheetState.isVisible) showSheet = true
                     }
+                    setOnboardingComplete(true)
                 },
                 sheetState = modalSheetState
-            )
+             )
         }
 
 
