@@ -107,7 +107,7 @@ fun SendRoute(
         currencyPrice = currencyprice,
         onChangeAssetClicked = viewModel::changeSelectedAsset,
         onToAddressChanged= viewModel::changeToAddress,
-        onCurrencyChange = viewModel::getExchange,
+        onCurrencyChange = {  },
         sendTransaction = { sendData ->
 
             val amount = sendData.amount.toString()
