@@ -73,6 +73,10 @@ dependencies {
 
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
 
+    implementation "androidx.compose.material:material-icons-core:1.5.4"
+    implementation "androidx.compose.material:material-icons-extended:1.0.0-alpha08"
+
+
 
     // Web3j
     implementation 'org.web3j:core:4.8.8-android'

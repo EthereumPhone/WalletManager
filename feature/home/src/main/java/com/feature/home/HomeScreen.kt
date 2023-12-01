@@ -35,6 +35,7 @@ import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
 import com.feature.home.ui.AddressBar
 import com.feature.home.ui.FunctionsRow
+import com.feature.home.ui.OnboardingModalBottomSheet
 import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
 import java.util.prefs.Preferences
@@ -96,6 +97,7 @@ internal fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
+<<<<<<< Updated upstream
     val onboarding = when(userData) {
         is WalletDataUiState.Success -> {
             userData.userData.onboardingCompleted
@@ -105,8 +107,14 @@ internal fun HomeScreen(
     }
 
     var showSheet by remember { mutableStateOf(onboarding) }
+=======
+    val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+    val showWelcomeSheet = sharedPreferences.getBoolean("show_welcome_sheet", true)
+    var showSheet by remember { mutableStateOf(showWelcomeSheet) }
+>>>>>>> Stashed changes
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
+
 
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
@@ -220,11 +228,8 @@ internal fun HomeScreen(
 
 
         if(showSheet) {
-            ModalBottomSheet(
-                containerColor = Color.Black,
-                contentColor = Color.White,
-
-                onDismissRequest = {
+            OnboardingModalBottomSheet(
+                onDismiss = {
                     coroutineScope.launch {
                         modalSheetState.hide()
                     }.invokeOnCompletion {
@@ -232,21 +237,7 @@ internal fun HomeScreen(
                     }
                 },
                 sheetState = modalSheetState
-            ) {
-
-//                NetworkPickerSheet(
-//                    balancesState = balances,
-//                    onSelectAsset = {
-//                        //onChangeAssetClicked(it)
-//                        //hides ModelBottomSheet
-//                        coroutineScope.launch {
-//                            modalSheetState.hide()
-//                        }.invokeOnCompletion {
-//                            if(!modalSheetState.isVisible) showSheet = false
-//                        }
-//                    }
-//                )
-            }
+            )
         }
 
 

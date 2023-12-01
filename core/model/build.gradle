@@ -10,4 +10,9 @@ java {
 
 dependencies {
     implementation libs.kotlinx.datetime
+
+    //Icons
+    implementation("androidx.compose.material3:material3")
+    implementation libs.androidx.ui.android
+
 }
