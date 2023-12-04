@@ -40,6 +40,7 @@ import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.OnboardingModalBottomSheet
 import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 import java.util.prefs.Preferences
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -142,13 +143,13 @@ internal fun HomeScreen(
 
     val fiatBalance = when(assetsUiState){
         is AssetUiState.Loading -> {
-            emptyList<TokenAsset>()
+            0.0
         }
         is AssetUiState.Empty -> {
             0.0
         }
         is AssetUiState.Error -> {
-            emptyList<TokenAsset>()
+            0.0
         }
         is AssetUiState.Success -> {
             val assetsbalance = assetsUiState.assets.filter { it.balance > 0.0 }
@@ -199,7 +200,7 @@ internal fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
-            Text(text = "$${fiatBalance}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+            Text(text = "$${formatDouble(fiatBalance)}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
             when(userData) {
                 is WalletDataUiState.Loading -> {
 
@@ -271,6 +272,10 @@ private fun copyTextToClipboard(context: Context, text: String) {
 
 
 
+fun formatDouble(input: Double): String {
+    val decimalFormat = DecimalFormat("#.#####")
+    return decimalFormat.format(input)
+}
 
 
 
