@@ -74,6 +74,7 @@ import org.web3j.protocol.http.HttpService
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
+import kotlin.math.abs
 import kotlin.math.max
 
 
@@ -350,7 +351,7 @@ fun SendScreen(
                     text = toAddress,
                     label = "(Enter address, ENS or QR scan)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true,
+                    singleLine = false,
                     onTextChanged = {
                         if (it.endsWith(".eth")) {
                             if (ENSName(it.lowercase()).isPotentialENSDomain()) {
@@ -437,7 +438,8 @@ fun SendScreen(
 
                         Row (
                             modifier = Modifier.widthIn(0.dp,300.dp),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ){
 
                                         ethOSTextField(
@@ -460,11 +462,15 @@ fun SendScreen(
                                         )
                             Spacer(modifier = Modifier.width(12.dp))
 
-
+                            val abbriviation = when(selectedToken.tokenAsset.chainId) {
+                                5 -> "GoerliETH"
+                                137 -> "MATIC"//Polygon
+                                else -> "ETH"
+                            }
 
                                 Text(
-                                    text = if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH",
-                                    fontSize = calculateFontSize(value.length,64),
+                                    text = abbriviation,
+                                    fontSize = calculateFontSize(value.length,if(selectedToken.tokenAsset.chainId == 5) 48 else 64),
                                     color = Color.White,
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.width(IntrinsicSize.Min)
@@ -472,9 +478,14 @@ fun SendScreen(
                         }
 
                     }
+                    val abbriviation = when(selectedToken.tokenAsset.chainId) {
+                        5 -> "GoerliETH"
+                        137 -> "MATIC"//Polygon
+                        else -> "ETH"
+                    }
                     Text(
-                        text = "${selectedToken.tokenAsset.balance} ${if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"} available",
-                        fontSize = 20.sp,
+                        text = "${selectedToken.tokenAsset.balance} $abbriviation available",
+                        fontSize = 16.sp,
                         color = Color(0xFF9FA2A5),
                         fontWeight = FontWeight.SemiBold
                     )
@@ -498,8 +509,8 @@ fun SendScreen(
                         chainId = selectedToken.tokenAsset.chainId,
                         onClickChange = {
                             showSheet = true
-                        },
-                        )
+                        }
+                    )
                 }
 
                 else -> {}
@@ -570,20 +581,6 @@ fun SendScreen(
                         else -> "ETHUSDT"
                     }
                     onCurrencyChange(currencychange)
-
-                    //maxAmount = it.balance
-
-//                            network = when(it.chainId) {
-//                                1 -> "Mainnet"
-//                                5 -> "Görli"
-//                                10 -> "Optimism"
-//                                137 -> "Polygon"
-//                                42161 -> "Arbitrum"
-//                                else -> ""
-//                            }
-
-                    //network =  it.chainId
-
 
                     //hides ModelBottomSheet
                     coroutineScope.launch {

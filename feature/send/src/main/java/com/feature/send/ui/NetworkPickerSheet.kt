@@ -54,8 +54,8 @@ fun NetworkPickerSheet(
                             WmListItem(
                                 headlineContent = {
                                     Text(
-                                        text = formatString(tokenAsset.symbol),
-                                        fontSize = 18.sp,
+                                        text = formatString(tokenAsset.symbol).uppercase(),
+                                        fontSize = 24.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 },
@@ -68,13 +68,22 @@ fun NetworkPickerSheet(
                                 },
 
                                  */
+
+
+
+
+
                                 trailingContent = {
+                                    val abbriviation = when(tokenAsset.chainId) {
+                                         5 -> "GoerliETH"
+                                         137 -> "MATIC"//Polygon
+                                        else -> "ETH"
+                                    }
                                     Text(
-                                        text = formatDouble(tokenAsset.balance) + " " + if(tokenAsset.chainId == 137) "MATIC" else "ETH",
-                                        fontSize = 18.sp,
+                                        text = formatDouble(tokenAsset.balance) + " " + abbriviation,
+                                        fontSize = 20.sp,
                                         color = Color.White,
                                         fontWeight = FontWeight.Medium
-
                                     )
                                 },
                                 modifier = Modifier.clickable {
@@ -89,51 +98,6 @@ fun NetworkPickerSheet(
                 is AssetUiState.Error -> {}
                 else -> {}
             }
-//            when(swapTokenUiState) {
-//                is SwapTokenUiState.Loading -> {
-//
-//                }
-//                is SwapTokenUiState.Success -> {
-//
-//                    swapTokenUiState.tokenAssets.forEach { tokenAsset ->
-//                        item(key = tokenAsset.address) {
-//                            WmListItem(
-//                                headlineContent = {
-//                                    Text(
-//                                        text = tokenAsset.symbol.uppercase(),
-//                                        fontSize = 18.sp,
-//                                        fontWeight = FontWeight.SemiBold
-//                                    )
-//                                },
-//                                supportingContent = {
-//                                    Text(
-//                                        text = tokenAsset.name,
-//                                        color = Color(0xFF9FA2A5)
-//                                    )
-//                                },
-//                                trailingContent = {
-//                                    Text(
-//                                        text = tokenAsset.balance.toString(),
-//                                        fontSize = 18.sp,
-//                                        color = Color.White,
-//                                        fontWeight = FontWeight.Medium
-//
-//                                    )
-//                                },
-//                                modifier = Modifier.clickable {
-//                                    onSelectAsset(tokenAsset)
-//                                }
-//                            )
-//                        }
-//                    }
-//                }
-//
-//                is SwapTokenUiState.Error -> {
-//
-//                }
-//            }
-
-
         }
 
 

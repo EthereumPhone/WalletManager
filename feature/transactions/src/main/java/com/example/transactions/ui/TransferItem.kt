@@ -49,18 +49,12 @@ internal fun TransferListItem(
                 .fillMaxWidth()
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
 
             //Color of Icon
             var icontint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
-            Box (
-                contentAlignment = Alignment.Center,
-                modifier = modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Transparent)
-                    .size(42.dp)
-            ){
+
 
                 var icon = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
 
@@ -71,7 +65,7 @@ internal fun TransferListItem(
                     tint = icontint,
                     modifier = Modifier.size(28.dp)
                 )
-            }
+
 
 
             Row(

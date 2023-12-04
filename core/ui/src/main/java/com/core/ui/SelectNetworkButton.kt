@@ -84,12 +84,12 @@ fun SelectedNetworkButton(
                 Box(
                     modifier = modifier
                         .clip(CircleShape)
-                        .size(18.dp)
+                        .size(16.dp)
                         .background(color)
                 ){}
                 Text(
                     text = network,
-                    fontSize = 20.sp,
+                    fontSize = 16.sp,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(start = 4.dp)

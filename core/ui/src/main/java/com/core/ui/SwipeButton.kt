@@ -126,7 +126,7 @@ fun SwipeButton(
         )
         Text(
             text = text,
-            color = Color(0xFF24303D),
+            color = Color.Black,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
@@ -255,7 +255,7 @@ fun SwipeIndicator(
 ) {
     Surface(
         shape = CircleShape,
-        color = Color(0xFF24303D),
+        color = Color.Black,
         modifier = modifier
             .size(36.dp)
     ) {

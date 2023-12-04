@@ -98,7 +98,6 @@ internal fun AssetScreen(
     ) {
         TopHeader(title = "Assets")
         Spacer(modifier = Modifier.height(48.dp))
-
         when(assetsUiState){
             is AssetUiState.Loading -> {
                 Box(

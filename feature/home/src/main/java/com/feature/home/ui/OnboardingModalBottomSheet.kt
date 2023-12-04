@@ -19,11 +19,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.ui.ethOSButton
+import com.feature.home.R
 import com.feature.home.util.OnboardingItem
 
 
@@ -39,7 +41,7 @@ fun WelcomeModalBottomSheet(onDismiss: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(imageVector = Icons.Filled.Warning, contentDescription = "WalletManager",tint = Color.White, modifier = Modifier.size(64.dp))
+            Icon(painterResource(id = R.drawable.wallet_icon), contentDescription = "WalletManager",tint = Color.White, modifier = Modifier.size(56.dp))
             Text(
                 text = "WalletManager",
                 textAlign = TextAlign.Center,
@@ -49,7 +51,7 @@ fun WelcomeModalBottomSheet(onDismiss: () -> Unit) {
             )
         }
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(32.dp)
+            verticalArrangement = Arrangement.spacedBy(42.dp)
         ){
             onboardingItems.forEach { item ->
                 item{

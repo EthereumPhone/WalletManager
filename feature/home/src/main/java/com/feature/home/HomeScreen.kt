@@ -1,6 +1,7 @@
 package com.feature.home
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -209,9 +211,9 @@ internal fun HomeScreen(
                         "137" -> "Polygon" // Polygon
                         "10" -> "Optimism" // Optimum
                         "42161" -> "Arbitrum" // Arbitrum
-                        "84531" -> "Base" // Base
+                        "8453" -> "Base" // Base
                         else -> {
-                            "Color(0xFF030303)"
+                            "N/A"
                         }
                     }
                     Text(text = "(${network})",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 14.sp)
@@ -261,7 +263,11 @@ internal fun HomeScreen(
 
 
 
-
+@SuppressLint("ServiceCast")
+private fun copyTextToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboardManager.setText(AnnotatedString(text))
+}
 
 
 

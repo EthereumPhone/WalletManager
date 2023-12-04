@@ -86,7 +86,7 @@ internal fun AddressBar(
                 "137" -> Color(0xFF442fb2) // Polygon
                 "10" -> Color(0xFFc82e31) // Optimum
                 "42161" -> Color(0xFF2b88b8) // Arbitrum
-                "84531" -> Color(0xFF053BCB) // Base
+                "8453" -> Color(0xFF053BCB) // Base
                 else -> {
                     Color(0xFF030303)
                 }
@@ -98,14 +98,16 @@ internal fun AddressBar(
     }
 
         Surface (
-            modifier = Modifier.clip(CircleShape),
+            modifier = Modifier.clip(CircleShape).clickable {
+                copyTextToClipboard(context,address)
+            },
             color = Color(0xFF262626),
             contentColor = Color.White
         ) {
             Row (
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier.padding(12.dp,8.dp)//(4.dp,4.dp)
+                modifier = modifier.padding(4.dp,4.dp)//(4.dp,4.dp)
             ){
                 //Add later
                 Box(

@@ -203,7 +203,7 @@ fun ReceiveScreen(
                     //TODO: Make reveil compasable
                     Text(
                         modifier = modifier.width(250.dp),
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold,
@@ -231,12 +231,12 @@ fun ReceiveScreen(
                         imageVector = Icons.Rounded.ContentCopy,
                         contentDescription = "Copy ethereum address",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Copy address",
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold
