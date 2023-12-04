@@ -22,10 +22,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -94,6 +100,8 @@ fun SendRoute(
     val walletSDK = WalletSDK(context)
     val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
+
+    val userNetwork by viewModel.userNetwork.collectAsStateWithLifecycle()
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
@@ -203,7 +211,8 @@ fun SendRoute(
             }
         },
         txComplete = txComplete,
-        selectedToken = selectedToken
+        selectedToken = selectedToken,
+        userNetwork = userNetwork
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
@@ -220,9 +229,14 @@ fun SendScreen(
     onCurrencyChange: (String) -> Unit,
     sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
-    txComplete: TxCompleteUiState
+    txComplete: TxCompleteUiState,
+    userNetwork: String
 
 ) {
+
+
+
+
     var validSendAddress by remember { mutableStateOf(false) }
 
     if (toAddress.endsWith(".eth")) {
@@ -266,7 +280,7 @@ fun SendScreen(
     var prevAmount by remember { mutableStateOf(value) }
     var enableButton by remember { mutableStateOf(false) }
     //var amountColor by remember { mutableStateOf(Color.White) }
-    var network by remember { mutableStateOf(test.chainId) }
+    //var network by remember { mutableStateOf(test.chainId) }
 
 
     val context = LocalContext.current
@@ -303,6 +317,10 @@ fun SendScreen(
         }
     )
 
+
+
+
+
     LaunchedEffect(key1 = true) {
         requestPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
@@ -322,31 +340,65 @@ fun SendScreen(
             TopHeader(
                 onBackClick = onBackClick,
                 title = "Send",
-                onClick = {
-                    //opens InfoDialog
-                    showCamera(barCodeLauncher)
-                },
+                onClick = {},
                 imageVector = Icons.Filled.QrCodeScanner,
                 onlyTitle = false,
-                trailIcon = true
+                trailIcon = false
+            )
+
+
+
+            Text(
+                text = "on ${userNetwork}",
+                fontSize = 16.sp,
+                color = Color(0xFF9FA2A5),
+                fontWeight = FontWeight.Normal,
 
             )
             Spacer(modifier = Modifier.height(24.dp))
+        }
 
-            Column(
-                horizontalAlignment =  Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+
+
+
+        val tokenbalance = when(balances){
+            is AssetUiState.Success -> {
+                balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
+            }
+            else -> {
+                0.0
+            }
+        }
+
+        val currentChainId = when (selectedToken) {
+            is SelectedTokenUiState.Selected -> {
+                selectedToken.tokenAsset.chainId
+            }
+
+            else -> {0}
+        }
+
+        val abbriviation = when(currentChainId) {
+            5 -> "GoerliETH"
+            137 -> "MATIC"//Polygon
+            else -> "ETH"
+        }
+
+        Column (
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
+
+        ){
+
+            Column (
                 modifier = Modifier
-                    .width(250.dp)
-
-
-            ) {
-                Text(
-                    text = "To",
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF9FA2A5),
-                    fontSize = 20.sp
-                )
+                    .padding(top = 42.dp)
+                    .width(300.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ){
                 ethOSCenterTextField(
                     text = toAddress,
                     label = "(Enter address, ENS or QR scan)",
@@ -358,242 +410,149 @@ fun SendScreen(
                                 // It is ENS
                                 println("Checking ENS")
                                 CompletableFuture.runAsync {
-                                    val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
+                                    val ens = ENS(
+                                        HttpEthereumRPC(
+                                            "https://eth-mainnet.g.alchemy.com/v2/${
+                                                chainToApiKey("eth-mainnet")
+                                            }"
+                                        )
+                                    )
                                     val ensAddr = ens.getAddress(ENSName(it.lowercase()))
                                     onToAddressChanged(ensAddr?.hex.toString())
                                     validSendAddress = true
                                 }
                             } else {
-                                if (it.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(it.lowercase())
+                                if (it.isNotEmpty()) validSendAddress =
+                                    WalletUtils.isValidAddress(it.lowercase())
                             }
-                            if(it.isEmpty()) {
+                            if (it.isEmpty()) {
                                 validSendAddress = false
                             }
+
                         }
-                        onToAddressChanged(it)
                     },
-                    size = 16
+                    size = 20
                 )
-            }
-        }
-
-
-
-
-
-        Column(
-            horizontalAlignment =  Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-
-
-        ) {
-            when (selectedToken) {
-                is SelectedTokenUiState.Unselected -> {
-                    Row(
-                    ){
-
-                        Row (
-                            modifier = Modifier.widthIn(0.dp,300.dp),
-                            horizontalArrangement = Arrangement.Center
-                        ){
-
-                            ethOSTextField(
-                                text = value,
-                                label = "0",
-                                singleLine = true,
-                                onTextChanged = { text -> value = text },
-                                size = 64,
-                                maxChar = 10,
-                                numberInput = true
-
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-
-
-
-                            Text(
-                                text = "ETH",
-                                fontSize = calculateFontSize(value.length,64),
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.width(IntrinsicSize.Min)
-                            )
-                        }
-
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ){
+                    /*IconButton(onClick = { /*TODO*/ }) {
+                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
+                    }*/
+                    IconButton(onClick = {
+                        //opens InfoDialog
+                        showCamera(barCodeLauncher)
+                    }) {
+                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Color.White)
                     }
+                }
+            }
+
+            Column(
+                horizontalAlignment =  Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+
+
+            ) {
+
+
+
+                ethOSTextField(
+                    text = value,
+                    label = "0",
+                    singleLine = true,
+                    onTextChanged = { text -> value = text },
+                    size = 64,
+                    maxChar = 10,
+                    color = if(value.isNotEmpty()){
+                        if(value.toFloat() < tokenbalance){
+                            Color.White
+                        }else{
+                            Color(0xFFc82e31)
+                        }
+                    }else {
+                        Color.White
+                    },
+                    numberInput = true
+                )
+                Text(
+                    text = "$tokenbalance available",
+                    fontSize = 20.sp,
+                    color = Color(0xFF9FA2A5),
+                    fontWeight = FontWeight.Normal
+                )
+
+
+                Surface(
+                    shape= CircleShape,
+                    color = Color(0xFF262626),
+                    modifier = Modifier.padding(top=24.dp)
+
+                ) {
                     Text(
-                        text = "0 ETH available",
+                        text = abbriviation,
                         fontSize = 20.sp,
-                        color = Color(0xFF9FA2A5),
-                        fontWeight = FontWeight.SemiBold
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(16.dp ,4.dp)
                     )
-
-
                 }
-                is SelectedTokenUiState.Selected -> {
-                    Row(
-                    ){
-
-                        Row (
-                            modifier = Modifier.widthIn(0.dp,300.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-
-                                        ethOSTextField(
-                                            text = value,
-                                            label = "0",
-                                            singleLine = true,
-                                            onTextChanged = { text -> value = text },
-                                            size = 64,
-                                            maxChar = 10,
-                                            color = if(value.isNotEmpty()){
-                                                if(value.toFloat() < selectedToken.tokenAsset.balance){
-                                                    Color.White
-                                                }else{
-                                                    Color(0xFFc82e31)
-                                                }
-                                            }else {
-                                                Color.White
-                                            },
-                                            numberInput = true
-                                        )
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            val abbriviation = when(selectedToken.tokenAsset.chainId) {
-                                5 -> "GoerliETH"
-                                137 -> "MATIC"//Polygon
-                                else -> "ETH"
+                /*Row{
+                    ethOSTextField(
+                        text = value,
+                        label = "0",
+                        singleLine = true,
+                        onTextChanged = { text -> value = text },
+                        size = 64,
+                        maxChar = 10,
+                        color = if(value.isNotEmpty()){
+                            if(value.toFloat() < tokenbalance){
+                                Color.White
+                            }else{
+                                Color(0xFFc82e31)
                             }
-
-                                Text(
-                                    text = abbriviation,
-                                    fontSize = calculateFontSize(value.length,if(selectedToken.tokenAsset.chainId == 5) 48 else 64),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.width(IntrinsicSize.Min)
-                                )
-                        }
-
-                    }
-                    val abbriviation = when(selectedToken.tokenAsset.chainId) {
-                        5 -> "GoerliETH"
-                        137 -> "MATIC"//Polygon
-                        else -> "ETH"
-                    }
-                    Text(
-                        text = "${selectedToken.tokenAsset.balance} $abbriviation available",
-                        fontSize = 16.sp,
-                        color = Color(0xFF9FA2A5),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-            }
-
-
-
-            when (selectedToken) {
-                is SelectedTokenUiState.Unselected -> {
-                    SelectedNetworkButton(
-                        chainId = 0,
-                        onClickChange = {
-                            showSheet = true
+                        }else {
+                            Color.White
                         },
+                        numberInput = true
                     )
-                }
-                is SelectedTokenUiState.Selected -> {
-                    SelectedNetworkButton(
-                        chainId = selectedToken.tokenAsset.chainId,
-                        onClickChange = {
-                            showSheet = true
-                        }
+                    Spacer(modifier = Modifier.width(12.dp))
+
+
+
+                    Text(
+                        text = abbriviation,
+                        fontSize = calculateFontSize(value.length, 64),
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.width(IntrinsicSize.Min)
                     )
-                }
+                }*/
 
-                else -> {}
+
             }
-        }
-
-
-
-        when (selectedToken) {
-            is SelectedTokenUiState.Unselected -> {
-
-                ethOSButton(
-                    onClick = {
-                    },
-                    enabled = false,
-                    text = "Send"
-                )
-            }
-
-            is SelectedTokenUiState.Selected -> {
-                ethOSButton(
-                    text = "Send",
-                    enabled = true,
-                    onClick = {
-                        if(value.toFloat() < selectedToken.tokenAsset.balance){
-                            sendTransaction(
-                                SendData(
-                                    amount = value.toFloat(),
-                                    address = toAddress,
-                                    chainId = selectedToken.tokenAsset.chainId
-                                )
+            ethOSButton(
+                text = "Send",
+                enabled = true,
+                onClick = {
+                    if(value.toFloat() < tokenbalance){
+                        sendTransaction(
+                            SendData(
+                                amount = value.toFloat(),
+                                address = toAddress,
+                                chainId = currentChainId
                             )
-                        }
-
+                        )
+                        onBackClick()
                     }
-                )
-            }
 
-        }
-
-
-
-        }
-
-
-
-    if(showSheet) {
-        ModalBottomSheet(
-            containerColor= Color(0xFF262626),
-            contentColor= Color.White,
-            modifier = Modifier.defaultMinSize(minHeight = 300.dp),
-            onDismissRequest = {
-                coroutineScope.launch {
-                    modalSheetState.hide()
-                }.invokeOnCompletion {
-                    if(!modalSheetState.isVisible) showSheet = false
-                }
-            },
-            sheetState = modalSheetState
-        ) {
-
-            NetworkPickerSheet(
-                balancesState = balances,
-                onSelectAsset = {
-                    onChangeAssetClicked(it)
-                    var currencychange = when(it.chainId){
-                        137 -> "MATICUSDT"
-                        else -> "ETHUSDT"
-                    }
-                    onCurrencyChange(currencychange)
-
-                    //hides ModelBottomSheet
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
-                    }
                 }
             )
         }
-    }
 
-
+        }
 }
 
 
@@ -604,12 +563,6 @@ fun formatDouble(input: Double): String {
     return decimalFormat.format(input)
 }
 
-private fun getBalance(assetsUiState: AssetUiState, chainid: Int): TokenAsset {
-    lateinit var info: TokenAsset
-
-
-    return info
-}
 
 
 
@@ -669,5 +622,48 @@ fun showCamera(
 @Preview
 @Composable
 fun PreviewSendScreen() {
-//    SendScreen()
+    SendScreen(
+        onBackClick= {},
+    toAddress="qwertyuio",
+    balances=  AssetUiState.Success(listOf(
+        TokenAsset(
+            "0xggrh32335n5dsiwjr",
+            1,
+            "ETH",
+            "Ether",
+            1.977
+        ),
+        TokenAsset(
+            "0xFjeiu54h44h5h643o4o4",
+            1,
+            "ETH",
+            "Ether",
+            1.2145
+        ),
+        TokenAsset(
+            "0xew34n4i55i5i6nwp20dgheru",
+            1,
+            "ETH",
+            "Ether",
+            0.23
+        ),
+
+    )),
+    currencyPrice= "0.5",
+    onChangeAssetClicked = { tokenasset ->  },
+    onToAddressChanged ={ tokenasset ->  },
+    onCurrencyChange= { tokenasset ->  },
+    sendTransaction= { tokenasset ->  },
+    selectedToken = SelectedTokenUiState.Selected(
+        TokenAsset(
+            "0xFjeiu54h44h5h643o4o4",
+            1,
+            "ETH",
+            "Ether",
+            1.2145
+        ),
+    ),
+    txComplete = TxCompleteUiState.Complete,
+        userNetwork = "Mainnet"
+    )
 }

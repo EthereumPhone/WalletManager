@@ -56,6 +56,15 @@ class SendViewModel @Inject constructor(
             initialValue = ""
         )
 
+    val userNetwork: StateFlow<String> =
+        userDataRepository.userData.map {
+            it.walletNetwork
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ""
+        )
+
     val networkBalanceState: StateFlow<AssetUiState> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances  ->
