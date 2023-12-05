@@ -1,5 +1,9 @@
 package com.feature.send
 
+import android.annotation.SuppressLint
+import android.content.ContentResolver
+import android.content.Context
+import android.provider.ContactsContract
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +12,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.model.dto.Contact
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
@@ -103,6 +108,12 @@ class SendViewModel @Inject constructor(
     private val _exchange = MutableStateFlow("")
     val exchange: Flow<String> = _exchange
 
+
+    private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
+    val contacts: Flow<List<Contact>> = _contacts
+
+
+
     fun send(
         to: String,
         chainId: Int,
@@ -147,6 +158,82 @@ class SendViewModel @Inject constructor(
             }
         }
     }
+
+
+    //Contacts
+    @SuppressLint("Range")
+    fun getContacts(context: Context) {
+        val contactsList = mutableListOf<Contact>()
+
+        val contentResolver: ContentResolver = context.contentResolver // Obtain the ContentResolver
+
+        val cursor = contentResolver.query(
+            ContactsContract.Contacts.CONTENT_URI,
+            null,
+            null,
+            null,
+            null
+        )
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                val contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID))
+                val contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
+
+                // Get the phone number for the contact
+                val phoneNumber = getPhoneNumber(contentResolver, contactId)
+
+                // Get eth address for the contact
+                val res = getData15ForContact(contactId,contentResolver)
+                val address = if(res?.isNotEmpty() == true) res else ""
+
+
+
+                val contact = Contact(id=contactId, name=contactName, phone=phoneNumber, address = address)
+                contactsList.add(contact)
+            } while (cursor.moveToNext())
+            cursor.close()
+        }
+
+        _contacts.value = contactsList
+    }
+
+    @SuppressLint("Range")
+    private fun getPhoneNumber(contentResolver: ContentResolver, contactId: String): String {
+        var phoneNumber = ""
+
+        val cursor = contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            null,
+            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+            arrayOf(contactId),
+            null
+        )
+
+        if (cursor != null && cursor.moveToFirst()) {
+            phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+            cursor.close()
+        }
+
+        return phoneNumber
+    }
+
+    @SuppressLint("Range")
+    fun getData15ForContact(contactId: String,contentResolver: ContentResolver): String? {
+        val uri = ContactsContract.Data.CONTENT_URI
+        val projection = arrayOf(ContactsContract.Data.DATA15)
+        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
+        val selectionArgs = arrayOf(contactId, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+
+        contentResolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA15))
+            }
+        }
+        return null
+    }
+
+
 }
 
 sealed interface TxCompleteUiState {

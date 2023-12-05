@@ -3,6 +3,7 @@ package com.feature.send
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.data.model.dto.Contact
 import com.core.data.util.chainToApiKey
 import com.core.model.SendData
 import com.core.model.TokenAsset
@@ -63,6 +65,8 @@ import org.ethereumphone.walletsdk.WalletSDK
 import java.text.DecimalFormat
 import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
+import com.feature.send.ui.ContactPickerSheet
+import com.feature.send.ui.ContactPill
 import com.feature.send.ui.NetworkPickerSheet
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
@@ -105,6 +109,8 @@ fun SendRoute(
 
     val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
 
+
+    val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
 
 
 
@@ -212,7 +218,9 @@ fun SendRoute(
         },
         txComplete = txComplete,
         selectedToken = selectedToken,
-        userNetwork = userNetwork
+        userNetwork = userNetwork,
+        getContacts = viewModel::getContacts,
+        contacts = contacts
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
@@ -230,8 +238,10 @@ fun SendScreen(
     sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
-    userNetwork: String
-
+    userNetwork: String,
+    getContacts: (Context) -> Unit,
+    contacts: List<Contact>
+    //getContacts: (Context, (List<Contact>) -> Unit) -> Unit,
 ) {
 
 
@@ -317,12 +327,40 @@ fun SendScreen(
         }
     )
 
+    var hasContactsPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_CONTACTS
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val requestContactPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if(isGranted) {
+                hasContactsPermission = isGranted
+            } else {
+                //TODO: Add
+            }
+        }
+    )
+
+
+    var selectedContact by remember { mutableStateOf(Contact())  }
+    var isContactSelected by remember { mutableStateOf(false) }
+
 
 
 
 
     LaunchedEffect(key1 = true) {
         requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    LaunchedEffect(key1 = true) {
+        requestContactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
     }
 
     Column (
@@ -347,9 +385,18 @@ fun SendScreen(
             )
 
 
+            val network = when(userNetwork){
+                "1" -> "Mainnet"
+                "5" -> "Görli"
+                "10" -> "Optimism"
+                "137" -> "Polygon"
+                "42161" -> "Arbitrum"
+                "8453" -> "Base"
+                else -> ""
+            }
 
             Text(
-                text = "on ${userNetwork}",
+                text = "on ${network}",
                 fontSize = 16.sp,
                 color = Color(0xFF9FA2A5),
                 fontWeight = FontWeight.Normal,
@@ -363,7 +410,8 @@ fun SendScreen(
 
         val tokenbalance = when(balances){
             is AssetUiState.Success -> {
-                balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
+                0.0
+                //balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
             }
             else -> {
                 0.0
@@ -399,46 +447,62 @@ fun SendScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ){
-                ethOSCenterTextField(
-                    text = toAddress,
-                    label = "(Enter address, ENS or QR scan)",
-                    modifier = Modifier.weight(1f),
-                    singleLine = false,
-                    onTextChanged = {
-                        if (it.endsWith(".eth")) {
-                            if (ENSName(it.lowercase()).isPotentialENSDomain()) {
-                                // It is ENS
-                                println("Checking ENS")
-                                CompletableFuture.runAsync {
-                                    val ens = ENS(
-                                        HttpEthereumRPC(
-                                            "https://eth-mainnet.g.alchemy.com/v2/${
-                                                chainToApiKey("eth-mainnet")
-                                            }"
-                                        )
-                                    )
-                                    val ensAddr = ens.getAddress(ENSName(it.lowercase()))
-                                    onToAddressChanged(ensAddr?.hex.toString())
-                                    validSendAddress = true
-                                }
-                            } else {
-                                if (it.isNotEmpty()) validSendAddress =
-                                    WalletUtils.isValidAddress(it.lowercase())
-                            }
-                            if (it.isEmpty()) {
-                                validSendAddress = false
-                            }
-
+                when(isContactSelected){
+                    true -> {
+                        ContactPill(contact = selectedContact) {
+                            selectedContact = Contact()
+                            onToAddressChanged("")
+                            isContactSelected = false
                         }
-                    },
-                    size = 20
-                )
+                    }
+                    false -> {
+                        ethOSCenterTextField(
+                            text = toAddress,
+                            label = "(Enter address, ENS or QR scan)",
+                            modifier = Modifier.weight(1f),
+                            singleLine = false,
+                            onTextChanged = {
+                                if (it.endsWith(".eth")) {
+                                    if (ENSName(it.lowercase()).isPotentialENSDomain()) {
+                                        // It is ENS
+                                        println("Checking ENS")
+                                        CompletableFuture.runAsync {
+                                            val ens = ENS(
+                                                HttpEthereumRPC(
+                                                    "https://eth-mainnet.g.alchemy.com/v2/${
+                                                        chainToApiKey("eth-mainnet")
+                                                    }"
+                                                )
+                                            )
+                                            val ensAddr = ens.getAddress(ENSName(it.lowercase()))
+                                            onToAddressChanged(ensAddr?.hex.toString())
+                                            validSendAddress = true
+                                        }
+                                    } else {
+                                        if (it.isNotEmpty()) validSendAddress =
+                                            WalletUtils.isValidAddress(it.lowercase())
+                                    }
+                                    if (it.isEmpty()) {
+                                        validSendAddress = false
+                                    }
+
+                                }
+                            },
+                            size = 20
+                        )
+                    }
+                }
+
+
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ){
-                    /*IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = {
+                        showSheet = true
+                    }) {
                         Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
-                    }*/
+                    }
                     IconButton(onClick = {
                         //opens InfoDialog
                         showCamera(barCodeLauncher)
@@ -552,7 +616,40 @@ fun SendScreen(
             )
         }
 
+        if(showSheet) {
+            ModalBottomSheet(
+                containerColor= Color(0xFF262626),
+                contentColor= Color.White,
+
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }.invokeOnCompletion {
+                        if(!modalSheetState.isVisible) showSheet = false
+                    }
+                },
+                sheetState = modalSheetState
+            ) {
+                coroutineScope.launch {
+                    getContacts(context)
+                }
+                val allowedContacts = contacts.filter { it.address.isNotEmpty() }
+                ContactPickerSheet(allowedContacts) { contact ->
+
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }.invokeOnCompletion {
+                        if (!modalSheetState.isVisible) showSheet = false
+                    }
+                    onToAddressChanged(contact.address)
+                    isContactSelected = true
+                    selectedContact = contact
+                }
+
+            }
         }
+
+    }
 }
 
 
@@ -622,6 +719,7 @@ fun showCamera(
 @Preview
 @Composable
 fun PreviewSendScreen() {
+    val context = LocalContext.current
     SendScreen(
         onBackClick= {},
     toAddress="qwertyuio",
@@ -664,6 +762,8 @@ fun PreviewSendScreen() {
         ),
     ),
     txComplete = TxCompleteUiState.Complete,
-        userNetwork = "Mainnet"
+        userNetwork = "Mainnet",
+        getContacts = {},
+        contacts = emptyList()
     )
 }
