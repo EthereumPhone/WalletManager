@@ -272,16 +272,7 @@ fun SendScreen(
     val modalSheetState = rememberModalBottomSheetState(true)
 
     //initalize values
-
-
-
-
-
-
-
     var test by remember { mutableStateOf(tokeninfo) }
-
-
     var maxAmount by remember { mutableStateOf(test.balance) }
     var prevAmount by remember { mutableStateOf(value) }
     var enableButton by remember { mutableStateOf(false) }
@@ -388,7 +379,6 @@ fun SendScreen(
                             tint = Color(0xFF9FA2A5),
                             modifier = modifier
                                 .clip(CircleShape)
-
                         )
                     }
                 }
@@ -438,16 +428,12 @@ fun SendScreen(
                                         focusManager.clearFocus()
                                     }
                                 }
-
                                 onToAddressChanged(address)
-
                             },
                             trailingIcon = {
                                 IconButton(
-                                    onClick = { showCamera(barCodeLauncher) },
-
-                                    ) {
-
+                                    onClick = { showCamera(barCodeLauncher) })
+                                {
                                     Icon(
                                         imageVector = Icons.Rounded.QrCode,
                                         contentDescription = "Address by QR",
@@ -482,7 +468,7 @@ fun SendScreen(
                                         }, enabled = false)
 
                                         Text(
-                                            text = "",//"${walletAmount.ethAmount} ETH",
+                                            text = "",
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 16.sp,
                                             color = Color(0xFF9FA2A5)
@@ -539,7 +525,7 @@ fun SendScreen(
                                         } else {
                                             val parts = value.split(".")
                                             if (parts.size > 1 && parts[1].length > 5) {
-                                                "${parts[0]}.${parts[1].substring(0, 5)}"
+                                                "${parts[0]}.${parts[1]}"
                                             } else {
                                                 value
                                             }
@@ -567,41 +553,6 @@ fun SendScreen(
                                             fontSize = amountfontSize,
                                             textAlign = TextAlign.Center)
 
-                                        /*
-                                        Text(
-                                            text = if (value.isBlank()) {
-                                                "0.0 "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
-                                            } else {
-                                                // If value has more than 7 decimals, show the string with less decimals
-                                                if (value.contains(".")) {
-                                                    val decimals = value.split(".")[1]
-                                                    if (decimals.length > 5) {
-                                                        value.split(".")[0] + "." + decimals.substring(0, 5)
-                                                    } else {
-                                                        value
-                                                    }
-                                                } else {
-                                                    value
-                                                } + " " + if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
-                                            },
-                                            //check if value over maxamount
-
-                                            color = if (value.isBlank()) {
-                                                Color.Gray
-                                            } else {
-                                                if(value.toDouble() > selectedToken.tokenAsset.balance){
-                                                    Color.Red
-                                                }else{
-                                                    Color.White
-                                                }
-                                                //if (value.toFloat() <= walletAmount.ethAmount.toFloat()) Color.White else Color.Red
-                                            },//"${walletAmount.ethAmount} ETH",
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = amountfontSize,
-                                            textAlign = TextAlign.Center
-                                        )
-                                         */
-
                                         if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
@@ -615,7 +566,7 @@ fun SendScreen(
                                             )
                                         }else{
                                             Text(
-                                                text = "$0.0",//$${value.toFloat()},
+                                                text = "$0.0",
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 16.sp,
                                                 color = Color(0xFF9FA2A5)
