@@ -5,30 +5,15 @@ import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
-import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
-import com.core.domain.GetGroupedTokenAssets
-import com.core.domain.GetTokenBalancesWithMetadataUseCase
-import com.core.domain.GetTransfersUseCase
-import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
-import com.core.model.TokenBalance
-import com.core.model.Transfer
-import com.core.model.TransferItem
-import com.core.result.Result
-import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.coroutineScope
@@ -187,9 +172,17 @@ class SendViewModel @Inject constructor(
                 val res = getData15ForContact(contactId,contentResolver)
                 val address = if(res?.isNotEmpty() == true) res else ""
 
+                // Get Image for the contact
 
 
-                val contact = Contact(id=contactId, name=contactName, phone=phoneNumber, address = address)
+                val contact = Contact(
+                    id = contactId,
+                    name = contactName,
+                    phone = phoneNumber,
+                    address = address,
+                    image = getPhotoUriForContact(contactId, contentResolver)
+                        ?: ""
+                )
                 contactsList.add(contact)
             } while (cursor.moveToNext())
             cursor.close()
@@ -216,6 +209,26 @@ class SendViewModel @Inject constructor(
         }
 
         return phoneNumber
+    }
+
+    @SuppressLint("Range")
+    private fun getPhotoUriForContact(contactId: String,contentResolver: ContentResolver): String? {
+        val photoCursor = contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+            ContactsContract.Data.CONTACT_ID + " = ?",
+            arrayOf(contactId), null
+        )
+
+        photoCursor?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI))
+                if (photoUri != null) {
+                    return photoUri
+                }
+            }
+        }
+
+        return null
     }
 
     @SuppressLint("Range")

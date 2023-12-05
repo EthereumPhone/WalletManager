@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.data.model.dto.Contact
 import com.feature.send.R
+import coil.compose.rememberImagePainter
 
 @Composable
 fun ContactPill(
@@ -47,9 +49,18 @@ fun ContactPill(
                     .clip(CircleShape)
                     .background(Color(0xFF262626))
             ){
-                val image = if (contact.image != "") R.drawable.nouns else R.drawable.nouns//contact.image else R.drawable.nouns
-                Image(painter = painterResource(id = image), contentDescription = "" )
-            }
+                if (contact.image != ""){
+//                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "" )
+                    Image(
+                        painter = rememberImagePainter(contact.image),
+                        contentDescription = "Contact Profile Pic",
+                        contentScale = ContentScale.Crop
+                    )
+                } else{
+                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
+
+                }//contact.image else R.drawable.nouns
+                }
             Text(
                 text = contact.name,
                 fontSize = 20.sp,
