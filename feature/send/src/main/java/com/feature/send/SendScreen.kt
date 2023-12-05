@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -77,6 +78,9 @@ import com.feature.send.ui.TextToggleButton
 import com.feature.send.ui.ethOSTextField
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.CompoundBarcodeView
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.CompletableFuture
@@ -301,17 +305,20 @@ fun SendScreen(
     var network by remember { mutableStateOf(test.chainId) }
 
 
-
-
-
-
-
-
-
-
     val context = LocalContext.current
     //val selectedNetwork = selectedNetworkState.value
 
+
+    val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            if(result.contents == null) {
+
+            } else {
+                onToAddressChanged(result.contents)
+            }
+        }
+    )
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -321,12 +328,21 @@ fun SendScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val launcher = rememberLauncherForActivityResult(
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCameraPermission = granted
+        onResult = { isGranted ->
+            if(isGranted) {
+                hasCameraPermission = isGranted
+            } else {
+                //TODO: Add
+            }
         }
     )
+
+    LaunchedEffect(key1 = true) {
+        requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
 
     var amountfontSize by remember { mutableStateOf(68.sp) }
 
@@ -345,24 +361,6 @@ fun SendScreen(
     }
 
 
-
-
-
-
-    LaunchedEffect(key1 = true) {
-        launcher.launch(Manifest.permission.CAMERA)
-    }
-
-    val showDialog =  remember { mutableStateOf(false) }
-
-    if(showDialog.value)
-        qrCodeDialog(
-            context = context,
-            setShowDialog = {
-            showDialog.value = false
-        }) {
-            Log.i("HomePage","HomePage : $it")
-        }
 
 
 
@@ -430,9 +428,6 @@ fun SendScreen(
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
-                //AddressBar("0x123123123123123123",onclick={}, network = "Mainnet")//userAddress,onclick={}, network = "Mainnet")//Addressclick
-
-
 
                 // Creating a values and variables to remember
                 // focus requester, manager and state
@@ -476,7 +471,7 @@ fun SendScreen(
                             },
                             trailingIcon = {
                                 IconButton(
-                                    onClick = { showDialog.value = true },
+                                    onClick = { showCamera(barCodeLauncher) },
 
                                     ) {
 
@@ -491,32 +486,11 @@ fun SendScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-//                                .onFocusChanged {
-//
-//                                    if (ENSName(address).isPotentialENSDomain()) {
-//                                        // It is ENS
-//                                        CompletableFuture.runAsync {
-//                                            val ens =
-//                                                ENS(HttpEthereumRPC("https://cloudflare-eth.com"))
-//                                            val ensAddr = ens.getAddress(ENSName(address))
-//                                            address = ensAddr?.hex.toString()
-//                                        }
-//                                        focusManager.clearFocus()
-//                                    } else {
-//                                        if (address.isNotEmpty()) validSendAddress =
-//                                            isValidAddress(address)
-//                                    }
-//                                    if (address.isEmpty()) validSendAddress = true
-//
-//                                }
                         )
                     }
                     Spacer(modifier = Modifier
                         .height(16.dp)
                     )
-
-
-
                         //Amount Section
                         Column (
                             modifier = modifier.fillMaxWidth(),
@@ -862,113 +836,16 @@ private fun getBalance(assetsUiState: AssetUiState, chainid: Int): TokenAsset {
     return info
 }
 
-@Composable
-fun qrCodeDialog(
-    context: Context,
-    setShowDialog: () -> Unit,
-    onDecoded: (String) -> Unit
+fun showCamera(
+    cameraLauncher: ManagedActivityResultLauncher<ScanOptions, ScanIntentResult>
 ) {
-    var scanFlag by remember { mutableStateOf(false) }
-    val compoundBarcodeView = remember {
-        CompoundBarcodeView(context).apply {
-            val capture = CaptureManager(context as Activity, this)
-            capture.initializeFromIntent(context.intent, null)
-            this.setStatusText("")
-            this.resume()
-            capture.decode()
-            this.decodeContinuous { result ->
-                if(scanFlag){
-                    return@decodeContinuous
-                }
-                scanFlag = true
-                result.text?.let { barCodeOrQr->
-                    //Do something and when you finish this something
-                    //put scanFlag = false to scan another item
-                    onDecoded(barCodeOrQr)
-                    scanFlag = true
-                }
-                //If you don't put this scanFlag = false, it will never work again.
-                //you can put a delay over 2 seconds and then scanFlag = false to prevent multiple scanning
-
-            }
-        }
-    }
-
-
-    Dialog(onDismissRequest = { setShowDialog() }) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF24303D),
-            contentColor = Color.White,
-            tonalElevation = 4.dp
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-
-                    horizontalAlignment = Alignment.CenterHorizontally
-
-                ) {
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "",
-                            tint = Color.Transparent,
-                            modifier = Modifier
-//                                .width(30.dp)
-//                                .height(30.dp)
-
-                        )
-                        Text(
-                            text = "Scan QR Code",
-                            style = TextStyle(
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily.Default,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                        IconButton(
-                            modifier = Modifier
-                                .width(30.dp)
-                                .height(30.dp),
-                            onClick = {
-                                setShowDialog()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Close",
-                                tint = Color(0xFF9FA2A5),
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(36.dp))
-
-                    //TODO: QRCode
-                    Box (
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .height(400.dp)
-                            .width(300.dp),
-                        contentAlignment = Alignment.Center
-                    ){
-                        AndroidView(
-                            modifier = Modifier,
-                            factory = { compoundBarcodeView },
-                        )
-                    }
-
-                }
-            }
-        }
-    }
+    val options = ScanOptions()
+    options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+    options.setPrompt("Scan QR Code")
+    options.setCameraId(0)
+    options.setBeepEnabled(false)
+    options.setOrientationLocked(false)
+    cameraLauncher.launch(options)
 }
 
 
