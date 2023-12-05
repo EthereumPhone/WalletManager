@@ -315,7 +315,7 @@ fun SendScreen(
             if(result.contents == null) {
 
             } else {
-                onToAddressChanged(result.contents)
+                address = result.contents
             }
         }
     )
