@@ -10,7 +10,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-
+import androidx.compose.foundation.layout.Column
 
 
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -90,62 +91,60 @@ internal fun WalletTabRow(
 
     val refreshScope = rememberCoroutineScope()
 
-
     val tabItems = remember { TabItems.values().toList() }
     val pagerState = rememberPagerState(
         initialPage = 0,
         initialPageOffsetFraction = 0f
-    ) {
-        tabItems.size
-    }
+    ) { tabItems.size }
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
         onRefresh = {
             refreshScope.launch {
                 refreshState = true
-                delay(1000)
+                delay(500)
                 onRefresh()
                 refreshState = false
             }
         }
     )
 
-    TabRow(
-        modifier = Modifier
-            .clip(RoundedCornerShape(30.dp))
-            .background(primaryVariant),
-        backgroundColor = primaryVariant,
-        selectedTabIndex = pagerState.currentPage,
-        indicator = { tabPositions ->
-            WmTabIndicator(tabPositions, pagerState)
-        }
-    ) {
-        tabItems.forEachIndexed { index, title ->
-            TabRowItem(
-                index = index,
-                tabName = title.name,
-                pagerState = pagerState
-            )
-        }
-    }
-
-    Box {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.pullRefresh(pullRefreshState)
-        ) { page ->
-            when (tabItems[page]) {
-                TabItems.TRANSFERS -> TransferList(transfersUiState)
-                TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
+    Column {
+        TabRow(
+            modifier = Modifier
+                .clip(RoundedCornerShape(30.dp))
+                .background(primaryVariant),
+            backgroundColor = primaryVariant,
+            selectedTabIndex = pagerState.currentPage,
+            indicator = { tabPositions ->
+                WmTabIndicator(tabPositions, pagerState)
+            }
+        ) {
+            tabItems.forEachIndexed { index, title ->
+                TabRowItem(
+                    index = index,
+                    tabName = title.name,
+                    pagerState = pagerState
+                )
             }
         }
 
-        PullRefreshIndicator(
-            refreshing = refreshState,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
+        Box {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.pullRefresh(pullRefreshState)
+            ) { page ->
+                when (tabItems[page]) {
+                    TabItems.TRANSFERS -> TransferList(transfersUiState)
+                    TabItems.ASSETS -> AssetList(assetsUiState)//, currencyPrice = currencyPrice, onCurrencyChange = onCurrencyChange)
+                }
+            }
+            PullRefreshIndicator(
+                refreshing = refreshState,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     }
 }
 
@@ -365,28 +364,26 @@ enum class TabItems {
 @Composable
 @Preview
 fun PreviewWalletTabRow() {
-//    var txInfo by remember { mutableStateOf(
-//        TransferItem(
-//            chainId = 1,
-//            address = "",
-//            asset = "",
-//            value = "",
-//            timeStamp = "",
-//            userSent = true
-//        )
-//    ) }
-//
-//    Column {
-//        WalletTabRow(
-//            TransfersUiState.Loading,
-//            AssetUiState.Loading,
-//            false,
-//            {},
-//            onTxOpen = {
-//                txInfo = it
-//            }
-//        )
-//    }
+    var txInfo by remember { mutableStateOf(
+        TransferItem(
+            chainId = 1,
+            from = "",
+            to = "",
+            asset = "",
+            value = "",
+            timeStamp = "",
+            userSent = true,
+            txHash = ""
+        )
+    ) }
+
+    Column {
+        WalletTabRow(
+            TransfersUiState.Loading,
+            AssetUiState.Loading,
+            {},
+        )
+    }
 }
 
 @Composable

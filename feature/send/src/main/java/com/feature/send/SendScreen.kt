@@ -115,20 +115,11 @@ fun SendRoute(
 
     var initialAddress = initialAddress
 
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
-    val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
-
-    //val toAddress by viewModel.toAddress.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val walletSDK = WalletSDK(context)
-    val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
-
     val currencyprice = ""
-
-
 
     SendScreen(
         modifier = Modifier,
@@ -140,7 +131,6 @@ fun SendRoute(
         onToAddressChanged= viewModel::changeToAddress,
         onCurrencyChange = viewModel::getExchange,
         sendTransaction = { sendData ->
-
             val amount = sendData.amount.toString()
             var address = sendData.address
             val chainid = sendData.chainId
@@ -152,7 +142,6 @@ fun SendRoute(
                 42161 -> "arb-mainnet"
                 else -> "eth-mainnet"
             }
-
             val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
 
             println("RPC: $rpcurl")
@@ -230,7 +219,7 @@ fun SendRoute(
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
@@ -244,8 +233,6 @@ fun SendScreen(
     sendTransaction: (SendData) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState
-    //toAddress: String,
-    //onAddressClick: () -> Unit,
 ) {
 
     var address by remember { mutableStateOf(initialAddress) }
