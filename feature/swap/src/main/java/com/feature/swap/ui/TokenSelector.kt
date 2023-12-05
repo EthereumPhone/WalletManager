@@ -194,7 +194,7 @@ fun TokenSelector(
                     Text(
                         text = "Balance: ${toBalance}",
                         fontSize = 16.sp,
-                        color= if(toAmountTooHigh) Color(0xFFF1847E) else Color(0xFF9FA2A5)
+                        color= Color(0xFF9FA2A5)
                     )
                 }
             }
@@ -213,9 +213,6 @@ fun TokenSelector(
                     }
                 },
                 placeholder = "Amount",
-                isError = amountsUiState.toAmount.isNotBlank() &&
-                        (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
-                        (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
             )
         }
     }
