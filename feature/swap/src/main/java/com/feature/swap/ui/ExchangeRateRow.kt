@@ -32,6 +32,8 @@ import com.feature.swap.SelectedTokenUiState
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.onGloballyPositioned
+import java.math.BigDecimal
+import kotlin.math.pow
 
 
 @Composable
@@ -42,7 +44,7 @@ fun ExchangeRateRow(
 ) {
 
     //Opacity Animation
-    val transition = rememberInfiniteTransition()
+    val transition = rememberInfiniteTransition("")
     val fadingAnimation by transition.animateFloat(
         initialValue = 1.0f,
         targetValue = 1f,
@@ -53,7 +55,7 @@ fun ExchangeRateRow(
                 0f at  1000 with LinearEasing
                 1.0f at  2000 with LinearEasing
             }
-        )
+        ), label = ""
     )
 
    if(assetsUiState.fromAsset is SelectedTokenUiState.Selected && assetsUiState.toAsset is SelectedTokenUiState.Selected) {
@@ -73,8 +75,10 @@ fun ExchangeRateRow(
               )
           }
       } else {
+          val roundedExchange = exchangeUiState.pow(4)
+
           Text(
-              text = "1 ${assetsUiState.fromAsset.tokenAsset.symbol} = $exchangeUiState ${assetsUiState.toAsset.tokenAsset.symbol}",
+              text = "1 ${assetsUiState.fromAsset.tokenAsset.symbol} = ${extractPattern(BigDecimal(exchangeUiState).stripTrailingZeros().toPlainString())} ${assetsUiState.toAsset.tokenAsset.symbol}",
               color = Color(0xFF9FA2A5),
               fontSize = 16.sp
           )
@@ -112,4 +116,10 @@ fun previewExchangeRateRow() {
         0.0,
         true
     )
+}
+
+fun extractPattern(input: String): String? {
+    val regex = Regex("""^(\d*\.?0*([1-9])\d{0,3})\d*$""")
+    val matchResult = regex.find(input)
+    return matchResult?.groupValues?.get(1)
 }
