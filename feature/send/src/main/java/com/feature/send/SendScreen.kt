@@ -53,10 +53,13 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -163,7 +166,6 @@ fun SendRoute(
 
             if(hasInternet) {
 
-
                 CoroutineScope(Dispatchers.IO).launch {
                     val web3jInstance = Web3j.build(HttpService(rpcurl))
 
@@ -217,33 +219,15 @@ fun SendRoute(
 
                 }
 
-//                    viewModel.send(
-//                        to = address,
-//                        chainId = chainid,
-//                        amount = amount
-//                    )
-//                }
-
             } else {
                 (context as Activity).runOnUiThread {
                     Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
                 }
             }
-
-            //onBackClick()
         },
-        //userAddress = userAddress,
-        //toAddress = toAddress,
         txComplete = txComplete,
         selectedToken = selectedToken
-//        onAddressClick = {
-//            copyTextToClipboard(localContext, userAddress)
-//        }
     )
-
-    //SendScreen()
-
-
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -335,7 +319,7 @@ fun SendScreen(
             if(isGranted) {
                 hasCameraPermission = isGranted
             } else {
-                //TODO: Add
+
             }
         }
     )
@@ -360,10 +344,6 @@ fun SendScreen(
         else -> minFontSize
     }
 
-
-
-
-
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
         InfoDialog(
@@ -383,13 +363,6 @@ fun SendScreen(
             onBackClick()
         }
     }
-
-
-
-    //Values
-
-
-
 
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -497,7 +470,6 @@ fun SendScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-
                             //Max Amount Section
                             Column (
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -562,9 +534,42 @@ fun SendScreen(
                                         )
                                     }
                                     is SelectedTokenUiState.Selected -> {
+                                        val currentText = if (value.isBlank()) {
+                                            "0.0"
+                                        } else {
+                                            val parts = value.split(".")
+                                            if (parts.size > 1 && parts[1].length > 5) {
+                                                "${parts[0]}.${parts[1].substring(0, 5)}"
+                                            } else {
+                                                value
+                                            }
+                                        }
+
+                                        val currentCurrency = if(selectedToken.tokenAsset.chainId == 137) " MATIC" else " ETH"
+                                        val currentColor = if (value.isBlank()) {
+                                            Color.Gray
+                                        } else {
+                                            if (value.toDouble() > selectedToken.tokenAsset.balance) {
+                                                Color.Red
+                                            } else {
+                                                Color.White
+                                            }
+                                        }
+
                                         Text(
-                                            text = //"0.0 ETH",
-                                            if (value == "") {
+                                            text = buildAnnotatedString {
+                                                withStyle(style = SpanStyle(color = currentColor)) {
+                                                    append(currentText)
+                                                }
+                                                withStyle(style = SpanStyle(color = Color.White)) { append(currentCurrency) }
+                                            },
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = amountfontSize,
+                                            textAlign = TextAlign.Center)
+
+                                        /*
+                                        Text(
+                                            text = if (value.isBlank()) {
                                                 "0.0 "+ if(selectedToken.tokenAsset.chainId == 137) "MATIC" else "ETH"
                                             } else {
                                                 // If value has more than 7 decimals, show the string with less decimals
@@ -581,8 +586,8 @@ fun SendScreen(
                                             },
                                             //check if value over maxamount
 
-                                            color = if (value == "") {
-                                                Color.White
+                                            color = if (value.isBlank()) {
+                                                Color.Gray
                                             } else {
                                                 if(value.toDouble() > selectedToken.tokenAsset.balance){
                                                     Color.Red
@@ -595,11 +600,8 @@ fun SendScreen(
                                             fontSize = amountfontSize,
                                             textAlign = TextAlign.Center
                                         )
+                                         */
 
-
-
-
-                                            //Log.e("currenccy",currencyPrice)
                                         if(selectedToken.tokenAsset.chainId != 5){
                                             Text(
                                                 text = if (value == "" || value == "0." || currencyPrice=="" ) {
@@ -619,17 +621,9 @@ fun SendScreen(
                                                 color = Color(0xFF9FA2A5)
                                             )
                                         }
-
-
-
                                     }
-
                                     else -> {}
                                 }
-                                //max amount
-
-
-
                             }
 
                             //select network
