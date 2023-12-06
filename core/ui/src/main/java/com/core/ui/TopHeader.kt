@@ -100,9 +100,9 @@ fun TopHeader(
                 ) {
                     Icon(
                         imageVector = imageVector,
-                        contentDescription = "Go back",
-                        tint =  if (!onlyTitle) Color.White else Color.Transparent,
-                        modifier  = Modifier.size(32.dp)
+                        contentDescription = "Icon",
+                        tint =  if (!onlyTitle) Color(0xFF9FA2A5) else Color.Transparent,
+                        modifier  = Modifier.size(24.dp)
                     )
                 }
             }

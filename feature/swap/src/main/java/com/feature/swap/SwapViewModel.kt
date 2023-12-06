@@ -48,6 +48,15 @@ class SwapViewModel @Inject constructor(
             initialValue = SwapTokenUiState.Loading
         )
 
+    val chainIdState: StateFlow<String> =
+        userDataRepository.userData.map {
+            it.walletNetwork
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ""
+        )
+
     private val _assetsUiState = MutableStateFlow(AssetsUiState())
     val assetsUiState = _assetsUiState.asStateFlow()
 
