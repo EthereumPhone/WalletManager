@@ -58,6 +58,7 @@ fun getEtherscanDomainForChain(chainId: Int): String {
 fun TokenPickerSheet(
     swapTokenUiState: SwapTokenUiState,
     searchQuery: String,
+    filterByChain: Int? = null,
     onQueryChange: (String) -> Unit,
     onSelectAsset: (TokenAsset) -> Unit
 ) {
@@ -97,9 +98,15 @@ fun TokenPickerSheet(
 
                 }
                 is SwapTokenUiState.Success -> {
-                    swapTokenUiState.tokenAssets.sortedByDescending {
+                    var sortedTokens = swapTokenUiState.tokenAssets.sortedByDescending {
                         it.balance
-                    }.forEach { tokenAsset ->
+                    }
+                    filterByChain?.let {
+                        sortedTokens = sortedTokens.filter {
+                            it.chainId == filterByChain
+                        }
+                    }
+                    sortedTokens.forEach { tokenAsset ->
                         item(key = tokenAsset.address) {
                             WmListItem(
                                 headlineContent = {
@@ -188,6 +195,7 @@ fun TokenPickerSheetPreview() {
             )
         ),
         "",
+        null,
         {},
         {}
     )

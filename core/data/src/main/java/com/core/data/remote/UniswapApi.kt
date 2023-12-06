@@ -19,6 +19,7 @@ import org.ethosmobile.uniswap_routing_sdk.UniversalRouter
 import org.json.JSONObject
 import org.web3j.crypto.Credentials
 import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
 import org.web3j.tx.gas.DefaultGasProvider
 import org.web3j.utils.Numeric
 import java.lang.Long.parseLong
@@ -31,15 +32,18 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class UniswapApi @Inject constructor(
-    private val walletSDK: WalletSDK,
-    private val web3j: Web3j,
+    private val walletSDKInjected: WalletSDK,
+    private val web3jInjected: Web3j,
     private val uniswapRouterSDK: UniswapRoutingSDK,
+    private val context: Context
 ) {
+
+    private var web3j = web3jInjected
+    private var walletSDK = walletSDKInjected
 
     companion object {
         val UNISWAP_V3_ADDRESS = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
         val UNISWAP_PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3"
-        val WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     }
 
     // Fee amount
@@ -58,9 +62,9 @@ class UniswapApi @Inject constructor(
 
     val universalRouter = UniversalRouter.load(UNISWAP_V3_ADDRESS, web3j, credentials, DefaultGasProvider())
 
-    suspend fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String): Double =
+    suspend fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String, chainId: Int): Double =
         suspendCoroutine { continuation ->
-            uniswapRouterSDK.getQuote(inputToken, outputToken, amountIn, receiverAddress)
+            uniswapRouterSDK.getQuote(inputToken, outputToken, amountIn, receiverAddress, chainId)
                 .whenComplete { result, exception ->
                     if (exception == null) {
                         continuation.resume(result)
@@ -89,19 +93,36 @@ class UniswapApi @Inject constructor(
         toToken: Token,
         amount: Double
     ): String {
-        if (walletSDK.getChainId() != 1) {
+        val currentChainId = walletSDK.getChainId()
+        if (currentChainId != 1 && currentChainId != 10) {
             val res = walletSDK.changeChain(1, "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
             if (res == WalletSDK.DECLINE) {
                 return WalletSDK.DECLINE
             }
         }
 
+        if (currentChainId == 10) {
+            web3j = Web3j.build(HttpService("https://opt-mainnet.g.alchemy.com/v2/${chainToApiKey("opt-mainnet")}"))
+            walletSDK = WalletSDK(
+                context = context,
+                web3jInstance = web3j
+            )
+        } else if (currentChainId == 1) {
+            web3j = Web3j.build(HttpService("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
+            walletSDK = WalletSDK(
+                context = context,
+                web3jInstance = web3j
+            )
+        }
+
+
         println("fromToken: $fromToken")
         println("toToken: $toToken")
+        Thread.sleep(500)
         if (fromToken == UniswapRoutingSDK.ETH_MAINNET) {
-            return swapEthToToken(toToken, amount)
+            return swapEthToToken(toToken, amount, currentChainId == 10)
         } else if (toToken == UniswapRoutingSDK.ETH_MAINNET) {
-            return swapTokenToEth(fromToken, amount)
+            return swapTokenToEth(fromToken, amount, currentChainId == 10)
         }
         // Get the optimal route for the swap
         val route = getBestRoute(fromToken, toToken, amount)
@@ -198,7 +219,8 @@ class UniswapApi @Inject constructor(
         )
         val permit2TransferData = realEncoder.encodePermitTransfer(
             token = fromToken.address,
-            fee = feeAmount
+            fee = feeAmount,
+            chainId = currentChainId
         )
 
 
@@ -227,15 +249,25 @@ class UniswapApi @Inject constructor(
         )
     }
 
-    private suspend fun swapTokenToEth(fromToken: Token, amount: Double): String {
+    private suspend fun swapTokenToEth(fromToken: Token, amount: Double, isOptimism: Boolean): String {
         // Add a unwrap command at the end
-        val toToken: Token = Token(
-            address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            decimals = 18,
-            symbol = "WETH",
-            name = "Wrapped Ether",
-            chainId = 1
-        )
+        val toToken = if (isOptimism) {
+            Token(
+                address = "0x4200000000000000000000000000000000000006",
+                decimals = 18,
+                symbol = "WETH",
+                name = "Wrapped Ether",
+                chainId = 10
+            )
+        } else {
+            Token(
+                address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                decimals = 18,
+                symbol = "WETH",
+                name = "Wrapped Ether",
+                chainId = 1
+            )
+        }
         // Get the optimal route for the swap
         val route = getBestRoute(fromToken, toToken, amount)
 
@@ -330,7 +362,8 @@ class UniswapApi @Inject constructor(
         )
         val permit2TransferData = realEncoder.encodePermitTransfer(
             token = fromToken.address,
-            fee = feeAmount
+            fee = feeAmount,
+            chainId = if (isOptimism) 10 else 1
         )
         val unwrapEthData = realEncoder.encodeWEthCommand(
             address = walletSDK.getAddress(),
@@ -365,15 +398,25 @@ class UniswapApi @Inject constructor(
         )
     }
 
-    private suspend fun swapEthToToken(toToken: Token, amount: Double): String {
+    private suspend fun swapEthToToken(toToken: Token, amount: Double, isOptimism: Boolean): String {
         // Add a wrap eth command to the commands, before the permit2 command
-        val fromToken: Token = Token(
-            address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            decimals = 18,
-            symbol = "WETH",
-            name = "Wrapped Ether",
-            chainId = 1
-        )
+        val fromToken = if (isOptimism) {
+            Token(
+                address = "0x4200000000000000000000000000000000000006",
+                decimals = 18,
+                symbol = "WETH",
+                name = "Wrapped Ether",
+                chainId = 10
+            )
+        } else {
+            Token(
+                address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                decimals = 18,
+                symbol = "WETH",
+                name = "Wrapped Ether",
+                chainId = 1
+            )
+        }
         // Get the optimal route for the swap
         val route = getBestRoute(fromToken, toToken, amount)
 
@@ -411,8 +454,9 @@ class UniswapApi @Inject constructor(
 
         // Using permit transfer as pay portion because its the same abi
         val transferData = realEncoder.encodePermitTransfer(
-            token = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            fee = feeAmount
+            token = fromToken.address,
+            fee = feeAmount,
+            chainId = if (isOptimism) 10 else 1
         )
 
         val universalData = universalRouter.execute(

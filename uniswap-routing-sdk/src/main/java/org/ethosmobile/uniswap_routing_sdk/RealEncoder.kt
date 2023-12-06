@@ -43,12 +43,17 @@ class RealEncoder {
         return "0"
     }
 
-    fun encodePermitTransfer(token: String, fee: BigInteger): String {
+    fun encodePermitTransfer(token: String, fee: BigInteger, chainId: Int): String {
         try {
+            val checksumAddress = if (chainId == 1) {
+                "0x55A4E5123F8923500fF7AA97e75231a54A9c233a"
+            } else {
+                "0x12dC5fF4AB146D9f70e50bd5f9854114a115e6c9"
+            }
             val f = Function("(address,address,uint256)")
             val args = Tuple.of(
                 com.esaulpaugh.headlong.abi.Address.wrap(token),
-                com.esaulpaugh.headlong.abi.Address.wrap("0x55A4E5123F8923500fF7AA97e75231a54A9c233a"), // Multisig address
+                com.esaulpaugh.headlong.abi.Address.wrap(checksumAddress), // Multisig address
                 fee
             )
             val result = f.encodeCall(args)

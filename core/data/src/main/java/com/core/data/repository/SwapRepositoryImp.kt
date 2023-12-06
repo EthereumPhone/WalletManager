@@ -32,6 +32,7 @@ class SwapRepositoryImp @Inject constructor(
         outputTokenAddress: String,
         amount: Double,
         receiverAddress: String,
+        chainId: Int
         ): Double {
         val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
             .first()
@@ -40,8 +41,8 @@ class SwapRepositoryImp @Inject constructor(
         val (inputToken, outputToken) = when {
             tokenMetadataList.size < 2 -> {
                 when {
-                    inputTokenAddress == "1" -> UniswapRoutingSDK.ETH_MAINNET to toToken(tokenMetadataList[0])
-                    outputTokenAddress == "1" -> toToken(tokenMetadataList[0]) to UniswapRoutingSDK.ETH_MAINNET
+                    (inputTokenAddress == "1" || inputTokenAddress == "10") -> UniswapRoutingSDK.ETH_MAINNET to toToken(tokenMetadataList[0])
+                    (outputTokenAddress == "1" || outputTokenAddress == "10") -> toToken(tokenMetadataList[0]) to UniswapRoutingSDK.ETH_MAINNET
                     else -> throw IllegalArgumentException("Token metadata could not be retrieved")
                 }
             }
@@ -53,7 +54,8 @@ class SwapRepositoryImp @Inject constructor(
                 inputToken,
                 outputToken,
                 amount,
-                receiverAddress
+                receiverAddress,
+                chainId
             )
         }
     }
@@ -66,29 +68,41 @@ class SwapRepositoryImp @Inject constructor(
         val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
             .first()
         println("TokenMetadatalist: $tokenMetadataList")
-        val inputToken = if (inputTokenAddress == "1") {
-            UniswapRoutingSDK.ETH_MAINNET
-        } else {
-            val inputTokenMetadata = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
-            Token(
-                chainId = inputTokenMetadata?.chainId!!,
-                address = inputTokenMetadata.contractAddress,
-                decimals = inputTokenMetadata.decimals,
-                name = inputTokenMetadata.name,
-                symbol = inputTokenMetadata.symbol
-            )
+        val inputToken = when (inputTokenAddress) {
+            "1" -> {
+                UniswapRoutingSDK.ETH_MAINNET
+            }
+            "10" -> {
+                UniswapRoutingSDK.ETH_MAINNET
+            }
+            else -> {
+                val inputTokenMetadata = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
+                Token(
+                    chainId = inputTokenMetadata?.chainId!!,
+                    address = inputTokenMetadata.contractAddress,
+                    decimals = inputTokenMetadata.decimals,
+                    name = inputTokenMetadata.name,
+                    symbol = inputTokenMetadata.symbol
+                )
+            }
         }
-        val outputToken = if (outputTokenAddress == "1") {
-            UniswapRoutingSDK.ETH_MAINNET
-        } else {
-            val outputTokenMetadata = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
-            Token(
-                chainId = outputTokenMetadata?.chainId!!,
-                address = outputTokenMetadata.contractAddress,
-                decimals = outputTokenMetadata.decimals,
-                name = outputTokenMetadata.name,
-                symbol = outputTokenMetadata.symbol
-            )
+        val outputToken = when (outputTokenAddress) {
+            "1" -> {
+                UniswapRoutingSDK.ETH_MAINNET
+            }
+            "10" -> {
+                UniswapRoutingSDK.ETH_MAINNET
+            }
+            else -> {
+                val outputTokenMetadata = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
+                Token(
+                    chainId = outputTokenMetadata?.chainId!!,
+                    address = outputTokenMetadata.contractAddress,
+                    decimals = outputTokenMetadata.decimals,
+                    name = outputTokenMetadata.name,
+                    symbol = outputTokenMetadata.symbol
+                )
+            }
         }
 
         uniswapApi.swap(

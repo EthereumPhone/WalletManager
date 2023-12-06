@@ -17,12 +17,13 @@ class GetSwapTokens @Inject constructor(
 ) {
 
     operator fun invoke(
-        query: String
+        query: String,
+        chainId: Int
     ): Flow<List<TokenAsset>> =
         combine(
-            tokenMetadataRepository.getTokensMetadata(1),
-            tokenBalanceRepository.getTokensBalances(1),
-            networkBalanceRepository.getNetworkBalance(1)
+            tokenMetadataRepository.getTokensMetadata(chainId),
+            tokenBalanceRepository.getTokensBalances(chainId),
+            networkBalanceRepository.getNetworkBalance(chainId)
         ) { metadata, erc20Amount, networkAmount ->
             val networkAsset = TokenAsset(
                 address = networkAmount.contractAddress,

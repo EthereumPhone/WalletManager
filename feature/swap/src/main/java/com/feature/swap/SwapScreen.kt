@@ -73,6 +73,7 @@ internal fun SwapRoute(
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+    val currentChainId by viewModel.chainIdState.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
@@ -88,7 +89,8 @@ internal fun SwapRoute(
         onAmountChange = viewModel::updateAmount,
         onSelectAsset = viewModel::selectAsset,
         onSwapClicked = { viewModel.swap(it) },
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        currentChainId = currentChainId
     )
 }
 
@@ -101,6 +103,7 @@ internal fun SwapScreen(
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    currentChainId: Int,
     isSyncing: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
@@ -221,23 +224,27 @@ internal fun SwapScreen(
             icon = Icons.Rounded.ArrowForward,
             //enabled = true,
             onSwipe = {
-                onSwapClicked {
-                    if (it.length == 66 && isEthereumTransactionHash(it)) {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
-                        }
-                    } else if (it == "decline") {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
-                        }
-                    } else {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
-                        }
+                if (currentChainId != 1 && currentChainId != 10) {
+                    (context as Activity).runOnUiThread {
+                        Toast.makeText(context, "Swap only supports Mainnet and Optimism at this time.", Toast.LENGTH_LONG).show()
                     }
-                    onBackClick()
-
-
+                } else {
+                    onSwapClicked {
+                        if (it.length == 66 && isEthereumTransactionHash(it)) {
+                            (context as Activity).runOnUiThread {
+                                Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
+                            }
+                        } else if (it == "decline") {
+                            (context as Activity).runOnUiThread {
+                                Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            (context as Activity).runOnUiThread {
+                                Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        onBackClick()
+                    }
                 }
             }
         )
@@ -260,6 +267,7 @@ internal fun SwapScreen(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
                     onQueryChange = onQueryChange,
+                    filterByChain = currentChainId,
                     onSelectAsset = {
                         onSelectAsset(it)
                         coroutineScope.launch {
