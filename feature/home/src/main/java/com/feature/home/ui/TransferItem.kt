@@ -161,6 +161,7 @@ private fun chainToNetworkName(chainId: Int): String = when(chainId) {
         10 -> "Optimism"
         137 -> "Polygon"
         42161 -> "Arbitrum"
+        8453 -> "Base"
         else -> ""
     }
 
