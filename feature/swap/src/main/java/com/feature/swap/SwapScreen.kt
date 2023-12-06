@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.SwipeButton
@@ -266,6 +267,23 @@ internal fun SwapScreen(
                     onBackClick()
 
                 }
+            }
+        )
+        ethOSButton(
+            text = "Send",
+            enabled = true,
+            onClick = {
+                if(value.toFloat() < tokenbalance){
+                    sendTransaction(
+                        SendData(
+                            amount = value.toFloat(),
+                            address = toAddress,
+                            chainId = currentChainId
+                        )
+                    )
+                    onBackClick()
+                }
+
             }
         )
     }

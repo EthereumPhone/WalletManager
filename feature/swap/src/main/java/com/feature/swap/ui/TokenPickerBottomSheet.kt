@@ -69,7 +69,7 @@ fun TokenPickerSheet(
                 topStart = 12.dp,
                 topEnd = 12.dp
             ))
-            .background(Color(0xFF24303D))
+            .background(Color(0xFF262626))
     ) {
 
         // query field
@@ -81,12 +81,13 @@ fun TokenPickerSheet(
             leadingIcon = { Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "search",
-                tint = Color(0xFF9FA2A5)
+                tint = Color.White
             ) },
             placeholder = {
                 Text(
                     text = "Search tokens",
-                    color = Color.Black
+                    fontSize = 18.sp,
+                    color = Color(0xFF9FA2A5)
                 )
             }
         )

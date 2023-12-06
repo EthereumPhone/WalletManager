@@ -283,16 +283,6 @@ fun SendScreen(
     //initalize values
 
 
-    var test by remember { mutableStateOf(tokeninfo) }
-
-
-    var maxAmount by remember { mutableStateOf(test.balance) }
-    var prevAmount by remember { mutableStateOf(value) }
-    var enableButton by remember { mutableStateOf(false) }
-    //var amountColor by remember { mutableStateOf(Color.White) }
-    //var network by remember { mutableStateOf(test.chainId) }
-
-
     val context = LocalContext.current
     //val selectedNetwork = selectedNetworkState.value
 
@@ -402,7 +392,7 @@ fun SendScreen(
                 fontWeight = FontWeight.Normal,
 
             )
-            Spacer(modifier = Modifier.height(24.dp))
+
         }
 
 
@@ -410,8 +400,7 @@ fun SendScreen(
 
         val tokenbalance = when(balances){
             is AssetUiState.Success -> {
-                0.0
-                //balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
+                balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
             }
             else -> {
                 0.0
@@ -514,7 +503,7 @@ fun SendScreen(
 
             Column(
                 horizontalAlignment =  Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
 
@@ -527,10 +516,47 @@ fun SendScreen(
                     text = value,
                     label = "0",
                     singleLine = true,
-                    onTextChanged = { text -> value = text },
+                    onTextChanged = { text ->
+//                        val sanitizedValue = text
+//                            .replace(",", "")
+//                            .replace("_", "")
+//                            .replace("-", "")
+//                            .replace("\\.{2,}".toRegex(), ".")
+
+
+                        if ((value.isEmpty() && text == ".") ||
+                            (value.isEmpty() && text == ",") ||
+                            (value.isEmpty() && text == "-") ||
+                            (value.isEmpty() && text == "_")
+                            ) {
+                            Log.d("DEBUG",value)
+                            Log.d("DEBUG2",text)
+                            // Remove the dot if it's the first character
+                            value = ""
+                        }
+                        if ((value.isNotEmpty() && !value.contains(".")) ||
+                            (value.isNotEmpty() && !value.contains(",")) ||
+                            (value.isNotEmpty() && !value.contains("-")) ||
+                            (value.isNotEmpty() && !value.contains("_"))
+                        ) {
+                            val regex = Regex("^(?![-.,_])[0-9]*\\.?[0-9]*\$")
+                            if (value.isEmpty() || regex.matches(value)) {
+                                value = text
+                            }
+
+                        }
+//                        // Perform any additional validation if needed
+//                        // For example, you can check if it starts with a dot and adjust the input accordingly
+//                        if (sanitizedValue.isNotEmpty() && (sanitizedValue.first() == '.' || sanitizedValue.first() == ',' || sanitizedValue.first() == '_')) {
+//                            // Remove the dot if it's the first character
+//                            value = sanitizedValue.substring(1)
+//                        } else {
+//                            value = text
+//                        }
+                                    },
                     size = 64,
                     maxChar = 10,
-                    color = if(value.isNotEmpty()){
+                    color = if(value.isNotEmpty() && value!="." && value!=","){
                         if(value.toFloat() < tokenbalance){
                             Color.White
                         }else{
@@ -552,7 +578,7 @@ fun SendScreen(
                 Surface(
                     shape= CircleShape,
                     color = Color(0xFF262626),
-                    modifier = Modifier.padding(top=24.dp)
+                    modifier = Modifier.padding(vertical=8.dp)
 
                 ) {
                     Text(
