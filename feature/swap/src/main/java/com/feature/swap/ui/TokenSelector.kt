@@ -172,7 +172,7 @@ fun TokenSelector(
                 maxChar = 12,
                 onTextChanged = {
                     val amountText = if (it == ".") "0$it" else it
-                    onAmountChange(TextFieldSelected.FROM, amountText)
+                    onAmountChange(TextFieldSelected.TO, amountText)
                 },
                 color = if(toAmountTooHigh) Color(0xFFF1847E) else Color.White
             )

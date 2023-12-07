@@ -517,43 +517,40 @@ fun SendScreen(
                     label = "0",
                     singleLine = true,
                     onTextChanged = { text ->
-//                        val sanitizedValue = text
-//                            .replace(",", "")
-//                            .replace("_", "")
-//                            .replace("-", "")
-//                            .replace("\\.{2,}".toRegex(), ".")
 
-
-                        if ((value.isEmpty() && text == ".") ||
+                        if(text == "_"){
+                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
+                        }
+                         if ((value.isEmpty() && text == ".") ||
                             (value.isEmpty() && text == ",") ||
-                            (value.isEmpty() && text == "-") ||
-                            (value.isEmpty() && text == "_")
-                            ) {
+                            (value.isEmpty() && text == "-")
+
+                        ) {
                             Log.d("DEBUG",value)
                             Log.d("DEBUG2",text)
                             // Remove the dot if it's the first character
-                            value = ""
-                        }
-                        if ((value.isNotEmpty() && !value.contains(".")) ||
-                            (value.isNotEmpty() && !value.contains(",")) ||
-                            (value.isNotEmpty() && !value.contains("-")) ||
-                            (value.isNotEmpty() && !value.contains("_"))
-                        ) {
-                            val regex = Regex("^(?![-.,_])[0-9]*\\.?[0-9]*\$")
-                            if (value.isEmpty() || regex.matches(value)) {
-                                value = text
+
+
+                            Log.d("DEBUG VALUE1",value)
+                        }else{
+                            if ((value.isNotEmpty() && text == ".") ||
+                                (value.isNotEmpty() && text == ",") ||
+                                (value.isNotEmpty() && text == "-")
+
+                            ) {
+
+                                Log.d("DEBUG VALUE2",value)
+                            }else{
+                                if(text != "_"){
+                                    value = text
+                                    Log.d("DEBUG VALUE3",value)
+                                }
                             }
 
                         }
-//                        // Perform any additional validation if needed
-//                        // For example, you can check if it starts with a dot and adjust the input accordingly
-//                        if (sanitizedValue.isNotEmpty() && (sanitizedValue.first() == '.' || sanitizedValue.first() == ',' || sanitizedValue.first() == '_')) {
-//                            // Remove the dot if it's the first character
-//                            value = sanitizedValue.substring(1)
-//                        } else {
-//                            value = text
-//                        }
-                                    },
+
+
+                    },
                     size = 64,
                     maxChar = 10,
                     color = if(value.isNotEmpty() && value!="." && value!=","){
