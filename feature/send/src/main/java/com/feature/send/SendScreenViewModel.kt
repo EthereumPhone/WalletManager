@@ -11,6 +11,7 @@ import com.core.data.model.dto.Contact
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
+import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset

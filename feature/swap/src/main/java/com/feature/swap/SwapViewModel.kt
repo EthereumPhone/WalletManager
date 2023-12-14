@@ -1,6 +1,7 @@
 package com.feature.swap
 
 import android.util.Log
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,20 +10,26 @@ import com.core.data.repository.UserDataRepository
 import com.core.domain.GetSwapTokens
 import com.core.model.TokenAsset
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,7 +38,7 @@ class SwapViewModel @Inject constructor(
     getSwapTokens: GetSwapTokens,
     private val swapRepository: SwapRepository,
     private val savedStateHandle: SavedStateHandle,
-
+    private val walletSDK: WalletSDK,
     ): ViewModel() {
 
     private val userData = userDataRepository.userData
@@ -63,6 +70,20 @@ class SwapViewModel @Inject constructor(
     private val _amountsUiState = MutableStateFlow(AmountsUiState())
     val amountsUiState = _amountsUiState.asStateFlow()
 
+    private val _chainIdState = MutableStateFlow(1)
+    val chainIdState = _chainIdState.asStateFlow()
+
+    init {
+        CompletableFuture.runAsync {
+            while(true) {
+                GlobalScope.launch {
+                    _chainIdState.value = walletSDK.getChainId()
+                }
+                Thread.sleep(1000)
+            }
+        }
+    }
+
     private val _selectedTextField = MutableStateFlow(TextFieldSelected.FROM)
     val selectedTextField = _selectedTextField.asStateFlow()
 
@@ -82,7 +103,8 @@ class SwapViewModel @Inject constructor(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     1.0,
-                    address
+                    address,
+                    _chainIdState.value
                 )
                 Log.d("getQuote", quote.toString())
                 _isSyncing.value = false
@@ -234,14 +256,17 @@ private fun swapTokenUiState(
     searchQuery: Flow<String>
 ): Flow<SwapTokenUiState> =
     searchQuery.flatMapLatest { query ->
-        getSwapTokens(query)
-            .map { result ->
-                if(result.isEmpty()) {
-                    SwapTokenUiState.Loading
-                } else {
-                    SwapTokenUiState.Success(result)
-                }
+        val firstCall = getSwapTokens(query, 1)
+        val secondCall = getSwapTokens(query, 10)
+
+        combine(firstCall, secondCall) { firstList, secondList ->
+            val combinedList = firstList + secondList
+            if (combinedList.isEmpty()) {
+                SwapTokenUiState.Loading
+            } else {
+                SwapTokenUiState.Success(combinedList)
             }
+        }
     }
 
 sealed interface SwapTokenUiState {

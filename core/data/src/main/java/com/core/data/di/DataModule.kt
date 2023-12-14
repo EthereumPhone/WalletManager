@@ -147,6 +147,7 @@ object DataModule {
     @Singleton
     @Provides
     fun provideUniSwapApi(
+        @ApplicationContext context: Context,
         walletSDK: WalletSDK,
         web3j: Web3j,
         uniswapRoutingSDK: UniswapRoutingSDK
@@ -154,7 +155,8 @@ object DataModule {
         return UniswapApi(
             walletSDK,
             web3j,
-            uniswapRoutingSDK
+            uniswapRoutingSDK,
+            context
         )
     }
 

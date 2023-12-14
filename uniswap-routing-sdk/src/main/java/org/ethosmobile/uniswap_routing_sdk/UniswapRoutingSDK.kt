@@ -32,14 +32,24 @@ class UniswapRoutingSDK(
         )
     }
 
-    fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String): CompletableFuture<Double> {
+    fun getQuote(inputToken: Token, outputToken: Token, amountIn: Double, receiverAddress: String, chainId: Int): CompletableFuture<Double> {
         val completableFuture: CompletableFuture<Double> = CompletableFuture()
+
+        val wethAddress = if (chainId == 1) {
+            "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        } else {
+            "0x4200000000000000000000000000000000000006"
+        }
 
 
         CompletableFuture.runAsync {
-            val inputAddress = if (inputToken.address == "ETH") "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" else inputToken.address
-            val outputAddress = if (outputToken.address == "ETH") "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" else outputToken.address
-            val tokenPriceURL = "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${inputAddress},${outputAddress}&vs_currencies=usd"
+            val inputAddress = if (inputToken.address == "ETH") wethAddress else inputToken.address
+            val outputAddress = if (outputToken.address == "ETH") wethAddress else outputToken.address
+            val tokenPriceURL = if (chainId == 1) {
+                "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${inputAddress},${outputAddress}&vs_currencies=usd"
+            } else {
+                "https://api.coingecko.com/api/v3/simple/token_price/optimistic-ethereum?contract_addresses=${inputAddress},${outputAddress}&vs_currencies=usd"
+            }
 
             try {
                 val jsonObj = JSONObject(URL(tokenPriceURL).readText())

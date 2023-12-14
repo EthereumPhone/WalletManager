@@ -8,6 +8,7 @@ interface SwapRepository {
         outputTokenAddress: String,
         amount: Double,
         receiverAddress: String,
+        chainId: Int
     ): Double
     suspend fun swap(
         inputTokenAddress: String,

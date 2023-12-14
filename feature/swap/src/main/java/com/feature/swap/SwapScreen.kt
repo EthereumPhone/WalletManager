@@ -79,7 +79,6 @@ internal fun SwapRoute(
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
     val currentChainId by viewModel.chainIdState.collectAsStateWithLifecycle()
 
-
     SwapScreen(
         modifier = modifier,
         swapTokenUiState = swapTokenUiState,
@@ -108,6 +107,7 @@ internal fun SwapScreen(
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
+    currentChainId: Int,
     isSyncing: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
@@ -303,6 +303,7 @@ internal fun SwapScreen(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
                     onQueryChange = onQueryChange,
+                    filterByChain = currentChainId,
                     onSelectAsset = {
                         onSelectAsset(it)
                         coroutineScope.launch {

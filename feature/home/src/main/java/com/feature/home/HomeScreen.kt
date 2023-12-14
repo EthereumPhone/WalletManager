@@ -1,7 +1,6 @@
 package com.feature.home
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,11 +14,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
 import com.feature.home.ui.AddressBar
@@ -42,6 +42,7 @@ import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.prefs.Preferences
+import com.feature.home.ui.WalletTabRow
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable

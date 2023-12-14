@@ -47,6 +47,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -68,6 +76,11 @@ import com.core.ui.ethOSCenterTextField
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
 import com.feature.send.ui.NetworkPickerSheet
+import com.core.ui.SelectedNetworkButton
+import com.feature.send.ui.TextToggleButton
+import com.feature.send.ui.ethOSTextField
+import com.journeyapps.barcodescanner.CaptureManager
+import com.journeyapps.barcodescanner.CompoundBarcodeView
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
@@ -99,10 +112,12 @@ fun SendRoute(
     val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
     val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
     val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
+
+    var initialAddress = initialAddress
+
+    val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val walletSDK = WalletSDK(context)
-    val coroutineScope = rememberCoroutineScope()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     val userNetwork by viewModel.userNetwork.collectAsStateWithLifecycle()
@@ -111,8 +126,6 @@ fun SendRoute(
 
 
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
-
-
 
     SendScreen(
         modifier = Modifier,
@@ -124,7 +137,6 @@ fun SendRoute(
         onToAddressChanged= viewModel::changeToAddress,
         onCurrencyChange = {  },
         sendTransaction = { sendData ->
-
             val amount = sendData.amount.toString()
             var address = sendData.address
             val chainid = sendData.chainId
@@ -137,12 +149,7 @@ fun SendRoute(
                 42161 -> "arb-mainnet"
                 else -> "eth-mainnet"
             }
-
-            var rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
-
-            if (chainid == 137) {
-                rpcurl = "https://rpc.ankr.com/polygon"
-            }
+            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
 
             println("RPC: $rpcurl")
 
@@ -154,7 +161,6 @@ fun SendRoute(
             val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
 
             if(hasInternet) {
-
 
                 CoroutineScope(Dispatchers.IO).launch {
 
@@ -297,6 +303,17 @@ fun SendScreen(
         }
     )
 
+    val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            if(result.contents == null) {
+
+            } else {
+                address = result.contents
+            }
+        }
+    )
+
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -351,6 +368,43 @@ fun SendScreen(
 
     LaunchedEffect(key1 = true) {
         requestContactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+    }
+
+
+    var amountfontSize by remember { mutableStateOf(68.sp) }
+
+    val maxFontSize = 68.sp
+    val minFontSize = 42.sp
+    val characterCount = value.length
+    amountfontSize =
+        when {
+        characterCount <= 2 -> 68.sp
+        characterCount > 2 && characterCount <= 4 -> 64.sp
+        characterCount > 4 && characterCount <= 6 -> 54.sp
+            characterCount > 4 && characterCount <= 6 -> 50.sp
+            characterCount > 6 && characterCount <= 9 -> 48.sp
+        //characterCount > 5 && characterCount <= 10 -> 18.sp
+        else -> minFontSize
+    }
+
+    val showInfoDialog =  remember { mutableStateOf(false) }
+    if(showInfoDialog.value){
+        InfoDialog(
+            setShowDialog = {
+                showInfoDialog.value = false
+            },
+            title = "Send crypto",
+            text = "Send Crypto to any address or ENS on mainnet or various L2s."
+        )
+    }
+
+    when (txComplete) {
+        is TxCompleteUiState.UnComplete -> {
+
+        }
+        is TxCompleteUiState.Complete -> {
+            onBackClick()
+        }
     }
 
     Column (
@@ -724,7 +778,6 @@ fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
 //    }
     return adjustedSize
 }
-
 
 fun showCamera(
     cameraLauncher: ManagedActivityResultLauncher<ScanOptions, ScanIntentResult>
