@@ -92,16 +92,16 @@ fun TopHeader(
             if (trailIcon){
                 IconButton(
                     onClick = {
-                        if (!onlyTitle){
-                            onClick()
-                        }
+//                        if (!onlyTitle){
+//                            onClick()
+//                        }
                     },
                     modifier  = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = imageVector,
                         contentDescription = "Icon",
-                        tint =  if (!onlyTitle) Color(0xFF9FA2A5) else Color.Transparent,
+                        tint =  Color.Transparent,
                         modifier  = Modifier.size(24.dp)
                     )
                 }
