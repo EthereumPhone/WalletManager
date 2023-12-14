@@ -586,39 +586,6 @@ fun SendScreen(
                         modifier = Modifier.padding(16.dp ,4.dp)
                     )
                 }
-                /*Row{
-                    ethOSTextField(
-                        text = value,
-                        label = "0",
-                        singleLine = true,
-                        onTextChanged = { text -> value = text },
-                        size = 64,
-                        maxChar = 10,
-                        color = if(value.isNotEmpty()){
-                            if(value.toFloat() < tokenbalance){
-                                Color.White
-                            }else{
-                                Color(0xFFc82e31)
-                            }
-                        }else {
-                            Color.White
-                        },
-                        numberInput = true
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-
-
-
-                    Text(
-                        text = abbriviation,
-                        fontSize = calculateFontSize(value.length, 64),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.width(IntrinsicSize.Min)
-                    )
-                }*/
-
-
             }
             ethOSButton(
                 text = "Send",

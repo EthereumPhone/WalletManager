@@ -32,45 +32,67 @@ fun AssetListItem(
     title: String,
     assets: List<TokenAsset>,
     linkTo: () -> Unit = {},
-){
+) {
+
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
-    ){
-        Text(title.uppercase(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+    ) {
+        Text(
+            title.uppercase(),
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold
+        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
-            ){
-                Row (
+            ) {
+                Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
 
-                    ){
-                    Text(formatDouble(assets.sumOf { it.balance }), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    ) {
+                    Text(
+                        formatDouble(assets.sumOf { it.balance }),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
 
-                    Text(assets.get(0).symbol.uppercase(), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        assets.get(0).symbol.uppercase(),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
                 //TODO: Dollar Amount
-                Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp, fontWeight = FontWeight.Medium )
+                Text(
+                    "$0.00-",
+                    color = Color(0xFF9FA2A5),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
             Spacer(modifier = Modifier.width(24.dp))
 
-                IconButton(
-                    onClick = linkTo,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowForwardIos,
-                        contentDescription = "Forward",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+            IconButton(
+                onClick = linkTo,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowForwardIos,
+                    contentDescription = "Forward",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
 
 
         }
