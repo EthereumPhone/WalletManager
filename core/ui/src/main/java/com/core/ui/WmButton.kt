@@ -32,17 +32,9 @@ fun ethOSButton(
         remember { MutableInteractionSource() }
 ) {
 
-    //val interactionSource = remember { MutableInteractionSource() }
-    //val isPressed by interactionSource.collectIsPressedAsState() //if pressed
-    //val isHovering by interactionSource.collectIsFocusedAsState() //if hovered
-
     Button(
         interactionSource = interactionSource,
-        onClick = {
-
-                onClick()
-
-        },
+        onClick = onClick,
         shape = RoundedCornerShape(50.dp),
         enabled = enabled,
         modifier = modifier
@@ -50,7 +42,6 @@ fun ethOSButton(
             //.hoverable(interactionSource = interactionSource, enabled = true)
             .height(54.dp)
             .indication(interactionSource, rememberRipple(bounded = true, color = Color.Black))
-
         ,
         contentPadding= PaddingValues(horizontal = 8.dp, vertical = 8.dp),
         colors = ButtonDefaults.buttonColors(

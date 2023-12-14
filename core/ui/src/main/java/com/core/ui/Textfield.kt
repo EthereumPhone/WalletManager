@@ -34,7 +34,6 @@ import kotlin.math.max
 fun ethOSCenterTextField(
     text: String,
     size: Int,
-    //focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
     label: String = "",
     singleLine: Boolean = false,//true,
@@ -113,7 +112,6 @@ fun ethOSCenterTextField(
 fun ethOSTextField(
     text: String,
     size: Int,
-    //focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
     label: String = "",
     singleLine: Boolean = false,//true,
