@@ -2,7 +2,6 @@ package com.feature.send
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
@@ -13,16 +12,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -47,14 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -64,40 +50,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.model.dto.Contact
 import com.core.data.util.chainToApiKey
-import com.core.model.SendData
 import com.core.model.TokenAsset
-import com.core.ui.SelectedNetworkButton
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
-import org.ethereumphone.walletsdk.WalletSDK
 import java.text.DecimalFormat
 import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
-import com.feature.send.ui.NetworkPickerSheet
-import com.core.ui.SelectedNetworkButton
-import com.feature.send.ui.TextToggleButton
-import com.feature.send.ui.ethOSTextField
-import com.journeyapps.barcodescanner.CaptureManager
-import com.journeyapps.barcodescanner.CompoundBarcodeView
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
-import org.web3j.protocol.Web3j
-import org.web3j.protocol.http.HttpService
-import java.math.BigDecimal
-import java.math.BigInteger
+
 import java.util.concurrent.CompletableFuture
-import kotlin.math.abs
 import kotlin.math.max
 
 
@@ -108,125 +79,29 @@ fun SendRoute(
     initialAddress: String = "",
     viewModel: SendViewModel = hiltViewModel()
 ) {
-    val userAddress by viewModel.userAddress.collectAsStateWithLifecycle()
-    val maxAmount by viewModel.maxAmount.collectAsStateWithLifecycle(initialValue = "")
-    val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
+    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+    val amount by viewModel.amount.collectAsStateWithLifecycle()
     val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
-
-    var initialAddress = initialAddress
-
-    val balances by viewModel.networkBalanceState.collectAsStateWithLifecycle()
+    val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
-
-    val userNetwork by viewModel.userNetwork.collectAsStateWithLifecycle()
-
-    val currencyprice by viewModel.exchange.collectAsStateWithLifecycle("")
-
-
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
+    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     SendScreen(
         modifier = Modifier,
         onBackClick = onBackClick,
         toAddress = toAddress,
-        balances = balances,
-        currencyPrice = currencyprice,
-        onChangeAssetClicked = viewModel::changeSelectedAsset,
-        onToAddressChanged= viewModel::changeToAddress,
-        onCurrencyChange = {  },
-        sendTransaction = { sendData ->
-            val amount = sendData.amount.toString()
-            var address = sendData.address
-            val chainid = sendData.chainId
-            //TODO: Replace with actual method to get rpcUrl
-            val chainName = when(chainid) {
-                1 -> "eth-mainnet"
-                5 -> "eth-goerli"
-                10 -> "opt-mainnet"
-                137 -> "polygon-mainnet"
-                42161 -> "arb-mainnet"
-                else -> "eth-mainnet"
-            }
-            val rpcurl = "https://${chainName}.g.alchemy.com/v2/${chainToApiKey(chainName)}"
-
-            println("RPC: $rpcurl")
-
-            Log.e("not complete","$txComplete")
-            // Check if phone is connected to internet using NetworkManager
-            val connectivityManager = ContextCompat.getSystemService(context, android.net.ConnectivityManager::class.java)
-            val activeNetwork = connectivityManager?.activeNetwork
-            val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
-            val hasInternet = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-
-            if(hasInternet) {
-
-                CoroutineScope(Dispatchers.IO).launch {
-
-
-
-                    val web3jInstance = Web3j.build(HttpService(rpcurl))
-
-                    val wallet = WalletSDK(
-                        context = context,
-                        web3jInstance = web3jInstance
-                    )
-
-                    if(wallet.getChainId() != chainid){
-                        wallet.changeChain(chainid,rpcurl)
-                    }
-
-                    // TODO: Find out why polygon transaction is underpriced
-                    var gasPrice = web3jInstance.ethGasPrice().send().gasPrice
-                    gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
-
-
-                    var res = try {
-                         wallet.sendTransaction(
-                            to = address,
-                            value = BigDecimal(amount.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString(), // 1 eth in wei
-                            data = "",
-                            gasPrice = gasPrice.toString()
-                         )
-                    } catch (exception: NullPointerException) {
-                        "error"
-                    }
-
-                    Log.e("Test",res)
-                    //Toast.makeText(context, "swipebutton", Toast.LENGTH_LONG).show()
-                    println(res)
-                    if(res != "decline" && res != "error"){
-                        //onBackClick()
-                        (context as Activity).runOnUiThread {
-                            //TODO: Snackbar
-                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
-                        }
-                        viewModel.changeTxComplete()
-
-                    }
-                    if (res == "error") {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    if (res != "decline" && res != "error" && !res.startsWith("0x")) {
-                        (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "Sending tx failed: $res", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            } else {
-                (context as Activity).runOnUiThread {
-                    Toast.makeText(context, "No internet connection found", Toast.LENGTH_LONG).show()
-                }
-            }
-        },
-        txComplete = txComplete,
+        amount = amount,
+        walletDataUiState = walletDataUiState,
+        assets = assets,
         selectedToken = selectedToken,
-        userNetwork = userNetwork,
+        contacts = contacts,
+        onChangeAssetClicked = viewModel::updateSelectedAsset,
+        onAmountChange = viewModel::updateAmount,
+        onToAddressChanged= viewModel::updateToAddress,
+        sendTransaction = viewModel::send,
+        txComplete = txComplete,
         getContacts = viewModel::getContacts,
-        contacts = contacts
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
@@ -234,50 +109,26 @@ fun SendRoute(
 @Composable
 fun SendScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit,
     toAddress: String,
-    balances:  AssetUiState,
-    currencyPrice: String,
+    amount: String,
+    walletDataUiState: WalletDataUiState,
+    assets: AssetUiState,
     onChangeAssetClicked: (TokenAsset) -> Unit,
+    onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    onCurrencyChange: (String) -> Unit,
-    sendTransaction: (SendData) -> Unit,
+    sendTransaction: () -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
-    userNetwork: String,
+    onBackClick: () -> Unit,
     getContacts: (Context) -> Unit,
     contacts: List<Contact>
-    //getContacts: (Context, (List<Contact>) -> Unit) -> Unit,
 ) {
-
-
-
 
     var validSendAddress by remember { mutableStateOf(false) }
 
-    if (toAddress.endsWith(".eth")) {
-        if (ENSName(toAddress.lowercase()).isPotentialENSDomain()) {
-            // It is ENS
-            println("Checking ENS")
-            CompletableFuture.runAsync {
-                val ens = ENS(HttpEthereumRPC("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
-                val ensAddr = ens.getAddress(ENSName(toAddress.lowercase()))
-                onToAddressChanged(ensAddr?.hex.toString())
-                validSendAddress = true
-            }
-        } else {
-            if (toAddress.isNotEmpty()) validSendAddress = WalletUtils.isValidAddress(toAddress.lowercase())
-        }
-        if(toAddress.isEmpty()) {
-            validSendAddress = false
-        }
-    }
 
-    var value by remember { mutableStateOf("") }
-    //var showDialog by remember { mutableStateOf(false) }
+
     var amountError by remember { mutableStateOf(false) }
-
-    var tokeninfo by remember { mutableStateOf(TokenAsset("",0,"","",7.0)) }
 
     // Declaring Coroutine scope
     val coroutineScope = rememberCoroutineScope()
@@ -290,7 +141,6 @@ fun SendScreen(
 
 
     val context = LocalContext.current
-    //val selectedNetwork = selectedNetworkState.value
 
     val barCodeLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
@@ -299,17 +149,6 @@ fun SendScreen(
 
             } else {
                 onToAddressChanged(result.contents)
-            }
-        }
-    )
-
-    val barCodeLauncher = rememberLauncherForActivityResult(
-        contract = ScanContract(),
-        onResult = { result ->
-            if(result.contents == null) {
-
-            } else {
-                address = result.contents
             }
         }
     )
@@ -358,10 +197,6 @@ fun SendScreen(
     var selectedContact by remember { mutableStateOf(Contact())  }
     var isContactSelected by remember { mutableStateOf(false) }
 
-
-
-
-
     LaunchedEffect(key1 = true) {
         requestPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
@@ -375,7 +210,7 @@ fun SendScreen(
 
     val maxFontSize = 68.sp
     val minFontSize = 42.sp
-    val characterCount = value.length
+    val characterCount = amount.length
     amountfontSize =
         when {
         characterCount <= 2 -> 68.sp
@@ -388,15 +223,6 @@ fun SendScreen(
     }
 
     val showInfoDialog =  remember { mutableStateOf(false) }
-    if(showInfoDialog.value){
-        InfoDialog(
-            setShowDialog = {
-                showInfoDialog.value = false
-            },
-            title = "Send crypto",
-            text = "Send Crypto to any address or ENS on mainnet or various L2s."
-        )
-    }
 
     when (txComplete) {
         is TxCompleteUiState.UnComplete -> {
@@ -404,6 +230,22 @@ fun SendScreen(
         }
         is TxCompleteUiState.Complete -> {
             onBackClick()
+        }
+    }
+
+    val network = when(walletDataUiState) {
+        is WalletDataUiState.Loading -> {
+            "loading"
+        }
+        is WalletDataUiState.Success -> {
+            idToName(walletDataUiState.userData.walletNetwork)
+        }
+    }
+
+    val tokenBalance = when(selectedToken) {
+        is SelectedTokenUiState.Unselected -> { 0.0 }
+        is SelectedTokenUiState.Selected -> {
+            selectedToken.tokenAsset.balance
         }
     }
 
@@ -429,15 +271,6 @@ fun SendScreen(
             )
 
 
-            val network = when(userNetwork){
-                "1" -> "Mainnet"
-                "5" -> "Görli"
-                "10" -> "Optimism"
-                "137" -> "Polygon"
-                "42161" -> "Arbitrum"
-                "8453" -> "Base"
-                else -> ""
-            }
 
             Text(
                 text = "on ${network}",
@@ -446,19 +279,6 @@ fun SendScreen(
                 fontWeight = FontWeight.Normal,
 
             )
-
-        }
-
-
-
-
-        val tokenbalance = when(balances){
-            is AssetUiState.Success -> {
-                balances.assets.filter { it.chainId == userNetwork.toInt()}.get(0).balance
-            }
-            else -> {
-                0.0
-            }
         }
 
         val currentChainId = when (selectedToken) {
@@ -564,10 +384,8 @@ fun SendScreen(
 
             ) {
 
-
-
                 ethOSTextField(
-                    text = value,
+                    text = amount,
                     label = "0",
                     singleLine = true,
                     onTextChanged = { text ->
@@ -575,40 +393,38 @@ fun SendScreen(
                         if(text == "_"){
                             Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
                         }
-                         if ((value.isEmpty() && text == ".") ||
-                            (value.isEmpty() && text == ",") ||
-                            (value.isEmpty() && text == "-")
+                         if ((amount.isEmpty() && text == ".") ||
+                            (amount.isEmpty() && text == ",") ||
+                            (amount.isEmpty() && text == "-")
 
                         ) {
-                            Log.d("DEBUG",value)
+                            Log.d("DEBUG",amount)
                             Log.d("DEBUG2",text)
                             // Remove the dot if it's the first character
 
 
-                            Log.d("DEBUG VALUE1",value)
+                            Log.d("DEBUG VALUE1",amount)
                         }else{
-                            if ((value.isNotEmpty() && text == ".") ||
-                                (value.isNotEmpty() && text == ",") ||
-                                (value.isNotEmpty() && text == "-")
+                            if ((amount.isNotEmpty() && text == ".") ||
+                                (amount.isNotEmpty() && text == ",") ||
+                                (amount.isNotEmpty() && text == "-")
 
                             ) {
 
-                                Log.d("DEBUG VALUE2",value)
+                                Log.d("DEBUG VALUE2",amount)
                             }else{
                                 if(text != "_"){
-                                    value = text
-                                    Log.d("DEBUG VALUE3",value)
+                                    onAmountChange(amount)
+                                    Log.d("DEBUG VALUE3",amount)
                                 }
                             }
 
                         }
-
-
                     },
                     size = 64,
                     maxChar = 10,
-                    color = if(value.isNotEmpty() && value!="." && value!=","){
-                        if(value.toFloat() < tokenbalance){
+                    color = if(amount.isNotEmpty() && amount!="." && amount!=",") {
+                        if(amount.toFloat() < tokenBalance){
                             Color.White
                         }else{
                             Color(0xFFc82e31)
@@ -619,7 +435,7 @@ fun SendScreen(
                     numberInput = true
                 )
                 Text(
-                    text = "$tokenbalance available",
+                    text = "$amount available",
                     fontSize = 20.sp,
                     color = Color(0xFF9FA2A5),
                     fontWeight = FontWeight.Normal
@@ -640,55 +456,15 @@ fun SendScreen(
                         modifier = Modifier.padding(16.dp ,4.dp)
                     )
                 }
-                /*Row{
-                    ethOSTextField(
-                        text = value,
-                        label = "0",
-                        singleLine = true,
-                        onTextChanged = { text -> value = text },
-                        size = 64,
-                        maxChar = 10,
-                        color = if(value.isNotEmpty()){
-                            if(value.toFloat() < tokenbalance){
-                                Color.White
-                            }else{
-                                Color(0xFFc82e31)
-                            }
-                        }else {
-                            Color.White
-                        },
-                        numberInput = true
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-
-
-
-                    Text(
-                        text = abbriviation,
-                        fontSize = calculateFontSize(value.length, 64),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.width(IntrinsicSize.Min)
-                    )
-                }*/
-
-
             }
             ethOSButton(
                 text = "Send",
                 enabled = true,
                 onClick = {
-                    if(value.toFloat() < tokenbalance){
-                        sendTransaction(
-                            SendData(
-                                amount = value.toFloat(),
-                                address = toAddress,
-                                chainId = currentChainId
-                            )
-                        )
+                    if(amount.toFloat() < tokenBalance) {
+                        sendTransaction()
                         onBackClick()
                     }
-
                 }
             )
         }
@@ -791,6 +567,20 @@ fun showCamera(
     cameraLauncher.launch(options)
 }
 
+private fun idToName(name: String): String = when(name) {
+    "1" -> "Mainnet"
+    "5" -> "Goerli"
+    "137" -> "Polygon" // Polygon
+    "10" -> "Optimism" // Optimum
+    "42161" -> "Arbitrum" // Arbitrum
+    "8453" -> "Base" // Base
+    else -> {
+        "N/A"
+    }
+}
+
+
+
 
 @Preview
 @Composable
@@ -798,47 +588,45 @@ fun PreviewSendScreen() {
     val context = LocalContext.current
     SendScreen(
         onBackClick= {},
-    toAddress="qwertyuio",
-    balances=  AssetUiState.Success(listOf(
-        TokenAsset(
-            "0xggrh32335n5dsiwjr",
-            1,
-            "ETH",
-            "Ether",
-            1.977
-        ),
-        TokenAsset(
-            "0xFjeiu54h44h5h643o4o4",
-            1,
-            "ETH",
-            "Ether",
-            1.2145
-        ),
-        TokenAsset(
-            "0xew34n4i55i5i6nwp20dgheru",
-            1,
-            "ETH",
-            "Ether",
-            0.23
-        ),
-
-    )),
-    currencyPrice= "0.5",
-    onChangeAssetClicked = { tokenasset ->  },
-    onToAddressChanged ={ tokenasset ->  },
-    onCurrencyChange= { tokenasset ->  },
-    sendTransaction= { tokenasset ->  },
-    selectedToken = SelectedTokenUiState.Selected(
-        TokenAsset(
-            "0xFjeiu54h44h5h643o4o4",
-            1,
-            "ETH",
-            "Ether",
-            1.2145
-        ),
-    ),
-    txComplete = TxCompleteUiState.Complete,
-        userNetwork = "Mainnet",
+        toAddress="qwertyuio",
+        assets=  AssetUiState.Success(listOf(
+            TokenAsset(
+                "0xggrh32335n5dsiwjr",
+                1,
+                "ETH",
+                "Ether",
+                1.977
+            ),
+            TokenAsset(
+                "0xFjeiu54h44h5h643o4o4",
+                1,
+                "ETH",
+                "Ether",
+                1.2145
+            ),
+            TokenAsset(
+                "0xew34n4i55i5i6nwp20dgheru",
+                1,
+                "ETH",
+                "Ether",
+                0.23
+            ),
+            )),
+        walletDataUiState = WalletDataUiState.Loading,
+        onChangeAssetClicked = { tokenasset ->  },
+        onToAddressChanged ={ tokenasset ->  },
+        sendTransaction= { },
+        amount = "",
+        selectedToken = SelectedTokenUiState.Selected(
+            TokenAsset(
+                "0xFjeiu54h44h5h643o4o4",
+                1,
+                "ETH",
+                "Ether",
+                1.2145)
+            ),
+        onAmountChange = {},
+        txComplete = TxCompleteUiState.Complete,
         getContacts = {},
         contacts = emptyList()
     )

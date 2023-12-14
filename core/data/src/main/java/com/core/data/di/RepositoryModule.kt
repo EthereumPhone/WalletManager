@@ -4,7 +4,6 @@ import com.core.data.repository.AlchemyTokenBalanceRepository
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.CoinbaseExchangeRepository
-import com.core.data.repository.Erc20TransferRepository
 import com.core.data.repository.ExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.ProtoUserDataRepository
@@ -16,7 +15,6 @@ import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
-import com.core.data.repository.Web3jErc20TransferRepository
 import com.core.data.repository.Web3jNetworkBalanceRepository
 import dagger.Binds
 import dagger.Module
@@ -61,11 +59,6 @@ interface RepositoryModule {
     fun bindsSendRepository(
         sendRepositoryImp: SendRepositoryImp
     ): SendRepository
-
-    @Binds
-    fun bindsErc20TransferRepository(
-        erc20TransferRepository: Web3jErc20TransferRepository
-    ): Erc20TransferRepository
 
     @Binds
     fun bindsCoinbaseExchangeRepository(

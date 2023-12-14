@@ -70,19 +70,6 @@ class SwapViewModel @Inject constructor(
     private val _amountsUiState = MutableStateFlow(AmountsUiState())
     val amountsUiState = _amountsUiState.asStateFlow()
 
-    private val _chainIdState = MutableStateFlow(1)
-    val chainIdState = _chainIdState.asStateFlow()
-
-    init {
-        CompletableFuture.runAsync {
-            while(true) {
-                GlobalScope.launch {
-                    _chainIdState.value = walletSDK.getChainId()
-                }
-                Thread.sleep(1000)
-            }
-        }
-    }
 
     private val _selectedTextField = MutableStateFlow(TextFieldSelected.FROM)
     val selectedTextField = _selectedTextField.asStateFlow()
@@ -104,7 +91,7 @@ class SwapViewModel @Inject constructor(
                     toAsset.tokenAsset.address,
                     1.0,
                     address,
-                    _chainIdState.value
+                    chainIdState.value.toInt()
                 )
                 Log.d("getQuote", quote.toString())
                 _isSyncing.value = false

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,18 +32,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.model.TokenAsset
-import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
 import com.feature.home.ui.AddressBar
+import com.feature.home.ui.AssetList
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.OnboardingModalBottomSheet
-import com.feature.home.ui.WalletTabRow
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.prefs.Preferences
-import com.feature.home.ui.WalletTabRow
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -232,9 +230,8 @@ internal fun HomeScreen(
             navigateToSend,
             navigateToReceive
             )
-            WalletTabRow(
-            assetsUiState,
-            )
+
+            AssetList(assetsUiState)
         }
 
 
@@ -255,23 +252,6 @@ internal fun HomeScreen(
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
-}
-
-
 
 fun formatDouble(input: Double): String {
     val decimalFormat = DecimalFormat("#.#####")

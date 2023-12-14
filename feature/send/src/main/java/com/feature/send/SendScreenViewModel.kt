@@ -4,86 +4,80 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
-import com.core.data.repository.AlchemyTransferRepository
-import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.SendRepository
-import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
-import com.core.model.NetworkChain
+import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
+import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.scopes.ViewModelScoped
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.lifecycle.SavedStateHandle
+import com.core.data.remote.EnsApi
+import com.core.model.UserData
+import com.core.result.Result
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.update
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
-    userDataRepository: UserDataRepository,
+    private val userDataRepository: UserDataRepository,
     private val sendRepository: SendRepository,
-    private val networkBalanceRepository: NetworkBalanceRepository,
-    private val alchemyTransferRepository: AlchemyTransferRepository // for pending transfers
+    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
+    private val savedStateHandle: SavedStateHandle,
+    private val ensApi: EnsApi
 ): ViewModel() {
 
-    val userAddress: StateFlow<String> =
-        userDataRepository.userData.map {
-            it.walletAddress
+    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
+        WalletDataUiState.Success(it)
+    }.stateIn(
+        scope = viewModelScope,
+        initialValue = WalletDataUiState.Loading,
+        started = SharingStarted.WhileSubscribed(5_000)
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val toAddress = savedStateHandle.getStateFlow(ADDRESS_QUERY, "")
+        .mapLatest {
+            ensApi.resolveEns(
+                it,
+                userDataRepository.userData.first().walletNetwork.toInt()
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ""
         )
+    val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
+    val amount = savedStateHandle.getStateFlow(AMOUNT, "")
 
-    val userNetwork: StateFlow<String> =
-        userDataRepository.userData.map {
-            it.walletNetwork
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
 
-    val networkBalanceState: StateFlow<AssetUiState> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances  ->
-                val assets = balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+    private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
+    val selectedAssetUiState = _selectedAssetUiState.asStateFlow()
 
-                    TokenAsset(
-                        it.contractAddress,
-                        it.chainId,
-                        if(name == "GOERLI") "GÖRLI" else name,
-                        if(name == "GOERLI") "GÖRLI" else name,
-                        it.tokenBalance.toDouble())
-                }
-                AssetUiState.Success(assets)
-            }.stateIn(
+    val tokensAssetState: StateFlow<AssetUiState> =
+        assetUiState(
+            userDataRepository,
+            queryTokenAssetsByNetwork,
+            searchQuery
+        ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AssetUiState.Loading
         )
-
-    private val _maxAmount = MutableStateFlow("")
-    val maxAmount: Flow<String> = _maxAmount .asStateFlow()
-
-    private val _amount = MutableStateFlow("")
-    val amount: Flow<String> = _amount .asStateFlow()
-
-    private val _toAddress = MutableStateFlow("")
-    val toAddress: Flow<String> = _toAddress.asStateFlow()
 
     private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
     val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
@@ -91,58 +85,51 @@ class SendViewModel @Inject constructor(
     private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)
     val txComplete: StateFlow<TxCompleteUiState> = _txComplete.asStateFlow()
 
-    private val _exchange = MutableStateFlow("")
-    val exchange: Flow<String> = _exchange
-
-
     private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
     val contacts: Flow<List<Contact>> = _contacts
 
 
-
-    fun send(
-        to: String,
-        chainId: Int,
-        amount: String
-    ){
+    fun send() {
         viewModelScope.launch {
-            sendRepository.transferEth(
-                chainId = chainId,
-                toAddress = to,
-                data = "",
-                value = amount
-            )
-        }
-    }
+            val selectedAsset = _selectedAssetUiState.value
 
-
-    fun changeToAddress(address: String) {
-        Log.d("Wowser", address)
-        _toAddress.value = address
-    }
-
-    fun changeTxComplete() {
-        when(_txComplete.value) {
-            is TxCompleteUiState.UnComplete -> {
-                _txComplete.value = TxCompleteUiState.Complete
-
-            }
-            is TxCompleteUiState.Complete -> {
-                _txComplete.value = TxCompleteUiState.UnComplete
+            if(selectedAsset is SelectedTokenUiState.Selected) {
+                val asset = selectedAsset.tokenAsset
+                if(asset.address.contains("0x")) {
+                    sendRepository.transferErc20(
+                        asset,
+                        amount.value.toDouble(),
+                        toAddress.value
+                    )
+                } else {
+                    sendRepository.transferEth(
+                        chainId = userDataRepository.userData.first().walletNetwork.toInt(),
+                        toAddress = toAddress.value,
+                        data = "",
+                        value = amount.value
+                    )
+                }
             }
         }
     }
 
-    fun changeSelectedAsset(tokenAsset: TokenAsset) {
-        when(_selectedAsset.value) {
-            is SelectedTokenUiState.Selected -> {
-                _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
 
-            }
-            is SelectedTokenUiState.Unselected -> {
-                _selectedAsset.value = SelectedTokenUiState.Selected(tokenAsset)
-            }
+    fun updateToAddress(address: String) {
+        savedStateHandle[ADDRESS_QUERY] = address
+    }
+
+    fun updateAmount(amount: String) {
+        savedStateHandle[AMOUNT] = amount
+    }
+
+    fun updateSelectedAsset(tokenAsset: TokenAsset) {
+        _selectedAssetUiState.update {
+            SelectedTokenUiState.Selected(tokenAsset)
         }
+    }
+
+    fun updateQuery(query: String) {
+        savedStateHandle[SEARCH_QUERY] = query
     }
 
 
@@ -246,8 +233,37 @@ class SendViewModel @Inject constructor(
         }
         return null
     }
+}
 
 
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun assetUiState(
+    userDataRepository: UserDataRepository,
+    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
+    searchQuery: Flow<String>
+): Flow<AssetUiState> {
+    return searchQuery.flatMapLatest { query ->
+        val userData = userDataRepository.userData.first()
+        queryTokenAssetsByNetwork(
+            userData.walletNetwork.toInt(),
+            query
+        )
+            .asResult()
+            .mapLatest { result ->
+                when(result) {
+                    is Result.Success -> {
+                        if (result.data.isEmpty()) {
+                            AssetUiState.Empty
+                        } else {
+                            AssetUiState.Success(result.data)
+                        }
+                    }
+                    is Result.Loading -> AssetUiState.Loading
+                    is Result.Error -> AssetUiState.Error
+                }
+            }
+    }
 }
 
 sealed interface TxCompleteUiState {
@@ -269,5 +285,11 @@ sealed interface AssetUiState {
     ): AssetUiState
 }
 
+sealed interface WalletDataUiState {
+    object Loading: WalletDataUiState
+    data class Success(val userData: UserData): WalletDataUiState
+}
 
-
+private const val SEARCH_QUERY = "searchQuery"
+private const val ADDRESS_QUERY = "addressQuery"
+private const val AMOUNT = "amount"

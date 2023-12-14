@@ -49,7 +49,14 @@ class SendRepositoryImp @Inject constructor(
     }
 
     override suspend fun transferErc20(tokenAsset: TokenAsset, amount: Double, toAddress: String) {
-        TODO("Not yet implemented")
+        withContext(Dispatchers.IO) {
+            erc20TransferApi.sendErc20Token(
+                toAddress,
+                tokenAsset.address,
+                amount,
+                tokenAsset.decimals
+            )
+        }
     }
 
     override suspend fun maxAllowedSend(

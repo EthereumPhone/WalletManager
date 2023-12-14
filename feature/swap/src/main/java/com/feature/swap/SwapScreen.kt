@@ -107,7 +107,6 @@ internal fun SwapScreen(
     exchangeUiState: Double,
     amountsUiState: AmountsUiState,
     assetsUiState: AssetsUiState,
-    currentChainId: Int,
     isSyncing: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
