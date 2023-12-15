@@ -41,6 +41,8 @@ class SendViewModel @Inject constructor(
     private val ensApi: EnsApi
 ): ViewModel() {
 
+    val currentChain: Flow<String> = userDataRepository.userData.map { it.walletNetwork }
+
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
     }.stateIn(
@@ -79,8 +81,6 @@ class SendViewModel @Inject constructor(
             initialValue = AssetUiState.Loading
         )
 
-    private val _selectedAsset = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
-    val selectedAsset: StateFlow<SelectedTokenUiState> = _selectedAsset.asStateFlow()
 
     private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)
     val txComplete: StateFlow<TxCompleteUiState> = _txComplete.asStateFlow()

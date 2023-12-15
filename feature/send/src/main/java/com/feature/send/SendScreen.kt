@@ -56,6 +56,7 @@ import com.core.ui.ethOSButton
 import java.text.DecimalFormat
 import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
+import com.core.ui.util.chainIdToName
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
 import com.journeyapps.barcodescanner.ScanContract
@@ -79,15 +80,17 @@ fun SendRoute(
     initialAddress: String = "",
     viewModel: SendViewModel = hiltViewModel()
 ) {
+    val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
     val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val amount by viewModel.amount.collectAsStateWithLifecycle()
     val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
     val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
-    val selectedToken by viewModel.selectedAsset.collectAsStateWithLifecycle()
+    val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     SendScreen(
+        currentNetwork = currentNetwork,
         modifier = Modifier,
         onBackClick = onBackClick,
         toAddress = toAddress,
@@ -108,6 +111,7 @@ fun SendRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendScreen(
+    currentNetwork: String,
     modifier: Modifier = Modifier,
     toAddress: String,
     amount: String,
@@ -125,9 +129,6 @@ fun SendScreen(
 ) {
 
     var validSendAddress by remember { mutableStateOf(false) }
-
-
-
     var amountError by remember { mutableStateOf(false) }
 
     // Declaring Coroutine scope
@@ -233,14 +234,8 @@ fun SendScreen(
         }
     }
 
-    val network = when(walletDataUiState) {
-        is WalletDataUiState.Loading -> {
-            "loading"
-        }
-        is WalletDataUiState.Success -> {
-            idToName(walletDataUiState.userData.walletNetwork)
-        }
-    }
+    val network = chainIdToName(currentNetwork)
+
 
     val tokenBalance = when(selectedToken) {
         is SelectedTokenUiState.Unselected -> { 0.0 }
@@ -567,26 +562,13 @@ fun showCamera(
     cameraLauncher.launch(options)
 }
 
-private fun idToName(name: String): String = when(name) {
-    "1" -> "Mainnet"
-    "5" -> "Goerli"
-    "137" -> "Polygon" // Polygon
-    "10" -> "Optimism" // Optimum
-    "42161" -> "Arbitrum" // Arbitrum
-    "8453" -> "Base" // Base
-    else -> {
-        "N/A"
-    }
-}
-
-
-
 
 @Preview
 @Composable
 fun PreviewSendScreen() {
     val context = LocalContext.current
     SendScreen(
+        currentNetwork = "1",
         onBackClick= {},
         toAddress="qwertyuio",
         assets=  AssetUiState.Success(listOf(
