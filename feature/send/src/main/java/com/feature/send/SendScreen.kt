@@ -12,16 +12,23 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +64,7 @@ import com.core.ui.ethOSButton
 import java.text.DecimalFormat
 import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
+import com.feature.send.ui.AssetPickerSheet
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
 import com.journeyapps.barcodescanner.ScanContract
@@ -121,7 +130,8 @@ fun SendScreen(
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     getContacts: (Context) -> Unit,
-    contacts: List<Contact>
+    contacts: List<Contact>,
+
 ) {
 
     var validSendAddress by remember { mutableStateOf(false) }
@@ -134,8 +144,11 @@ fun SendScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // Create a BottomSheetScaffoldState
-    var showSheet by remember { mutableStateOf(false) }
+    var showContactSheet by remember { mutableStateOf(false) }
     val modalSheetState = rememberModalBottomSheetState(true)
+
+    var showAssetSheet by remember { mutableStateOf(false) }
+    val modalAssetSheetState = rememberModalBottomSheetState(true)
 
     //initalize values
 
@@ -273,7 +286,7 @@ fun SendScreen(
 
 
             Text(
-                text = "on ${network}",
+                text = "on $network",
                 fontSize = 16.sp,
                 color = Color(0xFF9FA2A5),
                 fontWeight = FontWeight.Normal,
@@ -362,7 +375,7 @@ fun SendScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ){
                     IconButton(onClick = {
-                        showSheet = true
+                        showContactSheet = true
                     }) {
                         Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
                     }
@@ -390,10 +403,8 @@ fun SendScreen(
                     singleLine = true,
                     onTextChanged = { text ->
 
-                        if(text == "_"){
-                            Toast.makeText(context, "Successfully sent tx.", Toast.LENGTH_LONG).show()
-                        }
-                         if ((amount.isEmpty() && text == ".") ||
+
+                        if ((amount.isEmpty() && text == ".") ||
                             (amount.isEmpty() && text == ",") ||
                             (amount.isEmpty() && text == "-")
 
@@ -405,9 +416,9 @@ fun SendScreen(
 
                             Log.d("DEBUG VALUE1",amount)
                         }else{
-                            if ((amount.isNotEmpty() && text == ".") ||
-                                (amount.isNotEmpty() && text == ",") ||
-                                (amount.isNotEmpty() && text == "-")
+                            if ((amount.contains(".") && text == ".") ||
+                                (amount.contains(".") && text == ",") ||
+                                (amount.contains(".") && text == "-")
 
                             ) {
 
@@ -429,7 +440,7 @@ fun SendScreen(
                         }else{
                             Color(0xFFc82e31)
                         }
-                    }else {
+                    } else {
                         Color.White
                     },
                     numberInput = true
@@ -442,20 +453,46 @@ fun SendScreen(
                 )
 
 
-                Surface(
-                    shape= CircleShape,
-                    color = Color(0xFF262626),
-                    modifier = Modifier.padding(vertical=8.dp)
+                Spacer(modifier = Modifier.height(4.dp))
+                val token = when(selectedToken){
+                    is SelectedTokenUiState.Unselected -> {
+                        "Unselected"
+                    }
 
-                ) {
-                    Text(
-                        text = abbriviation,
-                        fontSize = 20.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(16.dp ,4.dp)
-                    )
+                    is SelectedTokenUiState.Selected -> {
+                        "Selected"//selectedToken.tokenAsset.symbol
+                    }
                 }
+                Text(text = token,fontWeight = FontWeight.Medium, fontSize = 18.sp, color = Color.White)
+                
+                Button(
+                    onClick = {
+                        showAssetSheet = true
+                    },
+                    contentPadding = PaddingValues(start = 12.dp,end = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF262626),
+                        contentColor = Color.White
+                    ),
+                    shape = CircleShape,
+                    content = {
+                        Row (
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            
+                            Text(token,fontWeight = FontWeight.Medium, fontSize = 18.sp)
+                            Icon(
+                                imageVector = Icons.Rounded.ChevronRight,
+                                contentDescription = "",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .rotate(90f)
+                            )
+                        }
+                    }
+                )
             }
             ethOSButton(
                 text = "Send",
@@ -469,7 +506,7 @@ fun SendScreen(
             )
         }
 
-        if(showSheet) {
+        if(showContactSheet) {
             ModalBottomSheet(
                 containerColor= Color(0xFF262626),
                 contentColor= Color.White,
@@ -478,7 +515,7 @@ fun SendScreen(
                     coroutineScope.launch {
                         modalSheetState.hide()
                     }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
+                        if(!modalSheetState.isVisible) showContactSheet = false
                     }
                 },
                 sheetState = modalSheetState
@@ -492,12 +529,58 @@ fun SendScreen(
                     coroutineScope.launch {
                         modalSheetState.hide()
                     }.invokeOnCompletion {
-                        if (!modalSheetState.isVisible) showSheet = false
+                        if (!modalSheetState.isVisible) showContactSheet = false
                     }
                     onToAddressChanged(contact.address)
                     isContactSelected = true
                     selectedContact = contact
                 }
+
+            }
+        }
+
+        val chain = when(walletDataUiState) {
+            is WalletDataUiState.Loading -> {
+                "loading"
+            }
+            is WalletDataUiState.Success -> {
+                walletDataUiState.userData.walletNetwork
+            }
+        }
+
+        if(showAssetSheet){
+            ModalBottomSheet(
+                containerColor= Color(0xFF262626),
+                contentColor= Color.White,
+
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        modalAssetSheetState.hide()
+                    }.invokeOnCompletion {
+                        if(!modalAssetSheetState.isVisible) showAssetSheet = false
+                    }
+                },
+                sheetState = modalAssetSheetState
+            ) {
+
+
+
+                AssetPickerSheet(
+                    assets = assets,
+                    onChangeAssetClicked = { tokenAsset ->
+                        Toast.makeText(context, "Clicked - ${tokenAsset.symbol}", Toast.LENGTH_SHORT).show()
+
+                        onChangeAssetClicked(tokenAsset)
+                        //SelectedTokenUiState.Selected(tokenAsset)
+                        coroutineScope.launch {
+                            modalAssetSheetState.hide()
+                        }.invokeOnCompletion {
+                            if (!modalAssetSheetState.isVisible) showAssetSheet = false
+                        }
+                    },
+                    chainId = if(network != "N/A") chain.toInt() else 1
+
+                )
 
             }
         }
