@@ -1,18 +1,19 @@
 package com.feature.swap
 
 import android.util.Log
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.SwapRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.GetSwapTokens
+import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
+import com.core.model.UserData
+import com.core.result.Result
+import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,32 +23,38 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
-    userDataRepository: UserDataRepository,
+    private val userDataRepository: UserDataRepository,
     getSwapTokens: GetSwapTokens,
+    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
     private val swapRepository: SwapRepository,
     private val savedStateHandle: SavedStateHandle,
-    private val walletSDK: WalletSDK,
     ): ViewModel() {
 
-    private val userData = userDataRepository.userData
+    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
+        WalletDataUiState.Success(it)
+    }.stateIn(
+        scope = viewModelScope,
+        initialValue = WalletDataUiState.Loading,
+        started = SharingStarted.WhileSubscribed(5_000)
+    )
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
     val swapTokenUiState: StateFlow<SwapTokenUiState> =
         swapTokenUiState(
-            getSwapTokens,
+            userDataRepository,
+            queryTokenAssetsByNetwork,
             searchQuery
         ).stateIn(
             scope = viewModelScope,
@@ -55,17 +62,8 @@ class SwapViewModel @Inject constructor(
             initialValue = SwapTokenUiState.Loading
         )
 
-    val chainIdState: StateFlow<String> =
-        userDataRepository.userData.map {
-            it.walletNetwork
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
-
-    private val _assetsUiState = MutableStateFlow(AssetsUiState())
-    val assetsUiState = _assetsUiState.asStateFlow()
+    private val _swapAssetsUiState = MutableStateFlow(AssetsUiState())
+    val swapAssetsUiState = _swapAssetsUiState.asStateFlow()
 
     private val _amountsUiState = MutableStateFlow(AmountsUiState())
     val amountsUiState = _amountsUiState.asStateFlow()
@@ -78,20 +76,20 @@ class SwapViewModel @Inject constructor(
     val isSyncing = _isSyncing.asStateFlow()
 
     val exchangeRate: StateFlow<Double> =
-        assetsUiState.map { currentState ->
+        swapAssetsUiState.map { currentState ->
             val fromAsset = currentState.fromAsset
             val toAsset = currentState.toAsset
 
             if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
                 _isSyncing.value = true
-                val address = userData.first().walletAddress
+                val address = userDataRepository.userData.first().walletAddress
 
                 val quote = swapRepository.getQuote(
                     fromAsset.tokenAsset.address,
                     toAsset.tokenAsset.address,
                     1.0,
                     address,
-                    chainIdState.value.toInt()
+                    userDataRepository.userData.first().walletNetwork.toInt()
                 )
                 Log.d("getQuote", quote.toString())
                 _isSyncing.value = false
@@ -110,39 +108,40 @@ class SwapViewModel @Inject constructor(
     }
 
     fun selectAsset(tokenAsset: TokenAsset) {
-        _assetsUiState.update { currentState ->
-            val fromAsset = currentState.fromAsset
-            val toAsset = currentState.toAsset
+        viewModelScope.launch {
+            _swapAssetsUiState.update { currentState ->
+                val fromAsset = currentState.fromAsset
+                val toAsset = currentState.toAsset
 
-            when(_selectedTextField.value) {
-                TextFieldSelected.FROM -> {
-                    if (toAsset is SelectedTokenUiState.Selected && toAsset.tokenAsset == tokenAsset) {
-                        currentState.copy(
-                            toAsset = SelectedTokenUiState.Unselected,
-                            fromAsset = SelectedTokenUiState.Selected(tokenAsset)
-                        )
-                    } else {
-                        currentState.copy(
-                            fromAsset = SelectedTokenUiState.Selected(tokenAsset)
-                        )
+                when(_selectedTextField.value) {
+                    TextFieldSelected.FROM -> {
+                        if (toAsset is SelectedTokenUiState.Selected && toAsset.tokenAsset == tokenAsset) {
+                            currentState.copy(
+                                toAsset = SelectedTokenUiState.Unselected,
+                                fromAsset = SelectedTokenUiState.Selected(tokenAsset)
+                            )
+                        } else {
+                            currentState.copy(
+                                fromAsset = SelectedTokenUiState.Selected(tokenAsset)
+                            )
+                        }
                     }
-                }
 
-                TextFieldSelected.TO -> {
-                    if (fromAsset is SelectedTokenUiState.Selected && fromAsset.tokenAsset == tokenAsset) {
-                        currentState.copy(
-                            fromAsset = SelectedTokenUiState.Unselected,
-                            toAsset = SelectedTokenUiState.Selected(tokenAsset)
-                        )
-                    } else {
-                        currentState.copy(
-                            toAsset = SelectedTokenUiState.Selected(tokenAsset)
-                        )
+                    TextFieldSelected.TO -> {
+                        if (fromAsset is SelectedTokenUiState.Selected && fromAsset.tokenAsset == tokenAsset) {
+                            currentState.copy(
+                                fromAsset = SelectedTokenUiState.Unselected,
+                                toAsset = SelectedTokenUiState.Selected(tokenAsset)
+                            )
+                        } else {
+                            currentState.copy(
+                                toAsset = SelectedTokenUiState.Selected(tokenAsset)
+                            )
+                        }
                     }
                 }
             }
         }
-
     }
 
     fun updateAmount(
@@ -190,7 +189,7 @@ class SwapViewModel @Inject constructor(
     }
 
     fun switchTokens() {
-        _assetsUiState.update { currentState ->
+        _swapAssetsUiState.update { currentState ->
             val currentFromAsset = currentState.fromAsset
 
             currentState.copy(
@@ -215,7 +214,7 @@ class SwapViewModel @Inject constructor(
 
     fun swap(callback: (String) -> Unit) {
         viewModelScope.launch {
-            val (fromAsset, toAsset) = assetsUiState.value
+            val (fromAsset, toAsset) = swapAssetsUiState.value
             val fromAmount = amountsUiState.value.fromAmount
 
             if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
@@ -239,21 +238,25 @@ private const val SEARCH_QUERY = "searchQuery"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun swapTokenUiState(
-    getSwapTokens: GetSwapTokens,
+    userDataRepository: UserDataRepository,
+    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
     searchQuery: Flow<String>
 ): Flow<SwapTokenUiState> =
     searchQuery.flatMapLatest { query ->
-        val firstCall = getSwapTokens(query, 1)
-        val secondCall = getSwapTokens(query, 10)
-
-        combine(firstCall, secondCall) { firstList, secondList ->
-            val combinedList = firstList + secondList
-            if (combinedList.isEmpty()) {
-                SwapTokenUiState.Loading
-            } else {
-                SwapTokenUiState.Success(combinedList)
+        queryTokenAssetsByNetwork(
+            userDataRepository.userData.first().walletNetwork.toInt(),
+            query
+        )
+            .asResult()
+            .mapLatest { result ->
+                when(result) {
+                    is Result.Success -> {
+                        SwapTokenUiState.Success(result.data)
+                    }
+                    is Result.Loading -> SwapTokenUiState.Loading
+                    is Result.Error -> SwapTokenUiState.Error
+                }
             }
-        }
     }
 
 sealed interface SwapTokenUiState {
@@ -279,3 +282,7 @@ sealed interface SelectedTokenUiState {
     ): SelectedTokenUiState
 }
 
+sealed interface WalletDataUiState {
+    object Loading: WalletDataUiState
+    data class Success(val userData: UserData): WalletDataUiState
+}

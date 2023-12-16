@@ -1,37 +1,20 @@
 package com.feature.swap
 
 import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +22,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -48,18 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.core.model.SendData
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
-import com.core.ui.SwipeButton
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
+import com.core.ui.util.chainIdToName
 //import com.core.ui.WmButton
 import com.feature.swap.ui.ExchangeRateRow
 import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.lang.NumberFormatException
 import java.math.BigDecimal
@@ -70,14 +49,14 @@ internal fun SwapRoute(
     viewModel: SwapViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
-    val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
-    val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
 
+    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+    val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
+    val assetsUiState by viewModel.swapAssetsUiState.collectAsStateWithLifecycle()
     val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
-    val currentChainId by viewModel.chainIdState.collectAsStateWithLifecycle()
 
     SwapScreen(
         modifier = modifier,
@@ -94,7 +73,7 @@ internal fun SwapRoute(
         onSelectAsset = viewModel::selectAsset,
         onSwapClicked = { viewModel.swap(it) },
         onBackClick = onBackClick,
-        currentChainId = currentChainId.toInt()
+        walletDataUiState = walletDataUiState
     )
 }
 
@@ -116,7 +95,7 @@ internal fun SwapScreen(
     onSelectAsset: (TokenAsset) -> Unit,
     onSwapClicked: ((String) -> Unit) -> Unit,
     onBackClick: () -> Unit,
-    currentChainId: Int,
+    walletDataUiState: WalletDataUiState,
 
 ) {
 
@@ -135,6 +114,16 @@ internal fun SwapScreen(
             title = "Swap",
             text = "Enjoy a low 0.5% fee per swap. Simplify your transactions, maximize your gains!"
         )
+    }
+
+    val network = when(walletDataUiState) {
+        is WalletDataUiState.Loading -> { "Loading" }
+        is WalletDataUiState.Success -> { chainIdToName(walletDataUiState.userData.walletNetwork) }
+    }
+
+    val currentChain = when(walletDataUiState) {
+        is WalletDataUiState.Loading -> { "Loading" }
+        is WalletDataUiState.Success -> { walletDataUiState.userData.walletNetwork }
     }
 
     Column(
@@ -162,15 +151,7 @@ internal fun SwapScreen(
             )
 
 
-            val network = when(currentChainId){
-                1 -> "Mainnet"
-                5 -> "Görli"
-                10 -> "Optimism"
-                137 -> "Polygon"
-                42161 -> "Arbitrum"
-                8453 -> "Base"
-                else -> ""
-            }
+
 
             Text(
                 text = "on ${network}",
@@ -182,44 +163,14 @@ internal fun SwapScreen(
 
         }
 
-
-
-
-
         Column (
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(36.dp)
-
-        ){
-
-            val tokenAsset = when(swapTokenUiState){
-                is SwapTokenUiState.Success -> {
-                    swapTokenUiState.tokenAssets.filter { it.chainId == currentChainId }.get(0)
-                }
-                is SwapTokenUiState.Loading -> {
-//                    swapTokenUiState.tokenAssets.filter { it.chainId == currentChainId }.get(0)
-                }
-                is SwapTokenUiState.Error -> {
-//                    swapTokenUiState.tokenAssets.filter { it.chainId == currentChainId }.get(0)
-                }
-
-                else -> {}
-            }
+        ) {
             TokenSelector(
                 amountsUiState = amountsUiState,
-                assetsUiState = if(tokenAsset is TokenAsset) {
-                    AssetsUiState(
-                        SelectedTokenUiState.Selected(tokenAsset),
-                        SelectedTokenUiState.Unselected
-                    )
-                }else{
-                    AssetsUiState(
-                        SelectedTokenUiState.Unselected,
-                        SelectedTokenUiState.Unselected
-                    )
-                     }
-                    ,
+                assetsUiState = assetsUiState,
                 switchTokens = switchTokens,
                 isSyncing = isSyncing,
                 onAmountChange = { selectedTextField, amount ->
@@ -245,11 +196,7 @@ internal fun SwapScreen(
                     exchangeUiState = exchangeUiState,
                     isSyncing = isSyncing
                 )
-
         }
-
-
-
 
         val context = LocalContext.current
 
@@ -258,7 +205,7 @@ internal fun SwapScreen(
             text = "Swap",
             enabled = true,
             onClick = {
-                if (currentChainId != 1 && currentChainId != 10) {
+                if (currentChain.toInt() != 1 && currentChain.toInt()  != 10) {
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Swap only supports Mainnet and Optimism at this time.", Toast.LENGTH_LONG).show()
                     }
@@ -302,7 +249,7 @@ internal fun SwapScreen(
                     swapTokenUiState = swapTokenUiState,
                     searchQuery = searchQuery,
                     onQueryChange = onQueryChange,
-                    filterByChain = currentChainId,
+                    filterByChain = currentChain.toInt(),
                     onSelectAsset = {
                         onSelectAsset(it)
                         coroutineScope.launch {
@@ -351,7 +298,7 @@ fun PreviewSwapScreen() {
         onSelectAsset= { asset ->},
         onSwapClicked= { },
         onBackClick= {},
-        currentChainId = 1,
+        walletDataUiState = WalletDataUiState.Loading,
     )
 }
 

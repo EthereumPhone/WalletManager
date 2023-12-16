@@ -76,28 +76,17 @@ fun TokenSelector(
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
         }
-
-        else -> {""}
     }
-//    val fromSymbol = when(assetsUiState.fromAsset) {
-//        is SelectedTokenUiState.Unselected -> { "" }
-//        is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
-//    }
 
     val toBalance = when(assetsUiState.toAsset) {
         is SelectedTokenUiState.Unselected -> { "" }
         is SelectedTokenUiState.Selected -> {
             formatDouble(assetsUiState.toAsset.tokenAsset.balance)
         }
-
-        else -> {""}
     }
 
     val maxed2 = remember { mutableStateOf(false) }
-    //var fromPrevAmount by remember { mutableStateOf(fromValue) }
 
-    // Creating a values and variables to remember
-    // focus requester, manager and state
 
 
 
