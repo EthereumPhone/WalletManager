@@ -7,3 +7,20 @@ plugins {
     alias libs.plugins.hilt.android apply false
     alias libs.plugins.kotlin.kapt apply false
 }
+
+subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            if (project.findProperty("composeCompilerReports") == "true") {
+                freeCompilerArgs += [
+                        "-P",
+                        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=/home/nicola/Documents/reports" ]
+            }
+            if (project.findProperty("composeCompilerMetrics") == "true") {
+                freeCompilerArgs += [
+                        "-P",
+                        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=/home/nicola/Documents/reports"]
+            }
+        }
+    }
+}

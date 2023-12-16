@@ -54,28 +54,15 @@ fun AssetRoute(
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
 
-    val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+    //val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val localContext = LocalContext.current
-
-
-    //For refresher
-    var updater by remember { mutableStateOf(true) }
-
-//    if(updater) {
-//        Log.d("automatic updater", "TEST")
-//        viewModel.refreshData()
-//        updater = false
-//    }
 
     AssetScreen(
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         onRefresh = viewModel::refreshData,
         navigateToAssetDetail = navigateToAssetDetail
-
-
     )
 }
 
@@ -135,34 +122,6 @@ internal fun AssetScreen(
                         .fillMaxSize()
                 ){
 
-                    if(assetsUiState.assets.isNotEmpty()){
-                        val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
-
-                        LazyColumn {
-                            groupedAssets.forEach { (assetName, assetList) ->
-                                item(key = assetName) {
-                                    AssetListItem(assetName,assetList,) {
-                                        //navigate to detailscreen
-                                        navigateToAssetDetail(assetList[0].symbol)
-                                    }
-                                }
-                            }
-                        }
-
-                    }else{
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-
-
-
-
-
 
                     PullRefreshIndicator(
                         refreshing = refreshState,
@@ -182,9 +141,6 @@ internal fun AssetScreen(
             }
         }
     }
-
-
-
 }
 
 fun formatDouble(input: Double): String {
@@ -231,3 +187,19 @@ fun PreviewAssetScreen(){
 //        }
     )
 }
+
+/*
+                    val groupedAssets = assetsUiState.assets.groupBy { it.symbol }
+
+                    LazyColumn {
+                        groupedAssets.forEach { (assetName, assetList) ->
+                            item(key = assetName) {
+                                AssetListItem(assetName,assetList,) {
+                                    //navigate to detailscreen
+                                    navigateToAssetDetail(assetList[0].symbol)
+                                }
+                            }
+                        }
+                    }
+
+                     */

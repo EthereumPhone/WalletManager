@@ -46,26 +46,6 @@ class WmAppState(
 
     // val isOffline
 
-    val currentState: CurrentState
-        get() = currentState
-
-    fun setCurrentState(newstate: CurrentState){
-        clearCurrentState()
-        currentState.address = newstate.address
-        currentState.assets = newstate.assets
-        currentState.name = newstate.name
-        currentState.balance = newstate.balance
-        currentState.symbol = newstate.symbol
-    }
-
-    fun clearCurrentState(){
-        currentState.address = ""
-        currentState.assets = emptyList()
-        currentState.name = ""
-        currentState.balance = 0.0
-        currentState.symbol = ""
-    }
-
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
 
         val topLevelNavOptions = navOptions {

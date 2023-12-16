@@ -23,7 +23,9 @@
         android:screenOrientation="portrait"
         tools:targetApi="33"
         android:debuggable="true"
-        tools:ignore="HardcodedDebugMode">
+        tools:ignore="HardcodedDebugMode"
+        >
+
 
         <activity
             android:name=".MainActivity"
