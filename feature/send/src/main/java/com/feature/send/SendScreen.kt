@@ -373,12 +373,7 @@ fun SendScreen(
                             (amount.isEmpty() && text == "-")
 
                         ) {
-                            Log.d("DEBUG",amount)
-                            Log.d("DEBUG2",text)
-                            // Remove the dot if it's the first character
 
-
-                            Log.d("DEBUG VALUE1",amount)
                         }else{
                             if ((amount.contains(".") && text == ".") ||
                                 (amount.contains(".") && text == ",") ||
@@ -386,11 +381,9 @@ fun SendScreen(
 
                             ) {
 
-                                Log.d("DEBUG VALUE2",amount)
                             }else{
                                 if(text != "_"){
-                                    onAmountChange(amount)
-                                    Log.d("DEBUG VALUE3",amount)
+                                    onAmountChange(text)
                                 }
                             }
 
@@ -410,7 +403,7 @@ fun SendScreen(
                     numberInput = true
                 )
                 Text(
-                    text = "$amount available",
+                    text = "$tokenBalance available",
                     fontSize = 20.sp,
                     color = Color(0xFF9FA2A5),
                     fontWeight = FontWeight.Normal
