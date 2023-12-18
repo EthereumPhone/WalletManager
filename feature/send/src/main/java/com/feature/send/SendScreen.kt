@@ -302,11 +302,12 @@ fun SendScreen(
                             modifier = Modifier.weight(1f),
                             singleLine = false,
                             onTextChanged = {
-                                if (it.endsWith(".eth")) {
-                                    if (ENSName(it.lowercase()).isPotentialENSDomain()) {
-                                        // It is ENS
-                                        println("Checking ENS")
-                                        CompletableFuture.runAsync {
+                                onToAddressChanged(it)
+                                CompletableFuture.runAsync {
+                                    if (it.endsWith(".eth")) {
+                                        if (ENSName(it.lowercase()).isPotentialENSDomain()) {
+                                            // It is ENS
+                                            println("Checking ENS")
                                             val ens = ENS(
                                                 HttpEthereumRPC(
                                                     "https://eth-mainnet.g.alchemy.com/v2/${
@@ -317,15 +318,14 @@ fun SendScreen(
                                             val ensAddr = ens.getAddress(ENSName(it.lowercase()))
                                             onToAddressChanged(ensAddr?.hex.toString())
                                             validSendAddress = true
+                                        } else {
+                                            if (it.isNotEmpty()) validSendAddress =
+                                                WalletUtils.isValidAddress(it.lowercase())
                                         }
-                                    } else {
-                                        if (it.isNotEmpty()) validSendAddress =
-                                            WalletUtils.isValidAddress(it.lowercase())
+                                        if (it.isEmpty()) {
+                                            validSendAddress = false
+                                        }
                                     }
-                                    if (it.isEmpty()) {
-                                        validSendAddress = false
-                                    }
-
                                 }
                             },
                             size = 20
@@ -452,7 +452,8 @@ fun SendScreen(
             }
             ethOSButton(
                 text = "Send",
-                enabled = true,
+                enabled = amount.isNotEmpty() && toAddress.isNotEmpty() && ((amount.toDoubleOrNull()
+                    ?: (tokenBalance + 1)) <= tokenBalance), // tokenbalance +1 if null to make it impossible
                 onClick = {
                     if(amount.toFloat() < tokenBalance) {
                         sendTransaction()
@@ -543,61 +544,6 @@ fun SendScreen(
 
     }
 }
-
-/*
-val barCodeLauncher = rememberLauncherForActivityResult(
-        contract = ScanContract(),
-        onResult = { result ->
-            if(result.contents == null) {
-
-            } else {
-                onToAddressChanged(result.contents)
-            }
-        }
-    )
-
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if(isGranted) {
-                hasCameraPermission = isGranted
-            } else {
-                //TODO: Add
-            }
-        }
-    )
-
-    var hasContactsPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_CONTACTS
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val requestContactPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if(isGranted) {
-                hasContactsPermission = isGranted
-            } else {
-                //TODO: Add
-            }
-        }
-    )
- */
-
-
 
 fun formatDouble(input: Double): String {
     val decimalFormat = DecimalFormat("#.#####")
