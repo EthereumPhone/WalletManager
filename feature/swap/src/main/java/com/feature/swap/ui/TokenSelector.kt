@@ -110,6 +110,7 @@ fun TokenSelector(
                 label="0",
                 size = 56,
                 maxChar = 12,
+                numberInput = true,
                 onTextChanged = {
                     val amountText = if (it == ".") "0$it" else it
                     onAmountChange(TextFieldSelected.FROM, amountText)
@@ -159,6 +160,7 @@ fun TokenSelector(
                 label="0",
                 size = 56,
                 maxChar = 12,
+                numberInput = true,
                 onTextChanged = {
                     val amountText = if (it == ".") "0$it" else it
                     onAmountChange(TextFieldSelected.TO, amountText)

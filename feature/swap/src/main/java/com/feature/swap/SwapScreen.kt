@@ -208,12 +208,19 @@ internal fun SwapScreen(
         }
 
         val allSelected = assetsUiState.toAsset is SelectedTokenUiState.Selected && assetsUiState.fromAsset is SelectedTokenUiState.Selected
-
+        val correctChain = currentChain == 1 || currentChain  == 10
+        val validAmount = (amountsUiState.fromAmount.toDoubleOrNull() ?: 0.0)
+        val tooHighAmount = when(assetsUiState.toAsset) {
+            is SelectedTokenUiState.Selected -> {
+                assetsUiState.toAsset.tokenAsset.balance >= validAmount
+            }
+            else -> false
+        }
 
 
         ethOSButton(
             text = "Swap",
-            enabled = ((currentChain == 1 || currentChain  == 10) && amountsUiState.toAmount.isNotBlank() && allSelected),
+            enabled =  correctChain && amountsUiState.toAmount.isNotBlank() && allSelected && tooHighAmount && validAmount != 0.0,
             onClick = {
                 if (currentChain != 1 && currentChain  != 10) {
                     (context as Activity).runOnUiThread {
