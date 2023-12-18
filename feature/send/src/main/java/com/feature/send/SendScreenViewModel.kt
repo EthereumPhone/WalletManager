@@ -57,14 +57,8 @@ class SendViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val toAddress = savedStateHandle.getStateFlow(ADDRESS_QUERY, "")
-        .mapLatest {
-            ensApi.resolveEns(
-                it,
-                userDataRepository.userData.first().walletNetwork.toInt()
-            )
-        }.stateIn(
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ""
