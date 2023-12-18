@@ -102,4 +102,6 @@ dependencies {
     implementation libs.androidx.lifecycle.compose
     implementation libs.kotlinx.datetime
 
+    implementation "com.google.accompanist:accompanist-permissions:0.32.0"
+
 }

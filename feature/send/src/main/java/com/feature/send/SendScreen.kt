@@ -53,6 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,6 +69,8 @@ import com.feature.send.ui.AssetPickerSheet
 import com.core.ui.util.chainIdToName
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
@@ -117,7 +120,7 @@ fun SendRoute(
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SendScreen(
     currentNetwork: String,
@@ -160,64 +163,30 @@ fun SendScreen(
         contract = ScanContract(),
         onResult = { result ->
             if(result.contents == null) {
-
             } else {
                 onToAddressChanged(result.contents)
             }
         }
     )
 
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if(isGranted) {
-                hasCameraPermission = isGranted
-            } else {
-                //TODO: Add
-            }
-        }
+    val permissionsToRequest = listOf(
+        Manifest.permission.CAMERA,
+        Manifest.permission.READ_CONTACTS
     )
 
-    var hasContactsPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_CONTACTS
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+    val multiplePermissionsState = rememberMultiplePermissionsState(permissions = permissionsToRequest)
+
+
+    LaunchedEffect(key1 = multiplePermissionsState.allPermissionsGranted) {
+        multiplePermissionsState.launchMultiplePermissionRequest()
     }
 
-    val requestContactPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if(isGranted) {
-                hasContactsPermission = isGranted
-            } else {
-                //TODO: Add
-            }
-        }
-    )
+
 
 
     var selectedContact by remember { mutableStateOf(Contact())  }
     var isContactSelected by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = true) {
-        requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-    }
-
-    LaunchedEffect(key1 = true) {
-        requestContactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-    }
 
 
     var amountfontSize by remember { mutableStateOf(68.sp) }
@@ -582,6 +551,58 @@ fun SendScreen(
     }
 }
 
+/*
+val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            if(result.contents == null) {
+
+            } else {
+                onToAddressChanged(result.contents)
+            }
+        }
+    )
+
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if(isGranted) {
+                hasCameraPermission = isGranted
+            } else {
+                //TODO: Add
+            }
+        }
+    )
+
+    var hasContactsPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_CONTACTS
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val requestContactPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if(isGranted) {
+                hasContactsPermission = isGranted
+            } else {
+                //TODO: Add
+            }
+        }
+    )
+ */
 
 
 
