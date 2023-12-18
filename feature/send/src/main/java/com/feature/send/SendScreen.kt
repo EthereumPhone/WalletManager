@@ -316,8 +316,10 @@ fun SendScreen(
                                                 )
                                             )
                                             val ensAddr = ens.getAddress(ENSName(it.lowercase()))
-                                            onToAddressChanged(ensAddr?.hex.toString())
-                                            validSendAddress = true
+                                            ensAddr?.let { address ->
+                                                onToAddressChanged(address.hex)
+                                                validSendAddress = true
+                                            }
                                         } else {
                                             if (it.isNotEmpty()) validSendAddress =
                                                 WalletUtils.isValidAddress(it.lowercase())
@@ -452,10 +454,10 @@ fun SendScreen(
             }
             ethOSButton(
                 text = "Send",
-                enabled = amount.isNotEmpty() && toAddress.isNotEmpty() && ((amount.toDoubleOrNull()
+                enabled = amount.isNotEmpty() && (amount.toDoubleOrNull() ?: 0.0 ) != 0.0 && toAddress.isNotEmpty() && ((amount.toDoubleOrNull()
                     ?: (tokenBalance + 1)) <= tokenBalance), // tokenbalance +1 if null to make it impossible
                 onClick = {
-                    if(amount.toFloat() < tokenBalance) {
+                    if(amount.toDouble() < tokenBalance) {
                         sendTransaction()
                         onBackClick()
                     }
