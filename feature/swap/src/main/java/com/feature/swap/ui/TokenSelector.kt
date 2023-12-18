@@ -163,7 +163,7 @@ fun TokenSelector(
                     val amountText = if (it == ".") "0$it" else it
                     onAmountChange(TextFieldSelected.TO, amountText)
                 },
-                color = if(toAmountTooHigh) Color(0xFFF1847E) else Color.White
+                color = Color.White
             )
 
             TokenAssetIcon(assetsUiState.toAsset) {

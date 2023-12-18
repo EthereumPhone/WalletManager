@@ -25,9 +25,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
+import com.core.data.repository.NetworkBalanceRepository
+import com.core.domain.GetSwapTokens
+import com.core.model.NetworkChain
 import com.core.model.UserData
 import com.core.result.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
@@ -36,7 +41,7 @@ import kotlinx.coroutines.flow.update
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val sendRepository: SendRepository,
-    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
+    private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi
 ): ViewModel() {
@@ -73,7 +78,7 @@ class SendViewModel @Inject constructor(
     val tokensAssetState: StateFlow<AssetUiState> =
         assetUiState(
             userDataRepository,
-            queryTokenAssetsByNetwork,
+            getSwapTokens,
             searchQuery
         ).stateIn(
             scope = viewModelScope,
@@ -87,11 +92,6 @@ class SendViewModel @Inject constructor(
 
     private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
     val contacts: Flow<List<Contact>> = _contacts
-
-
-    init {
-
-    }
 
 
     fun send() {
@@ -242,21 +242,22 @@ class SendViewModel @Inject constructor(
 
 
 
+
 @OptIn(ExperimentalCoroutinesApi::class)
-fun assetUiState(
+private fun assetUiState(
     userDataRepository: UserDataRepository,
-    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
+    getSwapTokens: GetSwapTokens,
     searchQuery: Flow<String>
-): Flow<AssetUiState> {
-    return searchQuery.flatMapLatest { query ->
-        val userData = userDataRepository.userData.first()
-        queryTokenAssetsByNetwork(
-            userData.walletNetwork.toInt(),
-            query
-        )
-            .asResult()
+): Flow<AssetUiState> =
+    searchQuery.flatMapLatest { query ->
+        getSwapTokens(
+            query,
+            userDataRepository.userData.first().walletNetwork.toInt()
+        ).asResult()
             .mapLatest { result ->
                 when(result) {
+                    is Result.Error -> { AssetUiState.Error }
+                    is Result.Loading -> { AssetUiState.Loading }
                     is Result.Success -> {
                         if (result.data.isEmpty()) {
                             AssetUiState.Empty
@@ -264,12 +265,9 @@ fun assetUiState(
                             AssetUiState.Success(result.data)
                         }
                     }
-                    is Result.Loading -> AssetUiState.Loading
-                    is Result.Error -> AssetUiState.Error
                 }
             }
     }
-}
 
 sealed interface TxCompleteUiState {
     object UnComplete: TxCompleteUiState

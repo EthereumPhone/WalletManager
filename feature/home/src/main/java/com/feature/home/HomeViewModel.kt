@@ -43,6 +43,8 @@ class HomeViewModel @Inject constructor(
     val shouldShowOnboarding: Flow<Boolean> =
         userDataRepository.userData.map { !it.onboardingCompleted }
 
+
+
     val tokenAssetState: StateFlow<AssetUiState> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances ->
@@ -64,6 +66,30 @@ class HomeViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = AssetUiState.Loading
             )
+
+    val currentNetworkCurrency: StateFlow<AssetUiState> =
+        networkBalanceRepository.getNetworksBalance()
+            .map { balances ->
+                val netWorkAssets = balances.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
+                    )
+                }
+                val netWorkAsset = netWorkAssets.first { it.chainId ==  userDataRepository.userData.first().walletNetwork.toInt() }
+                AssetUiState.Success(listOf(netWorkAsset))
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AssetUiState.Loading
+            )
+
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()

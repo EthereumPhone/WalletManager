@@ -49,6 +49,7 @@ fun WmApp(
                 destinations = listScreens,//all screens
                 onNavigateToDestination = appState::navigateToTopLevelDestination,
                 currentDestination = appState.currentDestination,
+
             )
 //
         }

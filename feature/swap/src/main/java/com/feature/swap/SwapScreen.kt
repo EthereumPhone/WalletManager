@@ -122,8 +122,8 @@ internal fun SwapScreen(
     }
 
     val currentChain = when(walletDataUiState) {
-        is WalletDataUiState.Loading -> { "Loading" }
-        is WalletDataUiState.Success -> { walletDataUiState.userData.walletNetwork }
+        is WalletDataUiState.Loading -> { 0 }
+        is WalletDataUiState.Success -> { walletDataUiState.userData.walletNetwork.toInt() }
     }
 
     Column(
@@ -200,12 +200,22 @@ internal fun SwapScreen(
 
         val context = LocalContext.current
 
+        if(currentChain != 1 && currentChain  != 10 && currentChain  != 0) {
+            Text(
+                "Only Mainnet and Optimism supported at this time",
+                color = Color.Red
+            )
+        }
+
+        val allSelected = assetsUiState.toAsset is SelectedTokenUiState.Selected && assetsUiState.fromAsset is SelectedTokenUiState.Selected
+
+
 
         ethOSButton(
             text = "Swap",
-            enabled = true,
+            enabled = ((currentChain == 1 || currentChain  == 10) && amountsUiState.toAmount.isNotBlank() && allSelected),
             onClick = {
-                if (currentChain.toInt() != 1 && currentChain.toInt()  != 10) {
+                if (currentChain != 1 && currentChain  != 10) {
                     (context as Activity).runOnUiThread {
                         Toast.makeText(context, "Swap only supports Mainnet and Optimism at this time.", Toast.LENGTH_LONG).show()
                     }

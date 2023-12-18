@@ -54,7 +54,7 @@ class SwapViewModel @Inject constructor(
     val swapTokenUiState: StateFlow<SwapTokenUiState> =
         swapTokenUiState(
             userDataRepository,
-            queryTokenAssetsByNetwork,
+            getSwapTokens,
             searchQuery
         ).stateIn(
             scope = viewModelScope,
@@ -239,25 +239,21 @@ private const val SEARCH_QUERY = "searchQuery"
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun swapTokenUiState(
     userDataRepository: UserDataRepository,
-    queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
+    getSwapTokens: GetSwapTokens,
     searchQuery: Flow<String>
-): Flow<SwapTokenUiState> =
-    searchQuery.flatMapLatest { query ->
-        queryTokenAssetsByNetwork(
-            userDataRepository.userData.first().walletNetwork.toInt(),
-            query
-        )
-            .asResult()
+): Flow<SwapTokenUiState> = searchQuery.flatMapLatest { query ->
+        getSwapTokens(
+            query,
+            userDataRepository.userData.first().walletNetwork.toInt()
+        ).asResult()
             .mapLatest { result ->
                 when(result) {
-                    is Result.Success -> {
-                        SwapTokenUiState.Success(result.data)
-                    }
-                    is Result.Loading -> SwapTokenUiState.Loading
-                    is Result.Error -> SwapTokenUiState.Error
+                    is Result.Error -> { SwapTokenUiState.Error }
+                    is Result.Loading -> { SwapTokenUiState.Loading }
+                    is Result.Success -> { SwapTokenUiState.Success(result.data) }
                 }
             }
-    }
+}
 
 sealed interface SwapTokenUiState {
     object Loading: SwapTokenUiState

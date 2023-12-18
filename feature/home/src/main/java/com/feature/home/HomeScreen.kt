@@ -54,6 +54,7 @@ internal fun HomeRoute(
     //val onboardingUiState  by viewModel.on
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    val currentNetworkCurrency by viewModel.currentNetworkCurrency.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     //val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
@@ -75,6 +76,7 @@ internal fun HomeRoute(
     HomeScreen(
         userData = walletDataUiState,
 //        transfersUiState = transfersUiState,
+        currentNetworkCurrency = currentNetworkCurrency,
         assetsUiState = assetsUiState,
 //        refreshState = refreshState,
 //        currencyPrice = currencyPrice,
@@ -91,6 +93,7 @@ internal fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     userData: WalletDataUiState,
+    currentNetworkCurrency: AssetUiState,
     assetsUiState: AssetUiState,
 //    refreshState: Boolean,
 //    currencyPrice: String,
@@ -109,7 +112,6 @@ internal fun HomeScreen(
 
 
 
-
     val onboardingComplete = when(userData) {
         is WalletDataUiState.Success -> {
             !userData.userData.onboardingCompleted
@@ -122,6 +124,13 @@ internal fun HomeScreen(
         else -> {
             false
         }
+    }
+
+    val fiatAmount = when(currentNetworkCurrency) {
+        is AssetUiState.Empty -> { "Loading" }
+        is AssetUiState.Error -> { "Loading" }
+        is AssetUiState.Loading -> { "Loading "}
+        is AssetUiState.Success -> { formatDouble(currentNetworkCurrency.assets[0].balance) }
     }
 
     val modalSheetState = rememberModalBottomSheetState(true)
@@ -140,28 +149,9 @@ internal fun HomeScreen(
     }
 
 
-    val fiatBalance = when(assetsUiState){
-        is AssetUiState.Loading -> {
-            0.0
-        }
-        is AssetUiState.Empty -> {
-            0.0
-        }
-        is AssetUiState.Error -> {
-            0.0
-        }
-        is AssetUiState.Success -> {
-            val assetsbalance = assetsUiState.assets.filter { it.balance > 0.0 }
 
-            var res = 0.0
 
-            assetsbalance.forEach {
-                res += it.balance
-                //get fiat value
-            }
-            res
-        }
-    }
+
 
 
     Column(
@@ -194,17 +184,20 @@ internal fun HomeScreen(
         }
 
 
+        /*
 
+         */
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
-            Text(text = "$${formatDouble(fiatBalance)}",fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
             when(userData) {
                 is WalletDataUiState.Loading -> {
 
                 }
                 is WalletDataUiState.Success -> {
+                    Text(text = fiatAmount,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+
                     val network = when(userData.userData.walletNetwork) {
                         "1" -> "Mainnet"
                         "5" -> "Goerli"

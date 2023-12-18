@@ -28,8 +28,8 @@ class GetSwapTokens @Inject constructor(
             val networkAsset = TokenAsset(
                 address = networkAmount.contractAddress,
                 chainId = networkAmount.chainId,
-                symbol = "ETH",
-                name = "Ether",
+                symbol = if (chainId == 137) "MATIC" else "ETH" ,
+                name = if (chainId == 137) "Matic" else "Ether",
                 balance = networkAmount.tokenBalance.toDouble(),
                 decimals = 18
             )
