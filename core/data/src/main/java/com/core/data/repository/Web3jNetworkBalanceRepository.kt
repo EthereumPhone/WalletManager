@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.util.Log
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenBalanceDao

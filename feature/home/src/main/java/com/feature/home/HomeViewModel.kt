@@ -1,8 +1,8 @@
 package com.feature.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.core.data.repository.CoinbaseExchangeRepository
 import com.core.data.repository.ExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.UserDataRepository
@@ -12,13 +12,15 @@ import com.core.model.TokenAsset
 import com.core.model.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,12 +42,9 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    val shouldShowOnboarding: Flow<Boolean> =
-        userDataRepository.userData.map { !it.onboardingCompleted }
 
 
-
-    val tokenAssetState: StateFlow<AssetUiState> =
+    val tokenAssetState: StateFlow<AssetsUiState> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances ->
                 val netWorkAssets = balances.map {
@@ -59,35 +58,12 @@ class HomeViewModel @Inject constructor(
                         decimals = 18
                     )
                 }
-                AssetUiState.Success(netWorkAssets)
+                AssetsUiState.Success(netWorkAssets)
             }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetUiState.Loading
-            )
-
-    val currentNetworkCurrency: StateFlow<AssetUiState> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                val netWorkAssets = balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
-                val netWorkAsset = netWorkAssets.first { it.chainId ==  userDataRepository.userData.first().walletNetwork.toInt() }
-                AssetUiState.Success(listOf(netWorkAsset))
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetUiState.Loading
+                initialValue = AssetsUiState.Loading
             )
 
 
@@ -116,13 +92,13 @@ class HomeViewModel @Inject constructor(
     }
 }
 
-sealed interface AssetUiState {
-    object Loading: AssetUiState
-    object Error: AssetUiState
-    object Empty: AssetUiState
+sealed interface AssetsUiState {
+    object Loading: AssetsUiState
+    object Error: AssetsUiState
+    object Empty: AssetsUiState
     data class Success(
         val assets: List<TokenAsset>
-    ): AssetUiState
+    ): AssetsUiState
 }
 
 sealed interface WalletDataUiState {

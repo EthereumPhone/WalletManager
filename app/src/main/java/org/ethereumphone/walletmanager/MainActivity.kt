@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -39,7 +40,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork(
                 "seed UniswapTokens",
@@ -53,7 +53,18 @@ class MainActivity : ComponentActivity() {
                 ExistingWorkPolicy.REPLACE,
                 SeedTokensWorker.startSeedNetworkBalanceWork()
             )
+        /*
+        var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
 
+
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition {
+            when(uiState) {
+                MainActivityUiState.Loading -> false
+                is MainActivityUiState.Success -> false
+            }
+        }
+         */
 
         // checks periodically the address of the system wallet
         walletAddressUpdater.startPeriodicUpdate()

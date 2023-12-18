@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name = "Theme.app.Starting" parent="Theme.SplashScreen">
+        <item name= "windowSplashScreenBackground">#000000</item>
+        <item name = "windowSplashScreenAnimatedIcon"> @drawable/wallet </item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+
+
+    </style>
+
+
+</resources>

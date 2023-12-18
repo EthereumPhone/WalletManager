@@ -65,7 +65,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation:1.4.3'
 
     implementation 'com.github.kenglxn.QRGen:android:3.0.1'
-    implementation("com.google.zxing:core:3.4.1")
+    implementation("com.google.zxing:core:3.5.1")
 
     implementation libs.hilt.android
     kapt libs.hilt.compiler
@@ -74,8 +74,8 @@ dependencies {
     implementation libs.androidx.lifecycle.compose
     implementation libs.kotlinx.datetime
 
-//    debugImplementation("androidx.compose.ui:ui-tooling:1.2.1")
-//    implementation "androidx.compose.ui:ui:1.2.1"
-//    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.2.1")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.2.1")
+    implementation "androidx.compose.ui:ui:1.2.1"
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.2.1")
 
 }

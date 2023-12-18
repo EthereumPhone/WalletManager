@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.feature.home.AssetUiState
+import com.feature.home.AssetsUiState
 
 @Composable
-fun AssetList(assetsUiState: AssetUiState) {
+fun AssetList(assetsUiState: AssetsUiState) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -34,21 +34,21 @@ fun AssetList(assetsUiState: AssetUiState) {
         ) {
             Text(text = "Overview", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
             when(assetsUiState){
-                is AssetUiState.Empty ->{
+                is AssetsUiState.Empty ->{
                     Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center){
                         Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
 
                     }
                 }
-                is AssetUiState.Loading -> {
+                is AssetsUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center){
                         Text(text = "Loading...", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
 
                     }
                 }
-                is AssetUiState.Success -> {
+                is AssetsUiState.Success -> {
                     val assets = assetsUiState.assets
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -63,7 +63,7 @@ fun AssetList(assetsUiState: AssetUiState) {
                         }
                     }
                 }
-                is AssetUiState.Error -> { }
+                is AssetsUiState.Error -> { }
             }
         }
     }

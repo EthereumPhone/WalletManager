@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,7 +37,6 @@ import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.OnboardingModalBottomSheet
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
-import java.util.prefs.Preferences
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -53,8 +49,7 @@ internal fun HomeRoute(
 ) {
     //val onboardingUiState  by viewModel.on
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
-    val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val currentNetworkCurrency by viewModel.currentNetworkCurrency.collectAsStateWithLifecycle()
+    val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
     //val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
@@ -76,7 +71,6 @@ internal fun HomeRoute(
     HomeScreen(
         userData = walletDataUiState,
 //        transfersUiState = transfersUiState,
-        currentNetworkCurrency = currentNetworkCurrency,
         assetsUiState = assetsUiState,
 //        refreshState = refreshState,
 //        currencyPrice = currencyPrice,
@@ -93,8 +87,7 @@ internal fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     userData: WalletDataUiState,
-    currentNetworkCurrency: AssetUiState,
-    assetsUiState: AssetUiState,
+    assetsUiState: AssetsUiState,
 //    refreshState: Boolean,
 //    currencyPrice: String,
 //    onCurrencyChange: (String) -> Unit,
@@ -126,12 +119,7 @@ internal fun HomeScreen(
         }
     }
 
-    val fiatAmount = when(currentNetworkCurrency) {
-        is AssetUiState.Empty -> { "Loading" }
-        is AssetUiState.Error -> { "Loading" }
-        is AssetUiState.Loading -> { "Loading "}
-        is AssetUiState.Success -> { formatDouble(currentNetworkCurrency.assets[0].balance) }
-    }
+
 
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
@@ -196,7 +184,17 @@ internal fun HomeScreen(
 
                 }
                 is WalletDataUiState.Success -> {
-                    Text(text = fiatAmount,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+
+                    val fiatAmount = when(assetsUiState) {
+                        is AssetsUiState.Success -> {
+                            if(assetsUiState.assets.isEmpty()) {
+                                0.0
+                            } else {
+                                assetsUiState.assets.filter { it.chainId ==  userData.userData.walletNetwork.toInt()}.first().balance
+                            }
+                        } else -> 0.0
+
+                    }
 
                     val network = when(userData.userData.walletNetwork) {
                         "1" -> "Mainnet"
@@ -209,6 +207,8 @@ internal fun HomeScreen(
                             "N/A"
                         }
                     }
+                    Text(text = formatDouble(fiatAmount) ,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
+
                     Text(text = "(${network})",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 14.sp)
 
                 }
