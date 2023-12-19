@@ -85,8 +85,6 @@ internal fun HomeScreen(
 
     //val isOnboardingLoading = userData is WalletDataUiState.Loading
 
-
-
     val onboardingComplete = when(userData) {
         is WalletDataUiState.Success -> {
             !userData.userData.onboardingCompleted
@@ -100,8 +98,6 @@ internal fun HomeScreen(
             false
         }
     }
-
-
 
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
@@ -117,12 +113,6 @@ internal fun HomeScreen(
             text = "Send and receive crypto, all natively from inside the WalletManager."
         )
     }
-
-
-
-
-
-
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -160,7 +150,7 @@ internal fun HomeScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ){
-            Text(text = "My Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
+            Text(text = "Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
             when(userData) {
                 is WalletDataUiState.Loading -> {
 
@@ -172,27 +162,11 @@ internal fun HomeScreen(
                             if(assetsUiState.assets.isEmpty()) {
                                 0.0
                             } else {
-                                assetsUiState.assets.filter { it.chainId ==  userData.userData.walletNetwork.toInt()}.first().balance
+                                assetsUiState.assets.filter { it.chainId == userData.userData.walletNetwork.toInt()}.first().balance
                             }
                         } else -> 0.0
-
-                    }
-
-                    val network = when(userData.userData.walletNetwork) {
-                        "1" -> "Mainnet"
-                        "5" -> "Goerli"
-                        "137" -> "Polygon" // Polygon
-                        "10" -> "Optimism" // Optimum
-                        "42161" -> "Arbitrum" // Arbitrum
-                        "8453" -> "Base" // Base
-                        else -> {
-                            "N/A"
-                        }
                     }
                     Text(text = formatDouble(fiatAmount) ,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
-
-                    Text(text = "(${network})",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 14.sp)
-
                 }
             }
         }
@@ -201,9 +175,9 @@ internal fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(56.dp)
         ){
             FunctionsRow(
-            navigateToSwap,
-            navigateToSend,
-            navigateToReceive
+                navigateToSwap,
+                navigateToSend,
+                navigateToReceive
             )
 
             AssetList(assetsUiState)

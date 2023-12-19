@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.DefaultBlockParameter
+import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.http.HttpService
 import javax.inject.Inject
 
 /**
@@ -48,22 +52,39 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             networks.map {
-                async {
-                    val newNetworkBalance = networkBalanceApi
-                        .getNetworkCurrency(
-                            toAddress,
-                            "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
+
+                if(it.chainId != 7777777) {
+                    async {
+                        val newNetworkBalance = networkBalanceApi
+                            .getNetworkCurrency(
+                                toAddress,
+                                "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
+                            )
+                        tokenBalanceDao.upsertTokenBalances(
+                            listOf(
+                                TokenBalanceEntity(
+                                    contractAddress = it.chainId.toString(),
+                                    chainId = it.chainId,
+                                    tokenBalance = newNetworkBalance
+                                )
+                            )
                         )
+                    }
+                } else {
+                    val zoraFetcher = Web3j.build(HttpService("https://rpc.zora.energy"))
+                    val amount = zoraFetcher.ethGetBalance(toAddress, DefaultBlockParameterName.LATEST).sendAsync().get()
+
                     tokenBalanceDao.upsertTokenBalances(
                         listOf(
                             TokenBalanceEntity(
                                 contractAddress = it.chainId.toString(),
                                 chainId = it.chainId,
-                                tokenBalance = newNetworkBalance
+                                tokenBalance = amount.balance.toBigDecimal()
                             )
                         )
                     )
                 }
+
             }
         }
     }

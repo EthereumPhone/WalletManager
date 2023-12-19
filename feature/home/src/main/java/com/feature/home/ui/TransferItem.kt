@@ -210,14 +210,15 @@ fun compareDate(transfer: String): String{//date1: String, date2:String) {
 }
 
 private fun chainToNetworkName(chainId: Int): String = when(chainId) {
-        1 -> "Mainnet"
-        5 -> "Görli"
-        10 -> "Optimism"
-        137 -> "Polygon"
-        42161 -> "Arbitrum"
-        8453 -> "Base"
-        else -> ""
-    }
+    1 -> "Mainnet"
+    5 -> "Görli"
+    10 -> "Optimism"
+    137 -> "Polygon"
+    42161 -> "Arbitrum"
+    8453 -> "Base"
+    7777777 -> "Zora"
+    else -> ""
+}
 
 @Preview
 @Composable

@@ -27,7 +27,12 @@ enum class NetworkChain(
     BASE(
         chainId = 8453,
         chainName = "base-mainnet",
-    );
+    ),
+    ZORA(
+        chainId = 7777777,
+        chainName = "eth-mainnet"
+    )
+    ;
 
     companion object {
         fun getAllNetworkChains(): List<NetworkChain> {

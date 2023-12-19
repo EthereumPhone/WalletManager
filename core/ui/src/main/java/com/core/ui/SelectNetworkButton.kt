@@ -51,6 +51,7 @@ fun SelectedNetworkButton(
         10 -> Color(0xFFc82e31)//Optimum
         42161 -> Color(0xFF2b88b8)//Arbitrum
         8453 -> Color(0xFF344afb)//Base
+        7777777 -> Color(0xFF777777) //Zora
         else -> {
             Color(0xFF030303)
         }
@@ -62,6 +63,7 @@ fun SelectedNetworkButton(
         137 -> "Polygon"
         42161 -> "Arbitrum"
         8453 -> "Base"
+        7777777 -> "Zora"
         else -> "Select Network"
     }
         Button(
