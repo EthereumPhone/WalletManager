@@ -100,25 +100,7 @@ private fun EthOSBottomBar(
             )
 
         }
-//                listScreens.forEach { screen ->
-//                    BottomNavigationItem(
-//                        icon = { Icon( screen.icon, contentDescription = null) },
-//                        label = { Text(screen.label) },
-//                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-//                        selectedContentColor = Color.White,
-//                        unselectedContentColor = Color(0xFF9FA2A5),
-//                        onClick = {
-//                            appStatenavigateToTopLevelDestination
-//
-//                        }
-//                    )
-//                }
-
-
-
-            }
-
-
+    }
 }
 
 private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: Screen) =

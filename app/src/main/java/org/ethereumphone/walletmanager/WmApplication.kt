@@ -29,24 +29,3 @@ class WmApplication: Application(), Configuration.Provider {
             .setWorkerFactory(workerFactory)
             .build()
 }
-
-/*
-class SeedWorkerFactory @Inject constructor(
-    private val updateTokensUseCase: UpdateTokensUseCase,
-    private val userDataRepository: UserDataRepository,
-    private val transferRepository: TransferRepository
-): WorkerFactory() {
-    override fun createWorker(
-        appContext: Context,
-        workerClassName: String,
-        workerParameters: WorkerParameters
-    ): ListenableWorker? = SeedTokensWorker(
-        appContext,
-        workerParameters,
-        updateTokensUseCase,
-        transferRepository,
-        userDataRepository
-    )
-}
-
- */

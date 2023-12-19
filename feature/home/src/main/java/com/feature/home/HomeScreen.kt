@@ -47,16 +47,9 @@ internal fun HomeRoute(
     navigateToReceive: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    //val onboardingUiState  by viewModel.on
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val localContext = LocalContext.current
-    //val currencyPrice: String by viewModel.exchange.collectAsStateWithLifecycle("")
-
-
-
-    // At the top level of your kotlin file:
 
     var updater by remember {mutableStateOf(true)}
 
@@ -66,20 +59,14 @@ internal fun HomeRoute(
         updater = false
     }
 
-
-
     HomeScreen(
         userData = walletDataUiState,
-//        transfersUiState = transfersUiState,
         assetsUiState = assetsUiState,
 //        refreshState = refreshState,
-//        currencyPrice = currencyPrice,
-//        onCurrencyChange = viewModel::getExchange,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
         setOnboardingComplete= viewModel::setOnboardingComplete,
-        //onboardingComplete = onboardingComplete
     )
 }
 
@@ -89,15 +76,10 @@ internal fun HomeScreen(
     userData: WalletDataUiState,
     assetsUiState: AssetsUiState,
 //    refreshState: Boolean,
-//    currencyPrice: String,
-//    onCurrencyChange: (String) -> Unit,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     setOnboardingComplete: (Boolean) -> Unit,
-    //onboardingComplete:  Boolean,
-//    onRefresh: () -> Unit,
-//    onDelete: (TransferItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
 

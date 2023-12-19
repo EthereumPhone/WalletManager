@@ -77,5 +77,3 @@ fun WmNavHost(
         )
     }
 }
-
-//         var address = destinationIntent?.getStringExtra("recipient_address") ?: "123"
