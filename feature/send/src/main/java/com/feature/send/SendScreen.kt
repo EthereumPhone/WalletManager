@@ -90,13 +90,13 @@ import kotlin.math.max
 fun SendRoute(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    initialAddress: String = "",
+    initialAddress: String?,
     viewModel: SendViewModel = hiltViewModel()
 ) {
     val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
     val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val amount by viewModel.amount.collectAsStateWithLifecycle()
-    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
+    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
     val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -104,6 +104,7 @@ fun SendRoute(
 
     SendScreen(
         currentNetwork = currentNetwork,
+        initialAddress = initialAddress,
         modifier = Modifier,
         onBackClick = onBackClick,
         toAddress = toAddress,
@@ -133,14 +134,17 @@ fun SendScreen(
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: () -> Unit,
+    sendTransaction: (() -> Unit) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     getContacts: (Context) -> Unit,
     contacts: List<Contact>,
+    initialAddress: String?
 
 ) {
+
+    initialAddress?.let(onToAddressChanged)
 
     var validSendAddress by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -154,6 +158,10 @@ fun SendScreen(
 
     var showAssetSheet by remember { mutableStateOf(false) }
     val modalAssetSheetState = rememberModalBottomSheetState(true)
+
+    var showCameraWithPerm by remember {
+        mutableStateOf(false)
+    }
 
     //initalize values
 
@@ -169,20 +177,27 @@ fun SendScreen(
             }
         }
     )
-
-    val permissionsToRequest = listOf(
-        Manifest.permission.CAMERA,
+    val contactsPermissionsToRequest = listOf(
         Manifest.permission.READ_CONTACTS
     )
 
-    val multiplePermissionsState = rememberMultiplePermissionsState(permissions = permissionsToRequest)
+    val contactsPermissionState = rememberMultiplePermissionsState(permissions = contactsPermissionsToRequest)
 
+    val scanningPermissionsToRequest = listOf(
+        Manifest.permission.CAMERA
+    )
 
-    LaunchedEffect(key1 = multiplePermissionsState.allPermissionsGranted) {
-        multiplePermissionsState.launchMultiplePermissionRequest()
+    if (showCameraWithPerm) {
+        val multiplePermissionsState = rememberMultiplePermissionsState(permissions = scanningPermissionsToRequest)
+
+        LaunchedEffect(key1 = multiplePermissionsState.allPermissionsGranted) {
+            if (multiplePermissionsState.allPermissionsGranted) {
+                showCamera(barCodeLauncher)
+            } else {
+                multiplePermissionsState.launchMultiplePermissionRequest()
+            }
+        }
     }
-
-
 
 
     var selectedContact by remember { mutableStateOf(Contact())  }
@@ -251,7 +266,7 @@ fun SendScreen(
 
 
             Text(
-                text = "on $network",
+                text = network,
                 fontSize = 16.sp,
                 color = Color(0xFF9FA2A5),
                 fontWeight = FontWeight.Normal,
@@ -290,10 +305,17 @@ fun SendScreen(
             ){
                 when(isContactSelected){
                     true -> {
-                        ContactPill(contact = selectedContact) {
-                            selectedContact = Contact()
-                            onToAddressChanged("")
-                            isContactSelected = false
+                        if (contactsPermissionState.allPermissionsGranted) {
+                            ContactPill(contact = selectedContact) {
+                                selectedContact = Contact()
+                                onToAddressChanged("")
+                                isContactSelected = false
+                            }
+                        }
+                        LaunchedEffect(key1 = contactsPermissionState.allPermissionsGranted) {
+                            if (!contactsPermissionState.allPermissionsGranted) {
+                                contactsPermissionState.launchMultiplePermissionRequest()
+                            }
                         }
                     }
                     false -> {
@@ -343,12 +365,14 @@ fun SendScreen(
                 ){
                     IconButton(onClick = {
                         showContactSheet = true
+                        if (!contactsPermissionState.allPermissionsGranted) {
+                            contactsPermissionState.launchMultiplePermissionRequest()
+                        }
                     }) {
                         Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
                     }
                     IconButton(onClick = {
-                        //opens InfoDialog
-                        showCamera(barCodeLauncher)
+                        showCameraWithPerm = true
                     }) {
                         Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Color.White)
                     }
@@ -464,14 +488,15 @@ fun SendScreen(
                     ?: (tokenBalance + 1)) <= tokenBalance), // tokenbalance +1 if null to make it impossible
                 onClick = {
                     if(amount.toDouble() < tokenBalance) {
-                        sendTransaction()
-                        onBackClick()
+                        sendTransaction {
+                            onBackClick()
+                        }
                     }
                 }
             )
         }
 
-        if(showContactSheet) {
+        if(showContactSheet && contactsPermissionState.allPermissionsGranted) {
             ModalBottomSheet(
                 containerColor= Color(0xFF262626),
                 contentColor= Color.White,
@@ -654,6 +679,7 @@ fun PreviewSendScreen() {
         onAmountChange = {},
         txComplete = TxCompleteUiState.Complete,
         getContacts = {},
-        contacts = emptyList()
+        contacts = emptyList(),
+        initialAddress = null,
     )
 }

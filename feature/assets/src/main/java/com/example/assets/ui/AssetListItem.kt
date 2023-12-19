@@ -41,7 +41,7 @@ fun AssetListItem(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            title.uppercase(),
+            truncateString(title.uppercase()),
             color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
@@ -136,6 +136,11 @@ fun formatDouble(input: Double): String {
     return decimalFormat.format(input)
 }
 
+fun truncateString(input: String): String {
+    return if (input.length > 14) input.substring(0, 14) + "..." else input
+}
+
+
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
@@ -147,7 +152,7 @@ fun PreviewAssetListItem(){
         address = "",
         chainId = 1,
         symbol = "ETH",
-        name = "Ether",
+        name = "Super long spammy name",
         balance = 0.61
     )
 
@@ -157,7 +162,7 @@ fun PreviewAssetListItem(){
         token
     )
 
-        AssetListItem("Ether",list, {})
+    AssetListItem(token.name,list, {})
 
 
 }
