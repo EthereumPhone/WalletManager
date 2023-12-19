@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +55,6 @@ fun AssetRoute(
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
 
-    //val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
@@ -74,7 +74,19 @@ internal fun AssetScreen(
     refreshState: Boolean,
     onRefresh: () -> Unit,
     navigateToAssetDetail: (String) -> Unit,
-){
+) {
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = refreshState,
+        onRefresh = {
+            onRefresh()
+        }
+    )
+
+    LaunchedEffect(key1 = assetsUiState) {
+        println("recomposing now :(")
+
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
 
@@ -111,33 +123,17 @@ internal fun AssetScreen(
                 }
             }
             is AssetUiState.Success -> {
-                val pullRefreshState = rememberPullRefreshState(
-                    refreshing = refreshState,
-                    onRefresh = {
-                        onRefresh()
-                    }
-                )
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                 ){
-
-
                     PullRefreshIndicator(
                         refreshing = refreshState,
                         state = pullRefreshState,
                         modifier = Modifier.align(Alignment.TopCenter)
                     )
                 }
-
-
-
-
-            }
-
-            else -> {
-                Text(text = "Else...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-
             }
         }
     }

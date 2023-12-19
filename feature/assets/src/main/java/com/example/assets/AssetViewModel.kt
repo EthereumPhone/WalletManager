@@ -14,6 +14,7 @@ import com.core.model.UserData
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -36,15 +38,6 @@ class AssetViewModel @Inject constructor(
     private val transferRepository: TransferRepository,
 ): ViewModel() {
 
-    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
-        WalletDataUiState.Success(it)
-    }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = WalletDataUiState.Loading,
-            started = SharingStarted.WhileSubscribed(5_000)
-        )
-
     val tokenAssetState: StateFlow<AssetUiState> =
         assetUiState(
             getTokenBalancesWithMetadataUseCase,
@@ -55,10 +48,6 @@ class AssetViewModel @Inject constructor(
             initialValue = AssetUiState.Loading
         )
 
-
-
-    private val _exchange = MutableStateFlow("")
-    val exchange: Flow<String> = _exchange
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
@@ -87,9 +76,10 @@ fun assetUiState(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     networkBalanceRepository: NetworkBalanceRepository
 ): Flow<AssetUiState> {
+
     // observe erc20 tokens
     val erc20Tokens: Flow<List<TokenAsset>> =
-        getTokenBalancesWithMetadataUseCase()
+        getTokenBalancesWithMetadataUseCase().flowOn(Dispatchers.IO)
 
     // observe network currency
     val networkToken: Flow<List<TokenAsset>> =
@@ -106,8 +96,9 @@ fun assetUiState(
                         decimals = 18
                     )
                 }
-            }
-    return combine(
+            }.flowOn(Dispatchers.IO)
+
+    val res = combine(
         erc20Tokens,
         networkToken,
         ::Pair
@@ -120,6 +111,7 @@ fun assetUiState(
                     if(filteredAssets.isEmpty()) {
                         AssetUiState.Empty
                     } else {
+
                         AssetUiState.Success(filteredAssets.filter { it.chainId != 5 })
                     }
                 }
@@ -131,6 +123,8 @@ fun assetUiState(
                 }
             }
         }
+
+    return res
 }
 
 sealed interface AssetUiState {

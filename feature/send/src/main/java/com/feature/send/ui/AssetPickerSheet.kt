@@ -103,7 +103,7 @@ fun AssetPickerSheet(
                 }
                 is AssetUiState.Success -> {
 
-                    val filteredAssets = assets.assets//assets.assets.filter { it.chainId == chainId }
+                    val filteredAssets = assets.assets
 
                     LazyColumn(
                     ) {
@@ -127,7 +127,7 @@ fun AssetPickerSheet(
                                     trailingContent = {
                                         //contact.
                                         Text(
-                                            text = "${tokenasset.balance}",
+                                            text = formatDouble(tokenasset.balance),
                                             fontSize = 20.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White

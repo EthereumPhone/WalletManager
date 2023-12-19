@@ -67,6 +67,7 @@ import com.core.ui.ethOSTextField
 import com.core.ui.ethOSCenterTextField
 import com.feature.send.ui.AssetPickerSheet
 import com.core.ui.util.chainIdToName
+import com.core.ui.util.formatDouble
 import com.feature.send.ui.ContactPickerSheet
 import com.feature.send.ui.ContactPill
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -404,18 +405,23 @@ fun SendScreen(
                     },
                     numberInput = true
                 )
-                Text(
-                    text = "$tokenBalance available",
-                    fontSize = 20.sp,
-                    color = Color(0xFF9FA2A5),
-                    fontWeight = FontWeight.Normal
-                )
 
+                when(selectedToken) {
+                    is SelectedTokenUiState.Unselected -> {}
+                    is SelectedTokenUiState.Selected -> {
+                        Text(
+                            text = "${formatDouble(tokenBalance)} available",
+                            fontSize = 20.sp,
+                            color = Color(0xFF9FA2A5),
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
                 val token = when(selectedToken){
                     is SelectedTokenUiState.Unselected -> {
-                        abbriviation//"Unselected"
+                        "Select"
                     }
 
                     is SelectedTokenUiState.Selected -> {
@@ -546,12 +552,6 @@ fun SendScreen(
 
     }
 }
-
-fun formatDouble(input: Double): String {
-    val decimalFormat = DecimalFormat("#.#####")
-    return decimalFormat.format(input)
-}
-
 
 
 
