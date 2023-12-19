@@ -393,33 +393,15 @@ fun SendScreen(
                     label = "0",
                     singleLine = true,
                     onTextChanged = { text ->
-
-
-                        if ((amount.isEmpty() && text == ".") ||
-                            (amount.isEmpty() && text == ",") ||
-                            (amount.isEmpty() && text == "-")
-
-                        ) {
-
-                        }else{
-                            if ((amount.contains(".") && text == ".") ||
-                                (amount.contains(".") && text == ",") ||
-                                (amount.contains(".") && text == "-")
-
-                            ) {
-
-                            }else{
-                                if(text != "_"){
-                                    onAmountChange(text)
-                                }
-                            }
-
+                        if (text.isEmpty() || text == "." || text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
+                            // If it's a valid format or empty, call onAmountChange with the text
+                            onAmountChange(text)
                         }
                     },
                     size = 64,
                     maxChar = 10,
                     color = if(amount.isNotEmpty() && amount!="." && amount!=",") {
-                        if(amount.toFloat() < tokenBalance){
+                        if((amount.toDoubleOrNull() ?: 0.0) < tokenBalance){
                             Color.White
                         }else{
                             Color(0xFFc82e31)
