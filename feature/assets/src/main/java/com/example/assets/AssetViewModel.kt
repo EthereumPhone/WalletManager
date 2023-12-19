@@ -35,7 +35,6 @@ import javax.inject.Inject
 class AssetViewModel @Inject constructor(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    GetGroupedTokenAssets: GetGroupedTokenAssets,
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
