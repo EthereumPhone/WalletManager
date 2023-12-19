@@ -134,7 +134,7 @@ fun SendScreen(
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: () -> Unit,
+    sendTransaction: (() -> Unit) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
@@ -488,8 +488,9 @@ fun SendScreen(
                     ?: (tokenBalance + 1)) <= tokenBalance), // tokenbalance +1 if null to make it impossible
                 onClick = {
                     if(amount.toDouble() < tokenBalance) {
-                        sendTransaction()
-                        onBackClick()
+                        sendTransaction {
+                            onBackClick()
+                        }
                     }
                 }
             )
