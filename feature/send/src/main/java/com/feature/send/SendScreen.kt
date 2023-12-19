@@ -90,13 +90,13 @@ import kotlin.math.max
 fun SendRoute(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    initialAddress: String = "",
+    initialAddress: String?,
     viewModel: SendViewModel = hiltViewModel()
 ) {
     val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
     val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val amount by viewModel.amount.collectAsStateWithLifecycle()
-    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress)
+    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
     val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -104,6 +104,7 @@ fun SendRoute(
 
     SendScreen(
         currentNetwork = currentNetwork,
+        initialAddress = initialAddress,
         modifier = Modifier,
         onBackClick = onBackClick,
         toAddress = toAddress,
@@ -139,8 +140,11 @@ fun SendScreen(
     onBackClick: () -> Unit,
     getContacts: (Context) -> Unit,
     contacts: List<Contact>,
+    initialAddress: String?
 
 ) {
+
+    initialAddress?.let(onToAddressChanged)
 
     var validSendAddress by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -674,6 +678,7 @@ fun PreviewSendScreen() {
         onAmountChange = {},
         txComplete = TxCompleteUiState.Complete,
         getContacts = {},
-        contacts = emptyList()
+        contacts = emptyList(),
+        initialAddress = null,
     )
 }
