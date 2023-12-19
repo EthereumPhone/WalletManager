@@ -99,6 +99,7 @@ fun AssetListDetailItem(
         137 -> "Polygon"
         8453 -> "Base"
         42161 -> "Arbitrum"
+        7777777 -> "Zora"
         else -> { ""}
     }
     Row(

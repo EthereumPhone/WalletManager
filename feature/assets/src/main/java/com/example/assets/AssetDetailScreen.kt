@@ -123,10 +123,6 @@ fun AssetDetailScreen(
 
                         Spacer(modifier = modifier.height(84.dp))
 
-                        println(asset.get(0).address)
-
-
-
                         LazyColumn (
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ){
@@ -134,21 +130,12 @@ fun AssetDetailScreen(
                                 item {
                                     AssetListDetailItem(it)
                                 }
-
                             }
-
-
                         }
                     }
                 }
-
         }
-
-
     }
-
-
-
 }
 
 

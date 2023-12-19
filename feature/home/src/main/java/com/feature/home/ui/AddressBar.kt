@@ -87,6 +87,8 @@ internal fun AddressBar(
                 "10" -> Color(0xFFc82e31) // Optimum
                 "42161" -> Color(0xFF2b88b8) // Arbitrum
                 "8453" -> Color(0xFF053BCB) // Base
+                "7777777" -> Color(0xFF777777)
+
                 else -> {
                     Color(0xFF030303)
                 }
@@ -143,6 +145,7 @@ private fun chainName(chainId: String) = when(chainId) {
     "137" -> "Polygon"
     "8453" -> "Base"
     "42161" -> "Arbitrum"
+    "7777777" -> "Zora"
     else -> "Loading..."
 }
 

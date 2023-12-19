@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,24 +37,39 @@ import com.example.transactions.ui.TransferListItem
 fun TransactionRoute(
     modifier: Modifier = Modifier,
 //    onBackClick: () -> Unit,
-//    initialAddress: String = "",
     navigateToTxDetail: (String) -> Unit,
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
+    val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     TransactionScreen(
         transfersUIState = transfersUIState,
-        navigateToTxDetail = navigateToTxDetail
+        navigateToTxDetail = navigateToTxDetail,
+        refreshState = refreshState,
+        onRefresh = viewModel::refreshData
     )
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TransactionScreen(
     modifier: Modifier = Modifier,
     transfersUIState: TransfersUiState,
+    refreshState: Boolean,
+    onRefresh: () -> Unit,
     navigateToTxDetail: (String) -> Unit,
-){
+) {
+
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = refreshState,
+        onRefresh = {
+            onRefresh()
+        }
+    )
+
+
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
 
@@ -64,7 +81,7 @@ fun TransactionScreen(
 
         //Header
 
-        TopHeader(title = "Transaction")
+        TopHeader(title = "Transactions")
         Spacer(modifier = Modifier.height(48.dp))
         when(transfersUIState){
             is TransfersUiState.Loading -> {
@@ -91,14 +108,6 @@ fun TransactionScreen(
 
                         transfers.reversed().forEach { transfer ->
                             item {
-                                //TODO: Month sections
-//                            Log.e("Month", month)
-//                            if (transfer.timeStamp.substring(0,2) != month){
-//                                month = transfer.timeStamp.substring(0,2)
-//                                val monthtext = getMonth(transfer.timeStamp.substring(0,2).toInt())
-//                                Text(text = monthtext,color = Color(0xFF9FA2A5))
-//
-//                            }
                                 TransferListItem(
                                     transfer = transfer ,
                                     onCardClick = {
