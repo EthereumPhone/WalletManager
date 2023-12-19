@@ -54,7 +54,6 @@ fun AssetRoute(
     navigateToAssetDetail: (String) -> Unit,
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
-
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
@@ -82,10 +81,6 @@ internal fun AssetScreen(
         }
     )
 
-    LaunchedEffect(key1 = assetsUiState) {
-        println("recomposing now :(")
-
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -127,7 +122,19 @@ internal fun AssetScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                ){
+                ) {
+                    LazyColumn(
+
+                    ) {
+                        assetsUiState.assets.forEach {
+                            item(it.key) {
+                                AssetListItem(title = it.key, assets = it.value) {
+                                    navigateToAssetDetail(it.key)
+                                }
+                            }
+                        }
+                    }
+
                     PullRefreshIndicator(
                         refreshing = refreshState,
                         state = pullRefreshState,
@@ -149,26 +156,7 @@ fun formatDouble(input: Double): String {
 @Preview
 fun PreviewAssetScreen(){
     AssetScreen(
-        assetsUiState = AssetUiState.Success(
-            listOf(
-                    TokenAsset(
-                        address = "byuohui",
-                        chainId =  5,
-                        symbol=  "ETH",
-                        name= "Ether",
-                        balance= 1.657
-                    ),
-                    TokenAsset(
-                        address = "yuooyvyuv",
-                        chainId =  10,
-                        symbol=  "ETH",
-                        name= "Ether",
-                        balance= 0.12
-                    )
-                )
-
-
-        ),
+        assetsUiState = AssetUiState.Loading,
         refreshState = false,
         onRefresh = {},
         navigateToAssetDetail ={},

@@ -64,21 +64,9 @@ fun AssetListItem(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
-
-                    Text(
-                        assets.get(0).symbol.uppercase(),
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
                 //TODO: Dollar Amount
-                Text(
-                    "$0.00-",
-                    color = Color(0xFF9FA2A5),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+
             }
             Spacer(modifier = Modifier.width(24.dp))
 

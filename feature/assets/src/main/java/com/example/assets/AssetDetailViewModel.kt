@@ -48,7 +48,7 @@ class AssetDetailViewModel @Inject constructor(
 
     val symbol = assetDetailArgs.symbol
 
-    val currentState: StateFlow<AssetUiState> =
+    val currentState: StateFlow<DetailAssetUiState> =
         assetUiState(
             tokenAssetBySymbolUseCase,
             networkBalanceRepository,
@@ -56,7 +56,7 @@ class AssetDetailViewModel @Inject constructor(
         ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetUiState.Loading
+            initialValue = DetailAssetUiState.Loading
         )
 }
 
@@ -65,7 +65,7 @@ fun assetUiState(
     getTokenAssetsByNetwork: GetTokenAssetsBySymbolUseCase,
     networkBalanceRepository: NetworkBalanceRepository,
     symbol: String
-): Flow<AssetUiState> {
+): Flow<DetailAssetUiState> {
 
     // observe erc20 tokens
     val erc20Tokens: Flow<List<TokenAsset>> = getTokenAssetsByNetwork(symbol)
@@ -100,12 +100,22 @@ fun assetUiState(
                 is Result.Success -> {
                     val (tokens, networkTokens) = tokenToTokeResult.data
                     val filteredNetwork = networkTokens.filter { it.symbol == symbol }
-                    AssetUiState.Success(filteredNetwork + tokens)
+                    DetailAssetUiState.Success(filteredNetwork + tokens)
                 }
-                is Result.Loading -> AssetUiState.Loading
-                is Result.Error -> AssetUiState.Error
+                is Result.Loading -> DetailAssetUiState.Loading
+                is Result.Error -> DetailAssetUiState.Error
             }
         }
+}
+
+
+sealed interface DetailAssetUiState {
+    object Loading: DetailAssetUiState
+    object Error: DetailAssetUiState
+    object Empty: DetailAssetUiState
+    data class Success(
+        val assets: List<TokenAsset>
+    ): DetailAssetUiState
 }
 
 

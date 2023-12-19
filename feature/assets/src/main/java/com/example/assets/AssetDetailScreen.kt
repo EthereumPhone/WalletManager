@@ -41,22 +41,22 @@ fun AssetDetailRoute(
     navigateToAsset: () -> Unit,
     viewModel: AssetDetailViewModel = hiltViewModel(),
 ) {
-    val assetDetailUiState: AssetUiState by viewModel.currentState.collectAsStateWithLifecycle()
+    val detailAssetUiState by viewModel.currentState.collectAsStateWithLifecycle()
     AssetDetailScreen(
-        assetDetailUiState = assetDetailUiState,
+        detailAssetUiState = detailAssetUiState,
         navigateToAsset = navigateToAsset
     )
 }
 @Composable
 fun AssetDetailScreen(
     modifier: Modifier = Modifier,
-    assetDetailUiState: AssetUiState,
+    detailAssetUiState: DetailAssetUiState,
     navigateToAsset: () -> Unit,
 ){
-    when(assetDetailUiState){
-        is AssetUiState.Error -> { }
-        is AssetUiState.Empty -> { }
-        is AssetUiState.Loading -> {
+    when(detailAssetUiState){
+        is DetailAssetUiState.Error -> { }
+        is DetailAssetUiState.Empty -> { }
+        is DetailAssetUiState.Loading -> {
             Box(
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -64,8 +64,8 @@ fun AssetDetailScreen(
                 Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        is AssetUiState.Success -> {
-            var asset = assetDetailUiState.assets
+        is DetailAssetUiState.Success -> {
+            var asset = detailAssetUiState.assets
                 Column (
                     modifier = Modifier
                         .fillMaxSize()
@@ -122,6 +122,8 @@ fun AssetDetailScreen(
                         Text(text = asset.get(0).symbol.uppercase(),fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
 
                         Spacer(modifier = modifier.height(84.dp))
+
+                        println(asset.get(0).address)
 
 
 

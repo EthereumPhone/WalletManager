@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -33,6 +35,7 @@ import javax.inject.Inject
 class AssetViewModel @Inject constructor(
     getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    GetGroupedTokenAssets: GetGroupedTokenAssets,
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
@@ -112,7 +115,10 @@ fun assetUiState(
                         AssetUiState.Empty
                     } else {
 
-                        AssetUiState.Success(filteredAssets.filter { it.chainId != 5 })
+                        AssetUiState.Success(filteredAssets
+                            .filter { it.chainId != 5 }
+                            .groupBy { it.symbol }
+                        )
                     }
                 }
                 is Result.Loading -> {
@@ -132,11 +138,6 @@ sealed interface AssetUiState {
     object Error: AssetUiState
     object Empty: AssetUiState
     data class Success(
-        val assets: List<TokenAsset>
+        val assets: Map<String, List<TokenAsset>>
     ): AssetUiState
-}
-
-sealed interface WalletDataUiState {
-    object Loading: WalletDataUiState
-    data class Success(val userData: UserData): WalletDataUiState
 }

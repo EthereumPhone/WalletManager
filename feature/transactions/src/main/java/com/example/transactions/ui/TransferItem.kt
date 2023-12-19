@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.TransferItem
+import com.core.ui.util.formatDouble
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.Date
@@ -104,11 +105,10 @@ internal fun TransferListItem(
                             verticalAlignment = Alignment.CenterVertically,
 
                             ){
-                            Text(transfer.value, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
+                            Text(formatDouble(transfer.value.toDouble()), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
 
                             Text(transfer.asset, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
                         }
-                        Text("$0.00-", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium )
                     }
 
                     Spacer(modifier = Modifier.width(24.dp))
