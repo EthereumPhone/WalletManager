@@ -22,6 +22,7 @@ import com.core.result.Result
 import com.core.result.asResult
 import com.example.assets.navigation.SymbolArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -68,7 +70,7 @@ fun assetUiState(
 ): Flow<DetailAssetUiState> {
 
     // observe erc20 tokens
-    val erc20Tokens: Flow<List<TokenAsset>> = getTokenAssetsByNetwork(symbol)
+    val erc20Tokens: Flow<List<TokenAsset>> = getTokenAssetsByNetwork(symbol).flowOn(Dispatchers.IO)
 
 
     // observe network currency
@@ -88,7 +90,7 @@ fun assetUiState(
                             decimals = 18
                         )
                     }
-            }
+            }.flowOn(Dispatchers.IO)
 
     return combine(
         erc20Tokens,

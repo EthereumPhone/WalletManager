@@ -18,10 +18,9 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
             tokenBalanceRepository.getTokensBalances(),
             tokenMetadataRepository.getTokensMetadata()
         ) { balance, metadata ->
+            val metadataMap = metadata.associateBy { it.contractAddress.lowercase() }
             val pairedList = balance.mapNotNull { tokenBalance ->
-                metadata.find {
-                    it.contractAddress.lowercase() == tokenBalance.contractAddress.lowercase()
-                }?.let { tokenMetadata ->
+                metadataMap[tokenBalance.contractAddress.lowercase()]?.let { tokenMetadata ->
                     Pair(tokenBalance, tokenMetadata)
                 }
             }
@@ -40,7 +39,7 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
 
             if(symbol != "") {
                 tokenAssets.filter {
-                    it.symbol.contains(symbol)
+                    it.symbol == symbol
                 }
             } else {
                 tokenAssets

@@ -119,11 +119,11 @@ fun AssetListDetailItem(
                     verticalAlignment = Alignment.CenterVertically,
 
                     ){
-                    Text("${tokenAsset.balance}", color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(formatDouble(tokenAsset.balance), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
 
                     Text(tokenAsset.symbol.uppercase(), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
-                Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp,fontWeight = FontWeight.Medium )
+                //Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp,fontWeight = FontWeight.Medium )
             }
 
         }
