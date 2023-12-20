@@ -45,5 +45,9 @@ internal fun FunctionsRow(
 @Preview
 @Composable
 private fun previewFunctionsRow() {
-    //FunctionsRow(navigateToSwap, navigateToSend, navigateToReceive)
+    FunctionsRow(
+        {},
+        {},
+        {}
+    )
 }
