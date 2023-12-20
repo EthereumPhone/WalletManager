@@ -96,8 +96,6 @@ fun TransactionScreen(
 
                 val transfers = transfersUIState.transfers
 
-                Spacer(modifier = Modifier.height(32.dp))
-
 
                 if (transfers.size > 0){
                     LazyColumn (
@@ -122,7 +120,7 @@ fun TransactionScreen(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                        Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
 

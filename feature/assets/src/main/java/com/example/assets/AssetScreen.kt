@@ -83,8 +83,6 @@ internal fun AssetScreen(
 
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
@@ -106,7 +104,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
             is AssetUiState.Error -> {
