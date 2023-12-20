@@ -119,7 +119,8 @@ fun ethOSTextField(
     sizeCut: Int = 2,
     numberInput: Boolean = false,
     onTextChanged: (String) -> Unit,
-    color: Color = Color.White
+    color: Color = Color.White,
+    center: Boolean = false
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
@@ -146,7 +147,7 @@ fun ethOSTextField(
             fontSize = calculateFontSize(text.length,size,sizeCut),
             fontWeight = FontWeight.SemiBold
         ),
-        modifier = Modifier.width(IntrinsicSize.Min),
+        modifier = modifier.width(IntrinsicSize.Min),
 
 //            textStyle = TextStyle(
 ////                textAlign = TextAlign.Center,
@@ -164,17 +165,17 @@ fun ethOSTextField(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
         ) {
             if (!isFocused && text.isEmpty()) {
                 Text(
                     text = label,
-                    textAlign = TextAlign.Start,
+                    textAlign = if(center) TextAlign.Center else TextAlign.Start ,
                     fontWeight = FontWeight.Medium,
                     fontSize = size.sp,
                     color = Color(0xFF9FA2A5),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = modifier.fillMaxWidth()
                 )
             }
             innerTextField()

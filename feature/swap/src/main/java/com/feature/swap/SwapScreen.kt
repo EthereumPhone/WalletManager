@@ -154,7 +154,7 @@ internal fun SwapScreen(
 
 
             Text(
-                text = "on ${network}",
+                text = "${network}",
                 fontSize = 16.sp,
                 color = Color(0xFF9FA2A5),
                 fontWeight = FontWeight.Normal,

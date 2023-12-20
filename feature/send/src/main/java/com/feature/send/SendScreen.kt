@@ -144,7 +144,10 @@ fun SendScreen(
 
 ) {
 
-    initialAddress?.let(onToAddressChanged)
+    if(initialAddress != null && initialAddress !=""){
+        onToAddressChanged(initialAddress)
+    }
+//    initialAddress?.let(onToAddressChanged)
 
     var validSendAddress by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
@@ -242,6 +245,10 @@ fun SendScreen(
         }
     }
 
+    var testAddress by remember {
+        mutableStateOf("")
+    }
+
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
@@ -319,12 +326,18 @@ fun SendScreen(
                         }
                     }
                     false -> {
+
                         ethOSCenterTextField(
-                            text = toAddress,
+                            text = toAddress,//testAddress,
                             label = "(Enter address, ENS or QR scan)",
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f), //.background(Color.Red),//.fillMaxWidth(0.95f).
                             singleLine = false,
+//                            center = true,
                             onTextChanged = {
+//                                Log.d("Debug1",testAddress)
+//                                Log.d("Debug",it)
+//                                testAddress = it
+
                                 onToAddressChanged(it)
                                 CompletableFuture.runAsync {
                                     if (it.endsWith(".eth")) {
@@ -357,7 +370,6 @@ fun SendScreen(
                         )
                     }
                 }
-
 
 
                 Row(
@@ -464,10 +476,11 @@ fun SendScreen(
                     }
                 )
             }
+
             ethOSButton(
                 text = "Send",
-                enabled = amount.isNotEmpty() && (amount.toDoubleOrNull() ?: 0.0 ) != 0.0 && toAddress.isNotEmpty() && ((amount.toDoubleOrNull()
-                    ?: (tokenBalance + 1)) <= tokenBalance), // tokenbalance +1 if null to make it impossible
+                enabled = (selectedToken is SelectedTokenUiState.Selected) && allowedReceipient(toAddress) && allowedAmount(amount,tokenBalance),
+
                 onClick = {
                     if(amount.toDouble() < tokenBalance) {
                         sendTransaction {
@@ -561,6 +574,15 @@ fun SendScreen(
 }
 
 
+fun allowedReceipient(receipient: String):Boolean{
+    return receipient.isNotEmpty()
+}
+
+fun allowedAmount(amount: String, tokenBalance: Double):Boolean{
+    return amount.isNotEmpty() && (amount.toDoubleOrNull() ?: 0.0 ) != 0.0 && ((amount.toDoubleOrNull()
+        ?: (tokenBalance + 1)) <= tokenBalance)// tokenbalance +1 if null to make it impossible
+
+}
 
 fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
     val defaultFontSize = defaultSize.sp
