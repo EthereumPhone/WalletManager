@@ -22,6 +22,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
@@ -37,6 +38,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var walletAddressUpdater: SystemWalletAddressUpdater
+
+    @Inject
+    lateinit var networkMonitor: NetworkMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +86,7 @@ class MainActivity : ComponentActivity() {
             )
 
 
-            WmApp()
+            WmApp(networkMonitor = networkMonitor)
         }
     }
 

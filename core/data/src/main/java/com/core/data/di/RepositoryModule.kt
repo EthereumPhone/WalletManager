@@ -16,6 +16,8 @@ import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.repository.Web3jNetworkBalanceRepository
+import com.core.data.util.ConnectivityManagerNetworkMonitor
+import com.core.data.util.NetworkMonitor
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -64,5 +66,10 @@ interface RepositoryModule {
     fun bindsCoinbaseExchangeRepository(
         coinbaseExchangeRepository: CoinbaseExchangeRepository
     ): ExchangeRepository
+
+    @Binds
+    fun bindsNetworkMonitor(
+        networkMonitor: ConnectivityManagerNetworkMonitor,
+    ): NetworkMonitor
 
 }

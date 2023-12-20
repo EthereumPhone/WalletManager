@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.core.data.util.NetworkMonitor
 import com.core.model.CurrentState
 import kotlinx.coroutines.CoroutineScope
 import com.example.assets.navigation.assetRoute
@@ -19,16 +20,28 @@ import com.example.transactions.navigation.transactionRoute
 
 import com.feature.home.navigation.homeRoute
 import com.feature.home.navigation.navigateToHome
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 import org.ethereumphone.walletmanager.utils.Screen
 
 @Composable
 fun rememberWmAppState(
+    networkMonitor: NetworkMonitor,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     navController: NavHostController = rememberNavController()
 ): WmAppState {
-    return remember(navController, coroutineScope) {
-        WmAppState(navController, coroutineScope)
+    return remember(
+        networkMonitor,
+        navController,
+        coroutineScope
+    ) {
+        WmAppState(
+            navController,
+            networkMonitor,
+            coroutineScope
+        )
     }
 }
 
@@ -38,6 +51,7 @@ fun rememberWmAppState(
 @Stable
 class WmAppState(
     val navController: NavHostController,
+    networkMonitor: NetworkMonitor,
     val coroutineScope: CoroutineScope
 ) {
     val currentDestination: NavDestination?
@@ -45,7 +59,13 @@ class WmAppState(
             .currentBackStackEntryAsState().value?.destination
 
 
-    // val isOffline
+    val isOffline = networkMonitor.isOnline
+        .map(Boolean::not)
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false,
+        )
 
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
 

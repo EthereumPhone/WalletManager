@@ -12,17 +12,24 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
 import com.core.designsystem.theme.secondary
 import com.feature.home.navigation.homeGraphRoutePattern
@@ -37,8 +44,24 @@ import org.ethereumphone.walletmanager.utils.Screen
 
 @Composable
 fun WmApp(
-    appState: WmAppState = rememberWmAppState(),
+    networkMonitor: NetworkMonitor,
+    appState: WmAppState = rememberWmAppState(networkMonitor),
 ) {
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val isOffline by appState.isOffline.collectAsState()
+
+    // If user is not connected to the internet show a snack bar to inform them.
+    val notConnectedMessage = "⚠\uFE0F You aren’t connected to the internet. Sending and Swapping will be disabled until reconnected"
+    LaunchedEffect(isOffline) {
+        if (isOffline) {
+            snackbarHostState.showSnackbar(
+                message = notConnectedMessage,
+                duration = SnackbarDuration.Indefinite,
+            )
+        }
+    }
 
     val listScreens = listOf(Screen.Home,Screen.Assets,Screen.Transaction)
     Scaffold(
