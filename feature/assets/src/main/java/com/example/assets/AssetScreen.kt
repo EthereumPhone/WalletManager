@@ -90,12 +90,6 @@ internal fun AssetScreen(
     ) {
         TopHeader(title = "Assets")
         Spacer(modifier = Modifier.height(48.dp))
-        Box(
-                    modifier = modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ){
-                    Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-                }
 
         when(assetsUiState){
             is AssetUiState.Loading -> {
@@ -129,7 +123,7 @@ internal fun AssetScreen(
                         .fillMaxSize()
                 ) {
                     LazyColumn(
-
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         assetsUiState.assets.forEach {
                             item(it.key) {

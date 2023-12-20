@@ -57,40 +57,41 @@ internal fun TransferListItem(
             var icontint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
 
 
-                var icon = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
-
-
-                Icon(
-                    imageVector = icon,
-                    contentDescription = if (transfer.userSent) "Send" else "Receive",
-                    tint = icontint,
-                    modifier = Modifier.size(28.dp)
-                )
+//                var icon = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
+//
+//
+//                Icon(
+//                    imageVector = icon,
+//                    contentDescription = if (transfer.userSent) "Send" else "Receive",
+//                    tint = icontint,
+//                    modifier = Modifier.size(28.dp)
+//                )
 
 
 
             Row(
                 modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
                 ) {
 
                 Column (
                     modifier = modifier
                 ){
                     Text(
-
                         text = if(transfer.userSent) "Sent ${transfer.asset}" else "Received ${transfer.asset}",
                         color = Color.White,//(0xFF9FA2A5),
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         modifier = Modifier.width(125.dp)
                     )
-                    Text(transfer.timeStamp.take(10), color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(transfer.timeStamp.take(10), color = Color(0xFF9FA2A5), fontSize = 18.sp, fontWeight = FontWeight.Medium)
                 }
 
                 Row (
+                    modifier = modifier,
                     verticalAlignment = Alignment.CenterVertically,
 
 
@@ -105,13 +106,12 @@ internal fun TransferListItem(
                             verticalAlignment = Alignment.CenterVertically,
 
                             ){
-                            Text(formatDouble(transfer.value.toDouble()), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
-
-                            Text(transfer.asset, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
+                            Text("${if(transfer.userSent) "-" else "+"}${formatDouble(transfer.value.toDouble())} ${transfer.asset}", color = icontint, fontSize = 18.sp, fontWeight = FontWeight.Medium)//"${tokenAsset.balance}", color = Color.White)
+                            //Text(transfer.asset, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Medium)//tokenAsset.symbol, color = Color.White)
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(24.dp))
+                    Spacer(modifier = Modifier.width(18.dp))
 
                     IconButton(
                         onClick = onCardClick,
