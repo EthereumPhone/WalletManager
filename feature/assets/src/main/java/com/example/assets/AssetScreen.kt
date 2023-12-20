@@ -90,6 +90,7 @@ internal fun AssetScreen(
     ) {
         TopHeader(title = "Assets")
         Spacer(modifier = Modifier.height(48.dp))
+
         when(assetsUiState){
             is AssetUiState.Loading -> {
                 Box(
@@ -122,7 +123,7 @@ internal fun AssetScreen(
                         .fillMaxSize()
                 ) {
                     LazyColumn(
-
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         assetsUiState.assets.forEach {
                             item(it.key) {

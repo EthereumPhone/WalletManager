@@ -154,7 +154,7 @@ internal fun SwapScreen(
 
 
             Text(
-                text = "on ${network}",
+                text = "${network}",
                 fontSize = 16.sp,
                 color = Color(0xFF9FA2A5),
                 fontWeight = FontWeight.Normal,
@@ -196,6 +196,8 @@ internal fun SwapScreen(
                     exchangeUiState = exchangeUiState,
                     isSyncing = isSyncing
                 )
+
+
         }
 
         val context = LocalContext.current
@@ -218,9 +220,10 @@ internal fun SwapScreen(
         }
 
 
+
         ethOSButton(
             text = "Swap",
-            enabled =  correctChain && amountsUiState.toAmount.isNotBlank() && allSelected && tooHighAmount && validAmount != 0.0,
+            enabled =  correctChain && amountsUiState.toAmount.isNotBlank() && allSelected && !tooHighAmount && validAmount != 0.0,
             onClick = {
                 if (currentChain != 1 && currentChain  != 10) {
                     (context as Activity).runOnUiThread {

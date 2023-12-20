@@ -150,24 +150,25 @@ fun TransctionDetailScreen(
                         TransactionDetailItem("Chain",tx.chainId.toString())
                         TransactionDetailItem("Amount",tx.value)
 
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                //send intent to etherscann
+                                val intent = Intent(Intent.ACTION_VIEW,
+                                    Uri.parse("https://etherscan.io/tx/${txHash}"))
+                                startActivity(context, intent, null)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White,
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(96.dp))
-                    Button(
-                        onClick = {
-                            //send intent to etherscann
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                Uri.parse("https://etherscan.io/tx/${txHash}"))
-                            startActivity(context, intent, null)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = Color.White,
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                    }
+
                 }
             }
         }

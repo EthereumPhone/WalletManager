@@ -71,7 +71,7 @@ fun WelcomeModalBottomSheet(onDismiss: () -> Unit) {
 @Composable
 fun OnboardingListItem(item: OnboardingItem){
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(

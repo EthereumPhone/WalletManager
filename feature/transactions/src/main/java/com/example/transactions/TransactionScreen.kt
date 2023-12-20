@@ -150,5 +150,10 @@ fun getMonth(month: Int): String {
 fun PreviewTransactionScreen(
     modifier: Modifier = Modifier
 ){
-    //TransactionScreen()
+    TransactionScreen(
+        transfersUIState = TransfersUiState.Loading,
+        refreshState = false,
+        onRefresh = {},
+        navigateToTxDetail = {}
+    )
 }
