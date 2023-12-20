@@ -1,45 +1,31 @@
 package org.ethereumphone.walletmanager.ui
 
-import android.content.Intent
-import androidx.compose.foundation.border
+import android.widget.Toast
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Article
-import androidx.compose.material.icons.rounded.Dataset
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
 import com.core.designsystem.theme.secondary
-import com.feature.home.navigation.homeGraphRoutePattern
-import com.feature.home.navigation.homeRoute
-import com.example.assets.navigation.assetRoute
-import com.example.transactions.navigation.transactionRoute
-import com.feature.send.navigation.navigateToSend
-import com.feature.send.navigation.sendRoute
 import org.ethereumphone.walletmanager.navigation.WmNavHost
 import org.ethereumphone.walletmanager.utils.Screen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 
 
 @Composable
@@ -50,12 +36,14 @@ fun WmApp(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val isOffline by appState.isOffline.collectAsState()
+    val isOffline by appState.isOffline.collectAsStateWithLifecycle()
 
     // If user is not connected to the internet show a snack bar to inform them.
-    val notConnectedMessage = "⚠\uFE0F You aren’t connected to the internet. Sending and Swapping will be disabled until reconnected"
+    val notConnectedMessage = "⚠\uFE0F You aren’t connected to the internet"
     LaunchedEffect(isOffline) {
         if (isOffline) {
+            println("offline")
+
             snackbarHostState.showSnackbar(
                 message = notConnectedMessage,
                 duration = SnackbarDuration.Indefinite,
@@ -74,17 +62,13 @@ fun WmApp(
                 currentDestination = appState.currentDestination,
 
             )
-//
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
-
-
-
         WmNavHost(
             appState = appState,
             modifier = Modifier.padding(paddingValues),
         )
-
     }
 }
 
