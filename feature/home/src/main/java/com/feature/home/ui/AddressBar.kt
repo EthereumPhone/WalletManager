@@ -101,7 +101,12 @@ internal fun AddressBar(
 
         Surface (
             modifier = Modifier.clip(CircleShape).clickable {
-                copyTextToClipboard(context,address)
+                when (userData) {
+                    is WalletDataUiState.Success -> {
+                        copyTextToClipboard(context, userData.userData.walletAddress)
+                    }
+                    else -> {}
+                }
             },
             color = Color(0xFF262626),
             contentColor = Color.White

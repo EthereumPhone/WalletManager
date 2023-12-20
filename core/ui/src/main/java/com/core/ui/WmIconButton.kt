@@ -1,5 +1,6 @@
 package com.core.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,9 @@ fun WmIconButton(
     icon: ImageVector,
     contentDescription: String? = null
 ) = Column(
+    Modifier.clickable {
+        onClick()
+    },
     horizontalAlignment = Alignment.CenterHorizontally
 ) {
     IconButton(

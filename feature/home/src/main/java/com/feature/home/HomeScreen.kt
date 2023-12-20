@@ -170,7 +170,7 @@ internal fun HomeScreen(
                 navigateToReceive
             )
 
-            AssetList(assetsUiState)
+            AssetList(assetsUiState, userData)
         }
 
 
