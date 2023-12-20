@@ -15,12 +15,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.core.model.TokenAsset
+import com.core.model.UserData
 import com.feature.home.AssetsUiState
+import com.feature.home.WalletDataUiState
 
 @Composable
-fun AssetList(assetsUiState: AssetsUiState) {
+fun AssetList(
+    assetsUiState: AssetsUiState,
+    userData: WalletDataUiState
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -49,17 +56,21 @@ fun AssetList(assetsUiState: AssetsUiState) {
                     }
                 }
                 is AssetsUiState.Success -> {
-                    val assets = assetsUiState.assets
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        assets.forEach { item ->
-                            item(key = item.address) {
+                    if (userData is WalletDataUiState.Success) {
+                        val assets = assetsUiState.assets
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            val sortedAssets = assets.sortedWith(compareBy { it.chainId != (userData.userData.walletNetwork.toIntOrNull() ?: 0) })
 
-                                AssetListItem(title = item.symbol, value = item.balance)
-                                Spacer(modifier = Modifier.height(8.dp))
+                            sortedAssets.forEach { item ->
+                                item(key = item.address) {
+                                    AssetListItem(title = item.symbol, value = item.balance)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
                             }
+
                         }
                     }
                 }
@@ -71,4 +82,33 @@ fun AssetList(assetsUiState: AssetsUiState) {
 
 fun formatString(input: String): String {
     return input.uppercase()
+}
+
+
+@Preview
+@Composable
+fun PreviewAssetList() {
+    AssetList(
+        AssetsUiState.Success(
+            listOf(
+                TokenAsset(
+                    address = "",
+                    chainId = 1,
+                    symbol = "ETH",
+                    name = "ETHER",
+                    balance = 1.0,
+                    decimals = 18,
+                    swappable = true
+                )
+            )
+        ),
+        WalletDataUiState.Success(
+            UserData(
+                "",
+                "",
+                true,
+                ""
+            )
+        )
+    )
 }
