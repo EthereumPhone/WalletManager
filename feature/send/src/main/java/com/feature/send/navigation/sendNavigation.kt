@@ -18,7 +18,7 @@ const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
 fun NavController.navigateToSend(address: String? = null) {
     this.navigate(sendRoute) {
         popUpTo("home_route") {
-            inclusive = true
+            inclusive = false
         }
     }
 }

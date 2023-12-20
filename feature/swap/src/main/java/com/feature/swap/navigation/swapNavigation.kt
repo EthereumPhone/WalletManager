@@ -11,7 +11,7 @@ const val swapRoute = "swap_route"
 fun NavController.navigateToSwap() {
     this.navigate(swapRoute) {
         popUpTo("home_route") {
-            inclusive = true
+            inclusive = false
         }
     }
 }

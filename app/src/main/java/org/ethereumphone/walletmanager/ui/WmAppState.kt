@@ -50,23 +50,22 @@ class WmAppState(
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
 
         val topLevelNavOptions = navOptions {
-            // Pop up to the start destination of the graph to
-            // avoid building up a large stack of destinations
-            // on the back stack as users select items
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
-            // Avoid multiple copies of the same destination when
-            // reselecting the same item
             launchSingleTop = true
-            // Restore state when reselecting a previously selected item
             restoreState = true
         }
 
-        when (topLevelDestination.route) {
-            homeRoute -> navController.navigateToHome(topLevelNavOptions)
-            assetRoute -> navController.navigateToAsset(topLevelNavOptions)
-            transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
+        // Check if we are already on the home screen and the user clicks on the home button
+        if (topLevelDestination.route == homeRoute && navController.currentDestination?.route != homeRoute) {
+            navController.popBackStack(homeRoute, inclusive = false)
+        } else {
+            when (topLevelDestination.route) {
+                homeRoute -> navController.navigateToHome(topLevelNavOptions)
+                assetRoute -> navController.navigateToAsset(topLevelNavOptions)
+                transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
+            }
         }
     }
 }
