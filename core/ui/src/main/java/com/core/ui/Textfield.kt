@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -18,10 +19,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +42,7 @@ fun ethOSCenterTextField(
     label: String = "",
     singleLine: Boolean = false,//true,
     onTextChanged: (String) -> Unit,
-    color: Color = Color.White
+    color: Color = Color.White,
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
@@ -120,16 +124,17 @@ fun ethOSTextField(
     numberInput: Boolean = false,
     onTextChanged: (String) -> Unit,
     color: Color = Color.White,
-    center: Boolean = false
+    center: Boolean = false,
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
     //val focusRequester = FocusRequester()
     var fontSize by remember { mutableStateOf(size.sp) }
 
-
+    val focusManager = LocalFocusManager.current
     BasicTextField(
         value = text,
+        readOnly = false,
         onValueChange = {
             if(it.length < maxChar){
                 onTextChanged(it)
@@ -138,6 +143,8 @@ fun ethOSTextField(
             fontSize = size.sp
 
         },
+        keyboardActions = KeyboardActions(
+            onDone = { focusManager.clearFocus() }),
         keyboardOptions = if(numberInput) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions(keyboardType = KeyboardType.Text),
         singleLine = singleLine,
         minLines = 1,
