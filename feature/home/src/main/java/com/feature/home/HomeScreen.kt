@@ -152,7 +152,7 @@ internal fun HomeScreen(
                             if(assetsUiState.assets.isEmpty()) {
                                 0.0
                             } else {
-                                assetsUiState.assets.filter { it.chainId == userData.userData.walletNetwork.toInt()}.first().balance
+                                (assetsUiState.assets.filter { it.chainId == userData.userData.walletNetwork.toInt()}.firstOrNull() ?: assetsUiState.assets.filter { it.chainId == 1}.first()).balance
                             }
                         } else -> 0.0
                     }
