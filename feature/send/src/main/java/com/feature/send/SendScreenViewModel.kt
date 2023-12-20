@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
@@ -94,21 +95,26 @@ class SendViewModel @Inject constructor(
             val selectedAsset = _selectedAssetUiState.value
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
-                val asset = selectedAsset.tokenAsset
-                if(asset.address.contains("0x")) {
-                    sendRepository.transferErc20(
-                        asset,
-                        amount.value.toDouble(),
-                        toAddress.value
-                    )
-                } else {
-                    sendRepository.transferEth(
-                        chainId = userDataRepository.userData.first().walletNetwork.toInt(),
-                        toAddress = toAddress.value,
-                        data = "",
-                        value = amount.value
-                    )
+                try {
+                    val asset = selectedAsset.tokenAsset
+                    if(asset.address.contains("0x")) {
+                        sendRepository.transferErc20(
+                            asset,
+                            amount.value.toDouble(),
+                            toAddress.value
+                        )
+                    } else {
+                        sendRepository.transferEth(
+                            chainId = userDataRepository.userData.first().walletNetwork.toInt(),
+                            toAddress = toAddress.value,
+                            data = "",
+                            value = amount.value
+                        )
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
+
             }
             callback()
         }

@@ -216,14 +216,17 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             val (fromAsset, toAsset) = swapAssetsUiState.value
             val fromAmount = amountsUiState.value.fromAmount
-
-            if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
-                val result = swapRepository.swap(
-                    fromAsset.tokenAsset.address,
-                    toAsset.tokenAsset.address,
-                    fromAmount.toDouble()
-                )
-                callback(result)
+            try {
+                if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                    val result = swapRepository.swap(
+                        fromAsset.tokenAsset.address,
+                        toAsset.tokenAsset.address,
+                        fromAmount.toDouble()
+                    )
+                    callback(result)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
