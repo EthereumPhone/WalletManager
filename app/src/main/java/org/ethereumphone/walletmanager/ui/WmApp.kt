@@ -80,6 +80,8 @@ private fun EthOSBottomBar(
         contentColor = Color.White
     ){
 
+        println(currentDestination)
+
         destinations.forEach { destination ->
             val selected = currentDestination.isTopLevelDestinationInHierarchy(destination)
             BottomNavigationItem(
@@ -94,11 +96,8 @@ private fun EthOSBottomBar(
                 selected = selected,
                 selectedContentColor = Color.White,
                 unselectedContentColor = Color(0xFF9FA2A5),
-                onClick = {
-                    onNavigateToDestination(destination)
-                }
+                onClick = { onNavigateToDestination(destination) }
             )
-
         }
     }
 }

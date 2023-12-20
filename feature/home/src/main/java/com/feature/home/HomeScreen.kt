@@ -49,7 +49,6 @@ internal fun HomeRoute(
 ) {
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     var updater by remember {mutableStateOf(true)}
 
@@ -82,9 +81,6 @@ internal fun HomeScreen(
     setOnboardingComplete: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    //val isOnboardingLoading = userData is WalletDataUiState.Loading
-
     val onboardingComplete = when(userData) {
         is WalletDataUiState.Success -> {
             !userData.userData.onboardingCompleted
@@ -138,15 +134,9 @@ internal fun HomeScreen(
                 },
                 imageVector = Icons.Filled.QrCodeScanner,
             )
-
             AddressBar(userData)
-
         }
 
-
-        /*
-
-         */
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ){

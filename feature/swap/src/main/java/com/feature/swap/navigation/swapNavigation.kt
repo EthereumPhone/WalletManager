@@ -9,7 +9,11 @@ import com.feature.swap.SwapRoute
 const val swapRoute = "swap_route"
 
 fun NavController.navigateToSwap() {
-    this.navigate(swapRoute)
+    this.navigate(swapRoute) {
+        popUpTo("home_route") {
+            inclusive = true
+        }
+    }
 }
 
 fun NavGraphBuilder.swapScreen(

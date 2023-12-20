@@ -44,6 +44,7 @@ class WmAppState(
         @Composable get() = navController
             .currentBackStackEntryAsState().value?.destination
 
+
     // val isOffline
 
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
@@ -67,6 +68,5 @@ class WmAppState(
             assetRoute -> navController.navigateToAsset(topLevelNavOptions)
             transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
         }
-
     }
 }

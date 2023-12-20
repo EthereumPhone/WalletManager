@@ -10,7 +10,11 @@ import com.feature.receive.ReceiveScreen
 const val receiveRoute = "receive_route"
 
 fun NavController.navigateToReceive() {
-    this.navigate(receiveRoute)
+    this.navigate(receiveRoute) {
+        popUpTo("home_route") {
+            inclusive = true
+        }
+    }
 }
 
 
