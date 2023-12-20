@@ -39,7 +39,9 @@ fun WmNavHost(
         startDestination = startDestination,
         modifier = modifier,
         enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None }
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
 
         homeGraph(
