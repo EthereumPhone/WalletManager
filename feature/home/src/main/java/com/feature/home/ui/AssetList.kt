@@ -22,6 +22,10 @@ import com.core.model.TokenAsset
 import com.core.model.UserData
 import com.feature.home.AssetsUiState
 import com.feature.home.WalletDataUiState
+import com.feature.home.formatDouble
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.walletmanager.ethOSAssetListItem
+import org.ethosmobile.components.library.walletmanager.ethOSSimpleAssetListItem
 
 @Composable
 fun AssetList(
@@ -39,19 +43,19 @@ fun AssetList(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(text = "Overview", color = Color(0xFF9FA2A5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text(text = "Overview", color = Colors.GRAY, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             when(assetsUiState){
                 is AssetsUiState.Empty ->{
                     Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center){
-                        Text(text = "No assets", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                        Text(text = "No assets", color = Colors.GRAY, fontSize = 20.sp, fontWeight = FontWeight.Medium)
 
                     }
                 }
                 is AssetsUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center){
-                        Text(text = "Loading...", color = Color(0xFF9FA2A5), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                        Text(text = "Loading...", color = Colors.GRAY, fontSize = 20.sp, fontWeight = FontWeight.Medium)
 
                     }
                 }
@@ -66,7 +70,9 @@ fun AssetList(
 
                             sortedAssets.forEach { item ->
                                 item(key = item.address) {
-                                    AssetListItem(title = item.symbol, value = item.balance)
+                                    val value = formatDouble(item.balance)
+                                    //TODO: use meethod in composable
+                                    ethOSSimpleAssetListItem(title = item.symbol, value = value.toDouble() )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
