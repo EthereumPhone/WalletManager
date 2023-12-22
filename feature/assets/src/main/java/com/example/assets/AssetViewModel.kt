@@ -37,7 +37,6 @@ class AssetViewModel @Inject constructor(
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
-    private val transferRepository: TransferRepository,
 ): ViewModel() {
 
     val tokenAssetState: StateFlow<AssetUiState> =
@@ -63,7 +62,6 @@ class AssetViewModel @Inject constructor(
 
             try {
                 val userData = userDataRepository.userData.first()
-                transferRepository.refreshTransfers(userData.walletAddress)
                 updateTokensUseCase(userData.walletAddress)
             } catch (e: Exception) {
                 e.printStackTrace()

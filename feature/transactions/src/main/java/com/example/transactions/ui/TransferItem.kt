@@ -56,19 +56,6 @@ internal fun TransferListItem(
             //Color of Icon
             var icontint = if (transfer.userSent) Color(0xFF2C63B3B) else Color(0xFF1B7C12)
 
-
-//                var icon = if (transfer.userSent) Icons.Rounded.NorthEast else Icons.Rounded.ArrowDownward
-//
-//
-//                Icon(
-//                    imageVector = icon,
-//                    contentDescription = if (transfer.userSent) "Send" else "Receive",
-//                    tint = icontint,
-//                    modifier = Modifier.size(28.dp)
-//                )
-
-
-
             Row(
                 modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
