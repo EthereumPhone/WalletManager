@@ -96,5 +96,6 @@ dependencies {
     implementation libs.kotlinx.datetime
 
 
-    implementation 'com.github.EthereumPhone:ethOS-Component-Library:0159dcb2be'
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:d091c9f28b'
+
 }

@@ -66,9 +66,9 @@ import com.core.data.util.chainToApiKey
 import com.core.model.TokenAsset
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
+import com.core.ui.ethOSCenterTextFieldInline
 import java.text.DecimalFormat
-import com.core.ui.ethOSTextField
-import com.core.ui.ethOSCenterTextField
+
 import com.feature.send.ui.AssetPickerSheet
 import com.core.ui.util.chainIdToName
 import com.core.ui.util.formatDouble
@@ -80,6 +80,13 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSCenterTextField
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.core.ethOSTagButton
+import org.ethosmobile.components.library.core.ethOSTextField
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
+import org.ethosmobile.components.library.walletmanager.ethOSContactPill
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -258,32 +265,20 @@ fun SendScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
-                .padding(horizontal = 32.dp, vertical = 32.dp)
+                .background(Colors.BLACK)
+                //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
             //Breadcrumb w/ backbutton
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TopHeader(
-                onBackClick = onBackClick,
-                title = "Send",
-                onClick = {},
-                imageVector = Icons.Filled.QrCodeScanner,
-                onlyTitle = false,
-                trailIcon = false
-            )
-
-
-
+        ethOSHeader(title="Send", isBackButton = true, onBackClick = onBackClick, isBottomContent = true, bottomContent = {
             Text(
                 text = network,
                 fontSize = 16.sp,
-                color = Color(0xFF9FA2A5),
+                color = Colors.GRAY,
+                fontFamily = Fonts.INTER,
                 fontWeight = FontWeight.Normal,
 
-            )
-        }
+                )
+        })
 
         val currentChainId = when (selectedToken) {
             is SelectedTokenUiState.Selected -> {
@@ -304,6 +299,7 @@ fun SendScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
+                .padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
 
         ){
 
@@ -317,7 +313,7 @@ fun SendScreen(
                 when(isContactSelected){
                     true -> {
                         if (contactsPermissionState.allPermissionsGranted) {
-                            ContactPill(contact = selectedContact) {
+                            ethOSContactPill(name = selectedContact.name, image = selectedContact.image) {
                                 selectedContact = Contact()
                                 onToAddressChanged("")
                                 isContactSelected = false
@@ -331,7 +327,7 @@ fun SendScreen(
                     }
                     false -> {
 
-                        ethOSCenterTextField(
+                        ethOSCenterTextFieldInline(
                             text = toAddress,//testAddress,
                             label = "(Enter address, ENS or QR scan)",
                             modifier = Modifier.weight(1f), //.background(Color.Red),//.fillMaxWidth(0.95f).
@@ -370,7 +366,7 @@ fun SendScreen(
                                     }
                                 }
                             },
-                            size = 20
+                            size = 20,
                         )
                     }
                 }
@@ -400,6 +396,7 @@ fun SendScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(start = 32.dp,end = 32.dp,bottom = 32.dp)
 
 
             ) {
@@ -418,12 +415,12 @@ fun SendScreen(
                     maxChar = 10,
                     color = if(amount.isNotEmpty() && amount!="." && amount!=",") {
                         if((amount.toDoubleOrNull() ?: 0.0) < tokenBalance){
-                            Color.White
+                            Colors.WHITE
                         }else{
-                            Color(0xFFc82e31)
+                            Colors.ERROR
                         }
                     } else {
-                        Color.White
+                        Colors.WHITE
                     },
                     numberInput = true
                 )
@@ -434,7 +431,7 @@ fun SendScreen(
                         Text(
                             text = "${formatDouble(tokenBalance)} available",
                             fontSize = 20.sp,
-                            color = Color(0xFF9FA2A5),
+                            color = Colors.GRAY,
                             fontWeight = FontWeight.Normal
                         )
                     }
@@ -451,34 +448,10 @@ fun SendScreen(
                     }
                 }
 
-                Button(
-                    onClick = {
-                        showAssetSheet = true
-                    },
-                    contentPadding = PaddingValues(start = 12.dp,end = 6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF262626),
-                        contentColor = Color.White
-                    ),
-                    shape = CircleShape,
-                    content = {
-                        Row (
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            
-                            Text(token,fontWeight = FontWeight.Medium, fontSize = 18.sp)
-                            Icon(
-                                imageVector = Icons.Rounded.ChevronRight,
-                                contentDescription = "",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .rotate(90f)
-                            )
-                        }
-                    }
-                )
+                ethOSTagButton(text = token) {
+                    showAssetSheet = true
+                }
+
             }
 
             ethOSButton(
@@ -497,8 +470,8 @@ fun SendScreen(
 
         if(showContactSheet && contactsPermissionState.allPermissionsGranted) {
             ModalBottomSheet(
-                containerColor= Color(0xFF262626),
-                contentColor= Color.White,
+                containerColor= Colors.DARK_GRAY,
+                contentColor= Colors.WHITE,
 
                 onDismissRequest = {
                     coroutineScope.launch {
@@ -539,8 +512,8 @@ fun SendScreen(
 
         if(showAssetSheet){
             ModalBottomSheet(
-                containerColor= Color(0xFF262626),
-                contentColor= Color.White,
+                containerColor= Colors.DARK_GRAY,
+                contentColor= Colors.WHITE,
 
                 onDismissRequest = {
                     coroutineScope.launch {

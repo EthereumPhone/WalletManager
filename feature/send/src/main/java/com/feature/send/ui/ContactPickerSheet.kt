@@ -33,6 +33,7 @@ import com.core.model.TokenAsset
 import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
 import com.feature.send.R
+import org.ethosmobile.components.library.core.ethOSListItem
 
 @Composable
 fun ContactPickerSheet(
@@ -74,42 +75,22 @@ fun ContactPickerSheet(
         ) {
             contacts.forEach {contact ->
                 item(key = contact.id) {
-                    WmListItem(
-                        headlineContent = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ){
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF262626))
-                                ){
-                                    if (contact.image != ""){
-                                        Image(
-                                            painter = rememberImagePainter(contact.image),
-                                            contentDescription = "Contact Profile Pic",
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    } else{
-                                        Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
-                                    }
-                                }
-                                Text(
-                                    text = contact.name,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
 
+                    ethOSListItem(
+                        withImage = true,
+                        image = {
+                            if (contact.image != ""){
+                                Image(
+                                    painter = rememberImagePainter(contact.image),
+                                    contentDescription = "Contact Profile Pic",
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else{
+                                Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
+                            }
                         },
-                        trailingContent = {
-                            //contact.
-                        },
-                        modifier = Modifier.clickable {
-                            onSelectContact(contact)
-                        }
+                        header = contact.name,
+                        onClick = { onSelectContact(contact) }
                     )
                 }
             }

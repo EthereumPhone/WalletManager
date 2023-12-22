@@ -46,6 +46,8 @@ import com.core.model.UserData
 import com.core.ui.TopHeader
 import com.example.assets.ui.AssetListItem
 import com.example.assets.ui.formatDouble
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.theme.Fonts
 import java.text.DecimalFormat
 
 @Composable
@@ -86,9 +88,9 @@ internal fun AssetScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 32.dp, vertical = 32.dp)
+            .padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
     ) {
-        TopHeader(title = "Assets")
+        ethOSHeader(title = "Assets")
         Spacer(modifier = Modifier.height(48.dp))
 
         when(assetsUiState){
@@ -97,7 +99,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Loading...", fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
             is AssetUiState.Empty -> {
@@ -105,7 +107,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "No Assets yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "No Assets yet",fontFamily = Fonts.INTER, color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
             is AssetUiState.Error -> {
@@ -113,7 +115,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Error...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Error...",fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
             is AssetUiState.Success -> {

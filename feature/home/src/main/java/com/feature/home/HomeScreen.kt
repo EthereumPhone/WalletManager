@@ -147,7 +147,7 @@ internal fun HomeScreen(
                     "..."
                 }
                 is WalletDataUiState.Success -> {
-                    truncateText(userData.userData.walletAddress)
+                    userData.userData.walletAddress
                 }
             }
 
