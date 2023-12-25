@@ -170,7 +170,7 @@ internal fun HomeScreen(
                         "10" -> Color(0xFFc82e31) // Optimum
                         "42161" -> Color(0xFF2b88b8) // Arbitrum
                         "8453" -> Color(0xFF053BCB) // Base
-                        "7777777" -> Color(0xFF777777)
+                        "7777777" -> Color(0xFF777777) // Zora
 
                         else -> {
                             Color(0xFF030303)
