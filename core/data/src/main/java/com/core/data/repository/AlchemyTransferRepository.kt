@@ -46,7 +46,7 @@ class AlchemyTransferRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val networks = NetworkChain.getAllNetworkChains()
             networks
-                .filter { it != NetworkChain.BASE }
+                .filter { it != NetworkChain.BASE && it != NetworkChain.ZORA }
                 .map { network ->
                 val apiKey = chainToApiKey(network.chainName)
                     // outbound transactions

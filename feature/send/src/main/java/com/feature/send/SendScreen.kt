@@ -180,7 +180,8 @@ fun SendScreen(
         onResult = { result ->
             if(result.contents == null) {
             } else {
-                onToAddressChanged(result.contents)
+                val address = result.contents.removePrefix("ethereum:")
+                onToAddressChanged(address)
             }
         }
     )

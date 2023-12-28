@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -121,6 +122,7 @@ internal fun AssetScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .pullRefresh(pullRefreshState)
                 ) {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
