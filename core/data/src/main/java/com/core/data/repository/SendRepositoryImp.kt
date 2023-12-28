@@ -5,6 +5,7 @@ import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
@@ -21,6 +22,11 @@ class SendRepositoryImp @Inject constructor(
     private val erc20TransferApi: Erc20TransferApi
 
 ): SendRepository {
+
+    override val currentTransactionHash = MutableStateFlow("")
+    override val currentTransactionChainId = MutableStateFlow(0)
+
+
     override suspend fun transferEth(
         chainId: Int,
         toAddress: String,
@@ -35,7 +41,7 @@ class SendRepositoryImp @Inject constructor(
             var gasPrice = web3j.ethGasPrice().send().gasPrice
             gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
 
-            var res = try {
+            val res = try {
                 walletSDK.sendTransaction(
                     toAddress,
                     decimalValue,
@@ -45,17 +51,31 @@ class SendRepositoryImp @Inject constructor(
             } catch (exception: NullPointerException) {
                 "error"
             }
+            currentTransactionHash.value = res
+            currentTransactionChainId.value = chainId
         }
     }
 
-    override suspend fun transferErc20(tokenAsset: TokenAsset, amount: Double, toAddress: String) {
+    override suspend fun transferErc20(
+        chainId: Int,
+        tokenAsset: TokenAsset,
+        amount: Double,
+        toAddress: String
+    ) {
         withContext(Dispatchers.IO) {
-            erc20TransferApi.sendErc20Token(
-                toAddress,
-                tokenAsset.address,
-                amount,
-                tokenAsset.decimals
-            )
+
+            val res = try {
+                erc20TransferApi.sendErc20Token(
+                    toAddress,
+                    tokenAsset.address,
+                    amount,
+                    tokenAsset.decimals
+                )
+            } catch (exception: NullPointerException) {
+                "error"
+            }
+            currentTransactionHash.value = res
+            currentTransactionChainId.value = chainId
         }
     }
 

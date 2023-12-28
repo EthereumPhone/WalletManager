@@ -27,14 +27,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
-import com.core.data.repository.NetworkBalanceRepository
 import com.core.domain.GetSwapTokens
-import com.core.model.NetworkChain
 import com.core.model.UserData
 import com.core.result.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
@@ -47,6 +43,7 @@ class SendViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi
 ): ViewModel() {
+
 
     val currentChain: Flow<String> = userDataRepository.userData.map { it.walletNetwork }
 
@@ -99,10 +96,12 @@ class SendViewModel @Inject constructor(
                     val asset = selectedAsset.tokenAsset
                     if(asset.address.contains("0x")) {
                         sendRepository.transferErc20(
+                            userDataRepository.userData.first().walletNetwork.toInt(),
                             asset,
                             amount.value.toDouble(),
                             toAddress.value
                         )
+
                     } else {
                         sendRepository.transferEth(
                             chainId = userDataRepository.userData.first().walletNetwork.toInt(),
@@ -114,7 +113,7 @@ class SendViewModel @Inject constructor(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-
+                println(sendRepository.currentTransactionHash)
             }
             callback()
         }

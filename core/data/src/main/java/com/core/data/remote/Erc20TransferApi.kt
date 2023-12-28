@@ -22,7 +22,7 @@ class Erc20TransferApi @Inject constructor(
         erc20ContractAddress: String,
         amount: Double,
         decimals: Int,
-    ) {
+    ): String {
         val credentials = Credentials.create("0x0ec8bb8d1aebf3b6e9e838dba065501c06a6ffa4cc12794abfd385eb24accfc1")
         val contract = ERC20.load(
             erc20ContractAddress,
@@ -37,7 +37,7 @@ class Erc20TransferApi @Inject constructor(
             realAmount.toBigIntegerExact()
         ).encodeFunctionCall()
 
-        walletSDK.sendTransaction(
+        return walletSDK.sendTransaction(
             to = erc20ContractAddress,
             value = "0",
             data = data,

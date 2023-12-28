@@ -1,9 +1,13 @@
 package com.core.data.repository
 
 import com.core.model.TokenAsset
+import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal
 
 interface SendRepository {
+
+    val currentTransactionHash: Flow<String>
+    val currentTransactionChainId: Flow<Int>
     suspend fun transferEth(
         chainId: Int,
         toAddress: String,
@@ -14,6 +18,7 @@ interface SendRepository {
     )
 
     suspend fun transferErc20(
+        chainId: Int,
         tokenAsset: TokenAsset,
         amount: Double,
         toAddress: String

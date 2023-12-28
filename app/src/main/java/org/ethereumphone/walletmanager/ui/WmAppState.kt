@@ -10,6 +10,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.core.data.repository.SendRepository
+import com.core.data.repository.TransferRepository
 import com.core.data.util.NetworkMonitor
 import com.core.model.CurrentState
 import kotlinx.coroutines.CoroutineScope
@@ -29,18 +31,21 @@ import org.ethereumphone.walletmanager.utils.Screen
 @Composable
 fun rememberWmAppState(
     networkMonitor: NetworkMonitor,
+    sendRepository: SendRepository,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     navController: NavHostController = rememberNavController()
 ): WmAppState {
     return remember(
         networkMonitor,
         navController,
+        sendRepository,
         coroutineScope
     ) {
         WmAppState(
             navController,
             networkMonitor,
-            coroutineScope
+            coroutineScope,
+            sendRepository
         )
     }
 }
@@ -52,8 +57,12 @@ fun rememberWmAppState(
 class WmAppState(
     val navController: NavHostController,
     networkMonitor: NetworkMonitor,
-    val coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    sendRepository: SendRepository
 ) {
+
+    val currentTransaction = sendRepository.currentTransactionHash
+    val currentChainId = sendRepository.currentTransactionChainId
     val currentDestination: NavDestination?
         @Composable get() = navController
             .currentBackStackEntryAsState().value?.destination
