@@ -41,6 +41,16 @@ class SendRepositoryImp @Inject constructor(
             var gasPrice = web3j.ethGasPrice().send().gasPrice
             gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
 
+            if(chainId != walletSDK.getChainId()) {
+                val rpc = NetworkChain.getNetworkByChainId(chainId)
+                rpc?.let {
+                    walletSDK.changeChain(
+                        chainId,
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                    )
+                }
+            }
+
             val res = try {
                 walletSDK.sendTransaction(
                     toAddress,
@@ -63,6 +73,16 @@ class SendRepositoryImp @Inject constructor(
         toAddress: String
     ) {
         withContext(Dispatchers.IO) {
+
+            if(chainId != walletSDK.getChainId()) {
+                val rpc = NetworkChain.getNetworkByChainId(chainId)
+                rpc?.let {
+                    walletSDK.changeChain(
+                        chainId,
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                    )
+                }
+            }
 
             val res = try {
                 erc20TransferApi.sendErc20Token(
