@@ -38,55 +38,51 @@ fun PendingTransactionStateUi(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
+        if(transactionHash.startsWith("0x")) {
+            Icon(
+                Icons.Default.CheckCircleOutline,
+                "",
+                tint = Color.Green
+            )
 
-        when(transactionHash) {
-            "error" -> {
-                Icon(
-                    Icons.Outlined.Cancel,
-                    "",
-                    tint = Color.Red
+            Text(
+                text = "Transaction Succeeded",
+                color = Color.White,
+                modifier = Modifier
+                    .weight(1f),
+            )
 
-                )
-
-                Text(
-                    text = "Transaction Failed",
-                    color = Color.White,
-                )
-            }
-            else -> {
-                Icon(
-                    Icons.Default.CheckCircleOutline,
-                    "",
-                    tint = Color.Green
-                )
-
-                Text(
-                    text = "Transaction Succeeded",
-                    color = Color.White,
-                    modifier = Modifier
-                            .weight(1f),
-                )
-
-                Text(
-                    text = "view details",
-                    color = Color(0xFF71B5FF),
-                    fontSize = 10.sp,
-                    modifier = Modifier.clickable {
-                        val domain = getEtherscanDomainForChain(transactionChainId)
-                        val link = "${domain}tx/${transactionHash}"
+            Text(
+                text = "view details",
+                color = Color(0xFF71B5FF),
+                fontSize = 10.sp,
+                modifier = Modifier.clickable {
+                    val domain = getEtherscanDomainForChain(transactionChainId)
+                    val link = "${domain}tx/${transactionHash}"
 
 
-                        // Open link in browser
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                        intent.data = android.net.Uri.parse(link)
-                        context.startActivity(intent)
-                    }
-                )
-            }
+                    // Open link in browser
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    intent.data = android.net.Uri.parse(link)
+                    context.startActivity(intent)
+                }
+            )
+
+        } else {
+            Icon(
+                Icons.Outlined.Cancel,
+                "",
+                tint = Color.Red
+
+            )
+
+            Text(
+                text = "Transaction Failed",
+                color = Color.White,
+            )
         }
 
     }
-
 }
 
 @Preview

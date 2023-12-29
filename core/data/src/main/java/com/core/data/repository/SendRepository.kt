@@ -28,4 +28,6 @@ interface SendRepository {
         amount: BigDecimal,
         chainId: Int
     ): String
+
+    fun restoreState()
 }

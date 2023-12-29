@@ -22,6 +22,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,6 +49,7 @@ interface RepositoryModule {
     ): TransferRepository
 
     @Binds
+    @Singleton
     fun bindsProtoUserDataRepository(
         userDataRepository: ProtoUserDataRepository
     ): UserDataRepository
@@ -58,6 +60,7 @@ interface RepositoryModule {
     ): SwapRepository
 
     @Binds
+    @Singleton
     fun bindsSendRepository(
         sendRepositoryImp: SendRepositoryImp
     ): SendRepository

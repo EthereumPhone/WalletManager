@@ -103,7 +103,10 @@ fun WmApp(
                     coroutineScope.launch {
                         transactionSheetState.hide()
                     }.invokeOnCompletion {
-                        if(!transactionSheetState.isVisible) showSheet = false
+                        if(!transactionSheetState.isVisible) {
+                            showSheet = false
+                            appState.restoreState()
+                        }
                     }
                 },
                 sheetState = transactionSheetState

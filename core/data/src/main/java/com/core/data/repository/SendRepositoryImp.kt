@@ -7,6 +7,7 @@ import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import okhttp3.internal.wait
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
@@ -36,20 +37,22 @@ class SendRepositoryImp @Inject constructor(
         gasAmount: String
     ) {
         withContext(Dispatchers.IO) {
-            val decimalValue = BigDecimal(value.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
-
-            var gasPrice = web3j.ethGasPrice().send().gasPrice
-            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
-
             if(chainId != walletSDK.getChainId()) {
                 val rpc = NetworkChain.getNetworkByChainId(chainId)
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
-                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
                     )
                 }
             }
+
+            val decimalValue = BigDecimal(value.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+
+            var gasPrice = web3j.ethGasPrice().send().gasPrice
+            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
+
+
 
             val res = try {
                 walletSDK.sendTransaction(
@@ -97,6 +100,8 @@ class SendRepositoryImp @Inject constructor(
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
         }
+
+        currentTransactionHash.value = ""
     }
 
     override suspend fun maxAllowedSend(
@@ -108,5 +113,10 @@ class SendRepositoryImp @Inject constructor(
         val gas = web3j.ethGasPrice().sendAsync().get().gasPrice
         val gasEther = Convert.fromWei(gas.toString(), Convert.Unit.ETHER)
         amount.minus(gasEther).toString()
+    }
+
+    override fun restoreState() {
+        currentTransactionHash.value = ""
+        currentTransactionChainId.value = 0
     }
 }

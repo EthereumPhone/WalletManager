@@ -1,5 +1,6 @@
 package org.ethereumphone.walletmanager.ui
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
@@ -58,11 +59,26 @@ class WmAppState(
     val navController: NavHostController,
     networkMonitor: NetworkMonitor,
     coroutineScope: CoroutineScope,
-    sendRepository: SendRepository
+    val sendRepository: SendRepository
 ) {
 
     val currentTransaction = sendRepository.currentTransactionHash
+        .map {
+            Log.d("My hash", it)
+            it
+        }
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = "",
+            )
+
     val currentChainId = sendRepository.currentTransactionChainId
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 0,
+        )
     val currentDestination: NavDestination?
         @Composable get() = navController
             .currentBackStackEntryAsState().value?.destination
@@ -75,6 +91,10 @@ class WmAppState(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false,
         )
+
+    fun restoreState() {
+        sendRepository.restoreState()
+    }
 
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
 
