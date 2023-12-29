@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.content.Context
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
@@ -18,9 +19,9 @@ import java.math.BigInteger
 import javax.inject.Inject
 
 class SendRepositoryImp @Inject constructor(
-    private val walletSDK: WalletSDK,
     private val web3j: Web3j,
-    private val erc20TransferApi: Erc20TransferApi
+    private val erc20TransferApi: Erc20TransferApi,
+    private val mContext: Context
 
 ): SendRepository {
 
@@ -37,8 +38,17 @@ class SendRepositoryImp @Inject constructor(
         gasAmount: String
     ) {
         withContext(Dispatchers.IO) {
+            val rpc = NetworkChain.getNetworkByChainId(chainId)
+            val walletSDK = if (rpc != null) {
+                WalletSDK(
+                    context = mContext,
+                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"))
+                )
+            } else {
+                WalletSDK(mContext)
+            }
+
             if(chainId != walletSDK.getChainId()) {
-                val rpc = NetworkChain.getNetworkByChainId(chainId)
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
@@ -77,12 +87,21 @@ class SendRepositoryImp @Inject constructor(
     ) {
         withContext(Dispatchers.IO) {
 
+            val rpc = NetworkChain.getNetworkByChainId(chainId)
+            val walletSDK = if (rpc != null) {
+                WalletSDK(
+                    context = mContext,
+                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"))
+                )
+            } else {
+                WalletSDK(mContext)
+            }
+
             if(chainId != walletSDK.getChainId()) {
-                val rpc = NetworkChain.getNetworkByChainId(chainId)
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
-                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
                     )
                 }
             }
