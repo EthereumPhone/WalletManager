@@ -143,6 +143,12 @@ object DataModule {
         )
     }
 
+    @Singleton
+    @Provides
+    fun provideApplicationContext(@ApplicationContext context: Context): Context {
+        return context
+    }
+
 
     @Singleton
     @Provides
