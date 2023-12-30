@@ -113,7 +113,6 @@ class SendViewModel @Inject constructor(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                println(sendRepository.currentTransactionHash)
             }
             callback()
         }

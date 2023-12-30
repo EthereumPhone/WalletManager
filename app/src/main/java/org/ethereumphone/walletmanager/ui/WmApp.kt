@@ -109,7 +109,9 @@ fun WmApp(
                         }
                     }
                 },
-                sheetState = transactionSheetState
+                sheetState = transactionSheetState,
+                containerColor = Color.Black,
+                contentColor = Color.White
             ) {
                 PendingTransactionStateUi(transactionHash = currentTransferHash, transactionChainId = currentTransferChainId)
             }

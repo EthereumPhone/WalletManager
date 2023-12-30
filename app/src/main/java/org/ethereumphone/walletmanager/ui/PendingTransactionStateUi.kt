@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircleOutline
@@ -32,6 +34,8 @@ fun PendingTransactionStateUi(
 
     Column(
         modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black)
             .fillMaxHeight(.5f)
         ,
         verticalArrangement = Arrangement.Center,
@@ -42,20 +46,20 @@ fun PendingTransactionStateUi(
             Icon(
                 Icons.Default.CheckCircleOutline,
                 "",
-                tint = Color.Green
+                tint = Color.Green,
+                modifier = Modifier.size(64.dp)
             )
 
             Text(
                 text = "Transaction Succeeded",
                 color = Color.White,
-                modifier = Modifier
-                    .weight(1f),
-            )
+                fontSize = 32.sp,
+                )
 
             Text(
                 text = "view details",
                 color = Color(0xFF71B5FF),
-                fontSize = 10.sp,
+                fontSize = 16.sp,
                 modifier = Modifier.clickable {
                     val domain = getEtherscanDomainForChain(transactionChainId)
                     val link = "${domain}tx/${transactionHash}"
@@ -72,16 +76,19 @@ fun PendingTransactionStateUi(
             Icon(
                 Icons.Outlined.Cancel,
                 "",
-                tint = Color.Red
-
+                modifier = Modifier.size(64.dp),
+                tint = Color.Red,
             )
+
+            Spacer(modifier = Modifier.size(8.dp))
+
 
             Text(
                 text = "Transaction Failed",
+                fontSize = 32.sp,
                 color = Color.White,
             )
         }
-
     }
 }
 
