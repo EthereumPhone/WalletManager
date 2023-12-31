@@ -154,8 +154,13 @@ fun TransctionDetailScreen(
                         Button(
                             onClick = {
                                 //send intent to etherscann
-                                val intent = Intent(Intent.ACTION_VIEW,
-                                    Uri.parse("https://etherscan.io/tx/${txHash}"))
+                                val domain = getEtherscanDomainForChain(tx.chainId)
+                                val link = "${domain}tx/${txHash}"
+
+
+                                // Open link in browser
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.data = Uri.parse(link)
                                 startActivity(context, intent, null)
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -174,4 +179,16 @@ fun TransctionDetailScreen(
         }
     }
 
+}
+
+fun getEtherscanDomainForChain(chainId: Int): String {
+    return when(chainId) {
+        1 -> "https://etherscan.io/"
+        5 -> "https://goerli.etherscan.io/"
+        10 -> "https://optimistic.etherscan.io/"
+        137 -> "https://polygonscan.com/"
+        42161 -> "https://arbiscan.io/"
+        8453 -> "https://basescan.org/"
+        else -> ""
+    }
 }

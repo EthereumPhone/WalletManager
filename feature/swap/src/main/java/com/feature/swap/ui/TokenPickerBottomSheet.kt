@@ -50,6 +50,7 @@ fun getEtherscanDomainForChain(chainId: Int): String {
         10 -> "https://optimistic.etherscan.io/"
         137 -> "https://polygonscan.com/"
         42161 -> "https://arbiscan.io/"
+        8453 -> "https://basescan.org/"
         else -> ""
     }
 }
