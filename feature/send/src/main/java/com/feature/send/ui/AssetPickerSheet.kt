@@ -54,7 +54,7 @@ fun AssetPickerSheet(
                     topEnd = 12.dp
                 )
             )
-            .background(Color(0xFF262626))
+            //.background(Color(0xFF262626))
             .padding(start = 12.dp, end = 12.dp, bottom = 48.dp)
     ) {
         Row(

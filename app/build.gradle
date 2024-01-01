@@ -138,4 +138,6 @@ dependencies {
 
     implementation "androidx.core:core-splashscreen:1.0.1"
 
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
+
 }

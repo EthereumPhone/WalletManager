@@ -71,7 +71,7 @@ fun TokenPickerSheet(
                 topStart = 12.dp,
                 topEnd = 12.dp
             ))
-            .background(Color(0xFF262626))
+            //.background(Color(0xFF262626))
     ) {
 
         // query field

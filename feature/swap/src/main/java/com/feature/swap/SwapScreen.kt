@@ -253,7 +253,7 @@ internal fun SwapScreen(
 
         if(showSheet) {
             ModalBottomSheet(
-                containerColor= Color(0xFF262626),
+                containerColor= Color.Black,
                 contentColor= Color.White,
 
                 onDismissRequest = {

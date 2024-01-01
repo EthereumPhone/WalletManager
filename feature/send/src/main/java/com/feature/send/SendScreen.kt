@@ -498,7 +498,7 @@ fun SendScreen(
 
         if(showContactSheet && contactsPermissionState.allPermissionsGranted) {
             ModalBottomSheet(
-                containerColor= Color(0xFF262626),
+                containerColor= Color.Black,
                 contentColor= Color.White,
 
                 onDismissRequest = {
@@ -540,7 +540,7 @@ fun SendScreen(
 
         if(showAssetSheet){
             ModalBottomSheet(
-                containerColor= Color(0xFF262626),
+                containerColor= Color.Black,
                 contentColor= Color.White,
 
                 onDismissRequest = {

@@ -2,7 +2,10 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="PreviewReceiveScreen">
+      <entry key="PreviewEmptyPendingTransactionStateUi">
+        <State />
+      </entry>
+      <entry key="PreviewPendingTransactionStateUi">
         <State />
       </entry>
       <entry key="app">

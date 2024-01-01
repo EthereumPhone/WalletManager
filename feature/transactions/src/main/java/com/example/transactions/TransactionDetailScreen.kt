@@ -169,7 +169,7 @@ fun TransctionDetailScreen(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.Normal)
                         }
                     }
 
