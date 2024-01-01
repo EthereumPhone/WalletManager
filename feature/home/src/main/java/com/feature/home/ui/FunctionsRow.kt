@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.core.ui.WmIconButton
+import org.ethosmobile.components.library.core.ethOSIconButton
 
 @Composable
 internal fun FunctionsRow(
@@ -22,19 +23,19 @@ internal fun FunctionsRow(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        WmIconButton(
+        ethOSIconButton(
             onClick = { navigateToSend() },
             icon = Icons.Rounded.NorthEast,
             contentDescription = "Send"
         )
 
-        WmIconButton(
+        ethOSIconButton(
             onClick = { navigateToReceive() },
             icon = Icons.Rounded.ArrowDownward,
             contentDescription = "Receive"
         )
 
-        WmIconButton(
+        ethOSIconButton(
             onClick = { navigateToSwap() },
             icon = Icons.Rounded.SwapVert,
             contentDescription = "Swap"

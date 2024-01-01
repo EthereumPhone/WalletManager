@@ -5,8 +5,11 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -35,7 +38,13 @@ import com.feature.home.ui.AddressBar
 import com.feature.home.ui.AssetList
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.OnboardingModalBottomSheet
+
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.core.ethOSInfoDialog
+import org.ethosmobile.components.library.core.ethOSNetworkPill
+import org.ethosmobile.components.library.core.ethOSOnboardingModalBottomSheet
+import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -101,7 +110,7 @@ internal fun HomeScreen(
 
     val showInfoDialog =  remember { mutableStateOf(false) }
     if(showInfoDialog.value){
-        InfoDialog(
+        ethOSInfoDialog(
             setShowDialog = {
                 showInfoDialog.value = false
             },
@@ -109,33 +118,71 @@ internal fun HomeScreen(
             text = "Send and receive crypto, all natively from inside the WalletManager."
         )
     }
+    if(onboardingComplete) {
+        ethOSOnboardingModalBottomSheet(
+            onDismiss = {
+                coroutineScope.launch {
+                    modalSheetState.hide()
+                }.invokeOnCompletion {
+
+                }
+                setOnboardingComplete(true)
+            },
+            sheetState = modalSheetState
+        )
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.SpaceBetween,
-
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 32.dp, vertical = 32.dp)
-    ) {
-        Column (
-            modifier = modifier
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            TopHeader(
+            .background(Colors.BLACK)
 
-                title = "Wallet",
-                onClick = {
-                    //opens InfoDialog
-                            //showDialog.value = true
-                },
-                imageVector = Icons.Filled.QrCodeScanner,
-            )
-            AddressBar(userData)
-        }
+    ) {
+        ethOSHeader(title="Wallet", isBottomContent = true, bottomContent = {
+            Spacer(modifier = modifier.height(12.dp))
+            val address = when(userData) {
+                is WalletDataUiState.Loading -> {
+                    "..."
+                }
+                is WalletDataUiState.Success -> {
+                    userData.userData.walletAddress
+                }
+            }
+
+            val network = when(userData) {
+                is WalletDataUiState.Loading -> {
+                    "..."
+                }
+                is WalletDataUiState.Success -> {
+                    chainName(userData.userData.walletNetwork)
+                }
+            }
+
+            var chainColor = when(userData) {
+                is WalletDataUiState.Success -> {
+                    val data = userData.userData
+                    when(data.walletNetwork) {
+                        "1" -> Color(0xFF32CD32)
+                        "5" -> Color(0xFFF0EAD6)
+                        "137" -> Color(0xFF442fb2) // Polygon
+                        "10" -> Color(0xFFc82e31) // Optimum
+                        "42161" -> Color(0xFF2b88b8) // Arbitrum
+                        "8453" -> Color(0xFF053BCB) // Base
+                        "7777777" -> Color(0xFF777777) // Zora
+
+                        else -> {
+                            Color(0xFF030303)
+                        }
+                    }
+                }
+                is WalletDataUiState.Loading -> {
+                    Color.Transparent
+                }
+            }
+            ethOSNetworkPill(address = address, network = network, chainColor = chainColor)
+        })
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
@@ -161,8 +208,11 @@ internal fun HomeScreen(
             }
         }
 
+
         Column (
-            verticalArrangement = Arrangement.spacedBy(56.dp)
+            verticalArrangement = Arrangement.spacedBy(56.dp),
+            modifier = Modifier
+                .padding(horizontal = 32.dp, vertical = 32.dp)
         ){
             FunctionsRow(
                 navigateToSwap,
@@ -174,22 +224,10 @@ internal fun HomeScreen(
         }
 
 
-        if(onboardingComplete) {
-            OnboardingModalBottomSheet(
-                onDismiss = {
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-
-                    }
-                    setOnboardingComplete(true)
-                },
-                sheetState = modalSheetState
-             )
-        }
 
 
     }
+
 }
 
 fun formatDouble(input: Double): String {
@@ -197,6 +235,24 @@ fun formatDouble(input: Double): String {
     return decimalFormat.format(input)
 }
 
+private fun truncateText(text: String): String {
+    if (text.length > 19) {
+        return text.substring(0, 5) + "..." //+ text.takeLast(3) + " "
+    }
+    return text
+}
+
+
+fun chainName(chainId: String) = when(chainId) {
+    "1" -> "Mainnet"
+    "5" -> "Görli"
+    "10" -> "Optimism"
+    "137" -> "Polygon"
+    "8453" -> "Base"
+    "42161" -> "Arbitrum"
+    "7777777" -> "Zora"
+    else -> "Loading..."
+}
 
 
 @Preview

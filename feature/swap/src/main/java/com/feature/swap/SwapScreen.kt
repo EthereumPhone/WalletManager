@@ -40,6 +40,9 @@ import com.feature.swap.ui.ExchangeRateRow
 import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 import java.lang.NumberFormatException
 import java.math.BigDecimal
 
@@ -131,37 +134,25 @@ internal fun SwapScreen(
         verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .background(Colors.BLACK)
+//            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
+        ethOSHeader(
+            title="Swap",
+            isBottomContent = true,
+            bottomContent = {
+                Text(
+                    text = network,
+                    fontSize = 16.sp,
+                    color = Colors.GRAY,
+                    fontFamily = Fonts.INTER,
+                    fontWeight = FontWeight.Normal,
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TopHeader(
-                onBackClick = onBackClick,
-                title = "Swap",
-                imageVector = Icons.Outlined.Info,
-                onClick = {
-                    //opens InfoDialog
-                    showInfoDialog.value = true
-                },
-                trailIcon = true,
-                onlyTitle = false
-            )
-
-
-
-
-            Text(
-                text = network,
-                fontSize = 16.sp,
-                color = Color(0xFF9FA2A5),
-                fontWeight = FontWeight.Normal,
-
-                )
-
-        }
+                    )
+            },
+            isBackButton = true,
+            onBackClick = onBackClick,
+        )
 
         Column (
             modifier = Modifier.fillMaxWidth(),
@@ -205,7 +196,7 @@ internal fun SwapScreen(
         if(currentChain != 1 && currentChain  != 10 && currentChain  != 0) {
             Text(
                 "Only Mainnet and Optimism supported at this time",
-                color = Color.Red
+                color = Colors.ERROR
             )
         }
 
@@ -248,13 +239,15 @@ internal fun SwapScreen(
                     }
                 }
 
-            }
+            },
+            modifier = Modifier.padding(start = 32.dp,end = 32.dp,bottom = 32.dp)
         )
 
         if(showSheet) {
             ModalBottomSheet(
-                containerColor= Color.Black,
-                contentColor= Color.White,
+
+                containerColor= Colors.DARK_GRAY,
+                contentColor= Colors.WHITE,
 
                 onDismissRequest = {
                     coroutineScope.launch {

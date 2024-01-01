@@ -40,6 +40,8 @@ import com.core.model.TokenMetadata
 import com.core.ui.WmListItem
 import com.core.ui.WmTextField
 import com.feature.swap.SwapTokenUiState
+import org.ethosmobile.components.library.core.ethOSListItem
+import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
 import kotlin.math.pow
 
@@ -67,11 +69,13 @@ fun TokenPickerSheet(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(
-                topStart = 12.dp,
-                topEnd = 12.dp
-            ))
-            //.background(Color(0xFF262626))
+            .clip(
+                RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 12.dp
+                )
+            )
+            //.background(Colors.DARK_GRAY)
     ) {
 
         // query field
@@ -89,7 +93,7 @@ fun TokenPickerSheet(
                 Text(
                     text = "Search tokens",
                     fontSize = 18.sp,
-                    color = Color(0xFF9FA2A5)
+                    color = Colors.DARK_GRAY
                 )
             }
         )
@@ -110,20 +114,10 @@ fun TokenPickerSheet(
                     }
                     sortedTokens.forEach { tokenAsset ->
                         item(key = tokenAsset.address) {
-                            WmListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = tokenAsset.symbol.uppercase(),
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        text = tokenAsset.name,
-                                        color = Color(0xFF9FA2A5)
-                                    )
-                                },
+                            ethOSListItem(
+                                header = tokenAsset.symbol.uppercase(),
+                                withSubheader = true,
+                                subheader = tokenAsset.name,
                                 trailingContent = {
                                     Row {
                                         Text(
@@ -154,12 +148,59 @@ fun TokenPickerSheet(
                                             )
                                         }
                                     }
-
                                 },
-                                modifier = Modifier.clickable {
-                                    onSelectAsset(tokenAsset)
-                                }
+                                onClick = {onSelectAsset(tokenAsset)}
                             )
+//                            WmListItem(
+//                                headlineContent = {
+//                                    Text(
+//                                        text = tokenAsset.symbol.uppercase(),
+//                                        fontSize = 18.sp,
+//                                        fontWeight = FontWeight.SemiBold
+//                                    )
+//                                },
+//                                supportingContent = {
+//                                    Text(
+//                                        text = tokenAsset.name,
+//                                        color = Color(0xFF9FA2A5)
+//                                    )
+//                                },
+//                                trailingContent = {
+//                                    Row {
+//                                        Text(
+//                                            modifier = Modifier.align(Alignment.CenterVertically),
+//                                            text = formatDouble(tokenAsset.balance),
+//                                            fontSize = 18.sp,
+//                                            color = Color.White,
+//                                            fontWeight = FontWeight.Medium
+//                                        )
+//                                        IconButton(
+//                                            onClick = {
+//                                                //opens InfoDialog
+//                                                val domain = getEtherscanDomainForChain(tokenAsset.chainId)
+//                                                val link = "${domain}token/${tokenAsset.address}"
+//
+//                                                // Open link in browser
+//                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+//                                                intent.data = android.net.Uri.parse(link)
+//                                                context.startActivity(intent)
+//                                            }
+//                                        ) {
+//                                            Icon(
+//                                                imageVector = Icons.Outlined.OpenInNew,
+//                                                contentDescription = "Information",
+//                                                tint = Color(0xFF9FA2A5),
+//                                                modifier = Modifier
+//                                                    .clip(CircleShape)
+//                                            )
+//                                        }
+//                                    }
+//
+//                                },
+//                                modifier = Modifier.clickable {
+//                                    onSelectAsset(tokenAsset)
+//                                }
+//                            )
                         }
                     }
                 }

@@ -32,6 +32,7 @@ import com.core.model.TokenAsset
 import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
 import com.feature.send.R
+import org.ethosmobile.components.library.core.ethOSListItem
 
 @Composable
 fun AssetPickerSheet(
@@ -109,21 +110,10 @@ fun AssetPickerSheet(
                     ) {
                         filteredAssets.forEach { tokenasset ->
                             item(key = tokenasset.name) {
-                                WmListItem(
-                                    headlineContent = {
-                                            Text(
-                                                text = tokenasset.symbol,
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color.White
-                                            )
-                                    },
-                                    supportingContent = {
-                                        Text(
-                                            text = tokenasset.name,
-                                            color = Color(0xFF9FA2A5)
-                                        )
-                                    },
+                                ethOSListItem(
+                                    header=tokenasset.symbol,
+                                    withSubheader = true,
+                                    subheader = tokenasset.name,
                                     trailingContent = {
                                         //contact.
                                         Text(
@@ -133,9 +123,7 @@ fun AssetPickerSheet(
                                             color = Color.White
                                         )
                                     },
-                                    modifier = Modifier.clickable {
-                                        onChangeAssetClicked(tokenasset)
-                                    }
+                                    onClick={onChangeAssetClicked(tokenasset)}
                                 )
                             }
                         }

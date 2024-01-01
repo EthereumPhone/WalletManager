@@ -92,6 +92,9 @@ import com.feature.receive.ui.rememberQrBitmapPainter
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import net.glxn.qrgen.core.image.ImageType
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 import java.io.ByteArrayOutputStream
 
 @Composable
@@ -129,32 +132,21 @@ fun ReceiveScreen(
 
 ) {
 
-    val showInfoDialog =  remember { mutableStateOf(false) }
-//    if(showInfoDialog.value){
-//        InfoDialog(
-//            setShowDialog = {
-//                showInfoDialog.value = false
-//            },
-//            title = "Receive crypto",
-//            text = "Receive crypto to your system-level wallet."
-//        )
-//    }
-
-
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black)
-                .padding(horizontal = 32.dp, vertical = 32.dp)
+                .background(Colors.BLACK)
+                //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
-
-        TopHeader(
+        ethOSHeader(
+            title="Receive",
+            isBackButton = true,
             onBackClick = onBackClick,
-            title = "Receive",
-            onlyTitle = false
         )
+
+
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -162,15 +154,13 @@ fun ReceiveScreen(
                 modifier = Modifier
 
             ){
-
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White)
+                        .background(Colors.WHITE)
                         .padding(10.dp)
                         .size(200.dp),
                     contentAlignment = Alignment.Center
-
                 ) {
                     Image(
                         //TODO: Change Address
@@ -195,7 +185,8 @@ fun ReceiveScreen(
                     Text(
                         modifier = modifier.width(175.dp),
                         fontSize = 18.sp,
-                        color = Color(0xFF9FA2A5),
+                        fontFamily = Fonts.INTER,
+                        color = Colors.GRAY,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Normal,
                         text = "Address"
@@ -205,6 +196,7 @@ fun ReceiveScreen(
                         modifier = modifier.width(250.dp),
                         fontSize = 16.sp,
                         color = Color.White,
+                        fontFamily = Fonts.INTER,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold,
                         text = userData.walletAddress
@@ -217,7 +209,7 @@ fun ReceiveScreen(
 
 
         Row (
-            modifier = Modifier.padding(bottom = 18.dp)
+            modifier = Modifier.padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
         ){
             Button(
                 colors = ButtonDefaults.buttonColors(
@@ -230,21 +222,21 @@ fun ReceiveScreen(
                     Icon(
                         imageVector = Icons.Rounded.ContentCopy,
                         contentDescription = "Copy ethereum address",
-                        tint = Color.White,
+                        tint = Colors.WHITE,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Copy address",
                         fontSize = 16.sp,
-                        color = Color.White,
+                        color = Colors.WHITE,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
             }
         }
-        }
+    }
 }
 
 @Preview

@@ -34,6 +34,10 @@ import com.core.model.TransferItem
 import com.core.ui.TopHeader
 import com.example.transactions.ui.TransactionDetailItem
 import com.example.transactions.ui.TransferListItem
+import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
+import org.ethosmobile.components.library.walletmanager.ethOSTransferListItem
 
 @Composable
 fun TransactionRoute(
@@ -77,13 +81,14 @@ fun TransactionScreen(
 
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 32.dp, vertical = 32.dp)
+            .background(Colors.BLACK)
+            .padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
     ) {
 
         //Header
 
-        TopHeader(title = "Transactions")
+//        TopHeader(title = "Transactions")
+        ethOSHeader(title = "Transactions")
         Spacer(modifier = Modifier.height(48.dp))
         when(transfersUIState){
             is TransfersUiState.Loading -> {
@@ -91,7 +96,7 @@ fun TransactionScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold)
                 }
             }
             is TransfersUiState.Success -> {
@@ -109,15 +114,19 @@ fun TransactionScreen(
                         ) {
                             var month = ""
 
-                            transfers.reversed().forEach { transfer ->
-                                item {
-                                    TransferListItem(
-                                        transfer = transfer ,
-                                        onCardClick = {
-                                            navigateToTxDetail(transfer.txHash)
-                                        }
-                                    )
-                                }
+                        transfers.reversed().forEach { transfer ->
+                            item {
+
+                                ethOSTransferListItem(
+
+                                    asset = transfer.asset,
+                                    value = transfer.value,
+                                    timeStamp = transfer.timeStamp,//Clock.System.now().toString(),
+                                    userSent = transfer.userSent,
+                                    onCardClick = {
+                                        navigateToTxDetail(transfer.txHash)
+                                    }
+                                )
                             }
                         }
 
@@ -134,7 +143,7 @@ fun TransactionScreen(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Text(text = "No Transfers yet", color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "No Transfers yet", color = Colors.GRAY, fontSize = 24.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold)
                     }
                 }
 

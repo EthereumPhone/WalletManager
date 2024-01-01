@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.max
 
 @Composable
-fun ethOSCenterTextField(
+fun ethOSCenterTextFieldInline(
     text: String,
     size: Int,
     modifier: Modifier = Modifier,

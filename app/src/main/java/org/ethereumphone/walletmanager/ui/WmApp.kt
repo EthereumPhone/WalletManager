@@ -23,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.core.data.util.NetworkMonitor
@@ -33,6 +34,9 @@ import org.ethereumphone.walletmanager.utils.Screen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSSnackbarHost
+import org.ethosmobile.components.library.utils.SnackbarState
+import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,8 +50,9 @@ fun WmApp(
     ),
 ) {
 
-    val snackBarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
+    val hostState = remember { SnackbarHostState() }
+    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
     val isOffline by appState.isOffline.collectAsStateWithLifecycle()
 
@@ -60,13 +65,19 @@ fun WmApp(
 
 
     // If user is not connected to the internet show a snack bar to inform them.
-    val notConnectedMessage = "⚠\uFE0F You aren’t connected to the internet"
+    val notConnectedMessage = "You aren’t connected to the internet"//"⚠\uFE0F You aren’t connected to the internet"
     LaunchedEffect(isOffline) {
         if (isOffline) {
-            snackBarHostState.showSnackbar(
-                message = notConnectedMessage,
-                duration = SnackbarDuration.Indefinite,
-            )
+            println("offline")
+
+//            snackbarHostState.showSnackbar(
+//                message = notConnectedMessage,
+//                duration = SnackbarDuration.Indefinite,
+//            )
+            snackbarHostState.coroutineScope.launch{
+                snackbarHostState.showSnackbar(state = SnackbarState.ERROR, message = notConnectedMessage, duration = SnackbarDuration.Indefinite)
+            }
+
         }
     }
 
@@ -90,7 +101,8 @@ fun WmApp(
 
                 )
         },
-        snackbarHost = { SnackbarHost(snackBarHostState) },
+
+        snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(horizontal = 12.dp, vertical = 24.dp))},
     ) { paddingValues ->
         WmNavHost(
             appState = appState,

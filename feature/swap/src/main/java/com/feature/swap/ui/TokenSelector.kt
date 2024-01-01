@@ -57,6 +57,8 @@ import com.feature.swap.AssetsUiState
 import com.feature.swap.SelectedTokenUiState
 import com.feature.swap.SwapTokenUiState
 import com.feature.swap.TextFieldSelected
+import org.ethosmobile.components.library.core.ethOSTagButton
+import org.ethosmobile.components.library.theme.Colors
 import java.math.BigDecimal
 import java.text.DecimalFormat
 
@@ -115,7 +117,7 @@ fun TokenSelector(
                     val amountText = if (it == ".") "0$it" else it
                     onAmountChange(TextFieldSelected.FROM, amountText)
                 },
-                color = if(fromAmountTooHigh) Color(0xFFF1847E) else Color.White
+                color = if(fromAmountTooHigh) Colors.ERROR else Color.White
 
             )
             when(assetsUiState.fromAsset) {
@@ -123,14 +125,27 @@ fun TokenSelector(
             is SelectedTokenUiState.Selected -> {
                 formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
                 Text(text = "${formatDouble(assetsUiState.fromAsset.tokenAsset.balance)} available", fontSize = 16.sp,
-                    color= Color(0xFF9FA2A5))
+                    color= Colors.GRAY)
             }
         }
 
 
 
             //tokenasseticon
-            TokenAssetIcon(assetsUiState.fromAsset) {
+//            TokenAssetIcon(assetsUiState.fromAsset) {
+//                onPickAssetClicked(TextFieldSelected.FROM)
+//                //fromEnabled = true
+//                if(TextFieldSelected.FROM.name == TextFieldSelected.TO.name){
+//                    switchTokens()
+//                }
+//            }
+
+            val fromtext = when(assetsUiState.fromAsset) {
+                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
+                else -> {""}
+            }
+            ethOSTagButton(text = fromtext) {
                 onPickAssetClicked(TextFieldSelected.FROM)
                 //fromEnabled = true
                 if(TextFieldSelected.FROM.name == TextFieldSelected.TO.name){
@@ -169,13 +184,25 @@ fun TokenSelector(
 
             )
 
-            TokenAssetIcon(assetsUiState.toAsset) {
+//            TokenAssetIcon(assetsUiState.toAsset) {
+//                onPickAssetClicked(TextFieldSelected.TO)
+//
+//                if(TextFieldSelected.TO.name == TextFieldSelected.FROM.name){
+//                    switchTokens()
+//                }
+//                //toEnabled = true
+//            }
+            val totext = when(assetsUiState.toAsset) {
+                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
+                else -> {""}
+            }
+            ethOSTagButton(text = totext) {
                 onPickAssetClicked(TextFieldSelected.TO)
 
                 if(TextFieldSelected.TO.name == TextFieldSelected.FROM.name){
                     switchTokens()
                 }
-                //toEnabled = true
             }
 
         }
@@ -211,7 +238,9 @@ private fun TokenAssetIcon(
                     imageVector = Icons.Rounded.ChevronRight,
                     contentDescription = "",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp).rotate(90f)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(90f)
                 )
             }
         }
