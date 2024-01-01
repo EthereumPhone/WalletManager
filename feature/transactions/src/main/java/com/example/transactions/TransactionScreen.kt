@@ -96,7 +96,7 @@ fun TransactionScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium)
                 }
             }
             is TransfersUiState.Success -> {
@@ -114,19 +114,19 @@ fun TransactionScreen(
                         ) {
                             var month = ""
 
-                        transfers.reversed().forEach { transfer ->
-                            item {
+                            transfers.reversed().forEach { transfer ->
+                                item {
+                                    ethOSTransferListItem(
 
-                                ethOSTransferListItem(
-
-                                    asset = transfer.asset,
-                                    value = transfer.value,
-                                    timeStamp = transfer.timeStamp,//Clock.System.now().toString(),
-                                    userSent = transfer.userSent,
-                                    onCardClick = {
-                                        navigateToTxDetail(transfer.txHash)
-                                    }
-                                )
+                                        asset = transfer.asset,
+                                        value = transfer.value,
+                                        timeStamp = transfer.timeStamp,//Clock.System.now().toString(),
+                                        userSent = transfer.userSent,
+                                        onCardClick = {
+                                            navigateToTxDetail(transfer.txHash)
+                                        }
+                                    )
+                                }
                             }
                         }
 
@@ -137,13 +137,13 @@ fun TransactionScreen(
                         )
                     }
 
-                    
+
                 }else{
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Text(text = "No Transfers yet", color = Colors.GRAY, fontSize = 24.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold)
+                        Text(text = "No Transfers yet", color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                     }
                 }
 

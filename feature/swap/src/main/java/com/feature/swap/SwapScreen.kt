@@ -246,7 +246,7 @@ internal fun SwapScreen(
         if(showSheet) {
             ModalBottomSheet(
 
-                containerColor= Colors.DARK_GRAY,
+                containerColor= Colors.BLACK,
                 contentColor= Colors.WHITE,
 
                 onDismissRequest = {

@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +37,8 @@ import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
 import com.feature.send.R
 import org.ethosmobile.components.library.core.ethOSListItem
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 
 @Composable
 fun ContactPickerSheet(
@@ -55,7 +60,7 @@ fun ContactPickerSheet(
                     topEnd = 12.dp
                 )
             )
-            .padding(start = 12.dp, end = 12.dp, bottom =48.dp)
+            .padding(start = 12.dp, end = 12.dp, bottom = 48.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -70,35 +75,47 @@ fun ContactPickerSheet(
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
-        LazyColumn(
-        ) {
-            contacts.forEach {contact ->
-                item(key = contact.id) {
+        if (contacts.size > 0){
+            LazyColumn(
+            ) {
+                contacts.forEach {contact ->
+                    item(key = contact.id) {
 
-                    ethOSListItem(
-                        withImage = true,
-                        image = {
-                            if (contact.image != ""){
-                                Image(
-                                    painter = rememberImagePainter(contact.image),
-                                    contentDescription = "Contact Profile Pic",
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else{
-                                Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
-                            }
-                        },
-                        header = contact.name,
-                        onClick = { onSelectContact(contact) }
-                    )
+                        ethOSListItem(
+                            withImage = true,
+                            image = {
+                                if (contact.image != ""){
+                                    Image(
+                                        painter = rememberImagePainter(contact.image),
+                                        contentDescription = "Contact Profile Pic",
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else{
+                                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
+                                }
+                            },
+                            header = contact.name,
+                            onClick = { onSelectContact(contact) }
+                        )
+                    }
                 }
+
+
+
+
+
             }
+        }else{
+            Column(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
 
-
-
-
-
+            ){
+                Text(text = "No Contacts available ", color = Colors.GRAY, fontSize = 20.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium)
+            }
         }
+
 
 
 

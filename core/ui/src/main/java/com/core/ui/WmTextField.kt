@@ -52,8 +52,8 @@ fun WmTextField(
 
     TextField(
         colors= TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF262626),
-            unfocusedContainerColor = Color(0xFF262626),
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
             cursorColor = Color.White,

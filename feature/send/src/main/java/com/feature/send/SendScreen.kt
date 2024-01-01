@@ -471,7 +471,7 @@ fun SendScreen(
 
         if(showContactSheet && contactsPermissionState.allPermissionsGranted) {
             ModalBottomSheet(
-                containerColor= Colors.DARK_GRAY,
+                containerColor= Colors.BLACK,
                 contentColor= Colors.WHITE,
                 onDismissRequest = {
                     coroutineScope.launch {
@@ -512,7 +512,7 @@ fun SendScreen(
 
         if(showAssetSheet){
             ModalBottomSheet(
-                containerColor= Colors.DARK_GRAY,
+                containerColor= Colors.BLACK,
                 contentColor= Colors.WHITE,
 
                 onDismissRequest = {

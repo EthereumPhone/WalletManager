@@ -100,7 +100,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Loading...", fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Loading...", fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                 }
             }
             is AssetUiState.Empty -> {
@@ -108,7 +108,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "No Assets yet",fontFamily = Fonts.INTER, color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "No Assets yet",fontFamily = Fonts.INTER, color = Color(0xFF9FA2A5), fontSize = 24.sp, fontWeight = FontWeight.Medium)
                 }
             }
             is AssetUiState.Error -> {
@@ -116,7 +116,7 @@ internal fun AssetScreen(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ){
-                    Text(text = "Error...",fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Error...",fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                 }
             }
             is AssetUiState.Success -> {

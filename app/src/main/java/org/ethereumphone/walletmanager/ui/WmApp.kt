@@ -112,7 +112,7 @@ fun WmApp(
         if(showSheet) {
             ModalBottomSheet(
                 onDismissRequest = {
-                    coroutineScope.launch {
+                    scope.launch {
                         transactionSheetState.hide()
                     }.invokeOnCompletion {
                         if(!transactionSheetState.isVisible) {

@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -44,6 +47,8 @@ import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.core.ethOSInfoDialog
 import org.ethosmobile.components.library.core.ethOSNetworkPill
 import org.ethosmobile.components.library.core.ethOSOnboardingModalBottomSheet
+import org.ethosmobile.components.library.models.OnboardingItem
+import org.ethosmobile.components.library.models.OnboardingObject
 import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
 
@@ -128,7 +133,9 @@ internal fun HomeScreen(
                 }
                 setOnboardingComplete(true)
             },
-            sheetState = modalSheetState
+            sheetState = modalSheetState,
+            onboardingObject = walletOnboarding
+
         )
     }
 
@@ -229,6 +236,30 @@ internal fun HomeScreen(
     }
 
 }
+
+
+private val walletOnboarding = OnboardingObject(
+    imageVector = R.drawable.wallet_icon,
+    title = "Wallet",
+    items = listOf(
+        OnboardingItem(
+            imageVector = Icons.Filled.Wallet,
+            title= "Generated System Wallet",
+            subtitle = "Your personal ethOS address is managed by the wallet manager when connecting to ethOS native apps."
+        ),
+        OnboardingItem(
+            imageVector = Icons.Outlined.Send,
+            title= "Send & Receive Crypto",
+            subtitle = "Seamlessly send and receive ethereum across chains through the system wallet."
+        ),
+        OnboardingItem(
+            imageVector = Icons.Rounded.SwapVert,
+            title= "Swap Tokens",
+            subtitle = "Swap any ERC-20 Token directly on your phone."
+        )
+
+    )
+)
 
 fun formatDouble(input: Double): String {
     val decimalFormat = DecimalFormat("#.#####")

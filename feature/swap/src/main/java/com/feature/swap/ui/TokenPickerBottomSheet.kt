@@ -42,6 +42,7 @@ import com.core.ui.WmTextField
 import com.feature.swap.SwapTokenUiState
 import org.ethosmobile.components.library.core.ethOSListItem
 import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 import java.text.DecimalFormat
 import kotlin.math.pow
 
@@ -86,17 +87,20 @@ fun TokenPickerSheet(
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "search",
-                tint = Color.White
+                contentDescription = "Search",
+                tint = Colors.WHITE
             ) },
             placeholder = {
                 Text(
-                    text = "Search tokens",
+                    text = "Search Tokens",
                     fontSize = 18.sp,
-                    color = Colors.DARK_GRAY
+                    color = Colors.GRAY,
+                    fontFamily = Fonts.INTER,
+                    fontWeight = FontWeight.Normal
                 )
             }
         )
+
 
         LazyColumn {
             when(swapTokenUiState) {
