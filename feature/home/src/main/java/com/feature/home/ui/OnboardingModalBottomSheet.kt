@@ -119,17 +119,17 @@ val onboardingItems = listOf(
     OnboardingItem(
         imageVector = Icons.Filled.Wallet,
         title= "Generated System Wallet",
-        subtitle = "Your personal ethOS address is managed by the wallet manager when connecting to ethOS native apps."
+        subtitle = "You can manage your personal ethOS address in the wallet manager."
     ),
     OnboardingItem(
         imageVector = Icons.Outlined.Send,
         title= "Send & Receive Crypto",
-        subtitle = "Seamlessly send and receive ethereum across chains through the system wallet."
+        subtitle = "Seamlessly send and receive crypto across chains through the system wallet."
     ),
     OnboardingItem(
         imageVector = Icons.Rounded.SwapVert,
         title= "Swap Tokens",
-        subtitle = "Swap any ERC-20 Token directly on your phone."
+        subtitle = "Swap any ERC-20 Token directly on your phone. Currently supports mainnet and optimism."
     )
 
 )
