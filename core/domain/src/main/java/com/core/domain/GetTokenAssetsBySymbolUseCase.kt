@@ -18,9 +18,9 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
             tokenBalanceRepository.getTokensBalances(),
             tokenMetadataRepository.getTokensMetadata()
         ) { balance, metadata ->
-            val metadataMap = metadata.associateBy { it.contractAddress.lowercase() }
+            val metadataMap = metadata.associateBy { it.contractAddress.lowercase()+it.chainId }
             val pairedList = balance.mapNotNull { tokenBalance ->
-                metadataMap[tokenBalance.contractAddress.lowercase()]?.let { tokenMetadata ->
+                metadataMap[tokenBalance.contractAddress.lowercase()+tokenBalance.chainId]?.let { tokenMetadata ->
                     Pair(tokenBalance, tokenMetadata)
                 }
             }
