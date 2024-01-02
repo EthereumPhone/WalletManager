@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.text.DecimalFormat
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -31,11 +32,16 @@ class GetTransfersUseCase @Inject constructor(
                         from = it.from,
                         to = it.to,
                         asset = networkCurrency,
-                        value = it.value.toString(),
+                        value = formatDouble(it.value),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
                         userSent = it.userIsSender,
                         txHash = it.txHash
                     )
                 }
             }
+
+    fun formatDouble(input: Double): String {
+        val decimalFormat = DecimalFormat("#.#####")
+        return decimalFormat.format(input)
+    }
 }
