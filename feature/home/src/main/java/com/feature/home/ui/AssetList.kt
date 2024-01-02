@@ -3,6 +3,7 @@ package com.feature.home.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +26,7 @@ import com.feature.home.AssetsUiState
 import com.feature.home.WalletDataUiState
 import com.feature.home.formatDouble
 import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.walletmanager.ethOSAssetListItem
 import org.ethosmobile.components.library.walletmanager.ethOSSimpleAssetListItem
 
@@ -72,7 +75,7 @@ fun AssetList(
                                 item(key = item.address) {
                                     val value = formatDouble(item.balance)
                                     //TODO: use meethod in composable
-                                    ethOSSimpleAssetListItem(title = item.symbol, value = value.toDouble() )
+                                    ethOSSimpleAssetListItemCustom(title = item.symbol, value = value.replace(",", ".").toDouble() )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
@@ -90,6 +93,20 @@ fun formatString(input: String): String {
     return input.uppercase()
 }
 
+@Composable
+fun ethOSSimpleAssetListItemCustom(
+    title: String,
+    value: Double,
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = title.uppercase(), fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(0.4f), color = Color.White)
+        Text(text = formatDouble(value),fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color.White )
+    }
+}
 
 @Preview
 @Composable
