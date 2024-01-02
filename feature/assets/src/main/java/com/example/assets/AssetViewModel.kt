@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.spamTokens
 import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.UpdateTokensUseCase
@@ -107,7 +108,7 @@ fun assetUiState(
             when(tokenToTokeResult) {
                 is Result.Success -> {
                     val (tokens, networkTokens) = tokenToTokeResult.data
-                    val filteredAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }
+                    val filteredAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }.filter { it.address !in spamTokens }
                     if(filteredAssets.isEmpty()) {
                         AssetUiState.Empty
                     } else {
