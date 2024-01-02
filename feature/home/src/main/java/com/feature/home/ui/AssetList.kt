@@ -27,9 +27,6 @@ import com.feature.home.WalletDataUiState
 import com.feature.home.formatDouble
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
-import org.ethosmobile.components.library.walletmanager.ethOSAssetListItem
-import org.ethosmobile.components.library.walletmanager.ethOSSimpleAssetListItem
-
 @Composable
 fun AssetList(
     assetsUiState: AssetsUiState,
@@ -75,7 +72,7 @@ fun AssetList(
                                 item(key = item.address) {
                                     val value = formatDouble(item.balance)
                                     //TODO: use meethod in composable
-                                    ethOSSimpleAssetListItemCustom(title = item.symbol, value = value.replace(",", ".").toDouble() )
+                                    ethOSSimpleAssetListItemCustom(title = item.symbol, value = value.replace(",", ".").toDouble())
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
