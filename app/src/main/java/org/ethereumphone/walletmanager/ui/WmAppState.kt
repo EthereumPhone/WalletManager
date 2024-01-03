@@ -96,7 +96,10 @@ class WmAppState(
         sendRepository.restoreState()
     }
 
+
     fun navigateToTopLevelDestination(topLevelDestination: Screen) {
+        // Check if the current route is the start destination or opened via a deep link
+        val isStartOrDeepLink = navController.currentBackStackEntry?.destination?.route == navController.graph.startDestinationRoute || navController.previousBackStackEntry == null
 
         val topLevelNavOptions = navOptions {
             popUpTo(navController.graph.findStartDestination().id) {
@@ -106,12 +109,18 @@ class WmAppState(
             restoreState = true
         }
 
-        // Check if we are already on the home screen and the user clicks on the home button
-        if (topLevelDestination.route == homeRoute && navController.currentDestination?.route != homeRoute) {
+        if (topLevelDestination.route == homeRoute && !isStartOrDeepLink) {
             navController.popBackStack(homeRoute, inclusive = false)
         } else {
             when (topLevelDestination.route) {
-                homeRoute -> navController.navigateToHome(topLevelNavOptions)
+                homeRoute -> {
+                    if (isStartOrDeepLink) {
+                        // If we are at start destination or deep link, simply navigate to home
+                        navController.navigate(homeRoute)
+                    } else {
+                        navController.navigateToHome(topLevelNavOptions)
+                    }
+                }
                 assetRoute -> navController.navigateToAsset(topLevelNavOptions)
                 transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
             }
