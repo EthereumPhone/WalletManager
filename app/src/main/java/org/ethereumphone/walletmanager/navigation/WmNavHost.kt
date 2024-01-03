@@ -56,7 +56,7 @@ fun WmNavHost(
             },
             nestedGraphs = {
                 swapScreen(navController::popBackStack)
-                sendScreen(navController::popBackStack)
+                sendScreen(navController::popBackStack, navController)
                 receiveScreen(navController::popBackStack)
             }
         )

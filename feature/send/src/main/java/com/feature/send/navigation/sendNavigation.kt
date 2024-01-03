@@ -25,7 +25,7 @@ fun NavController.navigateToSend(address: String? = null) {
 
 fun NavGraphBuilder.sendScreen(
     onBackClick: () -> Unit,
-
+    navController: NavController
 ) {
     composable(
         route = sendRoute,
@@ -43,8 +43,16 @@ fun NavGraphBuilder.sendScreen(
         )
     ) { backStackEntry ->
         val address = backStackEntry.arguments?.getString("address")
+
         SendRoute(
-            onBackClick= onBackClick,
+            onBackClick = {
+                if (!address.isNullOrEmpty()) {
+                    // Navigate to the home screen explicitly if opened via a deep link
+                    navController.navigate("home_route")
+                } else {
+                    onBackClick()
+                }
+            },
             initialAddress = address?: ""
         )
     }
