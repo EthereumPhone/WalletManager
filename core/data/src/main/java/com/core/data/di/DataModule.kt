@@ -46,7 +46,7 @@ object DataModule {
     @Provides
     fun provideWeb3j(): Web3j {
         return Web3j.build(
-            HttpService("https://${NetworkChain.MAIN.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAIN.chainName)}")
+            HttpService("https://${NetworkChain.MAINNET.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAINNET.chainName)}")
         )
     }
 
@@ -139,7 +139,7 @@ object DataModule {
     fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
         return UniswapRoutingSDK(
             context = context,
-            web3RPC = "https://${NetworkChain.MAIN.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAIN.chainName)}"
+            web3RPC = "https://${NetworkChain.MAINNET.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.MAINNET.chainName)}"
         )
     }
 

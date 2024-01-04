@@ -4,7 +4,7 @@ enum class NetworkChain(
     val chainId: Int,
     val chainName: String, // used for alchemy APIs)
 ) {
-    MAIN(
+    MAINNET(
         chainId = 1,
         chainName = "eth-mainnet",
     ),

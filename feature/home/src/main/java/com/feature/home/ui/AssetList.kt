@@ -86,8 +86,9 @@ fun AssetList(
     }
 }
 
-fun formatString(input: String): String {
-    return input.uppercase()
+fun String.capitalizeFirstCharAndLowercaseRest(): String {
+    if (this.isEmpty()) return this
+    return this[0].uppercaseChar() + this.substring(1).lowercase()
 }
 
 @Composable
@@ -100,7 +101,7 @@ fun ethOSSimpleAssetListItemCustom(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title.uppercase(), fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(0.4f), color = Color.White)
+        Text(text = title.capitalizeFirstCharAndLowercaseRest(), fontFamily = Fonts.INTER, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(0.4f), color = Color.White)
         Text(text = formatDouble(value),fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium, fontSize = 18.sp, textAlign = TextAlign.End, modifier = Modifier.weight(0.30f), color = Color.White )
     }
 }
