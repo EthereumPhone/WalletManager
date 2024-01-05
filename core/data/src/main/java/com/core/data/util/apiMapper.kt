@@ -11,3 +11,17 @@ fun chainToApiKey(networkName: String): String = when(networkName) {
     "base-mainnet" -> BuildConfig.BASE_API
     else -> ""
 }
+
+fun chainIdToName(chainId: Int): String = when(chainId) {
+    1 -> "eth-mainnet"
+    5 -> "eth-goerli"
+    10 -> "opt-mainnet"
+    42161 -> "arb-mainnet"
+    137 -> "polygon-mainnet"
+    8453 -> "base-mainnet"
+    else -> ""
+}
+
+fun chainIdToRPC(chainId: Int): String {
+    return "https://${chainIdToName(chainId)}.g.alchemy.com/v2/${chainToApiKey(chainIdToName(chainId))}"
+}

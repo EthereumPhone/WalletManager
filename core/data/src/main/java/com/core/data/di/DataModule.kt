@@ -169,13 +169,9 @@ object DataModule {
     @Singleton
     @Provides
     fun provideErc20TransferApi(
-        walletSDK: WalletSDK,
-        web3j: Web3j
+        @ApplicationContext context: Context
     ): Erc20TransferApi {
-        return Erc20TransferApi(
-            walletSDK,
-            web3j
-        )
+        return Erc20TransferApi(context)
     }
 
     @Singleton
