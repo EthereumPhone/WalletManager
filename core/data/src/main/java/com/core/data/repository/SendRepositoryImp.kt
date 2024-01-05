@@ -111,7 +111,8 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     tokenAsset.address,
                     amount,
-                    tokenAsset.decimals
+                    tokenAsset.decimals,
+                    chainId
                 )
             } catch (exception: NullPointerException) {
                 "error"
