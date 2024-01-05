@@ -120,7 +120,6 @@ class SendRepositoryImp @Inject constructor(
             currentTransactionChainId.value = chainId
         }
 
-        currentTransactionHash.value = ""
     }
 
     override suspend fun maxAllowedSend(
