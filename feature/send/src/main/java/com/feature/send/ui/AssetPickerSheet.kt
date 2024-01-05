@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +36,7 @@ import com.core.model.TokenAsset
 import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
 import com.feature.send.R
-import org.ethosmobile.components.library.core.ethOSListItem
+import org.ethosmobile.components.library.theme.Colors
 
 @Composable
 fun AssetPickerSheet(
@@ -105,10 +109,13 @@ fun AssetPickerSheet(
                 is AssetUiState.Success -> {
 
                     val filteredAssets = assets.assets
+                    var sortedTokens = filteredAssets.sortedByDescending {
+                        it.balance
+                    }
 
                     LazyColumn(
                     ) {
-                        filteredAssets.forEach { tokenasset ->
+                        sortedTokens.forEach { tokenasset ->
                             item(key = tokenasset.name) {
                                 ethOSListItem(
                                     header=tokenasset.symbol,
@@ -144,6 +151,78 @@ fun AssetPickerSheet(
 
     }
 }
+
+
+@Composable
+fun ethOSListItem(
+    withImage:Boolean = false,
+    image: @Composable () -> Unit = {},
+    header: String = "Header",
+    withSubheader: Boolean = false,
+    subheader: String = "Subheader",
+    trailingContent: @Composable (() -> Unit)? = null,
+    backgroundColor: Color = Colors.TRANSPARENT,
+    colorOnBackground: Color = Colors.WHITE,
+    subheaderColorOnBackground: Color = Colors.WHITE,
+    onClick: () -> Unit = {},
+    modifier: Modifier= Modifier
+
+) {
+
+
+    Row (
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.clickable { onClick() },
+    ) {
+        if(withImage){
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = modifier
+                    .clip(CircleShape)
+                    .background(Colors.DARK_GRAY)
+                    .size(56.dp)
+            ) {
+                image()
+            }
+        }
+
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = header,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Colors.WHITE,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    modifier = Modifier.width(160.dp)
+                )
+            },
+            supportingContent = {
+                if(withSubheader){
+                    Text(
+                        text = subheader,
+                        color = Colors.GRAY,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        modifier = Modifier.width(160.dp)
+                    )
+                }
+
+            },
+            trailingContent = trailingContent,
+
+            colors = ListItemDefaults.colors(
+                headlineColor = colorOnBackground,
+                supportingColor = subheaderColorOnBackground,
+                containerColor = backgroundColor
+            )
+        )
+
+    }
+
+}
+
 
 @Composable
 @Preview
