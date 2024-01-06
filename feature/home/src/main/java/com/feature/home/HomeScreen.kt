@@ -280,6 +280,7 @@ fun chainName(chainId: String) = when(chainId) {
     "10" -> "Optimism"
     "137" -> "Polygon"
     "8453" -> "Base"
+    "84531" -> "Base Testnet"
     "42161" -> "Arbitrum"
     "7777777" -> "Zora"
     else -> "Loading..."
