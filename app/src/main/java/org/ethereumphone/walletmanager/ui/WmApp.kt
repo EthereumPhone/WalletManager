@@ -1,8 +1,17 @@
 package org.ethereumphone.walletmanager.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Snackbar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,7 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.core.data.util.NetworkMonitor
@@ -35,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
 import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
+import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.utils.SnackbarState
 import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 
@@ -51,8 +66,7 @@ fun WmApp(
 ) {
 
     val scope = rememberCoroutineScope()
-    val hostState = remember { SnackbarHostState() }
-    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val isOffline by appState.isOffline.collectAsStateWithLifecycle()
 
@@ -70,14 +84,10 @@ fun WmApp(
         if (isOffline) {
             println("offline")
 
-//            snackbarHostState.showSnackbar(
-//                message = notConnectedMessage,
-//                duration = SnackbarDuration.Indefinite,
-//            )
-            snackbarHostState.coroutineScope.launch{
-                snackbarHostState.showSnackbar(state = SnackbarState.ERROR, message = notConnectedMessage, duration = SnackbarDuration.Indefinite)
-            }
-
+            snackbarHostState.showSnackbar(
+                message = notConnectedMessage,
+                duration = SnackbarDuration.Indefinite,
+            )
         }
     }
 
@@ -102,7 +112,37 @@ fun WmApp(
                 )
         },
 
-        snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(horizontal = 12.dp, vertical = 24.dp))},
+        snackbarHost = { SnackbarHost(snackbarHostState) {
+            Snackbar(
+                contentColor = Color.Red,
+                shape =  RoundedCornerShape(12.dp),
+                backgroundColor = Color(0xFFC63B3B)
+            ) {
+                Row (
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ){
+                    Text(
+                        text = it.visuals.message,
+                        style = TextStyle(
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = Fonts.INTER,
+                        )
+                    )
+                    Image(
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(Color.White),
+                        imageVector = Icons.Outlined.Error,
+                        contentDescription = "Snackbar icon"
+                    )
+                }
+            }
+
+        } },
     ) { paddingValues ->
         WmNavHost(
             appState = appState,
