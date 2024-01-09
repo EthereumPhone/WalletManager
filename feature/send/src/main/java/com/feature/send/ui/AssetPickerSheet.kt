@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,6 +39,7 @@ import com.core.ui.WmListItem
 import com.feature.send.AssetUiState
 import com.feature.send.R
 import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 
 @Composable
 fun AssetPickerSheet(
@@ -80,31 +83,49 @@ fun AssetPickerSheet(
         ) {
             when(assets){
                 is AssetUiState.Loading -> {
-
+                    Box(
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = "Loading...",
-                            fontSize = 16.sp,
+                            fontSize = 20.sp,
                             color = Color.White,
-                            fontWeight = FontWeight.Normal,
+                            fontWeight = FontWeight.Medium,
                         )
+                    }
+
+
 
                 }
                 is AssetUiState.Empty -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No Assets",
+                            fontSize = 20.sp,
+                            color = Colors.WHITE,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
 
-                    Text(
-                        text = "No Assets",
-                        fontSize = 16.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Normal,
-                    )
+
                 }
                 is AssetUiState.Error -> {
-                    Text(
-                        text = "Error",
-                        fontSize = 16.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Normal,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(
+                            text = "Error",
+                            fontSize = 20.sp,
+                            color = Colors.GRAY,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+
                 }
                 is AssetUiState.Success -> {
 
@@ -127,6 +148,7 @@ fun AssetPickerSheet(
                                             text = formatDouble(tokenasset.balance),
                                             fontSize = 20.sp,
                                             fontWeight = FontWeight.Medium,
+                                            fontFamily = Fonts.INTER,
                                             color = Color.White
                                         )
                                     },

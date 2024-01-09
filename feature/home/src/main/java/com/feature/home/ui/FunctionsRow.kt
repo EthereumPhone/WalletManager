@@ -1,6 +1,8 @@
 package com.feature.home.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
@@ -23,23 +25,46 @@ internal fun FunctionsRow(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        ethOSIconButton(
-            onClick = { navigateToSend() },
-            icon = Icons.Rounded.NorthEast,
-            contentDescription = "Send"
-        )
+        Box(
+            modifier = Modifier.clickable {
+                navigateToSend()
+            }
+        ) {
+            ethOSIconButton(
+                onClick = { navigateToSend() },
+                icon = Icons.Rounded.NorthEast,
+                contentDescription = "Send"
+            )
+        }
 
-        ethOSIconButton(
-            onClick = { navigateToReceive() },
-            icon = Icons.Rounded.ArrowDownward,
-            contentDescription = "Receive"
-        )
 
-        ethOSIconButton(
-            onClick = { navigateToSwap() },
-            icon = Icons.Rounded.SwapVert,
-            contentDescription = "Swap"
-        )
+        Box(
+            modifier = Modifier.clickable {
+                navigateToReceive()
+            }
+        ) {
+            ethOSIconButton(
+                onClick = { navigateToReceive() },
+                icon = Icons.Rounded.ArrowDownward,
+                contentDescription = "Receive"
+            )
+        }
+
+        Box(
+            modifier = Modifier.clickable {
+                navigateToSwap()
+            }
+        ) {
+            ethOSIconButton(
+                onClick = { navigateToSwap() },
+                icon = Icons.Rounded.SwapVert,
+                contentDescription = "Swap"
+            )
+        }
+
+
+
+
     }
 }
 

@@ -159,7 +159,7 @@ fun TokenSelector(
 
 
 
-        Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = "Swap Icon", tint=Color.White, modifier = Modifier.size(64.dp))
+        Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = "Swap icon", tint=Color.White, modifier = Modifier.size(64.dp))
 
         val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
                 (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
