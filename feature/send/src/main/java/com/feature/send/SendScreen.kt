@@ -330,7 +330,7 @@ fun SendScreen(
 
                         ethOSCenterTextFieldInline(
                             text = toAddress,//testAddress,
-                            label = "(Enter address, ENS or QR scan)",
+                            label = "address or ENS",
                             modifier = Modifier.weight(1f), //.background(Color.Red),//.fillMaxWidth(0.95f).
                             singleLine = false,
 //                            center = true,
@@ -382,12 +382,12 @@ fun SendScreen(
                             contactsPermissionState.launchMultiplePermissionRequest()
                         }
                     }) {
-                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
+                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "Contact",tint=Colors.WHITE, modifier = modifier.size(32.dp))
                     }
                     IconButton(onClick = {
                         showCameraWithPerm = true
                     }) {
-                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Color.White)
+                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Colors.WHITE, modifier = modifier.size(32.dp))
                     }
                 }
             }

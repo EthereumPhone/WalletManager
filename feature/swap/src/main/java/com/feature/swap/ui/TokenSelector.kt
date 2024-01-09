@@ -141,7 +141,7 @@ fun TokenSelector(
 //            }
 
             val fromtext = when(assetsUiState.fromAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Unselected -> { "Select token" }
                 is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
                 else -> {""}
             }
@@ -159,7 +159,7 @@ fun TokenSelector(
 
 
 
-        Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = "Swap Icon", tint=Color.White, modifier = Modifier.size(64.dp))
+        Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = "Swap icon", tint=Color.White, modifier = Modifier.size(64.dp))
 
         val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
                 (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
@@ -193,7 +193,7 @@ fun TokenSelector(
 //                //toEnabled = true
 //            }
             val totext = when(assetsUiState.toAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Unselected -> { "Select token" }
                 is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
                 else -> {""}
             }

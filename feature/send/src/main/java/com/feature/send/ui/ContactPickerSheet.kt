@@ -86,11 +86,11 @@ fun ContactPickerSheet(
                                 if (contact.image != ""){
                                     Image(
                                         painter = rememberImagePainter(contact.image),
-                                        contentDescription = "Contact Profile Pic",
+                                        contentDescription = "Contact profile pic",
                                         contentScale = ContentScale.Crop
                                     )
                                 } else{
-                                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
+                                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact profile pic" )
                                 }
                             },
                             header = contact.name,
@@ -111,7 +111,7 @@ fun ContactPickerSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
 
             ){
-                Text(text = "No Contacts available ", color = Colors.GRAY, fontSize = 20.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium)
+                Text(text = "No contacts available ", color = Colors.GRAY, fontSize = 20.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium)
             }
         }
 
