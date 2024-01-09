@@ -216,7 +216,7 @@ private fun TokenAssetIcon(
 
 ) {
     val text = when(tokenAsset) {
-        is SelectedTokenUiState.Unselected -> { "Select Token" }
+        is SelectedTokenUiState.Unselected -> { "Select token" }
         is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
         else -> {""}
     }
