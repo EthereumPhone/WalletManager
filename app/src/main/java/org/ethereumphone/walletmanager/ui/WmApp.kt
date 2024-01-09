@@ -68,16 +68,19 @@ fun WmApp(
     val notConnectedMessage = "You aren’t connected to the internet"//"⚠\uFE0F You aren’t connected to the internet"
     LaunchedEffect(isOffline) {
         if (isOffline) {
-            println("offline")
+            println("wm offline")
 
 //            snackbarHostState.showSnackbar(
 //                message = notConnectedMessage,
 //                duration = SnackbarDuration.Indefinite,
 //            )
-            snackbarHostState.coroutineScope.launch{
+            //snackbarHostState.coroutineScope.launch{
                 snackbarHostState.showSnackbar(state = SnackbarState.ERROR, message = notConnectedMessage, duration = SnackbarDuration.Indefinite)
-            }
+            //}
 
+        }else{
+            println("wm online")
+            snackbarHostState.snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
 
