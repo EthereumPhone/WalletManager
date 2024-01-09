@@ -97,7 +97,7 @@ fun TokenPickerSheet(
             ) },
             placeholder = {
                 Text(
-                    text = "Search Tokens",
+                    text = "Search tokens",
                     fontSize = 18.sp,
                     color = Colors.GRAY,
                     fontFamily = Fonts.INTER,

@@ -143,7 +143,7 @@ fun TransactionScreen(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Text(text = "No Transfers yet", color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                        Text(text = "No transfers yet", color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                     }
                 }
 
