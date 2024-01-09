@@ -141,7 +141,7 @@ fun TokenSelector(
 //            }
 
             val fromtext = when(assetsUiState.fromAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Unselected -> { "Select token" }
                 is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
                 else -> {""}
             }
@@ -193,7 +193,7 @@ fun TokenSelector(
 //                //toEnabled = true
 //            }
             val totext = when(assetsUiState.toAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select Token" }
+                is SelectedTokenUiState.Unselected -> { "Select token" }
                 is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
                 else -> {""}
             }
@@ -216,7 +216,7 @@ private fun TokenAssetIcon(
 
 ) {
     val text = when(tokenAsset) {
-        is SelectedTokenUiState.Unselected -> { "Select Token" }
+        is SelectedTokenUiState.Unselected -> { "Select token" }
         is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
         else -> {""}
     }
