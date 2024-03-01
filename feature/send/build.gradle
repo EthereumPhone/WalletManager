@@ -104,6 +104,6 @@ dependencies {
 
     implementation "com.google.accompanist:accompanist-permissions:0.32.0"
 
-    implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'//36e645b378'//4f74da5c62
 
 }

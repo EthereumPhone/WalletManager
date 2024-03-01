@@ -10,6 +10,8 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -67,6 +69,7 @@ import com.core.model.TokenAsset
 import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
 import com.core.ui.ethOSCenterTextFieldInline
+import com.core.ui.ethOSTextField
 import java.text.DecimalFormat
 
 import com.feature.send.ui.AssetPickerSheet
@@ -83,7 +86,6 @@ import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSCenterTextField
 import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.core.ethOSTagButton
-import org.ethosmobile.components.library.core.ethOSTextField
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.walletmanager.ethOSContactPill
@@ -261,12 +263,19 @@ fun SendScreen(
         mutableStateOf("")
     }
 
+    val focusManager = LocalFocusManager.current
+
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
                 .background(Colors.BLACK)
+                .clickable(
+                    onClick = { focusManager.clearFocus() },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                )
                 //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
             //Breadcrumb w/ backbutton
@@ -423,7 +432,8 @@ fun SendScreen(
                     } else {
                         Colors.WHITE
                     },
-                    numberInput = true
+                    numberInput = true,
+//                    focusManager = focusManager
                 )
 
                 when(selectedToken) {
@@ -450,6 +460,7 @@ fun SendScreen(
                 }
 
                 ethOSTagButton(text = token) {
+                    focusManager.clearFocus()
                     showAssetSheet = true
                 }
 

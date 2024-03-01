@@ -8,6 +8,12 @@
       <entry key="PreviewPendingTransactionStateUi">
         <State />
       </entry>
+      <entry key="PreviewSwapScreen">
+        <State />
+      </entry>
+      <entry key="PreviewTextField">
+        <State />
+      </entry>
       <entry key="app">
         <State />
       </entry>

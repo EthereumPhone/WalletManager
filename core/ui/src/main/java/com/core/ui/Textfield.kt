@@ -1,6 +1,8 @@
 package com.core.ui
 
+import android.annotation.SuppressLint
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -18,15 +20,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
@@ -46,7 +62,7 @@ fun ethOSCenterTextFieldInline(
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
-    //val focusRequester = FocusRequester()
+    val focusRequester = FocusRequester()
     var fontSize by remember { mutableStateOf(size.sp) }
 
 
@@ -57,6 +73,13 @@ fun ethOSCenterTextFieldInline(
             onTextChanged(it)
             fontSize = size.sp
         },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                // Clear focus when the user presses the "Done" button on the keyboard
+                focusRequester.requestFocus()
+            }
+        ),
         singleLine = singleLine,
         minLines = 1,
         maxLines = 2,
@@ -66,7 +89,19 @@ fun ethOSCenterTextFieldInline(
             fontSize = fontSize,
             fontWeight = FontWeight.SemiBold
         ),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
+            }
+
+            .onKeyEvent {
+                if ((it.nativeKeyEvent.keyCode == Key.Enter.nativeKeyCode) || (it.nativeKeyEvent.keyCode == Key.NumPadEnter.nativeKeyCode)){
+                    focusRequester.requestFocus()
+                    true
+                }
+                false
+            },
 
 //            textStyle = TextStyle(
 ////                textAlign = TextAlign.Center,
@@ -103,8 +138,6 @@ fun ethOSCenterTextFieldInline(
             innerTextField()
         }
     }
-
-
 }
 
 
@@ -112,6 +145,8 @@ fun ethOSCenterTextFieldInline(
 
 
 
+
+@SuppressLint("ComposableNaming")
 @Composable
 fun ethOSTextField(
     text: String,
@@ -128,10 +163,13 @@ fun ethOSTextField(
 ) {
 
     var isFocused by remember { mutableStateOf(false) }
-    //val focusRequester = FocusRequester()
+    val focusRequester = FocusRequester()
     var fontSize by remember { mutableStateOf(size.sp) }
+    //val keyboardController = LocalSoftwareKeyboardController.current
 
-    val focusManager = LocalFocusManager.current
+
+
+
     BasicTextField(
         value = text,
         readOnly = false,
@@ -139,13 +177,15 @@ fun ethOSTextField(
             if(it.length < maxChar){
                 onTextChanged(it)
             }
-
             fontSize = size.sp
-
         },
         keyboardActions = KeyboardActions(
-            onDone = { focusManager.clearFocus() }),
-        keyboardOptions = if(numberInput) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions(keyboardType = KeyboardType.Text),
+            onDone = {
+                // Clear focus when the user presses the "Done" button on the keyboard
+                focusRequester.requestFocus()
+            }
+        ),
+        keyboardOptions = if(numberInput) KeyboardOptions(keyboardType = KeyboardType.Number,imeAction = ImeAction.Done) else KeyboardOptions(keyboardType = KeyboardType.Text,imeAction = ImeAction.Done),
         singleLine = singleLine,
         minLines = 1,
         maxLines = 2,
@@ -154,20 +194,22 @@ fun ethOSTextField(
             fontSize = calculateFontSize(text.length,size,sizeCut),
             fontWeight = FontWeight.SemiBold
         ),
-        modifier = modifier.width(IntrinsicSize.Min),
 
-//            textStyle = TextStyle(
-////                textAlign = TextAlign.Center,
-////                fontSize =  24.sp,
-////                fontWeight = FontWeight.SemiBold,
-////            ),
-        cursorBrush = SolidColor(Color.White),
-//            modifier = modifier
-//                .clip(RoundedCornerShape(10))
-//                .background(Color.Magenta)
-//                .height(64.dp)
-
-
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
+            }
+            .width(IntrinsicSize.Min)
+            .onKeyEvent {
+                if ((it.nativeKeyEvent.keyCode == Key.NumPadEnter.keyCode.toInt()) || (it.nativeKeyEvent.keyCode == Key.Enter.keyCode.toInt())){
+                    focusRequester.requestFocus()
+//                    /focusManager.clearFocus()
+                    true
+                }
+            false
+        },
+        cursorBrush = SolidColor(if (isFocused) Color.White else Color.Green),
     ) { innerTextField ->
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -190,7 +232,12 @@ fun ethOSTextField(
     }
 
 
+
+
+
 }
+
+
 
 fun calculateFontSize(length: Int, defaultSize: Int, maxChar: Int ): TextUnit {
     val defaultFontSize = defaultSize.sp
@@ -245,17 +292,17 @@ fun PreviewTextField() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        ethOSTextField(
-            text = test,
-            size = 64,
-            label = "0",
-            onTextChanged = { value -> test = value }
-
-//                modifier = Modifier.fillMaxWidth(),
-
-
-
-        )
+//        ethOSTextField(
+//            text = test,
+//            size = 64,
+//            label = "0",
+//            onTextChanged = { value -> test = value }
+//
+////                modifier = Modifier.fillMaxWidth(),
+//
+//
+//
+//        )
         //TextField(value = test, onValueChange = {test = it})
     }
 

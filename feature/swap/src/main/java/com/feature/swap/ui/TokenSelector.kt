@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -26,20 +28,27 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,6 +71,7 @@ import org.ethosmobile.components.library.theme.Colors
 import java.math.BigDecimal
 import java.text.DecimalFormat
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TokenSelector(
     amountsUiState: AmountsUiState,
@@ -70,7 +80,8 @@ fun TokenSelector(
     modifier: Modifier = Modifier,
     switchTokens: () -> Unit,
     onPickAssetClicked: (TextFieldSelected) -> Unit,
-    onAmountChange: (TextFieldSelected, String) -> Unit
+    onAmountChange: (TextFieldSelected, String) -> Unit,
+    focusManager: FocusManager
 ) {
 
     val fromBalance = when(assetsUiState.fromAsset) {
@@ -88,6 +99,8 @@ fun TokenSelector(
     }
 
     val maxed2 = remember { mutableStateOf(false) }
+
+
 
 
 
@@ -117,7 +130,8 @@ fun TokenSelector(
                     val amountText = if (it == ".") "0$it" else it
                     onAmountChange(TextFieldSelected.FROM, amountText)
                 },
-                color = if(fromAmountTooHigh) Colors.ERROR else Color.White
+                color = if(fromAmountTooHigh) Colors.ERROR else Color.White,
+//                focusManager = focusManager
 
             )
             when(assetsUiState.fromAsset) {
@@ -146,6 +160,7 @@ fun TokenSelector(
                 else -> {""}
             }
             ethOSTagButton(text = fromtext) {
+                focusManager.clearFocus()
                 onPickAssetClicked(TextFieldSelected.FROM)
                 //fromEnabled = true
                 if(TextFieldSelected.FROM.name == TextFieldSelected.TO.name){
@@ -182,6 +197,8 @@ fun TokenSelector(
                 },
                 color = Color.White,
 
+//                focusManager = focusManager
+
             )
 
 //            TokenAssetIcon(assetsUiState.toAsset) {
@@ -198,6 +215,8 @@ fun TokenSelector(
                 else -> {""}
             }
             ethOSTagButton(text = totext) {
+                focusManager.clearFocus()
+
                 onPickAssetClicked(TextFieldSelected.TO)
 
                 if(TextFieldSelected.TO.name == TextFieldSelected.FROM.name){
@@ -208,6 +227,10 @@ fun TokenSelector(
         }
     }
 }
+
+
+
+
 
 @Composable
 private fun TokenAssetIcon(
@@ -270,30 +293,31 @@ fun PreviewTokenSelector() {
     )
 
     Column {
-        TokenSelector(
-            amountsUiState = amount,
-            assetsUiState = assetState,
-            isSyncing = false,
-            modifier = Modifier.fillMaxWidth(),
-            {},
-            {textFieldSelected: TextFieldSelected -> clicked += 1 },
-            {textFieldSelected: TextFieldSelected, text: String ->
-                amount = when(textFieldSelected) {
-                    TextFieldSelected.FROM -> {
-                        amount.copy(
-                            fromAmount = text
-                        )
-                    }
-
-                    TextFieldSelected.TO -> {
-                        amount.copy(
-                            toAmount = text
-                        )
-                    }
-                }
-
-            }
-        )
+//        TokenSelector(
+//            amountsUiState = amount,
+//            assetsUiState = assetState,
+//            isSyncing = false,
+//            modifier = Modifier.fillMaxWidth(),
+//            {},
+//            {textFieldSelected: TextFieldSelected -> clicked += 1 },
+//            {textFieldSelected: TextFieldSelected, text: String ->
+//                amount = when(textFieldSelected) {
+//                    TextFieldSelected.FROM -> {
+//                        amount.copy(
+//                            fromAmount = text
+//                        )
+//                    }
+//
+//                    TextFieldSelected.TO -> {
+//                        amount.copy(
+//                            toAmount = text
+//                        )
+//                    }
+//                }
+//
+//            }
+//
+//        )
         Spacer(modifier = Modifier.height(8.dp))
         //Text(text = "Test TEXT $clicked")
 
