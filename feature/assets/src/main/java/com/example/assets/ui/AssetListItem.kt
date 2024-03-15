@@ -2,6 +2,7 @@ package com.example.assets.ui
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,7 +40,9 @@ fun AssetListItem(
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.clickable {
+            linkTo()
+        }.fillMaxWidth().padding(vertical = 12.dp),
     ) {
         Text(
             truncateString(title.uppercase()),
