@@ -22,6 +22,7 @@ import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
+import org.web3j.utils.Convert
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
@@ -48,14 +49,19 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         toAddress: String,
         chainIds: List<Int>
     ) {
+        Log.d("My testy Test", "My baby Misa :3")
+
+
         val networks = chainIds.mapNotNull {
             NetworkChain.getNetworkByChainId(it)
         }
 
         withContext(Dispatchers.IO) {
-            networks.map {
 
+            networks.map {
                 if(it.chainId != 7777777) {
+                    Log.d("SIGMA", "My baby Misa :3")
+
                     async {
                         val newNetworkBalance = networkBalanceApi
                             .getNetworkCurrency(
@@ -73,15 +79,17 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                         )
                     }
                 } else {
+
                     val zoraFetcher = Web3j.build(HttpService("https://rpc.zora.energy"))
-                    val amount = zoraFetcher.ethGetBalance(toAddress, DefaultBlockParameterName.LATEST).sendAsync().get()
+                    val amount = zoraFetcher.ethGetBalance(toAddress, DefaultBlockParameterName.LATEST
+                    ).sendAsync().get()
 
                     tokenBalanceDao.upsertTokenBalances(
                         listOf(
                             TokenBalanceEntity(
                                 contractAddress = it.chainId.toString(),
                                 chainId = it.chainId,
-                                tokenBalance = convertWeiToEth(amount.balance.toBigDecimal())
+                                tokenBalance = Convert.fromWei(amount.balance.toString(), Convert.Unit.ETHER)
                             )
                         )
                     )
@@ -93,7 +101,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
     private fun convertWeiToEth(weiBalance: BigDecimal): BigDecimal {
         val weiInEth = BigDecimal("1000000000000000000") // 10^18
-        return weiBalance.divide(weiInEth, RoundingMode.DOWN)
+        return weiBalance.divide(weiInEth, RoundingMode.HALF_EVEN)
     }
 
     override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, chainId: Int) {

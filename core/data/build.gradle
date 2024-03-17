@@ -19,7 +19,7 @@ android {
         properties.load(project.rootProject.file("local.properties").newDataInputStream())
 
         buildConfigField "String", "ETHEREUM_API", "\"${properties.getProperty("ETHEREUM_API")}\""
-        buildConfigField "String", "GOERLI_API", "\"${properties.getProperty("GOERLI_API")}\""
+        buildConfigField "String", "SEPOLIA_API", "\"${properties.getProperty("SEPOLIA_API")}\""
         buildConfigField "String", "ARBITRUM_API", "\"${properties.getProperty("ARBITRUM_API")}\""
         buildConfigField "String", "OPTIMISM_API", "\"${properties.getProperty("OPTIMISM_API")}\""
         buildConfigField "String", "POLYGON_API", "\"${properties.getProperty("POLYGON_API")}\""

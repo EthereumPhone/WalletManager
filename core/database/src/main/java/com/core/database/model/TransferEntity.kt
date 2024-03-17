@@ -40,7 +40,7 @@ data class RawContract(
     val value: String?
 )
 
-//TransferEntity that gets maped
+//TransferEntity that gets mapped
 fun TransferEntity.asExternalModel() = Transfer(
     asset,
     chainId,

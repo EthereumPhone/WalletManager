@@ -8,9 +8,9 @@ enum class NetworkChain(
         chainId = 1,
         chainName = "eth-mainnet",
     ),
-    GOERLI(
-        chainId = 5,
-        chainName = "eth-goerli",
+    SEPOLIA(
+        chainId = 11155111,
+        chainName = "eth-sepolia",
     ),
     OPTIMISM(
         chainId = 10,
@@ -31,8 +31,7 @@ enum class NetworkChain(
     ZORA(
         chainId = 7777777,
         chainName = "eth-mainnet"
-    )
-    ;
+    );
 
     companion object {
         fun getAllNetworkChains(): List<NetworkChain> {

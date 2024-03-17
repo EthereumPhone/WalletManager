@@ -75,7 +75,7 @@ fun NetworkPickerSheet(
 
                                 trailingContent = {
                                     val abbriviation = when(tokenAsset.chainId) {
-                                         5 -> "GoerliETH"
+                                        11155111 -> "SepolaETH"
                                          137 -> "MATIC"//Polygon
                                         else -> "ETH"
                                     }

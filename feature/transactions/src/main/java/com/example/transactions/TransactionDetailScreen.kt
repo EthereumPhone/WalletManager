@@ -184,7 +184,7 @@ fun TransctionDetailScreen(
 fun getEtherscanDomainForChain(chainId: Int): String {
     return when(chainId) {
         1 -> "https://etherscan.io/"
-        5 -> "https://goerli.etherscan.io/"
+        11155111 -> "https://goerli.etherscan.io/"
         10 -> "https://optimistic.etherscan.io/"
         137 -> "https://polygonscan.com/"
         42161 -> "https://arbiscan.io/"

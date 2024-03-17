@@ -4,7 +4,7 @@ import com.core.data.BuildConfig
 
 fun chainToApiKey(networkName: String): String = when(networkName) {
     "eth-mainnet" -> BuildConfig.ETHEREUM_API
-    "eth-goerli" -> BuildConfig.GOERLI_API
+    "eth-sepolia" -> BuildConfig.SEPOLIA_API
     "opt-mainnet" -> BuildConfig.OPTIMISM_API
     "arb-mainnet" -> BuildConfig.ARBITRUM_API
     "polygon-mainnet" -> BuildConfig.POLYGON_API
@@ -14,7 +14,7 @@ fun chainToApiKey(networkName: String): String = when(networkName) {
 
 fun chainIdToName(chainId: Int): String = when(chainId) {
     1 -> "eth-mainnet"
-    5 -> "eth-goerli"
+    11155111 -> "eth-sepolia"
     10 -> "opt-mainnet"
     42161 -> "arb-mainnet"
     137 -> "polygon-mainnet"

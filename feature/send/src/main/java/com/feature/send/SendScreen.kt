@@ -290,7 +290,7 @@ fun SendScreen(
         }
 
         val abbriviation = when(currentChainId) {
-            5 -> "GoerliETH"
+            11155111 -> "SepolaETH"
             137 -> "MATIC"//Polygon
             else -> "ETH"
         }
