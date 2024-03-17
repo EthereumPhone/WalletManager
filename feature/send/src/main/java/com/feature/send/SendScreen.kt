@@ -3,40 +3,29 @@ package com.feature.send
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QrCodeScanner
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -48,8 +37,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -57,33 +44,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.model.dto.Contact
 import com.core.data.util.chainToApiKey
 import com.core.model.TokenAsset
-import com.core.ui.TopHeader
 import com.core.ui.ethOSButton
 import com.core.ui.ethOSCenterTextFieldInline
-import java.text.DecimalFormat
-
-import com.feature.send.ui.AssetPickerSheet
+import com.core.ui.ethOSTextField
 import com.core.ui.util.chainIdToName
 import com.core.ui.util.formatDouble
+import com.feature.send.ui.AssetPickerSheet
 import com.feature.send.ui.ContactPickerSheet
-import com.feature.send.ui.ContactPill
+import com.feature.send.ui.ToolbarCaptureActivity
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
-import org.ethosmobile.components.library.core.ethOSCenterTextField
 import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.core.ethOSTagButton
-import org.ethosmobile.components.library.core.ethOSTextField
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.walletmanager.ethOSContactPill
@@ -92,7 +73,6 @@ import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
-
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
@@ -261,12 +241,19 @@ fun SendScreen(
         mutableStateOf("")
     }
 
+    val focusManager = LocalFocusManager.current
+
     Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
                 .background(Colors.BLACK)
+                .clickable(
+                    onClick = { focusManager.clearFocus() },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                )
                 //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
             //Breadcrumb w/ backbutton
@@ -300,7 +287,7 @@ fun SendScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
+                .padding(start = 32.dp, end = 32.dp, bottom = 32.dp)
 
         ){
 
@@ -330,7 +317,7 @@ fun SendScreen(
 
                         ethOSCenterTextFieldInline(
                             text = toAddress,//testAddress,
-                            label = "(Enter address, ENS or QR scan)",
+                            label = "address or ENS",
                             modifier = Modifier.weight(1f), //.background(Color.Red),//.fillMaxWidth(0.95f).
                             singleLine = false,
 //                            center = true,
@@ -382,12 +369,12 @@ fun SendScreen(
                             contactsPermissionState.launchMultiplePermissionRequest()
                         }
                     }) {
-                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "QR Scan",tint=Color.White)
+                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "Contact",tint=Colors.WHITE, modifier = modifier.size(32.dp))
                     }
                     IconButton(onClick = {
                         showCameraWithPerm = true
                     }) {
-                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Color.White)
+                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint=Colors.WHITE, modifier = modifier.size(32.dp))
                     }
                 }
             }
@@ -397,7 +384,7 @@ fun SendScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 32.dp,end = 32.dp,bottom = 32.dp)
+                    .padding(start = 32.dp, end = 32.dp, bottom = 32.dp)
 
 
             ) {
@@ -423,7 +410,8 @@ fun SendScreen(
                     } else {
                         Colors.WHITE
                     },
-                    numberInput = true
+                    numberInput = true,
+//                    focusManager = focusManager
                 )
 
                 when(selectedToken) {
@@ -450,6 +438,7 @@ fun SendScreen(
                 }
 
                 ethOSTagButton(text = token) {
+                    focusManager.clearFocus()
                     showAssetSheet = true
                 }
 
@@ -600,10 +589,12 @@ fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
     return adjustedSize
 }
 
+
 fun showCamera(
-    cameraLauncher: ManagedActivityResultLauncher<ScanOptions, ScanIntentResult>
+    cameraLauncher: ManagedActivityResultLauncher<ScanOptions?, ScanIntentResult?>
 ) {
     val options = ScanOptions()
+    options.setCaptureActivity(ToolbarCaptureActivity::class.java)
     options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
     options.setPrompt("Scan QR Code")
     options.setCameraId(0)
@@ -611,7 +602,6 @@ fun showCamera(
     options.setOrientationLocked(false)
     cameraLauncher.launch(options)
 }
-
 
 @Preview
 @Composable

@@ -36,6 +36,7 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.ui.util.chainIdToName
 import com.example.transactions.ui.TransactionDetailItem
 
 
@@ -145,9 +146,9 @@ fun TransctionDetailScreen(
                     Column (
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ){
-                        TransactionDetailItem("Tx Hash",tx.txHash)
+                        TransactionDetailItem("Tx hash",tx.txHash)
                         TransactionDetailItem(if(tx.userSent) "To" else "From",if(tx.userSent) tx.to else tx.from)
-                        TransactionDetailItem("Chain",tx.chainId.toString())
+                        TransactionDetailItem("Chain",chainIdToName(tx.chainId.toString()))
                         TransactionDetailItem("Amount",tx.value)
 
                         Spacer(modifier = Modifier.height(12.dp))

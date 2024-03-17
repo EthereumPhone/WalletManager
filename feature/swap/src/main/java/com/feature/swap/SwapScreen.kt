@@ -3,6 +3,8 @@ package com.feature.swap
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -129,12 +132,23 @@ internal fun SwapScreen(
         is WalletDataUiState.Success -> { walletDataUiState.userData.walletNetwork.toInt() }
     }
 
+
+    val focusManager = LocalFocusManager.current
+
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxSize()
             .background(Colors.BLACK)
+            .clickable(
+                onClick = { focusManager.clearFocus() },
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            )
+
+
 //            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
         ethOSHeader(
@@ -180,7 +194,8 @@ internal fun SwapScreen(
                 onPickAssetClicked = {
                     showSheet = true
                     onTextFieldSelected(it)
-                }
+                } ,
+                focusManager = focusManager
             )
                 ExchangeRateRow(
                     assetsUiState = assetsUiState,
@@ -297,7 +312,6 @@ fun PreviewSwapScreen() {
                     1.2145
                 )
             )
-
         ),
         exchangeUiState = 0.0,
         amountsUiState=  AmountsUiState(),
