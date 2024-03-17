@@ -99,11 +99,6 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         }
     }
 
-    private fun convertWeiToEth(weiBalance: BigDecimal): BigDecimal {
-        val weiInEth = BigDecimal("1000000000000000000") // 10^18
-        return weiBalance.divide(weiInEth, RoundingMode.HALF_EVEN)
-    }
-
     override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, chainId: Int) {
         val network = NetworkChain.getNetworkByChainId(chainId)
 
