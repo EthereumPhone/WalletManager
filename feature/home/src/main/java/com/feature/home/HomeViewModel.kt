@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.ExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.chainIdToRPC
+import com.core.data.util.chainToApiKey
 import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,7 +30,8 @@ class HomeViewModel @Inject constructor(
     private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    private val coinbaseExchangeRepository: ExchangeRepository
+    private val coinbaseExchangeRepository: ExchangeRepository,
+    private val walletSDK: WalletSDK
 ): ViewModel() {
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
@@ -84,6 +88,13 @@ class HomeViewModel @Inject constructor(
     fun setOnboardingComplete(onboardingComplete: Boolean){
         viewModelScope.launch {
             userDataRepository.setOnboardingCompleted(onboardingComplete)
+        }
+    }
+
+    fun changeNetwork(network: Int){
+        viewModelScope.launch {
+            walletSDK.changeChain(network, chainIdToRPC(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            userDataRepository.setWalletNetwork(network.toString())
         }
     }
 }

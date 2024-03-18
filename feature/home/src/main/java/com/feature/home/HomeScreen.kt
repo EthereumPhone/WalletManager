@@ -3,8 +3,10 @@ package com.feature.home
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,11 +44,13 @@ import com.feature.home.ui.AddressBar
 import com.feature.home.ui.AssetList
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.OnboardingModalBottomSheet
+import com.feature.home.ui.ethOSNetworkModalBottomSheet
+import com.feature.home.ui.ethOSNetworkPill
 
 import kotlinx.coroutines.launch
+
 import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.core.ethOSInfoDialog
-import org.ethosmobile.components.library.core.ethOSNetworkPill
 import org.ethosmobile.components.library.core.ethOSOnboardingModalBottomSheet
 import org.ethosmobile.components.library.models.OnboardingItem
 import org.ethosmobile.components.library.models.OnboardingObject
@@ -80,6 +85,7 @@ internal fun HomeRoute(
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
         setOnboardingComplete= viewModel::setOnboardingComplete,
+        setNetwork = viewModel::changeNetwork
     )
 }
 
@@ -93,6 +99,7 @@ internal fun HomeScreen(
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     setOnboardingComplete: (Boolean) -> Unit,
+    setNetwork: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val onboardingComplete = when(userData) {
@@ -114,6 +121,7 @@ internal fun HomeScreen(
 
 
     val showInfoDialog =  remember { mutableStateOf(false) }
+
     if(showInfoDialog.value){
         ethOSInfoDialog(
             setShowDialog = {
@@ -138,6 +146,38 @@ internal fun HomeScreen(
 
         )
     }
+
+
+    val modalNetworkSheetState = rememberModalBottomSheetState(true)
+    var showNetworkSheet by remember { mutableStateOf(false) }
+    if(showNetworkSheet) {
+        ethOSNetworkModalBottomSheet(
+            onDismiss = {
+                coroutineScope.launch {
+                    modalNetworkSheetState.hide()
+                }.invokeOnCompletion {
+
+                }
+                showNetworkSheet = false
+            },
+            sheetState = modalNetworkSheetState,
+            userData = userData,
+            assetsUiState = assetsUiState,
+            onClick = {
+                setNetwork(it)
+                coroutineScope.launch {
+                    modalNetworkSheetState.hide()
+                }.invokeOnCompletion {}
+                showNetworkSheet = false
+            }
+
+
+        )
+    }
+
+
+
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -188,7 +228,19 @@ internal fun HomeScreen(
                     Color.Transparent
                 }
             }
-            ethOSNetworkPill(address = address, network = network, chainColor = chainColor)
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        showNetworkSheet = true
+                    },
+            ){
+                ethOSNetworkPill(address = address, network = network, chainColor = chainColor, onClick = {
+                    showNetworkSheet = true
+                })
+            }
+
         })
 
         Column(
