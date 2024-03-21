@@ -179,6 +179,7 @@ internal fun HomeScreen(
 
 
 
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement=  Arrangement.SpaceBetween,
@@ -244,6 +245,7 @@ internal fun HomeScreen(
         })
 
         Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(text = "Balance",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 20.sp)
@@ -265,6 +267,8 @@ internal fun HomeScreen(
                     Text(text = formatDouble(fiatAmount) ,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
                 }
             }
+            Text(text = "ETH",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 16.sp)
+
         }
 
 

@@ -19,12 +19,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,9 +41,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -49,8 +65,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.model.dto.Contact
 import com.core.data.util.chainToApiKey
 import com.core.model.TokenAsset
-import com.core.ui.ethOSButton
 import com.core.ui.ethOSCenterTextFieldInline
+import com.core.ui.ethOSTextButton
 import com.core.ui.ethOSTextField
 import com.core.ui.util.chainIdToName
 import com.core.ui.util.formatDouble
@@ -63,6 +79,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSButton
 import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.core.ethOSTagButton
 import org.ethosmobile.components.library.theme.Colors
@@ -202,26 +219,6 @@ fun SendScreen(
     var selectedContact by remember { mutableStateOf(Contact())  }
     var isContactSelected by remember { mutableStateOf(false) }
 
-
-
-    var amountfontSize by remember { mutableStateOf(68.sp) }
-
-    val maxFontSize = 68.sp
-    val minFontSize = 42.sp
-    val characterCount = amount.length
-    amountfontSize =
-        when {
-        characterCount <= 2 -> 68.sp
-        characterCount > 2 && characterCount <= 4 -> 64.sp
-        characterCount > 4 && characterCount <= 6 -> 54.sp
-            characterCount > 4 && characterCount <= 6 -> 50.sp
-            characterCount > 6 && characterCount <= 9 -> 48.sp
-        //characterCount > 5 && characterCount <= 10 -> 18.sp
-        else -> minFontSize
-    }
-
-    val showInfoDialog =  remember { mutableStateOf(false) }
-
     when (txComplete) {
         is TxCompleteUiState.UnComplete -> {
 
@@ -305,14 +302,6 @@ fun SendScreen(
             is WalletDataUiState.Success -> {
                 walletDataUiState.userData.walletNetwork
             }
-        }
-
-        val text = when(selectedToken){
-            is SelectedTokenUiState.Selected -> {
-                selectedToken.tokenAsset.name
-            }
-
-            else -> {"SOMETOKEN"}
         }
 
         var startTokenSet by remember { mutableStateOf(false) }
@@ -529,18 +518,44 @@ fun SendScreen(
 
             }
 
-            ethOSButton(
-                text = "Send",
-                enabled = (selectedToken is SelectedTokenUiState.Selected) && allowedReceipient(toAddress) && allowedAmount(amount,tokenBalance),
+            Column (
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
 
-                onClick = {
-                    if(amount.toDouble() < tokenBalance) {
-                        sendTransaction {
-                            onBackClick()
+
+                //Max Button Feature
+                when(selectedToken) {
+                        is SelectedTokenUiState.Unselected -> {}
+                        is SelectedTokenUiState.Selected -> {
+                            ethOSTextButton(
+                                text = "Send all ${formatDouble(tokenBalance)} ${selectedToken.tokenAsset.symbol.uppercase()}",
+                                enabled = true,
+                                onClick = {
+                                    onAmountChange(tokenBalance.toString())
+                                }
+                            )
                         }
                     }
+
+
+                if(amount.isNotEmpty()){
+                    ethOSButton(
+                        text = "Send",
+                        enabled = (selectedToken is SelectedTokenUiState.Selected) && allowedReceipient(toAddress) && allowedAmount(amount,tokenBalance),
+
+                        onClick = {
+                            if(amount.toDouble() < tokenBalance) {
+                                sendTransaction {
+                                    onBackClick()
+                                }
+                            }
+                        }
+                    )
                 }
-            )
+
+            }
         }
 
         if(showContactSheet && contactsPermissionState.allPermissionsGranted) {
@@ -738,3 +753,4 @@ fun PreviewSendScreen() {
 
     )
 }
+

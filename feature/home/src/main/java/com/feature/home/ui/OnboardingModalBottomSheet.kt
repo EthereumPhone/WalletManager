@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,12 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.data.model.dto.Contact
 import com.core.model.TokenAsset
-import com.core.ui.ethOSButton
 import com.feature.home.AssetsUiState
 import com.feature.home.R
 import com.feature.home.WalletDataUiState
 import com.feature.home.formatDouble
 import com.feature.home.util.OnboardingItem
+import org.ethosmobile.components.library.core.ethOSButton
 import org.ethosmobile.components.library.core.ethOSListItem
 import org.ethosmobile.components.library.models.OnboardingObject
 import org.ethosmobile.components.library.theme.Colors
@@ -145,6 +146,8 @@ fun NetworkPickerSheet(
         is WalletDataUiState.Loading -> {
             Color.Transparent
         }
+
+        else -> {}
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -173,107 +176,87 @@ fun NetworkPickerSheet(
         Spacer(modifier = Modifier.height(24.dp))
 
 
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ){
+            when(assetsUiState) {
+                is AssetsUiState.Success -> {
 
-        //Balances
-        val mainnetBalance = when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Mainnet")
+                    //Balances
+                    val mainnetBalance =  findBalanceByName(assetsUiState.assets,"Mainnet")
+
+                    val optimismBalance=findBalanceByName(assetsUiState.assets, "Optimism")
+
+                    val arbitrumBalance=findBalanceByName(assetsUiState.assets,"Arbitrum")
+
+                    val baseBalance=findBalanceByName(assetsUiState.assets,"Base")
+
+                    val zoraBalance=findBalanceByName(assetsUiState.assets,"Zora")
+
+                    val basetestnetBalance= findBalanceByName(assetsUiState.assets,"Base Testnet")
+
+
+
+                    Column(
+                    ) {
+                        NetworkListItem(
+                            logo = R.drawable.ethereum_logo,
+                            title = "Mainnet",
+                            balance = "${mainnetBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(1)}
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.optimism_logo,
+                            title = "Optimism",
+                            balance = "${optimismBalance?.let { formatDouble(it) }} ETH",
+                            onClick = { onClick(10) }
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.arbitrum_logo,
+                            title = "Arbitrum",
+                            balance = "${arbitrumBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(42161)}
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.base_logo,
+                            title = "Base",
+                            balance = "${baseBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(8453)}
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.zora_wordmark_white,
+                            title = "Zora",
+                            balance = "${zoraBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(7777777)}
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.base_logo,
+                            title = "Base Testnet",
+                            balance = "${basetestnetBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(8453)}
+
+                        )
+                        // TODO : Sepolia
+
+
+                    }
+                }
+
+                else -> {
+                    Text(text = "Loading...", color = Colors.GRAY, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                }
             }
-            else -> 0.0
         }
-        val optimismBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Optimism")
-            }
-            else -> 0.0
-        }
-        val arbitrumBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Arbitrum")
-            }
-            else -> 0.0
-        }
-        val baseBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Base")
-            }
-            else -> 0.0
-        }
-        val zoraBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Zora")
-            }
-            else -> 0.0
-        }
-        val basetestnetBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Base Testnet")
-            }
-            else -> 0.0
-        }
-        val goerliBalance=when(assetsUiState) {
-            is AssetsUiState.Success -> {
-                findBalanceByName(assetsUiState.assets,"Görli")
-            }
-            else -> 0.0
-        }
 
 
 
 
-            Column(
-            ) {
-                NetworkListItem(
-                    logo = R.drawable.ethereum_logo,
-                    title = "Mainnet",
-                    balance = "${mainnetBalance?.let { formatDouble(it) }} ETH",
-                    onClick = {onClick(1)}
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.optimism_logo,
-                    title = "Optimism",
-                    balance = "${optimismBalance?.let { formatDouble(it) }} ETH",
-                    onClick = { onClick(10) }
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.arbitrum_logo,
-                    title = "Arbitrum",
-                    balance = "${arbitrumBalance?.let { formatDouble(it) }} ETH",
-                    onClick = {onClick(42161)}
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.base_logo,
-                    title = "Base",
-                    balance = "${baseBalance?.let { formatDouble(it) }} ETH",
-                    onClick = {onClick(8453)}
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.zora_wordmark_white,
-                    title = "Zora",
-                    balance = "${zoraBalance?.let { formatDouble(it) }} ETH",
-                    onClick = {onClick(7777777)}
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.base_logo,
-                    title = "Base Testnet",
-                    balance = "${basetestnetBalance?.let { formatDouble(it) }} ETH",
-                    onClick = {onClick(8453)}
-                )
-
-                NetworkListItem(
-                    logo = R.drawable.goerli,
-                    title = "Görli",
-                    balance = "${goerliBalance?.let { formatDouble(it) }} GoerliETH",
-                    onClick = {onClick(5)}
-                )
-
-
-            }
 
 
 
@@ -297,7 +280,7 @@ fun NetworkListItem(logo: Int, title: String, balance: String, onClick: () -> Un
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp,16.dp)
+            .padding(12.dp, 16.dp)
             .clickable {
                 onClick()
             },

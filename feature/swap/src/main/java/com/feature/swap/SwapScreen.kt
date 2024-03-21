@@ -36,13 +36,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
-import com.core.ui.ethOSButton
 import com.core.ui.util.chainIdToName
 //import com.core.ui.WmButton
 import com.feature.swap.ui.ExchangeRateRow
 import com.feature.swap.ui.TokenPickerSheet
 import com.feature.swap.ui.TokenSelector
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSButton
 import org.ethosmobile.components.library.core.ethOSHeader
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
