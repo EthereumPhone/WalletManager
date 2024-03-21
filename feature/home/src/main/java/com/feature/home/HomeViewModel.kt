@@ -53,7 +53,7 @@ class HomeViewModel @Inject constructor(
                         balance = it.tokenBalance.toDouble(),
                         decimals = 18
                     )
-                }
+                }.sortedBy { it.balance }
                 AssetsUiState.Success(netWorkAssets)
             }
             .stateIn(
