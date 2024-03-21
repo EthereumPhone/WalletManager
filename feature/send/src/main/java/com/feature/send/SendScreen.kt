@@ -93,6 +93,8 @@ fun SendRoute(
     val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
+
+
     SendScreen(
         currentNetwork = currentNetwork,
         initialAddress = initialAddress,
@@ -131,9 +133,11 @@ fun SendScreen(
     onBackClick: () -> Unit,
     getContacts: (Context) -> Unit,
     contacts: List<Contact>,
-    initialAddress: String?
-
+    initialAddress: String?,
 ) {
+
+
+
 
     if(initialAddress != null && initialAddress !=""){
         onToAddressChanged(initialAddress)
@@ -229,6 +233,18 @@ fun SendScreen(
 
     val network = chainIdToName(currentNetwork)
 
+//    val network = when(userData) {
+//        is WalletDataUiState.Loading -> {
+//            "..."
+//        }
+//        is WalletDataUiState.Success -> {
+//            chainName(userData.userData.walletNetwork)
+//        }
+//    }
+
+
+
+
 
     val tokenBalance = when(selectedToken) {
         is SelectedTokenUiState.Unselected -> { 0.0 }
@@ -282,6 +298,42 @@ fun SendScreen(
             else -> "ETH"
         }
 
+        val chain = when(walletDataUiState) {
+            is WalletDataUiState.Loading -> {
+                "loading"
+            }
+            is WalletDataUiState.Success -> {
+                walletDataUiState.userData.walletNetwork
+            }
+        }
+
+        val text = when(selectedToken){
+            is SelectedTokenUiState.Selected -> {
+                selectedToken.tokenAsset.name
+            }
+
+            else -> {"SOMETOKEN"}
+        }
+
+        var startTokenSet by remember { mutableStateOf(false) }
+
+        when(assets){
+            is AssetUiState.Success -> {
+                if(!startTokenSet){
+                    val filteredAssets = assets.assets
+                    val starttoken = filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0]
+                    onChangeAssetClicked(starttoken)
+                    startTokenSet = true
+                }
+
+            }
+
+            else -> {
+
+            }
+        }
+
+
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
@@ -290,6 +342,8 @@ fun SendScreen(
                 .padding(start = 32.dp, end = 32.dp, bottom = 32.dp)
 
         ){
+
+
 
             Column (
                 modifier = Modifier
@@ -427,6 +481,9 @@ fun SendScreen(
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
+
+
+
                 val token = when(selectedToken){
                     is SelectedTokenUiState.Unselected -> {
                         "Select"
@@ -436,6 +493,34 @@ fun SendScreen(
                         selectedToken.tokenAsset.symbol //"Selected"
                     }
                 }
+
+//                val tagtext = when(chain){
+//                    "Mainnet" -> {
+//                        selectedToken = SelectedTokenUiState.Selected()
+//                        "ETH"
+//                    }
+//                    "Optimism" -> "ETH"
+//                    "Mainnet" -> "ETH"
+//                    "Mainnet" -> "ETH"
+//
+//
+//                }
+//                val tokentest = when(selectedToken){
+//                    is SelectedTokenUiState.Unselected -> {
+//                        "Select"
+//                    }
+//
+//                    is SelectedTokenUiState.Selected -> {
+//                        Log.d("TOKEN"," address: ${selectedToken.tokenAsset.address}" +
+//                                "    val chainId: ${selectedToken.tokenAsset.chainId}" +
+//                                "    val symbol: ${selectedToken.tokenAsset.symbol}" +
+//                                "    val name: ${selectedToken.tokenAsset.name}" +
+//                                "    val balance: ${selectedToken.tokenAsset.balance}" +
+//                                "    val decimals: ${selectedToken.tokenAsset.decimals}" +
+//                                "    val swappable: Boolean = false")
+//                        selectedToken.tokenAsset //"Selected"
+//                    }
+//                }
 
                 ethOSTagButton(text = token) {
                     focusManager.clearFocus()
@@ -490,14 +575,7 @@ fun SendScreen(
             }
         }
 
-        val chain = when(walletDataUiState) {
-            is WalletDataUiState.Loading -> {
-                "loading"
-            }
-            is WalletDataUiState.Success -> {
-                walletDataUiState.userData.walletNetwork
-            }
-        }
+
 
         if(showAssetSheet){
             ModalBottomSheet(
@@ -521,6 +599,8 @@ fun SendScreen(
                     onChangeAssetClicked = { tokenAsset ->
                         //Toast.makeText(context, "Clicked - ${tokenAsset.symbol}", Toast.LENGTH_SHORT).show()
 
+                        Log.d("TOKEN2",tokenAsset.name)
+                        val test = tokenAsset
                         onChangeAssetClicked(tokenAsset)
                         //SelectedTokenUiState.Selected(tokenAsset)
                         coroutineScope.launch {
@@ -538,6 +618,9 @@ fun SendScreen(
 
     }
 }
+
+
+
 
 
 fun allowedReceipient(receipient: String):Boolean{
@@ -652,5 +735,6 @@ fun PreviewSendScreen() {
         getContacts = {},
         contacts = emptyList(),
         initialAddress = null,
+
     )
 }
