@@ -59,7 +59,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.core.model.TokenAsset
 import com.core.ui.TextToggleButton
 import com.core.ui.WmTextField
-import com.core.ui.ethOSButton
 import com.core.ui.ethOSTextField
 import com.feature.swap.AmountsUiState
 import com.feature.swap.AssetsUiState

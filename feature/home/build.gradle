@@ -88,5 +88,5 @@ dependencies {
     implementation libs.androidx.lifecycle.compose
     implementation libs.kotlinx.datetime
 
-    implementation 'com.github.EthereumPhone:ethOS-Component-Library:1a10060494'
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'
 }

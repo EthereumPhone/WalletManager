@@ -72,7 +72,7 @@ dependencies {
 
     implementation libs.androidx.lifecycle.compose
 
-    implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'
 
 
 

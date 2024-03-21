@@ -89,30 +89,24 @@ fun ethOSCenterTextFieldInline(
             fontSize = fontSize,
             fontWeight = FontWeight.SemiBold
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
             }
 
             .onKeyEvent {
-                if ((it.nativeKeyEvent.keyCode == Key.Enter.nativeKeyCode) || (it.nativeKeyEvent.keyCode == Key.NumPadEnter.nativeKeyCode)){
+                Log.d("KEYEVENT12", "${it.key.keyCode} == ${Key.NumPadEnter.keyCode}")
+
+                if ((it.nativeKeyEvent.keyCode == Key.Enter.nativeKeyCode) || (it.nativeKeyEvent.keyCode == Key.NumPadEnter.nativeKeyCode)) {
                     focusRequester.requestFocus()
                     true
                 }
                 false
-            },
-
-//            textStyle = TextStyle(
-////                textAlign = TextAlign.Center,
-////                fontSize =  24.sp,
-////                fontWeight = FontWeight.SemiBold,
-////            ),
+            }
+                ,
         cursorBrush = SolidColor(Color.White),
-//            modifier = modifier
-//                .clip(RoundedCornerShape(10))
-//                .background(Color.Magenta)
-//                .height(64.dp)
 
 
     ) { innerTextField ->
@@ -196,20 +190,36 @@ fun ethOSTextField(
         ),
 
         modifier = modifier
+            
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
             }
-            .width(IntrinsicSize.Min)
+
             .onKeyEvent {
-                if ((it.nativeKeyEvent.keyCode == Key.NumPadEnter.keyCode.toInt()) || (it.nativeKeyEvent.keyCode == Key.Enter.keyCode.toInt())){
+                Log.d("KEYEVENT12", "${it.key.keyCode} == ${Key.NumPadEnter.keyCode}")
+
+                if ((it.nativeKeyEvent.keyCode == Key.Enter.nativeKeyCode) || (it.nativeKeyEvent.keyCode == Key.NumPadEnter.nativeKeyCode)) {
                     focusRequester.requestFocus()
-//                    /focusManager.clearFocus()
                     true
                 }
-            false
-        },
-        cursorBrush = SolidColor(if (isFocused) Color.White else Color.Green),
+                false
+            }
+            .width(IntrinsicSize.Min)
+//            .onPreviewKeyEvent { keyEvent: KeyEvent ->
+//                if (keyEvent.key.keyCode == Key.NumPadEnter.keyCode) {
+//                    // Handle the enter press here
+//                    Log.d("KEYEVENT TRUE", "${keyEvent.key.keyCode} == ${Key.NumPadEnter.keyCode}")
+//                    true // Indicate that the event has been handled
+//                } else {
+//                    Log.d("KEYEVENT FASLE", "${keyEvent.key.keyCode} == ${Key.NumPadEnter.keyCode}")
+//
+//                    false // Indicate that the event has not been handled
+//                }
+//            }
+,
+        cursorBrush = SolidColor(Color.White),
+        //cursorBrush = SolidColor(if (isFocused) Color.White else Color.White),
     ) { innerTextField ->
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -217,7 +227,8 @@ fun ethOSTextField(
             modifier = modifier
                 .fillMaxWidth()
         ) {
-            if (!isFocused && text.isEmpty()) {
+            //if (!isFocused && text.isEmpty()) {
+            if (text.isEmpty()) {
                 Text(
                     text = label,
                     textAlign = if(center) TextAlign.Center else TextAlign.Start ,

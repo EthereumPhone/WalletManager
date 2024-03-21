@@ -117,7 +117,6 @@ fun TransactionScreen(
                             transfers.reversed().forEach { transfer ->
                                 item {
                                     ethOSTransferListItem(
-
                                         asset = transfer.asset,
                                         value = transfer.value,
                                         timeStamp = transfer.timeStamp,//Clock.System.now().toString(),

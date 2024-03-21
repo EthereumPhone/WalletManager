@@ -87,6 +87,8 @@ class SendViewModel @Inject constructor(
     val contacts: Flow<List<Contact>> = _contacts
 
 
+
+
     fun send(callback: () -> Unit) {
         viewModelScope.launch {
             val selectedAsset = _selectedAssetUiState.value

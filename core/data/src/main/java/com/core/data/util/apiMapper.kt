@@ -9,6 +9,7 @@ fun chainToApiKey(networkName: String): String = when(networkName) {
     "arb-mainnet" -> BuildConfig.ARBITRUM_API
     "polygon-mainnet" -> BuildConfig.POLYGON_API
     "base-mainnet" -> BuildConfig.BASE_API
+    "eth-goerli" -> BuildConfig.BASE_API
     else -> ""
 }
 
@@ -19,6 +20,7 @@ fun chainIdToName(chainId: Int): String = when(chainId) {
     42161 -> "arb-mainnet"
     137 -> "polygon-mainnet"
     8453 -> "base-mainnet"
+    5 -> "eth-goerli"
     else -> ""
 }
 
