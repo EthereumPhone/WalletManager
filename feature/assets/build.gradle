@@ -95,6 +95,7 @@ dependencies {
     implementation libs.androidx.lifecycle.compose
     implementation libs.kotlinx.datetime
 
+    implementation "io.coil-kt:coil-compose:2.6.0"
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:137ec355d7'
 

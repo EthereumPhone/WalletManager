@@ -90,6 +90,7 @@ import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
+import java.math.BigDecimal
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
@@ -129,6 +130,7 @@ fun SendRoute(
         sendTransaction = viewModel::send,
         txComplete = txComplete,
         getContacts = viewModel::getContacts,
+        setMaxAmount = viewModel::setMaxAmount
     )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
@@ -151,6 +153,7 @@ fun SendScreen(
     getContacts: (Context) -> Unit,
     contacts: List<Contact>,
     initialAddress: String?,
+    setMaxAmount: (BigDecimal,Int) -> Unit,
 ) {
 
 
@@ -238,6 +241,8 @@ fun SendScreen(
 //            chainName(userData.userData.walletNetwork)
 //        }
 //    }
+
+
 
 
 
@@ -533,7 +538,8 @@ fun SendScreen(
                                 text = "Send all ${formatDouble(tokenBalance)} ${selectedToken.tokenAsset.symbol.uppercase()}",
                                 enabled = true,
                                 onClick = {
-                                    onAmountChange(tokenBalance.toString())
+                                    setMaxAmount(formatDouble(tokenBalance).toBigDecimal(),currentNetwork.toInt())
+                                    //onAmountChange(tokenBalance.toString())
                                 }
                             )
                         }
@@ -750,6 +756,8 @@ fun PreviewSendScreen() {
         getContacts = {},
         contacts = emptyList(),
         initialAddress = null,
+
+        setMaxAmount = { i, j ->}
 
     )
 }

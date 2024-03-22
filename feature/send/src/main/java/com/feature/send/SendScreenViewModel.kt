@@ -34,6 +34,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
+import java.math.BigDecimal
+import java.text.DecimalFormat
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
@@ -137,6 +139,16 @@ class SendViewModel @Inject constructor(
 
     fun updateQuery(query: String) {
         savedStateHandle[SEARCH_QUERY] = query
+    }
+
+    fun setMaxAmount(maxamount: BigDecimal, chainId: Int){
+        viewModelScope.launch {
+
+            val decimalFormat = DecimalFormat("#.#####")
+            val test = sendRepository.maxAllowedSend(maxamount,chainId)
+
+            updateAmount(decimalFormat.format(test.toDouble()))
+        }
     }
 
 
