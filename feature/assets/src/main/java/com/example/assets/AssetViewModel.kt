@@ -4,15 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
-import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.spamTokens
-import com.core.domain.GetGroupedTokenAssets
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
-import com.core.model.UserData
 import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -94,6 +90,7 @@ fun assetUiState(
                         symbol = if(name.contains("POLYGON")) "matic" else "eth",
                         name = if(name.contains("POLYGON")) "matic" else "eth",
                         balance = it.tokenBalance.toDouble(),
+                        logoUrl = "",
                         decimals = 18
                     )
                 }

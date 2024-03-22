@@ -7,5 +7,6 @@ data class TokenAsset(
     val name: String,
     val balance: Double,
     val decimals: Int = 0,
+    val logoUrl: String? = "",
     val swappable: Boolean = false
 )

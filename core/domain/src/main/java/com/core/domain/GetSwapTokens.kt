@@ -31,7 +31,8 @@ class GetSwapTokens @Inject constructor(
                 symbol = if (chainId == 137) "MATIC" else "ETH" ,
                 name = if (chainId == 137) "Matic" else "Ether",
                 balance = networkAmount.tokenBalance.toDouble(),
-                decimals = 18
+                decimals = 18,
+                logoUrl = null
             )
 
             val erc20Assets = metadata.map { tokenMetadata ->
@@ -46,7 +47,8 @@ class GetSwapTokens @Inject constructor(
                     name = tokenMetadata.name,
                     balance = (truncatedValue?.div(scale))?.toDouble() ?: 0.0,
                     decimals = tokenMetadata.decimals, 
-                    swappable = tokenMetadata.swappable
+                    swappable = tokenMetadata.swappable,
+                    logoUrl = tokenMetadata.logo
                 )
             }
                 .filter { it.swappable }
