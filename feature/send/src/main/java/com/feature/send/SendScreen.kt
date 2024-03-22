@@ -538,7 +538,12 @@ fun SendScreen(
                                 text = "Send all ${formatDouble(tokenBalance)} ${selectedToken.tokenAsset.symbol.uppercase()}",
                                 enabled = true,
                                 onClick = {
-                                    setMaxAmount(formatDouble(tokenBalance).toBigDecimal(),currentNetwork.toInt())
+                                    if(selectedToken.tokenAsset.symbol.uppercase() == "ETH"){
+                                        setMaxAmount(formatDouble(tokenBalance).toBigDecimal(),currentNetwork.toInt())
+                                    }else{
+                                        onAmountChange(formatDouble(tokenBalance))
+                                    }
+
                                     //onAmountChange(tokenBalance.toString())
                                 }
                             )
