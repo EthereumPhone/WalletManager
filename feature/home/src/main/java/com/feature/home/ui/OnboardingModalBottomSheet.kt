@@ -201,7 +201,7 @@ fun NetworkPickerSheet(
                     Column(
                     ) {
                         NetworkListItem(
-                            logo = R.drawable.ethereum_logo,
+                            logo = R.drawable.placeholder_icon_4,
                             title = "Mainnet",
                             balance = "${mainnetBalance?.let { formatDouble(it) }} ETH",
                             onClick = {onClick(1)}

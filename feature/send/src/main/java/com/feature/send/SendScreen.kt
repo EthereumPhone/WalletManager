@@ -540,7 +540,6 @@ fun SendScreen(
                                 onClick = {
                                     if(selectedToken.tokenAsset.symbol.uppercase() == "ETH"){
                                         setMaxAmount(formatDouble(tokenBalance).toBigDecimal(),currentNetwork.toInt())
-                                    }else{
                                         onAmountChange(formatDouble(tokenBalance))
                                     }
 
