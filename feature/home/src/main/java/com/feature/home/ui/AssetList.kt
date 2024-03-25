@@ -66,9 +66,8 @@ fun AssetList(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            val sortedAssets = assets.sortedWith(compareBy { it.chainId != (userData.userData.walletNetwork.toIntOrNull() ?: 0) })
 
-                            sortedAssets.forEach { item ->
+                            assets.forEach { item ->
                                 item(key = item.address) {
                                     val value = formatDouble(item.balance)
                                     //TODO: use meethod in composable

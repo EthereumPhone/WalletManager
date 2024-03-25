@@ -129,11 +129,6 @@ internal fun AssetScreen(
     }
 }
 
-fun formatDouble(input: Double): String {
-    val decimalFormat = DecimalFormat("#.#####")
-    return decimalFormat.format(input)
-}
-
 
 @Composable
 @Preview

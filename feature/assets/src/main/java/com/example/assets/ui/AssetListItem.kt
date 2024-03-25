@@ -61,15 +61,31 @@ fun AssetListItem(
             .fillMaxWidth()
             .padding(vertical = 12.dp),
     ) {
+
         Row (
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
 
         ){
-            if(!assets[0].logoUrl.isNullOrEmpty()) {
+
+            if(assets[0].name == "eth") {
+                Box(
+                    contentAlignment = Alignment.Center ,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Colors.DARK_GRAY)
+                ) {
+                    Image(
+                        modifier = Modifier,
+                        contentScale = ContentScale.Crop,
+                        painter = painterResource(id = R.drawable.placeholder_icon),
+                        contentDescription = null
+                    )
+                }
+            } else {
                 AssetListItemHeaderImage(assets[0].logoUrl)
             }
-
 
             Text(
                 truncateString(title.uppercase()),
@@ -180,6 +196,7 @@ fun AssetListItemHeaderImage(
 
     // check if previewMode
     val isLocalInspection = LocalInspectionMode.current
+
     Box(
         contentAlignment = Alignment.Center ,
         modifier = Modifier
@@ -187,16 +204,18 @@ fun AssetListItemHeaderImage(
             .clip(CircleShape)
             .background(Colors.DARK_GRAY)
     ) {
+
+        // Loading state
         if (isLoading) {
 
         }
+
         Image(
             modifier = Modifier,
             contentScale = ContentScale.Crop,
             painter = if(isError.not() && !isLocalInspection) {
                 imageLoader
             } else {
-                //TODO: add placeholder
                 painterResource(id = R.drawable.placeholder_icon)
             },
             contentDescription = null
