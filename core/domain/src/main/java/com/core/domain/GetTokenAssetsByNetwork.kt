@@ -37,6 +37,8 @@ class GetTokenAssetsByNetwork @Inject constructor(
                     balance = tokenBalance.tokenBalance.divide(
                         (10.0.pow(tokenMetadata.decimals)).toBigDecimal()).toDouble(),
                     decimals = tokenMetadata.decimals,
+                    logoUrl = tokenMetadata.logo,
+
                 )
             }
 

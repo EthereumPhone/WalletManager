@@ -52,6 +52,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
+        val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
+
+        WorkManager.getInstance(applicationContext)
+            .beginWith(seedUniswapTokensWork)
+            .then(seedNetworkBalanceWork)
+            .enqueue()
+
+        /*
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork(
                 "seed UniswapTokens",
@@ -65,6 +75,8 @@ class MainActivity : ComponentActivity() {
                 ExistingWorkPolicy.REPLACE,
                 SeedTokensWorker.startSeedNetworkBalanceWork()
             )
+         */
+
         /*
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
 

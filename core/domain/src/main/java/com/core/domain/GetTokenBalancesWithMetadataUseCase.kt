@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.model.TokenAsset
@@ -25,6 +26,11 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                 }
             }
             pairedList.map { (tokenBalance, tokenMetadata) ->
+                Log.d("testyTest", tokenMetadata.name)
+                Log.d("testyTest", tokenMetadata.contractAddress)
+                Log.d("testyTest", tokenMetadata.logo?: "not found")
+                Log.d("testyTest", tokenMetadata.swappable.toString())
+
                 TokenAsset(
                     address = tokenBalance.contractAddress,
                     chainId = tokenBalance.chainId,
@@ -32,7 +38,9 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                     name = tokenMetadata.name,
                     balance = tokenBalance.tokenBalance.divide(
                         (10.0.pow(tokenMetadata.decimals)).toBigDecimal()).toDouble(),
-                    decimals = tokenMetadata.decimals
+                    decimals = tokenMetadata.decimals,
+                    logoUrl = tokenMetadata.logo,
+                    swappable = tokenMetadata.swappable
                 )
             }
         }

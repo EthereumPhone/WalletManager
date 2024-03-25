@@ -22,11 +22,12 @@ import javax.inject.Inject
 class UpdateTokensUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val tokenBalanceRepository: TokenBalanceRepository,
-    private val networkBalanceRepository: NetworkBalanceRepository
+    private val networkBalanceRepository: NetworkBalanceRepository,
 ) {
     suspend operator fun invoke(
         toAddress: String
     ) {
+
         tokenBalanceRepository.refreshTokensBalances(toAddress)
         networkBalanceRepository.refreshNetworkBalance(toAddress)
 
@@ -35,32 +36,31 @@ class UpdateTokensUseCase @Inject constructor(
 
         /*
         This portion filters out TokenMetadata that are already present in the db,
-        as they don't need to be updated
+        as they don't need to be updated.
         */
-        val metadataToFetch = combine(
-            balancesAddresses.map { balances -> balances.filter { it.contractAddress.contains("0x") }  },
-            metadataAddresses.map { metadataList -> metadataList.map { it.contractAddress } }
+        combine(
+            balancesAddresses.map { balances -> balances.filter { it.contractAddress.contains("0x") }  }, // skips network currency
+            metadataAddresses.map { metadataList -> metadataList.map { it.contractAddress.lowercase() } }
         ) { balances, metadata ->
-            balances.filter {
-                !metadata.contains(it.contractAddress)
+            val metadataToFetch = balances.filter {
+                !metadata.contains(it.contractAddress.lowercase())
             }.groupBy { it.chainId }
-        }.first()
 
-        /*
-         The Alchemy metadata api has different endpoints for each network.
-         If one tries to pass an erc20 address to the wrong endpoint,
-         it will return empty tokenMetadata DAOs.
-         For this reason, I need to group the addresses to the right chainID first,
-         so that the repository can map them to the right alchemy endpoint.
-        */
-        coroutineScope {
-
-            metadataToFetch.entries.forEach { (chainId, metadata) ->
-                async {
-                    tokenMetadataRepository.refreshTokensMetadata(
-                        metadata.map { it.contractAddress },
-                        chainId
-                    )
+            /*
+            The Alchemy metadata api has different endpoints for each network.
+            If one tries to pass an erc20 address to the wrong endpoint,
+            it will return empty tokenMetadata DAOs.
+            For this reason, I need to group the addresses to the right chainID first,
+            so that the repository can map them to the right alchemy endpoint.
+            */
+            coroutineScope {
+                metadataToFetch.entries.forEach { (chainId, metadata) ->
+                    async {
+                        tokenMetadataRepository.refreshTokensMetadata(
+                            metadata.map { it.contractAddress },
+                            chainId
+                        )
+                    }
                 }
             }
         }

@@ -33,7 +33,8 @@ class GetTokenAssetsBySymbolUseCase @Inject constructor(
                         name = tokenMetadata.name,
                         balance = tokenBalance.tokenBalance.divide(
                             (10.0.pow(tokenMetadata.decimals)).toBigDecimal()).toDouble(),
-                        decimals = tokenMetadata.decimals
+                        decimals = tokenMetadata.decimals,
+                        logoUrl = tokenMetadata.logo
                     )
                 }
 
