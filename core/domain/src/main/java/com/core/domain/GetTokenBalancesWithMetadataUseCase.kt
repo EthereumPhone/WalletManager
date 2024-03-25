@@ -26,10 +26,6 @@ class GetTokenBalancesWithMetadataUseCase @Inject constructor(
                 }
             }
             pairedList.map { (tokenBalance, tokenMetadata) ->
-                Log.d("testyTest", tokenMetadata.name)
-                Log.d("testyTest", tokenMetadata.contractAddress)
-                Log.d("testyTest", tokenMetadata.logo?: "not found")
-                Log.d("testyTest", tokenMetadata.swappable.toString())
 
                 TokenAsset(
                     address = tokenBalance.contractAddress,

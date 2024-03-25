@@ -197,8 +197,6 @@ fun ethOSTextField(
             }
 
             .onKeyEvent {
-                Log.d("KEYEVENT12", "${it.key.keyCode} == ${Key.NumPadEnter.keyCode}")
-
                 if ((it.nativeKeyEvent.keyCode == Key.Enter.nativeKeyCode) || (it.nativeKeyEvent.keyCode == Key.NumPadEnter.nativeKeyCode)) {
                     focusRequester.requestFocus()
                     true

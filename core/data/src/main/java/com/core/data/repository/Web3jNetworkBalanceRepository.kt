@@ -49,7 +49,6 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         toAddress: String,
         chainIds: List<Int>
     ) {
-        Log.d("My testy Test", "My baby Misa :3")
 
 
         val networks = chainIds.mapNotNull {
@@ -60,8 +59,6 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
             networks.map {
                 if(it.chainId != 7777777) {
-                    Log.d("SIGMA", "My baby Misa :3")
-
                     async {
                         val newNetworkBalance = networkBalanceApi
                             .getNetworkCurrency(
@@ -101,7 +98,6 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
     override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, chainId: Int) {
         val network = NetworkChain.getNetworkByChainId(chainId)
-
 
         withContext(Dispatchers.IO) {
             async {
