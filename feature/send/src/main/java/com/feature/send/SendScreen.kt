@@ -290,7 +290,6 @@ fun SendScreen(
             is SelectedTokenUiState.Selected -> {
                 selectedToken.tokenAsset.chainId
             }
-
             else -> {0}
         }
 
@@ -313,11 +312,57 @@ fun SendScreen(
 
         when(assets){
             is AssetUiState.Success -> {
+                Log.d("NETWORK vor","$currentChainId - $currentNetwork $chain")
                 if(!startTokenSet){
                     val filteredAssets = assets.assets
-                    val starttoken = filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0]
-                    onChangeAssetClicked(starttoken)
-                    startTokenSet = true
+
+                    Log.d("NETWORK vor","$currentChainId - $currentNetwork $chain")
+                    when(currentChainId){
+                        1 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        }
+
+                        5 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        }
+
+                        137 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("MATIC", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        } // Polygon
+
+                        10 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        } // Optimum
+
+                        42161 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ARB", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        } // Arbitrum
+
+                        8453 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("BASE", ignoreCase = true) }[0])
+                            startTokenSet = true
+                        } // Base
+
+                        7777777 -> {
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ZORA", ignoreCase = true) }[0])
+                            startTokenSet = true
+
+                        } // Zora
+
+                        else -> {
+                            Log.d("NETWORK","$currentChainId - $currentNetwork $chain")
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
+
+                        }
+                    }
+
+
+
                 }
 
             }

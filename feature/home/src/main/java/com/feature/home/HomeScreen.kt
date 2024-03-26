@@ -267,8 +267,6 @@ internal fun HomeScreen(
                     Text(text = formatDouble(fiatAmount) ,fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
                 }
             }
-            Text(text = "ETH",fontWeight = FontWeight.SemiBold, color = Color(0xFF9FA2A5), fontSize = 16.sp)
-
         }
 
 
