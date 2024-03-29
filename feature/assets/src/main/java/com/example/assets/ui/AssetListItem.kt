@@ -216,7 +216,7 @@ fun AssetListItemHeaderImage(
             painter = if(isError.not() && !isLocalInspection) {
                 imageLoader
             } else {
-                painterResource(id = R.drawable.placeholer_icon_3)
+                painterResource(id = R.drawable.placeholer_icon_5)
             },
             contentDescription = null
         )
