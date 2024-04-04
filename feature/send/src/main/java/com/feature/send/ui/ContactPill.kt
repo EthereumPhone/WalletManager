@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.core.data.model.dto.Contact
 import com.feature.send.R
 import coil.compose.rememberImagePainter
@@ -52,7 +53,7 @@ fun ContactPill(
                 if (contact.image != ""){
 //                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "" )
                     Image(
-                        painter = rememberImagePainter(contact.image),
+                        painter = rememberAsyncImagePainter(model = contact.image),
                         contentDescription = "Contact Profile Pic",
                         contentScale = ContentScale.Crop
                     )

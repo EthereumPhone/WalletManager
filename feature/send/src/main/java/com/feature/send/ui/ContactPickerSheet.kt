@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.core.data.model.dto.Contact
 import com.core.model.TokenAsset
@@ -85,7 +86,7 @@ fun ContactPickerSheet(
                             image = {
                                 if (contact.image != ""){
                                     Image(
-                                        painter = rememberImagePainter(contact.image),
+                                        painter = rememberAsyncImagePainter(model = contact.image),
                                         contentDescription = "Contact profile pic",
                                         contentScale = ContentScale.Crop
                                     )
