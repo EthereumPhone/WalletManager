@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
 
     <application
@@ -83,6 +84,11 @@
             android:screenOrientation="fullSensor"
             tools:replace="android:screenOrientation"
             />
+
+        <activity android:name="com.feature.send.ui.ToolbarCaptureActivity"
+            android:screenOrientation="fullSensor">
+            <!-- If `ToolbarCaptureActivity` requires specific intent filters, add them here -->
+        </activity>
     </application>
 
 </manifest>
