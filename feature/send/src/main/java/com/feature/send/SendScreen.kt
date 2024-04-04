@@ -72,6 +72,7 @@ import com.core.ui.util.chainIdToName
 import com.core.ui.util.formatDouble
 import com.feature.send.ui.AssetPickerSheet
 import com.feature.send.ui.ContactPickerSheet
+import com.feature.send.ui.ContactPill
 import com.feature.send.ui.ToolbarCaptureActivity
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -394,7 +395,9 @@ fun SendScreen(
                 when(isContactSelected){
                     true -> {
                         if (contactsPermissionState.allPermissionsGranted) {
-                            ethOSContactPill(name = selectedContact.name, image = selectedContact.image) {
+                            ContactPill(
+                                contact = selectedContact
+                            ) {
                                 selectedContact = Contact()
                                 onToAddressChanged("")
                                 isContactSelected = false
