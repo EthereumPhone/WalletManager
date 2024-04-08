@@ -148,8 +148,9 @@ fun AssetListDetailItem(
         137 -> "Polygon"
         8453 -> "Base"
         42161 -> "Arbitrum"
+        11155111 -> "Sepolia"
         7777777 -> "Zora"
-        else -> { ""}
+        else -> {""}
     }
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
