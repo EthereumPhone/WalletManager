@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -103,12 +104,19 @@ fun AssetPickerSheet(
                         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "No Assets",
-                            fontSize = 20.sp,
-                            color = Colors.WHITE,
-                            fontWeight = FontWeight.Medium,
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Image(
+                                modifier = Modifier.size(82.dp),
+                                contentScale = ContentScale.Crop,
+                                painter = painterResource(id = com.core.ui.R.drawable.no_assets),
+                                contentDescription = null
+                            )
+                            Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+
+                        }
                     }
 
 
@@ -118,12 +126,20 @@ fun AssetPickerSheet(
                         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
                         contentAlignment = Alignment.Center
                     ){
-                        Text(
-                            text = "Error",
-                            fontSize = 20.sp,
-                            color = Colors.GRAY,
-                            fontWeight = FontWeight.Medium,
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Image(
+                                modifier = Modifier.size(82.dp),
+                                contentScale = ContentScale.Crop,
+                                painter = painterResource(id = com.core.ui.R.drawable.baseline_error_outline_24),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(Colors.GRAY)
+                            )
+                            Text(text = "Error", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+
+                        }
                     }
 
                 }

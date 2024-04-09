@@ -1,6 +1,12 @@
 package com.example.assets.ui
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,7 +15,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,22 +34,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 
 import com.core.model.TokenAsset
-import com.feature.assets.R
 import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
+import com.core.ui.R
+import com.core.ui.util.shimmerEffect
 
 @Composable
 fun AssetListItem(
@@ -66,7 +78,7 @@ fun AssetListItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
 
-        ){
+            ){
 
             if(assets[0].name == "eth") {
                 Box(
@@ -79,7 +91,7 @@ fun AssetListItem(
                     Image(
                         modifier = Modifier,
                         contentScale = ContentScale.Crop,
-                        painter = painterResource(id = R.drawable.placeholder_icon),
+                        painter = painterResource(id = R.drawable.ethereum_icon),
                         contentDescription = null
                     )
                 }
@@ -136,6 +148,99 @@ fun AssetListItem(
     }
 }
 
+@Composable
+fun LoadingAssetListItem(
+) {
+
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+    ) {
+
+        Row (
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+
+            ){
+
+
+                Box(
+                    contentAlignment = Alignment.Center ,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .shimmerEffect()
+
+                ) {
+
+                }
+
+            Box(
+                contentAlignment = Alignment.Center ,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(32.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect()
+            ) {
+
+            }
+
+
+
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+
+                    ) {
+
+                    Box(
+                        contentAlignment = Alignment.Center ,
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(32.dp)
+                            .clip(CircleShape)
+                            .shimmerEffect()
+                    ) {
+
+                    }
+                }
+                //TODO: Dollar Amount
+
+            }
+            Spacer(modifier = Modifier.width(24.dp))
+
+            Box(
+                contentAlignment = Alignment.Center ,
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(32.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect()
+            ) {
+
+            }
+
+
+        }
+    }
+}
+
+
+
 
 @Composable
 fun AssetListDetailItem(
@@ -151,12 +256,108 @@ fun AssetListDetailItem(
         7777777 -> "Zora"
         else -> { ""}
     }
+    val networkicon = when(tokenAsset.chainId){
+        1 -> R.drawable.ethereum_icon
+        5 -> R.drawable.goerli
+        10 -> R.drawable.optimism_logo
+        137 -> R.drawable.polygon_logo
+        8453 -> R.drawable.base_logo
+        42161 -> R.drawable.arbitrum_logo
+        7777777 -> R.drawable.zora_wordmark_white.toInt()
+        else -> { ""}
+    }
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ){
-        Text(networkname, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ){
+            Box(
+                contentAlignment = Alignment.Center ,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+
+            ) {
+
+                // Loading stat
+
+
+
+                when(tokenAsset.chainId){
+                    1 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.ethereum_icon),
+                            contentDescription = null
+                        )
+                    }
+                    5 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.goerli),
+                            contentDescription = null
+                        )
+
+                    }
+                    10 ->{
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.optimism_logo),
+                            contentDescription = null
+                        )
+                    }
+                    137 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.polygon_logo),
+                            contentDescription = null
+                        )
+
+                    }
+                    8453 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.base_logo),
+                            contentDescription = null
+                        )
+                    }
+                    42161 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.arbitrum_logo),
+                            contentDescription = null
+                        )
+
+                    }
+                    7777777 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.zora_wordmark_white),
+                            contentDescription = null
+                        )
+
+                    }
+                    else -> { ""}
+                }
+
+            }
+            Text(networkname, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -172,6 +373,78 @@ fun AssetListDetailItem(
                     Text(formatDouble(tokenAsset.balance), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
 
                     Text(tokenAsset.symbol.uppercase(), color = Color.White,fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
+                //Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp,fontWeight = FontWeight.Medium )
+            }
+
+        }
+    }
+}
+
+@Composable
+fun LoadingAssetListDetailItem(){
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ){
+
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+
+        ){
+            Box(
+                contentAlignment = Alignment.Center ,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect()
+
+            ) {
+
+            }
+
+            Box(
+                contentAlignment = Alignment.Center ,
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(156.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect()
+
+            ) {
+
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center,
+//                modifier = Modifier.fillMaxWidth()
+            ){
+                Row (
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+
+                    ){
+                    Box(
+                        contentAlignment = Alignment.Center ,
+                        modifier = Modifier
+                            .height(32.dp)
+                            .width(84.dp)
+                            .clip(CircleShape)
+                            .shimmerEffect()
+
+                    ) {
+
+                    }
                 }
                 //Text("$0.00-", color = Color(0xFF9FA2A5),fontSize = 16.sp,fontWeight = FontWeight.Medium )
             }
@@ -237,6 +510,7 @@ fun truncateString(input: String): String {
 
 
 
+
 @SuppressLint("SuspiciousIndentation")
 @Composable
 @Preview
@@ -259,7 +533,19 @@ fun PreviewAssetListItem(){
         token
     )
 
-    AssetListItem(token.name,list, {})
+    //AssetListItem(token.name,list, {})
+
+    Column (
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+
+    ) {
+        AssetListDetailItem(token)
+
+    }
 
 
 }

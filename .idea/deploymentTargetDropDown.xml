@@ -5,16 +5,16 @@
       <entry key="PreviewAssetListItem">
         <State />
       </entry>
-      <entry key="PreviewEmptyPendingTransactionStateUi">
+      <entry key="PreviewAssetNetworkDetail">
         <State />
       </entry>
-      <entry key="PreviewPendingTransactionStateUi">
+      <entry key="PreviewAssetScreen">
         <State />
       </entry>
-      <entry key="PreviewSwapScreen">
+      <entry key="PreviewTransactionScreen">
         <State />
       </entry>
-      <entry key="PreviewTextField">
+      <entry key="TransctionDetailScreenPreview">
         <State />
       </entry>
       <entry key="app">

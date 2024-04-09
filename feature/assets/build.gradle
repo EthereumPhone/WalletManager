@@ -97,6 +97,6 @@ dependencies {
 
     implementation "io.coil-kt:coil-compose:2.6.0"
 
-    implementation 'com.github.EthereumPhone:ethOS-Component-Library:137ec355d7'
+    implementation 'com.github.EthereumPhone:ethOS-Component-Library:229e9987ee'
 
 }

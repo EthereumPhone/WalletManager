@@ -27,17 +27,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.model.TransferItem
 import com.core.ui.util.chainIdToName
+import com.core.ui.util.shimmerEffect
+import com.example.transactions.ui.LoadingTransactionDetailItem
 import com.example.transactions.ui.TransactionDetailItem
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.theme.Fonts
 
 
 @Composable
@@ -64,7 +71,6 @@ fun TransctionDetailScreen(
     txUiState: TransactionDetailUiState,
     navigateToTransaction: () -> Unit,
     txHash: String
-
 ){
     val context = LocalContext.current
 
@@ -74,7 +80,113 @@ fun TransctionDetailScreen(
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ){
-                Text(text = "Loading...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                Column (
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ){
+                    //Header
+                    Row (
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp, end = 24.dp, top = 24.dp)
+                        ,
+                        Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ){
+
+
+                        Button(
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor=  Colors.TRANSPARENT,
+                                contentColor = Colors.WHITE
+                            ),
+                            contentPadding = PaddingValues(0.dp,0.dp,16.dp,0.dp),
+                            onClick = navigateToTransaction
+                        ) {
+                            Row (
+                                modifier = modifier,
+                                Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowBackIosNew,
+                                    contentDescription = "Go back",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Transactions",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                )
+                            }
+                        }
+
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                            .padding(horizontal = 24.dp)
+                    ) {
+
+                        Spacer(modifier = modifier.height(64.dp))
+
+                        Box(
+                            contentAlignment = Alignment.Center ,
+                            modifier = Modifier
+                                .height(72.dp)
+                                .width(250.dp)
+                                .clip(CircleShape)
+                                .fillMaxWidth(0.2f)
+                                .shimmerEffect()
+
+                        ) {
+
+                        }
+                        Spacer(modifier = modifier.height(84.dp))
+
+
+                        Column (
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+
+                        ){
+                            LoadingTransactionDetailItem()
+                            LoadingTransactionDetailItem()
+                            LoadingTransactionDetailItem()
+                            LoadingTransactionDetailItem()
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Column (
+                                modifier = modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ){
+                                Box(
+                                    contentAlignment = Alignment.Center ,
+                                    modifier = Modifier
+                                        .height(48.dp)
+                                        .width(200.dp)
+                                        .clip(CircleShape)
+                                        .shimmerEffect()
+
+                                ) {
+
+                                }
+                            }
+                        }
+
+
+
+
+
+                    }
+                }
             }
         }
 
@@ -101,8 +213,8 @@ fun TransctionDetailScreen(
                     Button(
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor=  Color.Transparent,
-                            contentColor = Color.White
+                            containerColor= Colors.TRANSPARENT,
+                            contentColor = Colors.WHITE
                         ),
                         contentPadding = PaddingValues(0.dp,0.dp,16.dp,0.dp),
                         onClick = navigateToTransaction
@@ -115,12 +227,12 @@ fun TransctionDetailScreen(
                             Icon(
                                 imageVector = Icons.Rounded.ArrowBackIosNew,
                                 contentDescription = "Go back",
-                                tint = Color.White
+                                tint = Colors.WHITE
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Transactions",
-                                color = Color.White,
+                                color = Colors.WHITE,
                                 fontSize = 18.sp,
                             )
                         }
@@ -170,7 +282,7 @@ fun TransctionDetailScreen(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontWeight = FontWeight.Normal)
+                            Text(text = "View on etherscan", color = Color(0xFF71B5FF), fontSize = 20.sp, fontFamily = Fonts.INTER, fontWeight = FontWeight.Medium)
                         }
                     }
 
@@ -180,6 +292,27 @@ fun TransctionDetailScreen(
         }
     }
 
+}
+
+
+@Composable
+@Preview
+fun TransctionDetailScreenPreview(){
+    val list = listOf(
+        TransferItem(
+            chainId = 1,
+            from= "0xfwyhyg4w541wywbv4wy8wuw",
+            to= "0xfwyhyg4w541wywbv4wy8wuw",
+            asset = "ETH",
+            value = "2.24",
+            timeStamp = "10-19-01",
+            userSent = false,
+            txHash = "0xfwyhyg4w541wywbv4wy8wuw"
+
+        )
+    )
+    TransctionDetailScreen(txUiState = TransactionDetailUiState.Loading
+        , navigateToTransaction = {}, txHash = "0xfwyhyg4w541wywbv4wy8wuw")
 }
 
 fun getEtherscanDomainForChain(chainId: Int): String {
