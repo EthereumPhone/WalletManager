@@ -110,7 +110,6 @@ fun ethOSNetworkModalBottomSheet(
             assetsUiState,
             onClick
         )
-        //NetworkModalBottomSheet(onDismiss, onboardingObject)
     }
 }
 
@@ -123,6 +122,7 @@ fun NetworkPickerSheet(
    // onSelectContact: (Contact) -> Unit //method, when asset is selected
 
 ) {
+
 
 
 
@@ -184,20 +184,18 @@ fun NetworkPickerSheet(
                 is AssetsUiState.Success -> {
 
                     //Balances
-                    val mainnetBalance =  findBalanceByName(assetsUiState.assets,"Mainnet")
+                    val mainnetBalance = findBalanceByName(assetsUiState.assets,"mainnet")
 
-                    val optimismBalance=findBalanceByName(assetsUiState.assets, "Optimism")
+                    val optimismBalance = findBalanceByName(assetsUiState.assets, "optimism")
 
-                    val arbitrumBalance=findBalanceByName(assetsUiState.assets,"Arbitrum")
+                    val arbitrumBalance = findBalanceByName(assetsUiState.assets,"arbitrum")
 
-                    val baseBalance=findBalanceByName(assetsUiState.assets,"Base")
+                    val baseBalance = findBalanceByName(assetsUiState.assets,"base")
 
-                    val zoraBalance=findBalanceByName(assetsUiState.assets,"Zora")
+                    val zoraBalance = findBalanceByName(assetsUiState.assets,"zora")
 
-                    val basetestnetBalance= findBalanceByName(assetsUiState.assets,"Base Testnet")
-
-
-
+                    val basetestnetBalance = findBalanceByName(assetsUiState.assets,"basetestnet")
+                    
                     Column(
                     ) {
                         NetworkListItem(
@@ -269,8 +267,8 @@ fun NetworkPickerSheet(
 
 }
 
-fun findBalanceByName(assets: List<TokenAsset>, name: String): Double? {
-    val asset = assets.find { it.name == name }
+fun findBalanceByName(assets: List<TokenAsset>, chain: String): Double? {
+    val asset = assets.find { it.name == chain }
 
     return asset?.balance ?: 0.0
 }
