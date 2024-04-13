@@ -58,7 +58,7 @@ fun IconAsText(
 //                    modifier = Modifier.fillMaxSize().background(Color.Red)
 //                )
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_backspace_24),
+                    painter = painterResource(id = com.core.ui.R.drawable.baseline_backspace_24),
                     contentDescription = null // decorative element
                 )
             }
@@ -79,7 +79,7 @@ fun PreviewNumPad() {
     ) {
         Icon(
             tint= Color.White,
-            painter = painterResource(id = R.drawable.baseline_backspace_24),
+            painter = painterResource(id = com.core.ui.R.drawable.baseline_backspace_24),
             contentDescription = null // decorative element
         )
     }

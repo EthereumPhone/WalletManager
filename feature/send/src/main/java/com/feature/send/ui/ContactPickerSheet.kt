@@ -91,7 +91,7 @@ fun ContactPickerSheet(
                                         contentScale = ContentScale.Crop
                                     )
                                 } else{
-                                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact profile pic" )
+                                    Image(painter = painterResource(id = com.core.ui.R.drawable.nouns), contentDescription = "Contact profile pic" )
                                 }
                             },
                             header = contact.name,

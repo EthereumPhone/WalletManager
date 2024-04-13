@@ -58,7 +58,7 @@ fun ContactPill(
                         contentScale = ContentScale.Crop
                     )
                 } else{
-                    Image(painter = painterResource(id = R.drawable.nouns), contentDescription = "Contact Profile Pic" )
+                    Image(painter = painterResource(id = com.core.ui.R.drawable.nouns), contentDescription = "Contact Profile Pic" )
 
                 }//contact.image else R.drawable.nouns
                 }
