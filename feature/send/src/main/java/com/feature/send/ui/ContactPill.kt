@@ -59,6 +59,7 @@ fun ContactPill(
                     )
                 } else{
                     Image(painter = painterResource(id = com.core.ui.R.drawable.image_placeholder_regular), contentDescription = "Contact Profile Pic" )
+//                    Image(painter = painterResource(id = com.core.ui.R.drawable.nouns), contentDescription = "Contact Profile Pic" )
 
                 }//contact.image else R.drawable.nouns
                 }

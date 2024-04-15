@@ -340,17 +340,17 @@ fun SendScreen(
                         } // Optimum
 
                         42161 -> {
-                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ARB", ignoreCase = true) }[0])
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
                             startTokenSet = true
                         } // Arbitrum
 
                         8453 -> {
-                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("BASE", ignoreCase = true) }[0])
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
                             startTokenSet = true
                         } // Base
 
                         7777777 -> {
-                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ZORA", ignoreCase = true) }[0])
+                            onChangeAssetClicked(filteredAssets.filter { it.symbol.contains("ETH", ignoreCase = true) }[0])
                             startTokenSet = true
 
                         } // Zora

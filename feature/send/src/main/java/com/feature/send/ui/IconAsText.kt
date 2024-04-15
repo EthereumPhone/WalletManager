@@ -73,6 +73,7 @@ fun IconAsText(
 @Preview
 @Composable
 fun PreviewNumPad() {
+
 //    Box(
 //        modifier = Modifier.size(32.dp),
 //        contentAlignment = Alignment.Center
@@ -83,5 +84,6 @@ fun PreviewNumPad() {
 //            contentDescription = null // decorative element
 //        )
 //    }
+
 }
 
