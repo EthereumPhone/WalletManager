@@ -228,7 +228,7 @@ fun AssetDetailScreen(
 
                         Text(text = asset.get(0).symbol.uppercase(),fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 48.sp)
 
-
+                        Spacer(modifier = modifier.height(64.dp))
 
                         LazyColumn (
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -263,7 +263,7 @@ fun PreviewAssetNetworkDetail(){
         )
     )
     //.Success(testData)
-    AssetDetailScreen(detailAssetUiState = DetailAssetUiState.Loading, navigateToAsset = {})
+    AssetDetailScreen(detailAssetUiState = DetailAssetUiState.Success(testData), navigateToAsset = {})
 }
 
 

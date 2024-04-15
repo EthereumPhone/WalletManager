@@ -311,7 +311,7 @@ fun TransctionDetailScreenPreview(){
 
         )
     )
-    TransctionDetailScreen(txUiState = TransactionDetailUiState.Loading
+    TransctionDetailScreen(txUiState = TransactionDetailUiState.Success(list)
         , navigateToTransaction = {}, txHash = "0xfwyhyg4w541wywbv4wy8wuw")
 }
 

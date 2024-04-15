@@ -80,7 +80,6 @@ internal fun HomeRoute(
     HomeScreen(
         userData = walletDataUiState,
         assetsUiState = assetsUiState,
-//        refreshState = refreshState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
@@ -219,6 +218,7 @@ internal fun HomeScreen(
                         "42161" -> Color(0xFF2b88b8) // Arbitrum
                         "8453" -> Color(0xFF053BCB) // Base
                         "7777777" -> Color(0xFF777777) // Zora
+                        "11155111" -> Color(0xFFC77891) // Sepolia
 
                         else -> {
                             Color(0xFF030303)

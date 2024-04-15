@@ -137,6 +137,7 @@ fun NetworkPickerSheet(
                 "42161" -> Color(0xFF2b88b8) // Arbitrum
                 "8453" -> Color(0xFF053BCB) // Base
                 "7777777" -> Color(0xFF777777) // Zora
+                "11155111" -> Color(0xFFC77891) // Sepolia
 
                 else -> {
                     Color(0xFF030303)
@@ -195,7 +196,9 @@ fun NetworkPickerSheet(
                     val zoraBalance = findBalanceByName(assetsUiState.assets,"zora")
 
                     val basetestnetBalance = findBalanceByName(assetsUiState.assets,"basetestnet")
-                    
+
+                    val sepoliatestnetBalance = findBalanceByName(assetsUiState.assets,"sepoliatestnet")
+
                     Column(
                     ) {
                         NetworkListItem(
@@ -240,7 +243,14 @@ fun NetworkPickerSheet(
                             onClick = {onClick(8453)}
 
                         )
-                        // TODO : Sepolia
+
+                        NetworkListItem(
+                            logo = com.core.ui.R.drawable.sepolia_logo_v1,
+                            title = "Sepolia Testnet",
+                            balance = "${sepoliatestnetBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(8453)}
+
+                        )
 
 
                     }

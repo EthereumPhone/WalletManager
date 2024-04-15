@@ -261,16 +261,6 @@ fun AssetListDetailItem(
         7777777 -> "Zora"
         else -> {""}
     }
-    val networkicon = when(tokenAsset.chainId){
-        1 -> R.drawable.ethereum_icon
-        5 -> R.drawable.goerli
-        10 -> R.drawable.optimism_logo
-        137 -> R.drawable.polygon_logo
-        8453 -> R.drawable.base_logo
-        42161 -> R.drawable.arbitrum_logo
-        7777777 -> R.drawable.zora_wordmark_white.toInt()
-        else -> { ""}
-    }
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -349,12 +339,21 @@ fun AssetListDetailItem(
                     7777777 -> {
                         Image(
                             modifier = Modifier,
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             painter = painterResource(id = R.drawable.zora_wordmark_white),
                             contentDescription = null
                         )
 
                     }
+                    11155111 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Fit,
+                            painter = painterResource(id = R.drawable.sepolia_logo_v1),
+                            contentDescription = null
+                        )
+                    }
+
                     else -> { ""}
                 }
 
@@ -524,7 +523,7 @@ fun PreviewAssetListItem(){
 
     val token = TokenAsset(
         address = "",
-        chainId = 1,
+        chainId = 11155111,
         symbol = "ETH",
         name = "Super long spammy name",
         balance = 0.61,
