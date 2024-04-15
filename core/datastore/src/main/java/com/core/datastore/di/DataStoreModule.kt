@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
+import com.core.datastore.ExclusionListProtoSerializer
 import com.core.datastore.UserPreferencesSerializer
 import com.core.datastore.proto.UserPreferences
+import com.core.datastore.proto.ExclusionListProto
+import com.core.datastore.proto.ExclusionListProto.ExclusionList
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,5 +34,18 @@ object DataStoreModule {
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         ) {
             context.dataStoreFile("user_preferences.pb")
+        }
+
+    @Provides
+    @Singleton
+    fun providesExclustionDataStore(
+        @ApplicationContext context: Context,
+        exclusionListProtoSerializer: ExclusionListProtoSerializer
+    ): DataStore<ExclusionList> =
+        DataStoreFactory.create(
+            serializer = exclusionListProtoSerializer,
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        ) {
+            context.dataStoreFile("exclusion_list.pb.pb")
         }
 }

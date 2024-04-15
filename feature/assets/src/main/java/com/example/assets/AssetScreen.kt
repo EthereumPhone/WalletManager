@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +64,7 @@ import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
 import java.text.DecimalFormat
 import com.core.ui.R
+import com.example.assets.ui.AssetDialog
 
 @Composable
 fun AssetRoute(
@@ -71,13 +73,22 @@ fun AssetRoute(
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
     val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    val userData: WalletDataUiState by viewModel.userData.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
+
+    val exclusionList: List<String> by viewModel.exclusionList.collectAsStateWithLifecycle(
+        initialValue = emptyList()
+    )
 
     AssetScreen(
         assetsUiState = assetsUiState,
         refreshState = refreshState,
         onRefresh = viewModel::refreshData,
-        navigateToAssetDetail = navigateToAssetDetail
+        navigateToAssetDetail = navigateToAssetDetail,
+        addToExlustion = viewModel::addToExclusionList,
+        removeFromExlustion = viewModel::removeFromExclusionList,
+        userData = userData,
+        exclusionList = exclusionList,
     )
 }
 
@@ -88,14 +99,43 @@ internal fun AssetScreen(
     assetsUiState: AssetUiState,
     refreshState: Boolean,
     onRefresh: () -> Unit,
+    userData: WalletDataUiState,
+    exclusionList: List<String>,
+    addToExlustion: (String) -> Unit,
+    removeFromExlustion: (String) -> Unit,
     navigateToAssetDetail: (String) -> Unit,
 ) {
+
+
+
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
         onRefresh = {
             onRefresh()
         }
     )
+
+    var assetToHide by remember { mutableStateOf("") }//Asset address
+    val expandAssetDialog = remember { mutableStateOf(false) }
+    var hideOrUnhide = remember { mutableStateOf(true) }
+
+    if (expandAssetDialog.value){
+        AssetDialog(
+            expanded = expandAssetDialog,
+            title = "${if(hideOrUnhide.value) "Mark" else "Remove"} ${assetToHide.uppercase()} as Spam",
+            btntext = "${if(hideOrUnhide.value) "Add ${assetToHide.uppercase()} to Spam" else "Remove ${assetToHide.uppercase()}"} ",
+            subtext = "With this action your ${assetToHide.uppercase()} will be ${if(hideOrUnhide.value) "moved to the spam list." else "removed from the spam list."}"
+        ) {
+            if (hideOrUnhide.value){
+                addToExlustion(assetToHide)
+            } else {
+                removeFromExlustion(assetToHide)
+            }
+
+            expandAssetDialog.value = false
+        }
+    }
+
 
 
     Column(
@@ -105,7 +145,7 @@ internal fun AssetScreen(
             .padding(start = 32.dp, end = 32.dp, bottom = 32.dp)
     ) {
         ethOSHeader(title = "Assets")
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         when(assetsUiState){
             is AssetUiState.Loading -> {
@@ -136,6 +176,7 @@ internal fun AssetScreen(
                 }
             }
             is AssetUiState.Empty -> {
+
                 Box(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -150,8 +191,13 @@ internal fun AssetScreen(
                             painter = painterResource(id = R.drawable.no_assets),
                             contentDescription = null
                         )
-                        Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
-
+                        Text(
+                            text = "No assets",
+                            fontFamily = Fonts.INTER,
+                            color = Colors.GRAY,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -177,7 +223,7 @@ internal fun AssetScreen(
                 }
             }
             is AssetUiState.Success -> {
-                val pagelist = listOf("All","Hidden")
+                val pagelist = listOf("All","Spam")
                 val pagerState = rememberPagerState(pageCount = {
                     pagelist.size
                 })
@@ -186,17 +232,21 @@ internal fun AssetScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ){
-//                    ethOSTabRow(
-//                        items = pagelist,
-//                        selectedItemIndex = pagerState.currentPage,
-//                        onClick = {
-//                            coroutineScope.launch {
-//                                pagerState.animateScrollToPage(it)
-//                            }
-//
-//                        },
-//                        tabWidth= 80.dp
-//                    )
+
+                    //TODO: Hide Assets
+                    ethOSTabRow(
+                        items = pagelist,
+                        selectedItemIndex = pagerState.currentPage,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(it)
+                            }
+
+                        },
+                        tabWidth= 80.dp
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+
 
                     HorizontalPager(
                         state = pagerState,
@@ -210,14 +260,27 @@ internal fun AssetScreen(
                                         .fillMaxSize()
                                         .pullRefresh(pullRefreshState)
                                 ) {
+
+                                    val filteredlist = assetsUiState.assets.filterNot { it.key in exclusionList }
+
                                     LazyColumn(
+
                                         verticalArrangement = Arrangement.spacedBy(2.dp)
                                     ) {
-                                        assetsUiState.assets.forEach {
+                                        filteredlist.forEach {
                                             item(it.key) {
-                                                AssetListItem(title = it.key, assets = it.value) {
-                                                    navigateToAssetDetail(it.key)
-                                                }
+                                                AssetListItem(
+                                                    title = it.key,
+                                                    assets = it.value,
+                                                    longClick = {
+                                                        assetToHide = it.key
+                                                        hideOrUnhide.value = true
+                                                        expandAssetDialog.value = true
+                                                    },
+                                                    linkTo = {
+                                                        navigateToAssetDetail(it.key)
+                                                    }
+                                                )
                                             }
                                         }
                                     }
@@ -231,7 +294,7 @@ internal fun AssetScreen(
 
                                 }
                             }
-                            1 -> {
+                            1 -> { //Spam
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier
@@ -239,19 +302,51 @@ internal fun AssetScreen(
                                         .pullRefresh(pullRefreshState)
                                 ) {
 
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Image(
-                                            modifier = Modifier.size(82.dp),
-                                            contentScale = ContentScale.Fit,
-                                            painter = painterResource(id = R.drawable.hidden_assets),
-                                            contentDescription = null
-                                        )
-                                        Text(text = "No hidden assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                                    val filteredlist = assetsUiState.assets.filter { it.key in exclusionList }
+                                    if(filteredlist.isNotEmpty()){
+                                        LazyColumn(
 
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            filteredlist.forEach {
+                                                item(it.key) {
+                                                    AssetListItem(
+                                                        title = it.key,
+                                                        assets = it.value,
+                                                        longClick = {
+                                                            assetToHide = it.key
+                                                            hideOrUnhide.value = true
+                                                            expandAssetDialog.value = true
+                                                        },
+                                                        linkTo = {
+                                                            navigateToAssetDetail(it.key)
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        PullRefreshIndicator(
+                                            refreshing = refreshState,
+                                            state = pullRefreshState,
+                                            modifier = Modifier.align(Alignment.TopCenter)
+                                        )
+                                    }else{
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Image(
+                                                modifier = Modifier.size(82.dp),
+                                                contentScale = ContentScale.Fit,
+                                                painter = painterResource(id = R.drawable.hidden_assets),
+                                                contentDescription = null
+                                            )
+                                            Text(text = "No hidden assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+
+                                        }
                                     }
+
 
                                 }
                             }
@@ -273,7 +368,7 @@ internal fun AssetScreen(
 fun PreviewAssetScreen(){
     val testData = mapOf("ethereum" to listOf(
         TokenAsset(
-            address = "",
+            address = "sdfrthjkl",
             chainId = 1,
             symbol = "eth",
             name = "ethereum",
@@ -284,21 +379,22 @@ fun PreviewAssetScreen(){
     )
 
 
-    AssetScreen(
-        assetsUiState = AssetUiState.Empty,//.Success(testData),
-        refreshState = false,
-        onRefresh = {},
-        navigateToAssetDetail ={},
-//        toAssetDetail= {
-//            CurrentState(
-//                address = "",
-//                symbol = "ETH",
-//                name = "assetName",
-//                balance = 0.0,
-//                assets = emptyList()
-//            )
-//        }
-    )
+//    AssetScreen(
+//        assetsUiState = AssetUiState.Success(testData),
+//        refreshState = false,
+//        onRefresh = {},
+//        navigateToAssetDetail ={},
+//        setHiddenAssets = {}
+////        toAssetDetail= {
+////            CurrentState(
+////                address = "",
+////                symbol = "ETH",
+////                name = "assetName",
+////                balance = 0.0,
+////                assets = emptyList()
+////            )
+////        }
+//    )
 }
 
 

@@ -3,6 +3,8 @@ plugins {
     alias libs.plugins.kotlin.android
     alias libs.plugins.hilt.android
     alias libs.plugins.kotlin.kapt
+
+    alias libs.plugins.google.protobuf
 }
 
 android {
@@ -44,6 +46,26 @@ android {
 }
 
 
+// protobuf-protoc
+
+protobuf {
+    protoc {
+        artifact = libs.protobuf.protoc.get().toString()
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                java {
+                    option("lite")
+                }
+                kotlin {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
 
 dependencies {
 
@@ -60,6 +82,7 @@ dependencies {
 
     implementation "androidx.compose.material3:material3:1.1.1"
     implementation libs.material
+    implementation project(':core:datastore')
 
 
     testImplementation 'junit:junit:4.13.2'
@@ -84,6 +107,12 @@ dependencies {
     // Web3j needed for the WalletSDK
     implementation 'org.web3j:core:4.8.8-android'
     implementation 'com.github.EthereumPhone:WalletSDK:0.0.10'
+
+    //Datastore
+//    implementation "androidx.datastore:datastore:1.0.0"
+    implementation libs.androidx.datastore.preferences
+    implementation libs.androidx.datastore.proto
+    implementation "com.google.protobuf:protobuf-javalite:3.21.9"
 
 
 

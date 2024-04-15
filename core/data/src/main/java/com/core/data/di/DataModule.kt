@@ -10,6 +10,7 @@ import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
 import com.core.data.util.chainToApiKey
+import com.core.datastore.ExclusionListProtoSerializer
 import com.core.model.NetworkChain
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -179,5 +180,9 @@ object DataModule {
     fun provideEnsApi(): EnsApi {
         return EnsApi()
     }
+
+
+
+
 
 }

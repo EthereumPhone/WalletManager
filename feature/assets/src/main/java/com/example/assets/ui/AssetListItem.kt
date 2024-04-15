@@ -7,9 +7,11 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,21 +57,23 @@ import java.text.DecimalFormat
 import com.core.ui.R
 import com.core.ui.util.shimmerEffect
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AssetListItem(
     title: String,
     assets: List<TokenAsset>,
     linkTo: () -> Unit = {},
+    longClick: () -> Unit = {}
 ) {
 
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clickable {
-                linkTo()
-            }
+        modifier = Modifier.combinedClickable(
+            onClick = linkTo,
+            onLongClick = longClick
+        )
             .fillMaxWidth()
             .padding(vertical = 12.dp),
     ) {

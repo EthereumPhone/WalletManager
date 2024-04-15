@@ -283,10 +283,6 @@ internal fun HomeScreen(
 
             AssetList(assetsUiState, userData)
         }
-
-
-
-
     }
 
 }

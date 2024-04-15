@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_package = "com.core.datastore.proto";
+
+option java_outer_classname = "ExclusionListProto";
+
+message ExclusionList {
+    repeated string excluded_ids = 1;
+}

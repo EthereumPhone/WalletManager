@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class WmPreferencesDataSource @Inject constructor(
-    private val userPreferences: DataStore<UserPreferences>
+    private val userPreferences: DataStore<UserPreferences>,
+
 ) {
     val userData: Flow<UserData> = userPreferences.data
         .map {
@@ -17,7 +18,8 @@ class WmPreferencesDataSource @Inject constructor(
                 walletAddress = it.walletAddress,
                 walletNetwork = it.walletNetwork,
                 onboardingCompleted = it.onboardingCompleted,
-                preferredCurrency = it.preferredCurrency
+                preferredCurrency = it.preferredCurrency,
+
             )
         }
 
@@ -51,4 +53,8 @@ class WmPreferencesDataSource @Inject constructor(
             }
         }
     }
+
+
+
+
 }
