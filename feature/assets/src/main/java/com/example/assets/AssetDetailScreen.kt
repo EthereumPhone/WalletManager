@@ -230,14 +230,48 @@ fun AssetDetailScreen(
 
                         Spacer(modifier = modifier.height(64.dp))
 
-                        LazyColumn (
+//                        LazyColumn (
+//                            verticalArrangement = Arrangement.spacedBy(24.dp)
+//                        ){
+//                            asset.forEach {
+//                                item {
+//                                    AssetListDetailItem(it)
+//                                }
+//                            }
+//                        }
+
+                        Column (
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ){
-                            asset.forEach {
-                                item {
-                                    AssetListDetailItem(it)
-                                }
+                            val main = asset.find { it.chainId == 1 }
+                            if (main != null) {
+                                AssetListDetailItem(main)
                             }
+                            val arb = asset.find { it.chainId == 42161 }
+                            if (arb != null) {
+                                AssetListDetailItem(arb)
+                            }
+                            val base = asset.find { it.chainId == 8453 }
+                            if (base != null) {
+                                AssetListDetailItem(base)
+                            }
+                            val basegoerli = asset.find { it.chainId == 84531 }
+                            if (basegoerli != null) {
+                                AssetListDetailItem(basegoerli)
+                            }
+                            val op = asset.find { it.chainId == 10 }
+                            if (op != null) {
+                                AssetListDetailItem(op)
+                            }
+                            val sep = asset.find { it.chainId == 11155111 }
+                            if (sep != null) {
+                                AssetListDetailItem(sep)
+                            }
+                            val zora = asset.find { it.chainId == 7777777 }
+                            if (zora != null) {
+                                AssetListDetailItem(zora)
+                            }
+
                         }
                     }
                 }

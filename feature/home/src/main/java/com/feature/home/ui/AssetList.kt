@@ -1,6 +1,7 @@
 package com.feature.home.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,19 +57,21 @@ fun AssetList(
             Text(text = "Overview", color = Colors.GRAY, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             when(assetsUiState){
                 is AssetsUiState.Empty ->{
-                    Box(modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center){
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Image(
-                                modifier = Modifier.size(82.dp),
+                                modifier = Modifier.size(42.dp),
                                 contentScale = ContentScale.Crop,
                                 painter = painterResource(id = R.drawable.no_assets),
                                 contentDescription = null
                             )
-                            Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 18.sp, fontWeight = FontWeight.Medium)
 
                         }
                     }
@@ -81,9 +86,7 @@ fun AssetList(
                             LoadingSimpleAssetListItem()
                             LoadingSimpleAssetListItem()
                             LoadingSimpleAssetListItem()
-                            LoadingSimpleAssetListItem()
-                            LoadingSimpleAssetListItem()
-                            LoadingSimpleAssetListItem()
+
                         }
 
 
@@ -91,22 +94,83 @@ fun AssetList(
                 }
                 is AssetsUiState.Success -> {
                     if (userData is WalletDataUiState.Success) {
-                        val assets = assetsUiState.assets
-                        LazyColumn(
+                        Box(
                             modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                            contentAlignment = Alignment.Center
+                        ){
+                            val assets = assetsUiState.assets
+                            val filteredassets = assets.filter { it.balance > 0.0 }
 
-                            assets.forEach { item ->
-                                item(key = item.address) {
-                                    val value = formatDouble(item.balance)
-                                    //TODO: use meethod in composable
-                                    ethOSSimpleAssetListItemCustom(title = item.symbol, value = value.replace(",", ".").toDouble())
-                                    Spacer(modifier = Modifier.height(8.dp))
+                            if (filteredassets.isNotEmpty()){
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    //                            assets.forEach { item ->
+//                                item(key = item.address) {
+//                                    val value = formatDouble(item.balance)
+//                                    //TODO: use meethod in composable
+//                                    ethOSSimpleAssetListItemCustom(title = item.symbol, value =  formatDouble(main.balance).replace(",", ".").toDouble())
+//                                    Spacer(modifier = Modifier.height(8.dp))
+//                                }
+//                            }
+
+                                    val main = filteredassets.find { it.chainId == 1 }
+                                    if (main != null) {
+                                        ethOSSimpleAssetListItemCustom(title = main.symbol, value = formatDouble(main.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val arb = filteredassets.find { it.chainId == 42161 }
+                                    if (arb != null) {
+                                        ethOSSimpleAssetListItemCustom(title = arb.symbol, value =  formatDouble(arb.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val base = filteredassets.find { it.chainId == 8453 }
+                                    if (base != null) {
+                                        ethOSSimpleAssetListItemCustom(title = base.symbol, value =  formatDouble(base.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val basegoerli = filteredassets.find { it.chainId == 84531 }
+                                    if (basegoerli != null) {
+                                        ethOSSimpleAssetListItemCustom(title = basegoerli.symbol, value =  formatDouble(basegoerli.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val op = filteredassets.find { it.chainId == 10 }
+                                    if (op != null) {
+                                        ethOSSimpleAssetListItemCustom(title = op.symbol, value =  formatDouble(op.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val sep = filteredassets.find { it.chainId == 11155111 }
+                                    if (sep != null) {
+                                        ethOSSimpleAssetListItemCustom(title = sep.symbol, value =  formatDouble(sep.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    val zora = filteredassets.find { it.chainId == 7777777 }
+                                    if (zora != null) {
+                                        ethOSSimpleAssetListItemCustom(title = zora.symbol, value =  formatDouble(zora.balance).replace(",", ".").toDouble())
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                }
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Image(
+                                        modifier = Modifier.size(42.dp),
+                                        contentScale = ContentScale.Crop,
+                                        painter = painterResource(id = R.drawable.no_assets),
+                                        contentDescription = null
+                                    )
+                                    Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+
                                 }
                             }
 
+
+
                         }
+
                     }
                 }
                 is AssetsUiState.Error -> {
@@ -117,12 +181,14 @@ fun AssetList(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Image(
-                                modifier = Modifier.size(82.dp),
+                                modifier = Modifier.size(42.dp),
                                 contentScale = ContentScale.Crop,
                                 painter = painterResource(id = R.drawable.baseline_error_outline_24),
-                                contentDescription = null
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(Colors.GRAY)
+
                             )
-                            Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "No assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 18.sp, fontWeight = FontWeight.Medium)
 
                         }
                     }
@@ -163,8 +229,8 @@ fun LoadingSimpleAssetListItem(
         Box(
             contentAlignment = Alignment.Center ,
             modifier = Modifier
-                .size(18.dp)
-                .weight(0.4f)
+                .height(18.dp)
+                .width(180.dp)
                 .clip(CircleShape)
                 .shimmerEffect()
 
@@ -174,8 +240,8 @@ fun LoadingSimpleAssetListItem(
         Box(
             contentAlignment = Alignment.Center ,
             modifier = Modifier
-                .size(18.dp)
-                .weight(0.3f)
+                .height(18.dp)
+                .width(64.dp)
                 .clip(CircleShape)
                 .shimmerEffect()
 
@@ -189,19 +255,20 @@ fun LoadingSimpleAssetListItem(
 @Composable
 fun PreviewAssetList() {
     AssetList(
-        AssetsUiState.Success(
-            listOf(
-                TokenAsset(
-                    address = "",
-                    chainId = 1,
-                    symbol = "ETH",
-                    name = "ETHER",
-                    balance = 1.0,
-                    decimals = 18,
-                    swappable = true
-                )
-            )
-        ),
+        AssetsUiState.Loading,
+//        AssetsUiState.Success(
+//            listOf(
+//                TokenAsset(
+//                    address = "",
+//                    chainId = 1,
+//                    symbol = "ETH",
+//                    name = "ETHER",
+//                    balance = 1.0,
+//                    decimals = 18,
+//                    swappable = true
+//                )
+//            )
+//        ),
         WalletDataUiState.Success(
             UserData(
                 "",

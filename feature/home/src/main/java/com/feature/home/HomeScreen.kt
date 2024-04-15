@@ -213,7 +213,7 @@ internal fun HomeScreen(
                     when(data.walletNetwork) {
                         "1" -> Color(0xFF32CD32)
                         "5" -> Color(0xFFF0EAD6)
-                        "137" -> Color(0xFF442fb2) // Polygon
+//                        "137" -> Color(0xFF442fb2) // Polygon
                         "10" -> Color(0xFFc82e31) // Optimum
                         "42161" -> Color(0xFF2b88b8) // Arbitrum
                         "8453" -> Color(0xFF053BCB) // Base

@@ -209,13 +209,6 @@ fun NetworkPickerSheet(
                         )
 
                         NetworkListItem(
-                            logo = R.drawable.optimism_logo,
-                            title = "Optimism",
-                            balance = "${optimismBalance?.let { formatDouble(it) }} ETH",
-                            onClick = { onClick(10) }
-                        )
-
-                        NetworkListItem(
                             logo = R.drawable.arbitrum_logo,
                             title = "Arbitrum",
                             balance = "${arbitrumBalance?.let { formatDouble(it) }} ETH",
@@ -230,27 +223,39 @@ fun NetworkPickerSheet(
                         )
 
                         NetworkListItem(
+                            logo = R.drawable.base_logo,
+                            title = "Base Testnet",
+                            balance = "${basetestnetBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(84531)}
+
+                        )
+
+                        NetworkListItem(
+                            logo = R.drawable.optimism_logo,
+                            title = "Optimism",
+                            balance = "${optimismBalance?.let { formatDouble(it) }} ETH",
+                            onClick = { onClick(10) }
+                        )
+
+
+                        NetworkListItem(
+                            logo = com.core.ui.R.drawable.sepolia_logo_v1,
+                            title = "Sepolia Testnet",
+                            balance = "${sepoliatestnetBalance?.let { formatDouble(it) }} ETH",
+                            onClick = {onClick(11155111)}
+
+                        )
+
+
+                        NetworkListItem(
                             logo = R.drawable.zora_wordmark_white,
                             title = "Zora",
                             balance = "${zoraBalance?.let { formatDouble(it) }} ETH",
                             onClick = {onClick(7777777)}
                         )
 
-                        NetworkListItem(
-                            logo = R.drawable.base_logo,
-                            title = "Base Testnet",
-                            balance = "${basetestnetBalance?.let { formatDouble(it) }} ETH",
-                            onClick = {onClick(8453)}
 
-                        )
 
-                        NetworkListItem(
-                            logo = com.core.ui.R.drawable.sepolia_logo_v1,
-                            title = "Sepolia Testnet",
-                            balance = "${sepoliatestnetBalance?.let { formatDouble(it) }} ETH",
-                            onClick = {onClick(8453)}
-
-                        )
 
 
                     }
