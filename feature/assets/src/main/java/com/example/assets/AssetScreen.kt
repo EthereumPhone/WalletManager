@@ -296,7 +296,6 @@ internal fun AssetScreen(
                             }
                             1 -> { //Spam
                                 Box(
-                                    contentAlignment = Alignment.Center,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .pullRefresh(pullRefreshState)
