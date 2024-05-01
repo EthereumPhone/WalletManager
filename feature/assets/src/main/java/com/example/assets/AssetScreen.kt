@@ -176,7 +176,7 @@ internal fun AssetScreen(
                 }
             }
             is AssetUiState.Empty -> {
-
+                
                 Box(
                     modifier = modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -304,7 +304,6 @@ internal fun AssetScreen(
                                     val filteredlist = assetsUiState.assets.filter { it.key in exclusionList }
                                     if(filteredlist.isNotEmpty()){
                                         LazyColumn(
-
                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
                                             filteredlist.forEach {
@@ -314,7 +313,7 @@ internal fun AssetScreen(
                                                         assets = it.value,
                                                         longClick = {
                                                             assetToHide = it.key
-                                                            hideOrUnhide.value = true
+                                                            hideOrUnhide.value = false
                                                             expandAssetDialog.value = true
                                                         },
                                                         linkTo = {
