@@ -245,7 +245,7 @@ fun PreviewTransactionScreen(
 
     TransactionScreen(
         transfersUIState = TransfersUiState.Success(
-            emptyList()),//list),
+            list),
         refreshState = false,
         onRefresh = {},
         navigateToTxDetail = {}

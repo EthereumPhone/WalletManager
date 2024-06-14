@@ -298,7 +298,8 @@ internal fun AssetScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .pullRefresh(pullRefreshState)
+                                        .pullRefresh(pullRefreshState),
+                                    contentAlignment = Alignment.Center
                                 ) {
 
                                     val filteredlist = assetsUiState.assets.filter { it.key in exclusionList }
@@ -331,8 +332,9 @@ internal fun AssetScreen(
                                         )
                                     }else{
                                         Column(
+                                            modifier = Modifier.fillMaxSize(),
                                             horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                            verticalArrangement = Arrangement.Center
                                         ) {
                                             Image(
                                                 modifier = Modifier.size(82.dp),
@@ -341,20 +343,13 @@ internal fun AssetScreen(
                                                 contentDescription = null
                                             )
                                             Text(text = "No hidden assets", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
-
                                         }
                                     }
-
-
                                 }
                             }
-
                         }
                     }
                 }
-
-
-
             }
         }
     }
@@ -377,22 +372,16 @@ fun PreviewAssetScreen(){
     )
 
 
-//    AssetScreen(
-//        assetsUiState = AssetUiState.Success(testData),
-//        refreshState = false,
-//        onRefresh = {},
-//        navigateToAssetDetail ={},
-//        setHiddenAssets = {}
-////        toAssetDetail= {
-////            CurrentState(
-////                address = "",
-////                symbol = "ETH",
-////                name = "assetName",
-////                balance = 0.0,
-////                assets = emptyList()
-////            )
-////        }
-//    )
+    AssetScreen(
+        assetsUiState = AssetUiState.Success(testData),
+        refreshState = false,
+        onRefresh = {},
+        navigateToAssetDetail ={},
+        addToExlustion =  {},
+        removeFromExlustion = {  },
+        userData =  WalletDataUiState.Loading,
+        exclusionList = emptyList(),
+    )
 }
 
 
