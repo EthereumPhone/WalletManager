@@ -11,6 +11,8 @@ import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.UserData
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
+import okio.IOException
 import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
@@ -70,6 +77,40 @@ class HomeViewModel @Inject constructor(
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
+
+    suspend fun getLink(uri: String): String {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://getmoonpaynew-4bl33rjqpa-uc.a.run.app?text=$uri")
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val response: Response = client.newCall(request).execute()
+                if (!response.isSuccessful) throw IOException("Unexpected code $response")
+
+                // Parse the JSON response using Moshi
+                val moshi = Moshi.Builder()
+                    .add(KotlinJsonAdapterFactory())
+                    .build()
+
+                val adapter = moshi.adapter(MoonpayResponse::class.java)
+                val responseBody: ResponseBody? = response.body
+                if (responseBody != null) {
+                    val moonpayResponse = adapter.fromJson(responseBody.string())
+                    return@withContext moonpayResponse?.link ?: throw IOException("Invalid response format")
+                } else {
+                    throw IOException("Empty response")
+                }
+            } catch (e: Exception) {
+                throw IOException("Error fetching link: ${e.message}", e)
+            }
+        }
+    }
+
+    data class MoonpayResponse(
+        val link: String
+    )
 
 
     fun refreshData() {

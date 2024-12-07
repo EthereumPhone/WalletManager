@@ -1,6 +1,7 @@
 package com.feature.home
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,18 +9,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -31,19 +29,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.ui.InfoDialog
-import com.core.ui.TopHeader
-import com.feature.home.ui.AddressBar
 import com.feature.home.ui.AssetList
 import com.feature.home.ui.FunctionsRow
-import com.feature.home.ui.OnboardingModalBottomSheet
 import com.feature.home.ui.ethOSNetworkModalBottomSheet
 import com.feature.home.ui.ethOSNetworkPill
 
@@ -56,6 +50,7 @@ import org.ethosmobile.components.library.models.OnboardingItem
 import org.ethosmobile.components.library.models.OnboardingObject
 import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
+import kotlin.reflect.KSuspendFunction1
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -68,7 +63,6 @@ internal fun HomeRoute(
 ) {
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-
     var updater by remember {mutableStateOf(true)}
 
     if(updater) {
@@ -83,8 +77,9 @@ internal fun HomeRoute(
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToReceive = navigateToReceive,
-        setOnboardingComplete= viewModel::setOnboardingComplete,
-        setNetwork = viewModel::changeNetwork
+        setOnboardingComplete = viewModel::setOnboardingComplete,
+        setNetwork = viewModel::changeNetwork,
+        getLink = viewModel::getLink,
     )
 }
 
@@ -99,6 +94,7 @@ internal fun HomeScreen(
     navigateToReceive: () -> Unit,
     setOnboardingComplete: (Boolean) -> Unit,
     setNetwork: (Int) -> Unit,
+    getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier
 ) {
     val onboardingComplete = when(userData) {
@@ -117,6 +113,8 @@ internal fun HomeScreen(
 
     val modalSheetState = rememberModalBottomSheetState(true)
     val coroutineScope = rememberCoroutineScope()
+
+    val uriHandler = LocalUriHandler.current
 
 
     val showInfoDialog =  remember { mutableStateOf(false) }
@@ -279,7 +277,18 @@ internal fun HomeScreen(
                 navigateToSwap,
                 navigateToSend,
                 navigateToReceive
-            )
+            ) {
+                if (userData is WalletDataUiState.Success) {
+                    val address = userData.userData.walletAddress
+                    coroutineScope.launch {
+                        val json = Uri.encode("{\"eth\":\"$address\"}")
+                        getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json").let { uri ->
+                            println("Opening URI: $uri")
+                            uriHandler.openUri(uri)
+                        }
+                    }
+                }
+            }
 
             AssetList(assetsUiState, userData)
         }

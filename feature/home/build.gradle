@@ -89,4 +89,8 @@ dependencies {
     implementation libs.kotlinx.datetime
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'
+
+    implementation libs.squareup.moshi
+    implementation libs.moshi
+    implementation libs.okhttp
 }
