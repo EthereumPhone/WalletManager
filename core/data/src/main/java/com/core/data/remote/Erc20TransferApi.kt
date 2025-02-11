@@ -2,6 +2,7 @@ package com.core.data.remote
 
 
 import android.content.Context
+import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToName
 import com.core.data.util.chainIdToRPC
 import com.core.data.util.chainToApiKey
@@ -31,7 +32,8 @@ class Erc20TransferApi @Inject constructor(
         val web3j = Web3j.build(HttpService(chainIdToRPC(chainId)))
         val walletSDK = WalletSDK(
             context = context,
-            web3jInstance = web3j
+            web3jInstance = web3j,
+            bundlerRPCUrl = chainIdToBundler(chainId)
         )
         val credentials = Credentials.create("0x0ec8bb8d1aebf3b6e9e838dba065501c06a6ffa4cc12794abfd385eb24accfc1")
         val contract = ERC20.load(
@@ -51,41 +53,8 @@ class Erc20TransferApi @Inject constructor(
             to = erc20ContractAddress,
             value = "0",
             data = data,
-            gasAmount = estimateGas(
-                erc20ContractAddress,
-                data,
-                "0x0",
-                walletSDK,
-                web3j
-            ).toString()
+            from = walletSDK.getAddress(),
+            callGas = null
         )
-    }
-
-    private fun estimateGas(
-        to: String,
-        data: String,
-        value: String = "0x0",
-        walletSDK: WalletSDK,
-        web3j: Web3j
-    ): BigInteger {
-        val gas = web3j.ethEstimateGas(
-            org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
-                walletSDK.getAddress(),
-                null,
-                null,
-                null,
-                to,
-                BigInteger(Long.parseLong(value.substring(2), 16).toString()),
-                data
-            )
-        )?.sendAsync()?.get()
-        if (gas?.hasError() == true) {
-            println("Error: ${gas.error.message}")
-            //throw Exception(gas.error.message)
-            return BigInteger.valueOf(240000)
-        }
-        val gasResult = gas?.amountUsed!!
-        println("Gas estimation: $gasResult")
-        return gasResult
     }
 }

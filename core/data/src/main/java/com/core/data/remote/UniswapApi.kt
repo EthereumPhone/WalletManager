@@ -1,6 +1,7 @@
 package com.core.data.remote
 
 import android.content.Context
+import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -95,7 +96,7 @@ class UniswapApi @Inject constructor(
     ): String {
         val currentChainId = walletSDK.getChainId()
         if (currentChainId != 1 && currentChainId != 10) {
-            val res = walletSDK.changeChain(1, "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            val res = walletSDK.changeChain(1, "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}", chainIdToBundler(1))
             if (res == WalletSDK.DECLINE) {
                 return WalletSDK.DECLINE
             }
@@ -105,13 +106,15 @@ class UniswapApi @Inject constructor(
             web3j = Web3j.build(HttpService("https://opt-mainnet.g.alchemy.com/v2/${chainToApiKey("opt-mainnet")}"))
             walletSDK = WalletSDK(
                 context = context,
-                web3jInstance = web3j
+                web3jInstance = web3j,
+                bundlerRPCUrl = chainIdToBundler(10)
             )
         } else if (currentChainId == 1) {
             web3j = Web3j.build(HttpService("https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"))
             walletSDK = WalletSDK(
                 context = context,
-                web3jInstance = web3j
+                web3jInstance = web3j,
+                bundlerRPCUrl = chainIdToBundler(1)
             )
         }
 
@@ -169,13 +172,8 @@ class UniswapApi @Inject constructor(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
-                gasPrice = gasPrice.toString(),
-                gasAmount = estimateGas(
-                    to = fromToken.address,
-                    data = approveTokenData,
-                    walletSDK = walletSDK,
-                    web3j = web3j
-                ).toString()
+                from = walletSDK.getAddress(),
+                callGas = null
             )
             if (approveTxId == WalletSDK.DECLINE) {
                 return WalletSDK.DECLINE
@@ -198,7 +196,8 @@ class UniswapApi @Inject constructor(
         )
         val signature = walletSDK.signMessage(
             message = permit2string,
-            type = "eth_signTypedData"
+            chainId = currentChainId,
+            from = walletSDK.getAddress()
         )
         val realEncoder = RealEncoder()
         val permitData = realEncoder.encodePermit(
@@ -239,13 +238,8 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = "0",
             data = universalData,
-            gasPrice = gasPrice.toString(),
-            gasAmount = estimateGas(
-                to = UNISWAP_V3_ADDRESS,
-                data = universalData,
-                walletSDK = walletSDK,
-                web3j = web3j
-            ).toString()
+            from = walletSDK.getAddress(),
+            callGas = null,
         )
     }
 
@@ -312,13 +306,8 @@ class UniswapApi @Inject constructor(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
-                gasPrice = gasPrice.toString(),
-                gasAmount = estimateGas(
-                    to = fromToken.address,
-                    data = approveTokenData,
-                    walletSDK = walletSDK,
-                    web3j = web3j
-                ).toString()
+                from = walletSDK.getAddress(),
+                callGas = null
             )
             if (approveTxId == WalletSDK.DECLINE) {
                 return WalletSDK.DECLINE
@@ -341,7 +330,8 @@ class UniswapApi @Inject constructor(
         )
         val signature = walletSDK.signMessage(
             message = permit2string,
-            type = "eth_signTypedData"
+            from = walletSDK.getAddress(),
+            chainId = walletSDK.getChainId()
         )
         val realEncoder = RealEncoder()
         val permitData = realEncoder.encodePermit(
@@ -388,13 +378,8 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = "0",
             data = universalData,
-            gasPrice = gasPrice.toString(),
-            gasAmount = estimateGas(
-                to = UNISWAP_V3_ADDRESS,
-                data = universalData,
-                walletSDK = walletSDK,
-                web3j = web3j
-            ).toString()
+            from = walletSDK.getAddress(),
+            callGas = null
         )
     }
 
@@ -474,43 +459,9 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = fullAmountToSwap.toString(),
             data = universalData,
-            gasPrice = gasPrice.toString(),
-            gasAmount = estimateGas(
-                to = UNISWAP_V3_ADDRESS,
-                data = universalData,
-                value = "0x" + fullAmountToSwap.toString(16),
-                walletSDK = walletSDK,
-                web3j = web3j
-            ).toString()
+            from = walletSDK.getAddress(),
+            callGas = null
         )
-    }
-
-    fun estimateGas(
-        to: String,
-        data: String,
-        value: String = "0x0",
-        walletSDK: WalletSDK,
-        web3j: Web3j
-    ): BigInteger {
-        val gas = web3j.ethEstimateGas(
-            org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
-                walletSDK.getAddress(),
-                null,
-                null,
-                null,
-                to,
-                BigInteger(parseLong(value.substring(2), 16).toString()),
-                data
-            )
-        )?.sendAsync()?.get()
-        if (gas?.hasError() == true) {
-            println("Error: ${gas.error.message}")
-            //throw Exception(gas.error.message)
-            return BigInteger.valueOf(240000)
-        }
-        val gasResult = gas?.amountUsed!!
-        println("Gas estimation: $gasResult")
-        return gasResult
     }
 
 

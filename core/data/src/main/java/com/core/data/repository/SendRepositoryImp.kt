@@ -2,6 +2,7 @@ package com.core.data.repository
 
 import android.content.Context
 import com.core.data.remote.Erc20TransferApi
+import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -42,17 +43,19 @@ class SendRepositoryImp @Inject constructor(
             val walletSDK = if (rpc != null) {
                 WalletSDK(
                     context = mContext,
-                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"))
+                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}")),
+                    bundlerRPCUrl = chainIdToBundler(chainId)
                 )
             } else {
-                WalletSDK(mContext)
+                WalletSDK(mContext, bundlerRPCUrl = chainIdToBundler(chainId))
             }
 
             if(chainId != walletSDK.getChainId()) {
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
-                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}",
+                        chainIdToBundler(chainId)
                     )
                 }
             }
@@ -69,7 +72,8 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     decimalValue,
                     data?: "",
-                    gasPrice.toString(),
+                    walletSDK.getAddress(),
+                    null
                 )
             } catch (exception: NullPointerException) {
                 "error"
@@ -91,17 +95,19 @@ class SendRepositoryImp @Inject constructor(
             val walletSDK = if (rpc != null) {
                 WalletSDK(
                     context = mContext,
-                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"))
+                    web3jInstance = Web3j.build(HttpService("https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}")),
+                    bundlerRPCUrl = chainIdToBundler(chainId)
                 )
             } else {
-                WalletSDK(mContext)
+                WalletSDK(mContext, bundlerRPCUrl = chainIdToBundler(chainId))
             }
 
             if(chainId != walletSDK.getChainId()) {
                 rpc?.let {
                     walletSDK.changeChain(
                         chainId,
-                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
+                        "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName!!}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}",
+                        chainIdToBundler(chainId)
                     )
                 }
             }

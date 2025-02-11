@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.ExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
 import com.core.data.util.chainToApiKey
 import com.core.domain.UpdateTokensByNetworkUseCase
@@ -135,7 +136,7 @@ class HomeViewModel @Inject constructor(
 
     fun changeNetwork(network: Int){
         viewModelScope.launch {
-            walletSDK.changeChain(network, chainIdToRPC(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            walletSDK.changeChain(network, chainIdToRPC(network), chainIdToBundler(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
             userDataRepository.setWalletNetwork(network.toString())
         }
     }

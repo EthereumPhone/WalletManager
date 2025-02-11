@@ -27,3 +27,7 @@ fun chainIdToName(chainId: Int): String = when(chainId) {
 fun chainIdToRPC(chainId: Int): String {
     return "https://${chainIdToName(chainId)}.g.alchemy.com/v2/${chainToApiKey(chainIdToName(chainId))}"
 }
+
+fun chainIdToBundler(chainId: Int): String {
+    return "https://api.pimlico.io/v2/$chainId/rpc?apikey=pim_7TcvnUhBUJDatSS2ayjK9X"
+}

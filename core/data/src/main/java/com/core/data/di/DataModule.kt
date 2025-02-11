@@ -9,6 +9,7 @@ import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
+import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.datastore.ExclusionListProtoSerializer
 import com.core.model.NetworkChain
@@ -56,7 +57,7 @@ object DataModule {
     fun providesWalletSdk(
         @ApplicationContext appContext: Context
     ): WalletSDK {
-        return WalletSDK(appContext)
+        return WalletSDK(appContext, bundlerRPCUrl = chainIdToBundler(1))
     }
 
     @Singleton
