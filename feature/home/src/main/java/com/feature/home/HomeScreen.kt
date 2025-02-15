@@ -18,9 +18,11 @@ import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
+import com.core.model.UserData
 import com.feature.home.ui.AssetList
 import com.feature.home.ui.FunctionsRow
 import com.feature.home.ui.ethOSNetworkModalBottomSheet
@@ -51,6 +56,8 @@ import org.ethosmobile.components.library.models.OnboardingItem
 import org.ethosmobile.components.library.models.OnboardingObject
 import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import kotlin.reflect.KSuspendFunction1
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -323,6 +330,7 @@ private val walletOnboarding = OnboardingObject(
 
 fun formatDouble(input: Double): String {
     val decimalFormat = DecimalFormat("#.#####")
+    decimalFormat.decimalFormatSymbols = DecimalFormatSymbols(Locale.US)
     return decimalFormat.format(input)
 }
 
@@ -349,22 +357,53 @@ fun chainName(chainId: String) = when(chainId) {
 @Preview(
     name = "Home Screen Loading",
     showBackground = true,
-    device = Devices.PIXEL_4
+    widthDp = 447,
+    heightDp = 447
 )
 @Composable
 fun HomeScreenLoadingPreview() {
-    HomeScreen(
-        userData = WalletDataUiState.Loading,
-        assetsUiState = AssetsUiState.Loading,
-        navigateToSwap = {},
-        navigateToSend = {},
-        navigateToReceive = {},
-        setOnboardingComplete = {},
-        setNetwork = {},
-        getLink = ::fakeGetUrl
-    )
-}
+    // Mock UriHandler for preview
+    val previewUriHandler = object : UriHandler {
+        override fun openUri(uri: String) {
+            // No-op for preview
+        }
+    }
 
+    Surface {
+        CompositionLocalProvider(LocalUriHandler provides previewUriHandler) {
+            HomeScreen(
+                userData = WalletDataUiState.Success(
+                    UserData(
+                        walletAddress = "0x3a4e6eD8B0F02BFBfaA3C6506Af2DB939eA5798c",
+                        walletNetwork = "1",
+                        onboardingCompleted = true,
+                        preferredCurrency = "USD"
+                    )
+                ),
+                assetsUiState = AssetsUiState.Success(
+                    listOf(
+                        TokenAsset(
+                            chainId = 1,
+                            balance = 0.2,
+                            address = "0x0000000000000000000000000000000000000000",
+                            symbol = "ETH",
+                            name = "Ethereum",
+                            decimals = 18,
+                            logoUrl = "https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880",
+                            swappable = true,
+                        )
+                    )
+                ),
+                navigateToSwap = {},
+                navigateToSend = {},
+                navigateToReceive = {},
+                setOnboardingComplete = {},
+                setNetwork = {},
+                getLink = ::fakeGetUrl
+            )
+        }
+    }
+}
 
 suspend fun fakeGetUrl(uri: String): String {
     return ""
