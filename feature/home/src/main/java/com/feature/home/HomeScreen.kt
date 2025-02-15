@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -345,46 +346,26 @@ fun chainName(chainId: String) = when(chainId) {
     else -> "Loading..."
 }
 
-
-@Preview
+@Preview(
+    name = "Home Screen Loading",
+    showBackground = true,
+    device = Devices.PIXEL_4
+)
 @Composable
-fun PreviewHomeScreen() {
-//    HomeScreen()
-    //HomeScreen()
-//    HomeScreen(
-//        userData = UserData("0x123...123"),
-//        transfersUiState = TransfersUiState.Loading,
-//        assetsUiState = AssetUiState.Success(
-//
-//            listOf(
-//                    TokenAsset(
-//                        address = "String",
-//                        chainId =  5,
-//                        symbol=  "ETH",
-//                        name= "Ether",
-//                        balance= 0.00000245
-//                    ),
-//                    TokenAsset(
-//                        address = "yuooyvyuv",
-//                        chainId =  10,
-//                        symbol=  "ETH",
-//                        name= "Ether",
-//                        balance= 0.00000245
-//                    )
-//                )
-//
-//
-//        ),
-//        refreshState = false,
-//        onAddressClick = { },
-//        navigateToReceive = { },
-//        navigateToSend = { },
-//        navigateToSwap = { },
-//        onRefresh = { },
-//        onDelete = {},
-//        onCurrencyChange = {},
-//        currencyPrice = "1650.00",
-//        currentChain = 1,
-//        getCurrentChain = {}
-//    )
+fun HomeScreenLoadingPreview() {
+    HomeScreen(
+        userData = WalletDataUiState.Loading,
+        assetsUiState = AssetsUiState.Loading,
+        navigateToSwap = {},
+        navigateToSend = {},
+        navigateToReceive = {},
+        setOnboardingComplete = {},
+        setNetwork = {},
+        getLink = ::fakeGetUrl
+    )
+}
+
+
+suspend fun fakeGetUrl(uri: String): String {
+    return ""
 }
