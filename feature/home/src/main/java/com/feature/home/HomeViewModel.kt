@@ -66,7 +66,13 @@ class HomeViewModel @Inject constructor(
                         decimals = 18
                     )
                 }
-                    .sortedByDescending { it.balance }
+                .sortedByDescending { it.balance }
+
+                // Set the first value of selectedTokenAsset to the last item in the list
+                if (netWorkAssets.isNotEmpty()) {
+                    _selectedTokenAsset.value = netWorkAssets.last()
+                }
+
                 AssetsUiState.Success(netWorkAssets)
             }
             .stateIn(
@@ -78,6 +84,17 @@ class HomeViewModel @Inject constructor(
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
+
+    private val _selectedTokenAsset = MutableStateFlow<TokenAsset?>(null)
+    val selectedTokenAsset: StateFlow<TokenAsset?> = _selectedTokenAsset.asStateFlow()
+
+    fun setSelectedTokenAsset(tokenAsset: TokenAsset) {
+        _selectedTokenAsset.value = tokenAsset
+    }
+
+   fun getSelectedTokenAsset(): TokenAsset? {
+        return _selectedTokenAsset.value
+    }
 
     suspend fun getLink(uri: String): String {
         val client = OkHttpClient()

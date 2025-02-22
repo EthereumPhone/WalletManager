@@ -26,7 +26,7 @@ work = "2.8.1"
 hilt-jetpack = "1.0.0"
 datastore = "1.0.0"
 retrofit2 = "2.9.0"
-compose-lifecycle = "2.6.0-beta01"
+compose-lifecycle = "2.6.2"
 compose-navigation = "2.7.6"
 moshi = "1.13.0"
 datetime = "0.4.0"
@@ -37,6 +37,7 @@ workRuntimeKtx = "2.5.0"
 headlong = "9.4.0"
 fasterxml = "2.12.5"
 material = "1.10.0"
+coil = "3.1.0"
 
 
 
@@ -129,9 +130,9 @@ headlong = {group = "com.esaulpaugh", name = "headlong", version.ref = "headlong
 fasterxml = {group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "fasterxml"}
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
-
-
-
+#coil
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 
 [bundles]

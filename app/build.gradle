@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'org.ethereumphone.walletmanager'
-    compileSdk 34
+    compileSdk 33
 
     buildFeatures {
         compose = true
@@ -15,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId "org.ethereumphone.walletmanager"
-        minSdk 34
-        targetSdk 34
+        minSdk 26
+        targetSdk 33
         versionCode 8
         versionName "1.0"
 
@@ -39,7 +39,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion "1.4.6"
+        kotlinCompilerExtensionVersion "1.5.3"
     }
 }
 
