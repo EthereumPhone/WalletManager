@@ -1,11 +1,11 @@
 [versions]
 
 # plugins
-androidGradlePlugin = "7.4.2"
+androidGradlePlugin = "8.8.2"
 espressoCore = "3.5.1"
 hiltAndroid = "2.46.1"
 hiltWork = "1.0.0"
-kotlin = "1.8.20"
+kotlin = "2.1.0"
 hilt = "2.46.1"
 material3 = "1.1.2"
 moshiVersion = "1.13.0"
@@ -37,7 +37,7 @@ workRuntimeKtx = "2.5.0"
 headlong = "9.4.0"
 fasterxml = "2.12.5"
 material = "1.10.0"
-coil = "2.4.0"
+coil = "3.0.0"
 
 
 
@@ -50,6 +50,7 @@ kotlin-jvm = {id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
 hilt-android = {id = "com.google.dagger.hilt.android", version.ref = "hilt"}
 kotlin-kapt = {id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin"}
 google-protobuf = {id = "com.google.protobuf", version.ref = "protobufPlugin"}
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 
 
