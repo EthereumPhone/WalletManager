@@ -1,5 +1,6 @@
 package com.example.transactions
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,215 +11,75 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenGray
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.example.transactions.ui.LogEntry
 import com.example.transactions.ui.TxEntry
 import com.example.transactions.ui.TxType
-
+import org.ethosmobile.components.library.theme.Colors
+import org.ethosmobile.components.library.walletmanager.ethOSTransferListItem
 
 @Composable
-fun LogView(
-    onNavigateBack: () -> Unit = {}
+fun LogRoute(
+    navigateBack: () -> Unit,
+    viewModel: TransactionViewModel = hiltViewModel()
+){
+    val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
+    val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
+
+    LogScreen(
+        transfersUIState = transfersUIState,
+        onNavigateBack = navigateBack,
+        refreshState = refreshState,
+        onRefresh = viewModel::refreshData
+    )
+}
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun LogScreen(
+    modifier: Modifier = Modifier,
+    transfersUIState: TransfersUiState,
+    onNavigateBack: () -> Unit = {},
+    refreshState: Boolean,
+    onRefresh: () -> Unit,
 ){
 
-
-    val txs = listOf(
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SENT
-        ),
-        TxEntry(
-            fromAmount = 40.56,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 2.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SENT
-        ),
-        TxEntry(
-            fromAmount = 40.56,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 2.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SENT
-        ),
-        TxEntry(
-            fromAmount = 40.56,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 2.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SENT
-        ),
-        TxEntry(
-            fromAmount = 40.56,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 2.0,
-            toAmount = 0.0,
-            fromTokenName = "USDC",
-            toTokenName = "",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.RECEIVED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-        TxEntry(
-            fromAmount = 20.0,
-            toAmount = 245532.0,
-            fromTokenName = "USDC",
-            toTokenName = "DEGEN",
-            fromAddress = "0x369D9A3163ba0F5b703FDFe41471E20650523e68",
-            toAddress = "0x422C8d8eD47262De2C45F4628563Cc0FdDD6DE0E",
-            txType = TxType.SWAPED
-        ),
-
-        )
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = refreshState,
+        onRefresh = {
+            onRefresh()
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -240,28 +101,109 @@ fun LogView(
             }
         }
 
-        Box(modifier = Modifier
-            .fillMaxSize()){
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize().padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Spacer(Modifier.height(16.dp))
+        Box(modifier = Modifier.fillMaxSize()){
+
+            when(transfersUIState){
+                is TransfersUiState.Loading -> {
+
+                        Column(
+                            modifier = modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+                            LoadingTransferListItem()
+
+
+                        }
+
                 }
-                items(txs){ tx ->
-                    LogEntry(tx)
-                }
-                item {
-                    Spacer(Modifier.height(16.dp))
+                is TransfersUiState.Success -> {
+
+                    val transfers = transfersUIState.transfers
+
+
+                    if (transfers.isNotEmpty()){
+
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .pullRefresh(pullRefreshState)
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize().padding(horizontal = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                item {
+                                    Spacer(Modifier.height(16.dp))
+                                }
+                                items(transfers.reversed()) { transfer ->
+                                    LogEntry(transfer)
+                                }
+
+                                item {
+                                    Spacer(Modifier.height(16.dp))
+                                }
+                            }
+
+                            PullRefreshIndicator(
+                                refreshing = refreshState,
+                                state = pullRefreshState,
+                                modifier = Modifier.align(Alignment.TopCenter)
+                            )
+                        }
+
+
+                    }else{
+                        Box(
+                            modifier = modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ){
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Image(
+                                    modifier = Modifier.size(82.dp),
+                                    contentScale = ContentScale.Fit,
+                                    painter = painterResource(id = com.core.ui.R.drawable.no_transfer),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(Colors.GRAY)
+                                )
+                                Text(text = "No transfers",
+                                    fontFamily = PitagonsSans,
+                                    color = dgenGray,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                )
+
+                            }
+                        }
+                    }
+
+
+
+
                 }
             }
+
+
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(32.dp)
-                    .align(Alignment.TopCenter)// Adjust thickness of fading border
+                    .align(Alignment.TopCenter)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(dgenBlack,Color.Transparent)
@@ -272,8 +214,8 @@ fun LogView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)// Adjust thickness of fading border
-                    .height(40.dp) // Adjust thickness of fading border
+                    .align(Alignment.BottomCenter)
+                    .height(40.dp)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Transparent, dgenBlack)
@@ -294,82 +236,5 @@ fun LogView(
 )
 @Composable
 fun LogViewPreview(){
-//    val list = listOf(
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFF1E5A9C),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFF9C27B0),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFF8BC34A),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFFE91E63),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFF009688),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFFFFEB3B),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFF00BCD4),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//        Asset(
-//            amount = 120.00,
-//            tokenName = "USDC",
-//            fiatAmount = 120.00,
-//            backgroundColor = Color(0xFFF44336),
-//            chainList = listOf(1,10,8453,42161),
-//            icon = R.drawable.usdc
-//
-//        ),
-//
-//        )
-    LogView(
 
-    )
 }
