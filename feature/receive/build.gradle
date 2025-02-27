@@ -2,7 +2,7 @@ plugins {
     alias libs.plugins.android.library
     alias libs.plugins.kotlin.android
     alias libs.plugins.hilt.android
-    alias libs.plugins.kotlin.kapt
+    alias libs.plugins.ksp
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -69,7 +69,7 @@ dependencies {
     implementation("com.google.zxing:core:3.5.1")
 
     implementation libs.hilt.android
-    kapt libs.hilt.compiler
+    ksp libs.hilt.compiler
     implementation libs.hilt.navigation.compose
 
     implementation libs.androidx.lifecycle.compose

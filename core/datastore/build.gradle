@@ -2,7 +2,7 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
 
-    alias libs.plugins.kotlin.kapt
+    alias libs.plugins.ksp
     alias libs.plugins.hilt.android
     alias libs.plugins.google.protobuf
 }
@@ -12,7 +12,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        minSdk 33
+        minSdk 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -35,6 +35,24 @@ android {
 
 // protobuf-protoc
 
+/*
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.0"
+
+        generateProtoTasks {
+            all().forEach { task ->
+                task.builtins {
+                    create("java") {
+                        option("lite")
+                    }
+                }
+            }
+        }
+    }
+}
+ */
+
 protobuf {
     protoc {
         artifact = libs.protobuf.protoc.get().toString()
@@ -53,6 +71,31 @@ protobuf {
     }
 }
 
+
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        // No need for afterEvaluate in many cases,
+        // but if you truly need it, keep it.
+        afterEvaluate {
+            def capName = variant.name.capitalize()
+
+            tasks.named("ksp${capName}Kotlin",
+                    org.jetbrains.kotlin.gradle.tasks.KotlinCompile)
+                    .configure { kspTask ->
+                        // Link the proto generation outputs:
+                        source(tasks.named("generate${capName}Proto").get().outputs)
+                        // or setSource(...) if you prefer:
+                        // setSource(tasks.named("generate${capName}Proto").get().outputs)
+                    }
+        }
+    }
+}
+
+ksp {
+    arg("allowDependentSymbolResolution", "true")
+}
+
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
@@ -66,7 +109,7 @@ dependencies {
     implementation libs.androidx.datastore.preferences
     implementation libs.androidx.datastore.proto
     implementation libs.hilt.android
-    kapt libs.hilt.compiler
+    ksp libs.hilt.compiler
     implementation libs.protobuf.kotlin.lite
 
 }

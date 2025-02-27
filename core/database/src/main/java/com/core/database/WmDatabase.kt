@@ -23,7 +23,8 @@ import com.core.database.util.RawContractConverter
         TokenBalanceEntity::class,
         ExchangeEntity::class
     ],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 
 @TypeConverters(

@@ -4,13 +4,14 @@
 androidGradlePlugin = "8.8.2"
 espressoCore = "3.5.1"
 hiltAndroid = "2.46.1"
-hiltWork = "1.0.0"
+hiltWork = "1.2.0"
 kotlin = "2.1.0"
-hilt = "2.46.1"
+hilt = "2.55"
+ksp = "2.1.0-1.0.29"
 material3 = "1.1.2"
 moshiVersion = "1.13.0"
 okhttp = "4.12.0"
-protobufPlugin = "0.9.1"
+protobufPlugin = "0.9.4"
 
 # libs
 ktx = "1.9.0"
@@ -21,10 +22,10 @@ junit-version = "4.13.2"
 espresso = "3.5.1"
 compose = "1.4.3"
 
-roomdb = "2.5.0"
+roomdb = "2.6.1"
 work = "2.8.1"
-hilt-jetpack = "1.0.0"
-datastore = "1.0.0"
+hilt-jetpack = "1.2.0"
+datastore = "1.1.3"
 retrofit2 = "2.9.0"
 compose-lifecycle = "2.6.2"
 compose-navigation = "2.7.6"
@@ -44,7 +45,7 @@ coil = "3.0.0"
 [plugins]
 android-application = {id = "com.android.application", version.ref = "androidGradlePlugin"}
 android-library = {id = "com.android.library", version.ref = "androidGradlePlugin"}
-
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-android = {id = "org.jetbrains.kotlin.android", version.ref = "kotlin"}
 kotlin-jvm = {id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
 hilt-android = {id = "com.google.dagger.hilt.android", version.ref = "hilt"}

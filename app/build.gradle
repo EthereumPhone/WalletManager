@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.dagger.hilt.android'
-    id 'kotlin-kapt'
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -48,6 +48,7 @@ dependencies {
     implementation project(path: ':core:model')
     implementation project(path: ':core:domain')
     implementation project(path: ':core:data')
+
     implementation project(path: ':core:designsystem')
     implementation project(path: ':workers:work')
     implementation project(path: ':feature:home')
@@ -126,9 +127,9 @@ dependencies {
     // Barcode Scanning
 
     implementation libs.hilt.android
-    kapt (libs.hilt.compiler)
+    ksp (libs.hilt.compiler)
 
-    kapt( libs.androidx.hilt.compiler )
+    ksp( libs.androidx.hilt.compiler )
 
     implementation libs.androidx.hilt.work
     implementation libs.androidx.work.runtime.ktx
