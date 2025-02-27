@@ -288,7 +288,7 @@ fun HomeScreen2(
 
                     }
                     is AssetsUiState.Success -> {
-//                        if(assetsUiState.assets.isNotEmpty()){
+                        if(assetsUiState.assets.isNotEmpty()){
                             IconButton(modifier = Modifier, onClick = navigateToSend) {
 
                                 Column(
@@ -316,7 +316,7 @@ fun HomeScreen2(
 
                             }
                             Spacer(modifier = Modifier.width(32.dp))
-//                        }
+                        }
 
                     }
                 }
