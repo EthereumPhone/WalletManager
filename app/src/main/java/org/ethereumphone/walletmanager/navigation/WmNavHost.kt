@@ -10,7 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.assets.navigation.assetDetailScreen
 import com.example.assets.navigation.assetGraph
+import com.example.assets.navigation.navigateToAsset
 import com.example.assets.navigation.navigateToAssetDetail
+import com.example.transactions.navigation.navigateToTransaction
 import com.example.transactions.navigation.navigateToTransactionDetail
 import com.example.transactions.navigation.transactionDetailScreen
 import com.example.transactions.navigation.transactionGraph
@@ -51,8 +53,8 @@ fun WmNavHost(
             navigateToSend = {
                 navController.navigateToSend()
             },
-            navigateToReceive = {
-                navController.navigateToReceive()
+            navigateToLog = {
+                navController.navigateToTransaction()
             },
             nestedGraphs = {
                 swapScreen(navController::popBackStack)
@@ -69,12 +71,8 @@ fun WmNavHost(
             }
         )
         transactionGraph(
-            navigateToTxDetail = navController::navigateToTransactionDetail,
-            nestedGraphs = {
-                transactionDetailScreen(
-                    onBackClick = navController::popBackStack
-                )
-            }
+            navigateBack = navController::popBackStack,
+
 
         )
     }

@@ -39,17 +39,19 @@ fun CardCarousel(
 
     // Ensure scrolling starts at the last item
     LaunchedEffect(Unit) {
-        val token = when(selectedTokenUiState){
-            is SelectedTokenUiState.Unselected -> {
-                assets.last()
-            }
+        if (assets.isNotEmpty()){
+            val token = when(selectedTokenUiState){
+                is SelectedTokenUiState.Unselected -> {
+                    assets.last()
+                }
 
-            is SelectedTokenUiState.Selected -> {
-                selectedTokenUiState.tokenAsset
+                is SelectedTokenUiState.Selected -> {
+                    selectedTokenUiState.tokenAsset
+                }
             }
+            val index = assets.indexOf(token)
+            listState.scrollToItem(index)
         }
-        val index = assets.indexOf(token)
-        listState.scrollToItem(index)
     }
 
 

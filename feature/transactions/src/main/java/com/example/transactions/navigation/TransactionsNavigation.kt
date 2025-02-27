@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.example.transactions.LogRoute
 import com.example.transactions.TransactionRoute
 
 const val transactionGraphRoutePattern = "transaction_graph"
@@ -15,18 +16,16 @@ fun NavController.navigateToTransaction(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.transactionGraph(
-    navigateToTxDetail: (String) -> Unit,
-    nestedGraphs: NavGraphBuilder.() -> Unit,
+    navigateBack: () -> Unit,
 ) {
     navigation(
         route = transactionGraphRoutePattern,
         startDestination = transactionRoute
     ) {
         composable(transactionRoute){
-            TransactionRoute(
-                navigateToTxDetail = navigateToTxDetail
+            LogRoute(
+                navigateBack = navigateBack
             )
         }
-        nestedGraphs()
     }
 }

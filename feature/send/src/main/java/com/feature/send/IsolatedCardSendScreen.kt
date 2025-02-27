@@ -206,7 +206,7 @@ fun SendScreen2(
                         disabledContainerColor = dgenGray,
                         disabledContentColor = dgenBlack
                     ),
-                    onClick = {  },
+                    onClick =  onBackClick,
                 ){
                     Icon(
                         modifier = Modifier.size(24.dp),

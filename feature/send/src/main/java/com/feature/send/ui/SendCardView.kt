@@ -93,7 +93,7 @@ fun SendCardView(
             modifier = Modifier
                 .size(400.dp)
                 .offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.globe_card),
+            painter = painterResource(R.drawable.placeholer_icon_5),
             contentDescription = "Ethereum"
         )
     }
@@ -356,7 +356,7 @@ fun ErrorCardView(){
             modifier = Modifier
                 .size(400.dp)
                 .offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.globe_card),
+            painter = painterResource(R.drawable.placeholer_icon_5),
             contentDescription = "Ethereum"
         )
     }

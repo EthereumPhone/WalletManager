@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
@@ -64,7 +66,7 @@ internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
-    navigateToReceive: () -> Unit,
+    navigateToLog: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
 
@@ -86,6 +88,7 @@ internal fun HomeRoute2(
         assetsUiState = assetsUiState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
+        navigateToLog = navigateToLog,
         selectedTokenUiState = selectedTokenUiState,
         setSelectedToken = sendViewModel::updateSelectedAsset,
 
@@ -100,6 +103,7 @@ fun HomeScreen2(
     assetsUiState: AssetsUiState,
     navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
+    navigateToLog: () -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     setSelectedToken: (TokenAsset) -> Unit,
     modifier: Modifier = Modifier,
@@ -136,14 +140,19 @@ fun HomeScreen2(
                                 modifier = Modifier.size(82.dp),
                                 contentScale = ContentScale.Crop,
                                 painter = painterResource(id = com.core.ui.R.drawable.no_assets),
-                                contentDescription = null
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(dgenTurqoise)
                             )
                             Text(
                                 text = "No assets",
-                                fontFamily = Fonts.INTER,
-                                color = Colors.GRAY,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Medium
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenTurqoise,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 24.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                )
                             )
                         }
                     }
@@ -164,7 +173,15 @@ fun HomeScreen2(
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(Colors.GRAY)
                             )
-                            Text(text = "Error", fontFamily = Fonts.INTER, color = Colors.GRAY, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "Error",
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenTurqoise,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 24.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                ))
 
                         }
                     }
@@ -180,17 +197,57 @@ fun HomeScreen2(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(text = "Loading...", fontFamily = Fonts.INTER, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "Loading...",
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenTurqoise,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 24.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                ))
                         }
                   }
                 }
                 is AssetsUiState.Success -> {
-                    CardCarousel(
-                        modifier = Modifier.padding(bottom = 24.dp),
-                        assets = assetsUiState.assets,
-                        selectedTokenUiState = selectedTokenUiState,
-                        setSelectedToken = setSelectedToken
-                    )
+                    if(assetsUiState.assets.isNotEmpty()){
+                        CardCarousel(
+                            modifier = Modifier.padding(bottom = 24.dp),
+                            assets = assetsUiState.assets,
+                            selectedTokenUiState = selectedTokenUiState,
+                            setSelectedToken = setSelectedToken
+                        )
+                    }else {
+                        Box(
+                            modifier = modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ){
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Image(
+                                    modifier = Modifier.size(82.dp),
+                                    contentScale = ContentScale.Fit,
+                                    painter = painterResource(id = R.drawable.wallet_icon),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(dgenTurqoise)
+                                )
+                                Text(
+                                    text = "No assets".uppercase(),
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 24.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                )
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -220,34 +277,51 @@ fun HomeScreen2(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                IconButton(modifier = Modifier, onClick = navigateToSend) {
+                when(assetsUiState){
+                    AssetsUiState.Empty -> {
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            modifier = Modifier.width(16.dp),
-                            painter = painterResource(R.drawable.baseline_arrow_outward_24),
-                            contentDescription = "Back",
-                            tint = dgenTurqoise
-                        )
-                        Text(
-                            text= "SEND",
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = dgenTurqoise,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
-                                lineHeight = 12.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None
-                            )
-                        )
                     }
+                    AssetsUiState.Error -> {
 
+                    }
+                    AssetsUiState.Loading -> {
+
+                    }
+                    is AssetsUiState.Success -> {
+//                        if(assetsUiState.assets.isNotEmpty()){
+                            IconButton(modifier = Modifier, onClick = navigateToSend) {
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.width(16.dp),
+                                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
+                                        contentDescription = "Back",
+                                        tint = dgenTurqoise
+                                    )
+                                    Text(
+                                        text= "SEND",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = dgenTurqoise,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 12.sp,
+                                            lineHeight = 12.sp,
+                                            letterSpacing = 0.sp,
+                                            textDecoration = TextDecoration.None
+                                        )
+                                    )
+                                }
+
+                            }
+                            Spacer(modifier = Modifier.width(32.dp))
+//                        }
+
+                    }
                 }
-                Spacer(modifier = Modifier.width(32.dp))
-                IconButton(modifier = Modifier, onClick = { /* TODO: Action */ }) {
+
+                IconButton(modifier = Modifier, onClick = navigateToLog) {
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally

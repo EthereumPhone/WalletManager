@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
@@ -106,24 +108,6 @@ fun LogScreen(
             when(transfersUIState){
                 is TransfersUiState.Loading -> {
 
-                        Column(
-                            modifier = modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-                            LoadingTransferListItem()
-
-
-                        }
-
                 }
                 is TransfersUiState.Success -> {
 
@@ -174,17 +158,20 @@ fun LogScreen(
                                 Image(
                                     modifier = Modifier.size(82.dp),
                                     contentScale = ContentScale.Fit,
-                                    painter = painterResource(id = com.core.ui.R.drawable.no_transfer),
+                                    painter = painterResource(id = R.drawable.baseline_swap_vert_24),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(Colors.GRAY)
+                                    colorFilter = ColorFilter.tint(dgenTurqoise)
                                 )
-                                Text(text = "No transfers",
-                                    fontFamily = PitagonsSans,
-                                    color = dgenGray,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
+                                Text(
+                                    text = "No transaction".uppercase(),
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 24.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
                                 )
 
                             }

@@ -97,12 +97,7 @@ fun WmApp(
         containerColor = background,
         //bottombar
         bottomBar = {
-            EthOSBottomBar(
-                destinations = listScreens,//all screens
-                onNavigateToDestination = appState::navigateToTopLevelDestination,
-                currentDestination = appState.currentDestination,
 
-                )
         },
 
         snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(horizontal = 12.dp, vertical = 24.dp))},

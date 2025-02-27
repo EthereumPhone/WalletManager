@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.feature.send.SendRoute
+import com.feature.send.SendRoute2
 
 const val sendRoute = "send_route"
 const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
@@ -44,7 +45,7 @@ fun NavGraphBuilder.sendScreen(
     ) { backStackEntry ->
         val address = backStackEntry.arguments?.getString("address")
 
-        SendRoute(
+        SendRoute2(
             onBackClick = {
                 if (!address.isNullOrEmpty()) {
                     // Navigate to the home screen explicitly if opened via a deep link
