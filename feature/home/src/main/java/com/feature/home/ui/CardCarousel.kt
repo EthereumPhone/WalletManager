@@ -38,6 +38,8 @@ fun CardCarousel(
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
 
 
+
+
     // Ensure scrolling starts at the last item
     LaunchedEffect(Unit) {
 
@@ -58,19 +60,23 @@ fun CardCarousel(
     }
 
 
+
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
             .zIndex(3f),
-        verticalArrangement = Arrangement.spacedBy((-240).dp), // Overlapping effect
-        contentPadding = PaddingValues(top = 60.dp, bottom =40.dp) // Ensures enough space for scrolling
+        verticalArrangement = Arrangement.spacedBy((-225).dp), // Overlapping effect
+        contentPadding = PaddingValues(top = 100.dp, bottom = 100.dp) // Ensures enough space for scrolling
     ) {
         itemsIndexed(assets) { index, item ->
+            Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name }")
 
-            Log.d("TokenID", "$index - ${ item.name } - ${ item.address }")
+            Log.d("SendID", "Token: $index - ${ item.name } - ${ item.address }")
+
             val scrollOffset = listState.firstVisibleItemIndex + listState.firstVisibleItemScrollOffset / 1000f
-            val relativeIndex = index - scrollOffset
+            val relativeIndex = (index - scrollOffset).coerceIn(-2f, 2f) // Keep relative index in a reasonable range
+
 
             // Animated values
 
@@ -86,16 +92,16 @@ fun CardCarousel(
             )
 
             val frontCardTranslation by animateFloatAsState(
-                targetValue = lerp(0f, 1000f, (relativeIndex).coerceIn(0f, 1f)),
+                targetValue = lerp(0f, 800f, (relativeIndex / 2).coerceIn(0f, 1f)), // Reduced translation range
                 animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
             )
 
 
             // Detect the front card
             LaunchedEffect(scaleFactor) {
-                if (scaleFactor >= 0.79f) { // Check if the card is closest to the target scale
+                if (scaleFactor >= 0.69f) { // Check if the card is closest to the target scale
                     setSelectedToken(item.address)
-                    Log.d("SetToken", item.address)
+                    Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name } - ${ item.chainId }")
                 }
             }
 
@@ -107,14 +113,16 @@ fun CardCarousel(
                         scaleX = scaleFactor
                         scaleY = scaleFactor
                         alpha = alphaFactor
-                        rotationX = -10f
+                        rotationX = -5f
                         translationY = frontCardTranslation
                     }
                 ,
                 frontSide = {
+
+                    val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
                     IdleView(
                         amount = item.balance,
-                        tokenName = item.name,
+                        tokenName = tokenName,
                         fiatAmount = item.balance,
                         icon = item.logoUrl
                     )

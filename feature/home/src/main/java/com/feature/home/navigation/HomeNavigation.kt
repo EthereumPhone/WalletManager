@@ -19,7 +19,7 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 
 fun NavGraphBuilder.homeGraph(
     navigateToSwap: () -> Unit,
-    navigateToSend: (String) -> Unit,
+    navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {

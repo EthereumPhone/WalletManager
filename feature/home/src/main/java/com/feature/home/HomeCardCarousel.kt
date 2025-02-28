@@ -68,7 +68,7 @@ import org.ethosmobile.components.library.theme.Fonts
 internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
-    navigateToSend: (String) -> Unit,
+    navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
@@ -110,7 +110,7 @@ fun HomeScreen2(
     userData: WalletDataUiState,
     assetsUiState: AssetsUiState,
     navigateToSwap: () -> Unit,
-    navigateToSend: (String) -> Unit,
+    navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     setSelectedToken: (TokenAsset) -> Unit,
@@ -312,8 +312,8 @@ fun HomeScreen2(
                             IconButton(modifier = Modifier, onClick = {
 
                                 Log.d("SendID","Home ${selectedTokenId.value} ")
-                                Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
-                                navigateToSend(selectedTokenId.value)
+                                //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
+                                navigateToSend(selectedTokenId.value,selectedTokenId.value)
                             }) {
 
                                 Column(

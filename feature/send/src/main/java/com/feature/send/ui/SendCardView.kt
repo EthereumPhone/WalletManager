@@ -72,9 +72,12 @@ fun SendCardView(
     var validSendAddress by remember { mutableStateOf(false) }
 
 
+
     val cursorVisible = remember { mutableStateOf(true) }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
+    var amountCard by remember { mutableStateOf("") }
+    var toAddressCard by remember { mutableStateOf("") }
 
 
     // Create a blinking effect
@@ -93,7 +96,7 @@ fun SendCardView(
             modifier = Modifier
                 .size(400.dp)
                 .offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.placeholer_icon_5),
+            painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
     }
@@ -140,7 +143,7 @@ fun SendCardView(
             Box(
                 modifier = Modifier.weight(1f)
             ){
-                if (amount.isEmpty()){
+                if (amountCard.isEmpty()){
                     Text(
                         modifier = Modifier.alpha(0.5f),
                         text = "0.0",
@@ -164,8 +167,8 @@ fun SendCardView(
                             textLayoutResult?.let { layoutResult ->
                                 if (cursorVisible.value) {
                                     // Get last character position (if text is not empty)
-                                    val cursorOffset = if (amount.isNotEmpty()) {
-                                        val lastCharIndex = amount.length - 1
+                                    val cursorOffset = if (amountCard.isNotEmpty()) {
+                                        val lastCharIndex = amountCard.length - 1
                                         val cursorRect = layoutResult.getBoundingBox(lastCharIndex)
                                         cursorRect
                                     } else {
@@ -193,11 +196,12 @@ fun SendCardView(
                                 }
                             }
                         },
-                    value = amount,
+                    value = amountCard,
                     onValueChange = { text ->
                         if (text.isEmpty() || text == "." || text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
                             // If it's a valid format or empty, call onAmountChange with the text
                             onAmountChange(text)
+                            amountCard = text
                         }
                     },
                     cursorBrush = SolidColor(Color.Transparent), // Hide default cursor
@@ -232,7 +236,7 @@ fun SendCardView(
             Box(
                 modifier = Modifier.weight(1f)
             ){
-                if (toAddress.isEmpty()){
+                if (toAddressCard.isEmpty()){
                     Text(
                         modifier = Modifier.alpha(0.5f),
                         text = "Address",
@@ -251,10 +255,11 @@ fun SendCardView(
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth()
                     ,
-                    value = toAddress,
+                    value = toAddressCard,
                     onValueChange = {
 
                         onAddressChange(it)
+                        toAddressCard = it
                         CompletableFuture.runAsync {
                             if (it.endsWith(".eth")) {
                                 if (ENSName(it.lowercase()).isPotentialENSDomain()) {
@@ -356,7 +361,7 @@ fun ErrorCardView(){
             modifier = Modifier
                 .size(400.dp)
                 .offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.placeholer_icon_5),
+            painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
     }

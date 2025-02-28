@@ -12,12 +12,18 @@ import androidx.navigation.navDeepLink
 import com.feature.send.SendRoute
 import com.feature.send.SendRoute2
 
-const val sendRoute = "send_route"
+const val sendRoute = "send_route?address={address}&tokenId={tokenId}"
 const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
 
 
-fun NavController.navigateToSend(address: String? = null) {
-    this.navigate(sendRoute) {
+fun NavController.navigateToSend(
+    address: String = "",
+    tokenId: String = "",
+) {
+
+    val route = "send_route?address=$address&tokenId=$tokenId"
+
+    this.navigate(route) {
         popUpTo("home_route") {
             inclusive = false
         }
@@ -40,10 +46,15 @@ fun NavGraphBuilder.sendScreen(
             navArgument("address") {
                 type = NavType.StringType
                 defaultValue = ""
+            },
+            navArgument("tokenId") {
+                type = NavType.StringType
+                defaultValue = ""
             }
         )
     ) { backStackEntry ->
         val address = backStackEntry.arguments?.getString("address")
+        val tokenId = backStackEntry.arguments?.getString("tokenId")
 
         SendRoute2(
             onBackClick = {
@@ -54,7 +65,8 @@ fun NavGraphBuilder.sendScreen(
                     onBackClick()
                 }
             },
-            initialAddress = address?: ""
+            initialAddress = address,
+            tokenId = tokenId
         )
     }
 }

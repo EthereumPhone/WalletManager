@@ -52,7 +52,7 @@ fun SendRoute2(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     initialAddress: String?,
-    tokenAsset: TokenAsset? = null,
+    tokenId: String?,
     viewModel: SendViewModel = hiltViewModel(),
 
 ) {
@@ -65,7 +65,7 @@ fun SendRoute2(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
-
+    //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
 
     SendScreen2(
@@ -82,8 +82,7 @@ fun SendRoute2(
         onToAddressChanged= viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         txComplete = txComplete,
-        tokenAsset = tokenAsset,
-        selectedTokenId = selectedTokenId
+        tokenId = tokenId
 
     )
 }
@@ -102,8 +101,7 @@ fun SendScreen2(
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     initialAddress: String?,
-    tokenAsset: TokenAsset?,
-    selectedTokenId: State<String>,
+    tokenId: String?,
 ){
 
     var rotated by remember { mutableStateOf(false) }
@@ -122,7 +120,7 @@ fun SendScreen2(
     )
     var translateY by remember { mutableStateOf(0f) }
 
-    Log.d("SendID","S${selectedTokenId.value} ")
+    Log.d("SendID","tokenId: ${tokenId} ")
 
 
 
@@ -156,20 +154,20 @@ fun SendScreen2(
                     when(assets){
 
                         AssetUiState.Empty -> {
-                            ErrorCardView()
+//                            ErrorCardView()
                         }
                         AssetUiState.Error -> {
                             ErrorCardView()
                         }
                         AssetUiState.Loading -> {
-                            ErrorCardView()
+//                            ErrorCardView()
                         }
                         is AssetUiState.Success -> {
                             val token = assets.assets.firstOrNull {
                                 it.address.equals(initialAddress, ignoreCase = true)
                             }
 
-                                Log.d("SendID","-${initialAddress} ")
+                                Log.d("SendID","add- ${initialAddress}")
                             if(token == null){
                                 Log.d("SendID","token null ")
                             }
@@ -261,7 +259,7 @@ fun SendScreen2(
                             }
                             is AssetUiState.Success -> {
                                 val token = assets.assets.firstOrNull {
-                                    it.address.equals(selectedTokenId.value, ignoreCase = true)
+                                    it.address.equals(tokenId, ignoreCase = true)
                                 }
                                 if (token != null) {
                                     if(amount.toDouble() < token.balance) {

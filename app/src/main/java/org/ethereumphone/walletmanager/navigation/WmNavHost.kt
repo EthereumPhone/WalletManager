@@ -50,8 +50,8 @@ fun WmNavHost(
             navigateToSwap = {
                 navController.navigateToSwap()
             },
-            navigateToSend = {
-                navController.navigateToSend()
+            navigateToSend = { address, tokenId ->
+                navController.navigateToSend(address= address, tokenId =tokenId)
             },
             navigateToLog = {
                 navController.navigateToTransaction()

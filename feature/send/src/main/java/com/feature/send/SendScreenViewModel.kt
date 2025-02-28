@@ -169,6 +169,13 @@ class SendViewModel @Inject constructor(
         }
     }
 
+    // 1) Get the itemId directly as a value:
+//    val tokenId: String = savedStateHandle["tokenId"] ?: ""
+
+    // OR 2) Expose it as a StateFlow:
+     val tokenIdFlow: StateFlow<String> =
+         savedStateHandle.getStateFlow("itemId", "")
+
 
     //Contacts
     @SuppressLint("Range")

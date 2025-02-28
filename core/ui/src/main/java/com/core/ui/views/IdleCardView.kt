@@ -55,8 +55,8 @@ fun IdleView(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            modifier = Modifier.size(400.dp).offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.placeholer_icon_5),
+            modifier = Modifier.size(400.dp).offset(x = 125.dp, y = 50.dp),
+            painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
     }
@@ -78,24 +78,17 @@ fun IdleView(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
 
-//                if (icon != null){
-//                    AsyncImage(
-//                        modifier = Modifier.size(40.dp),
-//                        model = icon,
-//                        contentDescription = "Ethereum"
-//                    )
-//                } else {
                     Image(
                         modifier = Modifier
                             .padding(bottom = 2.dp)
-                            .size(40.dp),
+                            .size(32.dp),
                         painter = painterResource(R.drawable.placeholer_icon_5),
                         contentDescription = "Ethereum"
                     )
 //                }
 
                 Text(
-                    text = tokenName,
+                    text = tokenName.uppercase(),
                     style = TextStyle(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
