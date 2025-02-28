@@ -40,6 +40,8 @@ fasterxml = "2.12.5"
 material = "1.10.0"
 coil = "3.0.0"
 
+kotlinxSerializationJson = "1.7.3"
+
 
 
 [plugins]
@@ -52,6 +54,7 @@ hilt-android = {id = "com.google.dagger.hilt.android", version.ref = "hilt"}
 kotlin-kapt = {id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin"}
 google-protobuf = {id = "com.google.protobuf", version.ref = "protobufPlugin"}
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 
 
@@ -136,5 +139,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
+#serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 [bundles]

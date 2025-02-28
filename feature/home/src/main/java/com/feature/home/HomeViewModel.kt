@@ -1,5 +1,6 @@
 package com.feature.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.ExchangeRepository
@@ -39,8 +40,10 @@ class HomeViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val coinbaseExchangeRepository: ExchangeRepository,
-    private val walletSDK: WalletSDK
+    private val walletSDK: WalletSDK,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
+
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
@@ -157,6 +160,9 @@ class HomeViewModel @Inject constructor(
             userDataRepository.setWalletNetwork(network.toString())
         }
     }
+
+    // We’ll store our user input in the SavedStateHandle under a certain key
+
 }
 
 sealed interface AssetsUiState {

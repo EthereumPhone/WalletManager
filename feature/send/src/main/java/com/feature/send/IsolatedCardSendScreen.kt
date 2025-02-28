@@ -1,5 +1,6 @@
 package com.feature.send
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -17,6 +18,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
 import com.core.ui.Card
 import com.feature.send.ui.ErrorCardView
 import com.feature.send.ui.SendCardView
@@ -48,7 +52,9 @@ fun SendRoute2(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     initialAddress: String?,
-    viewModel: SendViewModel = hiltViewModel()
+    tokenAsset: TokenAsset? = null,
+    viewModel: SendViewModel = hiltViewModel(),
+
 ) {
     val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
     val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
@@ -57,6 +63,8 @@ fun SendRoute2(
     val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
+
+    val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
 
 
 
@@ -74,6 +82,8 @@ fun SendRoute2(
         onToAddressChanged= viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         txComplete = txComplete,
+        tokenAsset = tokenAsset,
+        selectedTokenId = selectedTokenId
 
     )
 }
@@ -92,14 +102,9 @@ fun SendScreen2(
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     initialAddress: String?,
+    tokenAsset: TokenAsset?,
+    selectedTokenId: State<String>,
 ){
-
-    val tokenBalance = when(selectedToken) {
-        is SelectedTokenUiState.Unselected -> { 0.0 }
-        is SelectedTokenUiState.Selected -> {
-            selectedToken.tokenAsset.balance
-        }
-    }
 
     var rotated by remember { mutableStateOf(false) }
 
@@ -117,7 +122,7 @@ fun SendScreen2(
     )
     var translateY by remember { mutableStateOf(0f) }
 
-
+    Log.d("SendID","S${selectedTokenId.value} ")
 
 
 
@@ -147,19 +152,38 @@ fun SendScreen2(
                         cameraDistance = 12f * density
                     },
                 frontSide = {
-                    when(selectedToken){
-                        is SelectedTokenUiState.Selected -> {
-                            SendCardView(
-                                amount = amount,
-                                toAddress = toAddress,
-                                maxamount = selectedToken.tokenAsset.balance,
-                                tokenName = selectedToken.tokenAsset.symbol,
-                                onAddressChange = onAmountChange,
-                                onAmountChange = onToAddressChanged
-                            )
-                        }
-                        SelectedTokenUiState.Unselected -> {
+
+                    when(assets){
+
+                        AssetUiState.Empty -> {
                             ErrorCardView()
+                        }
+                        AssetUiState.Error -> {
+                            ErrorCardView()
+                        }
+                        AssetUiState.Loading -> {
+                            ErrorCardView()
+                        }
+                        is AssetUiState.Success -> {
+                            val token = assets.assets.firstOrNull {
+                                it.address.equals(initialAddress, ignoreCase = true)
+                            }
+
+                                Log.d("SendID","-${initialAddress} ")
+                            if(token == null){
+                                Log.d("SendID","token null ")
+                            }
+
+                            if (token != null) {
+                                SendCardView(
+                                    amount = amount,
+                                    toAddress = toAddress,
+                                    maxamount = token.balance,
+                                    tokenName = token.symbol,
+                                    onAddressChange = onAmountChange,
+                                    onAmountChange = onToAddressChanged
+                                )
+                            }
                         }
                     }
 
@@ -224,11 +248,31 @@ fun SendScreen2(
                         disabledContentColor = dgenBlack
                     ),
                     onClick = {
-                        if(amount.toDouble() < tokenBalance) {
-                            sendTransaction {
-                                onBackClick()
+                        when(assets){
+
+                            AssetUiState.Empty -> {
+
+                            }
+                            AssetUiState.Error -> {
+
+                            }
+                            AssetUiState.Loading -> {
+
+                            }
+                            is AssetUiState.Success -> {
+                                val token = assets.assets.firstOrNull {
+                                    it.address.equals(selectedTokenId.value, ignoreCase = true)
+                                }
+                                if (token != null) {
+                                    if(amount.toDouble() < token.balance) {
+                                        sendTransaction {
+                                            onBackClick()
+                                        }
+                                    }
+                                }
                             }
                         }
+
                     },
                 ){
                     Icon(

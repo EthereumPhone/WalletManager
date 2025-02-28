@@ -4,6 +4,7 @@ plugins {
     alias libs.plugins.hilt.android
     alias libs.plugins.ksp
     alias(libs.plugins.kotlin.compose)
+    id("kotlinx-serialization")
 }
 
 android {
@@ -106,5 +107,8 @@ dependencies {
     implementation "com.google.accompanist:accompanist-permissions:0.32.0"
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'//36e645b378'//4f74da5c62
+
+    implementation(libs.kotlinx.serialization.json)
+
 
 }

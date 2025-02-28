@@ -89,6 +89,24 @@ class SendViewModel @Inject constructor(
     val contacts: Flow<List<Contact>> = _contacts
 
 
+    companion object {
+        private const val SELECTED_TOKEN_ID = "selected_token"
+    }
+
+    // Use a StateFlow, MutableStateFlow, LiveData, or mutableStateOf as desired
+    private val _selectedTokenIdFlow = MutableStateFlow(
+        // Retrieve the initial value from the SavedStateHandle (or default)
+        savedStateHandle.get<String>(SELECTED_TOKEN_ID) ?: ""
+    )
+    val selectedTokenIdFlow = _selectedTokenIdFlow.asStateFlow()
+
+    /**
+     * Update the user input in both the in-memory Flow and the SavedStateHandle
+     */
+    fun updateSelectedTokenId(newValue: String) {
+        _selectedTokenIdFlow.value = newValue
+        savedStateHandle[SELECTED_TOKEN_ID] = newValue
+    }
 
 
     fun send(callback: () -> Unit) {

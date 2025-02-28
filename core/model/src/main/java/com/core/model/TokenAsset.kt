@@ -1,5 +1,7 @@
 package com.core.model
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class TokenAsset(
     val address: String,
     val chainId: Int,

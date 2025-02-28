@@ -7,9 +7,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.feature.home.HomeRoute
 import com.feature.home.HomeRoute2
+import kotlinx.serialization.Serializable
 
 const val homeGraphRoutePattern = "home_graph"
 const val homeRoute = "home_route"
+
 
 fun NavController.navigateToHome(navOptions: NavOptions? = null) {
     this.navigate(homeGraphRoutePattern, navOptions)
@@ -17,7 +19,7 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 
 fun NavGraphBuilder.homeGraph(
     navigateToSwap: () -> Unit,
-    navigateToSend: () -> Unit,
+    navigateToSend: (String) -> Unit,
     navigateToLog: () -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {

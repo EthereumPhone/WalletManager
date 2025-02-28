@@ -27,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
 import com.example.dgenlibrary.ui.theme.PitagonsSans
@@ -65,7 +68,7 @@ import org.ethosmobile.components.library.theme.Fonts
 internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
-    navigateToSend: () -> Unit,
+    navigateToSend: (String) -> Unit,
     navigateToLog: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
@@ -74,6 +77,8 @@ internal fun HomeRoute2(
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedTokenUiState: SelectedTokenUiState by sendViewModel.selectedAssetUiState.collectAsStateWithLifecycle()
+
+    val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
     var updater by remember { mutableStateOf(true) }
 
@@ -91,6 +96,9 @@ internal fun HomeRoute2(
         navigateToLog = navigateToLog,
         selectedTokenUiState = selectedTokenUiState,
         setSelectedToken = sendViewModel::updateSelectedAsset,
+        selectedTokenId = selectedTokenId,
+        setSelectedTokenId = sendViewModel::updateSelectedTokenId
+
 
     )
 }
@@ -102,12 +110,17 @@ fun HomeScreen2(
     userData: WalletDataUiState,
     assetsUiState: AssetsUiState,
     navigateToSwap: () -> Unit,
-    navigateToSend: () -> Unit,
+    navigateToSend: (String) -> Unit,
     navigateToLog: () -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     setSelectedToken: (TokenAsset) -> Unit,
+    selectedTokenId: State<String>,
+    setSelectedTokenId: (String) -> Unit,
+
     modifier: Modifier = Modifier,
 ) {
+
+
 
     val context = LocalContext.current
     Box (
@@ -127,6 +140,7 @@ fun HomeScreen2(
 
             when(assetsUiState){
                 AssetsUiState.Empty -> {
+                    Log.d("Assets", "Assets is Empty")
 
                     Box(
                         modifier = modifier.fillMaxSize(),
@@ -138,13 +152,13 @@ fun HomeScreen2(
                         ) {
                             Image(
                                 modifier = Modifier.size(82.dp),
-                                contentScale = ContentScale.Crop,
-                                painter = painterResource(id = com.core.ui.R.drawable.no_assets),
+                                contentScale = ContentScale.Fit,
+                                painter = painterResource(id = R.drawable.wallet_icon),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(dgenTurqoise)
                             )
                             Text(
-                                text = "No assets",
+                                text = "No assets".uppercase(),
                                 style = TextStyle(
                                     fontFamily = SpaceMono,
                                     color = dgenTurqoise,
@@ -158,6 +172,8 @@ fun HomeScreen2(
                     }
                 }
                 AssetsUiState.Error -> {
+                    Log.d("Assets", "Assets Error")
+
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -187,6 +203,7 @@ fun HomeScreen2(
                     }
                 }
                 AssetsUiState.Loading -> {
+                    Log.d("Assets", "Assets is loading")
 
                     Box(
                         modifier = modifier.fillMaxSize(),
@@ -210,14 +227,17 @@ fun HomeScreen2(
                   }
                 }
                 is AssetsUiState.Success -> {
+                    Log.d("Assets", assetsUiState.assets.toString())
                     if(assetsUiState.assets.isNotEmpty()){
+                        Log.d("Assets", "Assets is not Empty")
                         CardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
                             selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedToken
+                            setSelectedToken = setSelectedTokenId
                         )
                     }else {
+                        Log.d("Assets", "Assets Size ${assetsUiState.assets.size}")
                         Box(
                             modifier = modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -234,7 +254,7 @@ fun HomeScreen2(
                                     colorFilter = ColorFilter.tint(dgenTurqoise)
                                 )
                                 Text(
-                                    text = "No assets".uppercase(),
+                                    text = "Assets Size ${assetsUiState.assets.size}".uppercase(),
                                     style = TextStyle(
                                         fontFamily = SpaceMono,
                                         color = dgenTurqoise,
@@ -289,7 +309,12 @@ fun HomeScreen2(
                     }
                     is AssetsUiState.Success -> {
                         if(assetsUiState.assets.isNotEmpty()){
-                            IconButton(modifier = Modifier, onClick = navigateToSend) {
+                            IconButton(modifier = Modifier, onClick = {
+
+                                Log.d("SendID","Home ${selectedTokenId.value} ")
+                                Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
+                                navigateToSend(selectedTokenId.value)
+                            }) {
 
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally

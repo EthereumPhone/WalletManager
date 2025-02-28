@@ -1,6 +1,7 @@
 package com.feature.home.ui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -31,7 +32,7 @@ import kotlin.math.abs
 fun CardCarousel(
     assets: List<TokenAsset>,
     selectedTokenUiState: SelectedTokenUiState,
-    setSelectedToken: (TokenAsset) -> Unit,
+    setSelectedToken: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
@@ -39,6 +40,7 @@ fun CardCarousel(
 
     // Ensure scrolling starts at the last item
     LaunchedEffect(Unit) {
+
         if (assets.isNotEmpty()){
             val token = when(selectedTokenUiState){
                 is SelectedTokenUiState.Unselected -> {
@@ -51,17 +53,22 @@ fun CardCarousel(
             }
             val index = assets.indexOf(token)
             listState.scrollToItem(index)
+            //setSelectedToken(token)
         }
     }
 
 
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxSize().zIndex(3f),
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(3f),
         verticalArrangement = Arrangement.spacedBy((-240).dp), // Overlapping effect
         contentPadding = PaddingValues(top = 60.dp, bottom =40.dp) // Ensures enough space for scrolling
     ) {
         itemsIndexed(assets) { index, item ->
+
+            Log.d("TokenID", "$index - ${ item.name } - ${ item.address }")
             val scrollOffset = listState.firstVisibleItemIndex + listState.firstVisibleItemScrollOffset / 1000f
             val relativeIndex = index - scrollOffset
 
@@ -87,7 +94,8 @@ fun CardCarousel(
             // Detect the front card
             LaunchedEffect(scaleFactor) {
                 if (scaleFactor >= 0.79f) { // Check if the card is closest to the target scale
-                    setSelectedToken(item)
+                    setSelectedToken(item.address)
+                    Log.d("SetToken", item.address)
                 }
             }
 
