@@ -25,6 +25,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -32,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,8 +63,11 @@ import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
+import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
+import org.ethosmobile.components.library.utils.SnackbarState
+import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -70,6 +77,7 @@ internal fun HomeRoute2(
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
+    isOffline: Boolean,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
 
@@ -95,9 +103,9 @@ internal fun HomeRoute2(
         navigateToSend = navigateToSend,
         navigateToLog = navigateToLog,
         selectedTokenUiState = selectedTokenUiState,
-        setSelectedToken = sendViewModel::updateSelectedAsset,
         selectedTokenId = selectedTokenId,
-        setSelectedTokenId = sendViewModel::updateSelectedTokenId
+        setSelectedTokenId = sendViewModel::updateSelectedTokenId,
+        isOffline = isOffline
 
 
     )
@@ -113,14 +121,16 @@ fun HomeScreen2(
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
-    setSelectedToken: (TokenAsset) -> Unit,
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
+    isOffline: Boolean,
 
     modifier: Modifier = Modifier,
 ) {
 
-
+    val scope = rememberCoroutineScope()
+    val hostState = remember { SnackbarHostState() }
+    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
     val context = LocalContext.current
     Box (
@@ -140,8 +150,6 @@ fun HomeScreen2(
 
             when(assetsUiState){
                 AssetsUiState.Empty -> {
-                    Log.d("Assets", "Assets is Empty")
-
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -254,7 +262,7 @@ fun HomeScreen2(
                                     colorFilter = ColorFilter.tint(dgenTurqoise)
                                 )
                                 Text(
-                                    text = "Assets Size ${assetsUiState.assets.size}".uppercase(),
+                                    text = "No Assets".uppercase(),
                                     style = TextStyle(
                                         fontFamily = SpaceMono,
                                         color = dgenTurqoise,
@@ -311,9 +319,22 @@ fun HomeScreen2(
                         if(assetsUiState.assets.isNotEmpty()){
                             IconButton(modifier = Modifier, onClick = {
 
-                                Log.d("SendID","Home ${selectedTokenId.value} ")
-                                //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
-                                navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                                if (isOffline){
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            state = SnackbarState.ERROR,
+                                            message = "You are offline!",
+                                            actionLabel = "UNDO",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                } else {
+                                    Log.d("SendID","Home ${selectedTokenId.value} ")
+                                    //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
+                                    navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                                }
+
+
                             }) {
 
                                 Column(
@@ -346,7 +367,20 @@ fun HomeScreen2(
                     }
                 }
 
-                IconButton(modifier = Modifier, onClick = navigateToLog) {
+                IconButton(modifier = Modifier, onClick = {
+                    if (isOffline){
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                state = SnackbarState.ERROR,
+                                message = "You are offline!",
+                                actionLabel = "UNDO",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        navigateToLog()
+                    }
+                }) {
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally

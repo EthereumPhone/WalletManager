@@ -18,6 +18,7 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.homeGraph(
+    isOffline: Boolean,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
@@ -29,6 +30,7 @@ fun NavGraphBuilder.homeGraph(
     ) {
         composable(route = homeRoute) {
             HomeRoute2(
+                isOffline = isOffline,
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,
                 navigateToLog = navigateToLog

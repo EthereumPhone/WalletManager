@@ -36,6 +36,7 @@ fun WmNavHost(
     startDestination: String = homeGraphRoutePattern,
 ) {
     val navController = appState.navController
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -47,6 +48,7 @@ fun WmNavHost(
     ) {
 
         homeGraph(
+            isOffline = appState.isOffline.value,
             navigateToSwap = {
                 navController.navigateToSwap()
             },

@@ -94,75 +94,17 @@ fun WmApp(
     val listScreens = listOf(Screen.Home,Screen.Assets,Screen.Transaction)
 
     Scaffold(
+        snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 80.dp))},
         containerColor = background,
-        //bottombar
-        bottomBar = {
-
-        },
-
-        snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(horizontal = 12.dp, vertical = 24.dp))},
     ) { paddingValues ->
         WmNavHost(
             appState = appState,
             modifier = Modifier.padding(paddingValues),
         )
-
-        if(showSheet) {
-            ModalBottomSheet(
-                onDismissRequest = {
-                    scope.launch {
-                        transactionSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!transactionSheetState.isVisible) {
-                            showSheet = false
-                            appState.restoreState()
-                        }
-                    }
-                },
-                sheetState = transactionSheetState,
-                containerColor = Color.Black,
-                contentColor = Color.White
-            ) {
-                PendingTransactionStateUi(transactionHash = currentTransferHash, transactionChainId = currentTransferChainId)
-            }
-        }
     }
 }
 
 
-@Composable
-private fun EthOSBottomBar(
-    destinations: List<Screen>,
-    onNavigateToDestination: (Screen) -> Unit,
-    currentDestination: NavDestination?,
-    modifier: Modifier = Modifier,
-) {
-
-    BottomNavigation (
-        modifier = modifier,
-        backgroundColor = Color.Black,
-        contentColor = Color.White
-    ){
-
-        destinations.forEach { destination ->
-            val selected = currentDestination.isTopLevelDestinationInHierarchy(destination)
-            BottomNavigationItem(
-                icon = {
-                    Icon(
-                        destination.icon,
-                        contentDescription = null,
-                        tint = if (selected) Color.White else secondary
-                    )
-                       },
-                label = { Text(destination.label, color = if (selected) Color.White else secondary) },
-                selected = selected,
-                selectedContentColor = Color.White,
-                unselectedContentColor = Color(0xFF9FA2A5),
-                onClick = { onNavigateToDestination(destination) }
-            )
-        }
-    }
-}
 
 private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: Screen) =
     this?.hierarchy?.any {

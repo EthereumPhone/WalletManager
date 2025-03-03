@@ -163,7 +163,7 @@ fun LogScreen(
                                     colorFilter = ColorFilter.tint(dgenTurqoise)
                                 )
                                 Text(
-                                    text = "No transaction".uppercase(),
+                                    text = "No transactions".uppercase(),
                                     style = TextStyle(
                                         fontFamily = SpaceMono,
                                         color = dgenTurqoise,
