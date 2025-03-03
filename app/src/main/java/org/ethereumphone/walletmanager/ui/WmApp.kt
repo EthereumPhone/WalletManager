@@ -94,8 +94,7 @@ fun WmApp(
     val listScreens = listOf(Screen.Home,Screen.Assets,Screen.Transaction)
 
     Scaffold(
-        snackbarHost = {ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 80.dp))},
-        containerColor = background,
+       containerColor = background,
     ) { paddingValues ->
         WmNavHost(
             appState = appState,

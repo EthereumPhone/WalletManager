@@ -64,6 +64,7 @@ import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
 import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.utils.SnackbarState
@@ -464,6 +465,9 @@ fun HomeScreen2(
 
             }
         }
+
+        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 80.dp))
+
     }
 
 }
