@@ -1,6 +1,7 @@
 package com.core.data.di
 
 import android.content.Context
+import android.os.Build
 import com.core.data.remote.CoinbaseTokenExchangeApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
@@ -22,6 +23,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.bouncycastle.util.Fingerprint
 import org.ethereumphone.walletsdk.WalletSDK
 import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
 import org.web3j.protocol.Web3j
@@ -56,8 +58,12 @@ object DataModule {
     @Provides
     fun providesWalletSdk(
         @ApplicationContext appContext: Context
-    ): WalletSDK {
-        return WalletSDK(appContext, bundlerRPCUrl = chainIdToBundler(1))
+    ): WalletSDK? {
+        return if (isEmulator) {
+            null
+        } else {
+            WalletSDK(appContext, bundlerRPCUrl = chainIdToBundler(1))
+        }
     }
 
     @Singleton
@@ -156,16 +162,20 @@ object DataModule {
     @Provides
     fun provideUniSwapApi(
         @ApplicationContext context: Context,
-        walletSDK: WalletSDK,
+        walletSDK: WalletSDK?,
         web3j: Web3j,
         uniswapRoutingSDK: UniswapRoutingSDK
-    ): UniswapApi {
-        return UniswapApi(
-            walletSDK,
-            web3j,
-            uniswapRoutingSDK,
-            context
-        )
+    ): UniswapApi? {
+        return if (walletSDK == null) {
+            null
+        } else {
+            UniswapApi(
+                walletSDK,
+                web3j,
+                uniswapRoutingSDK,
+                context
+            )
+        }
     }
 
     @Singleton
@@ -183,7 +193,24 @@ object DataModule {
     }
 
 
-
+    private val isEmulator: Boolean
+        get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.PRODUCT.contains("sdk_google")
+                || Build.PRODUCT.contains("google_sdk")
+                || Build.PRODUCT.contains("sdk")
+                || Build.PRODUCT.contains("sdk_x86")
+                || Build.PRODUCT.contains("sdk_gphone64_arm64")
+                || Build.PRODUCT.contains("vbox86p")
+                || Build.PRODUCT.contains("emulator")
+                || Build.PRODUCT.contains("simulator")
 
 
 }

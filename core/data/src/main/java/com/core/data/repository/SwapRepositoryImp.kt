@@ -24,7 +24,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class SwapRepositoryImp @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
-    private val uniswapApi: UniswapApi,
+    private val uniswapApi: UniswapApi?,
 ): SwapRepository {
 
     override suspend fun getQuote(
@@ -50,13 +50,13 @@ class SwapRepositoryImp @Inject constructor(
         }
 
         return withContext(Dispatchers.IO) {
-            uniswapApi.getQuote(
+            uniswapApi?.getQuote(
                 inputToken,
                 outputToken,
                 amount,
                 receiverAddress,
                 chainId
-            )
+            ) ?: 0.0
         }
     }
 
@@ -105,11 +105,11 @@ class SwapRepositoryImp @Inject constructor(
             }
         }
 
-        uniswapApi.swap(
+        uniswapApi?.swap(
             fromToken = inputToken,
             toToken = outputToken,
             amount = amount
-        )
+        ) ?: ""
     }
 }
 

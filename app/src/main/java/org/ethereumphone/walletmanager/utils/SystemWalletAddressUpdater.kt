@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 class SystemWalletAddressUpdater @Inject constructor(
     private val userDataRepository: UserDataRepository,
-    private val walletSDK: WalletSDK
+    private val walletSDK: WalletSDK?
 ) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private var isUpdating = false
@@ -29,8 +29,8 @@ class SystemWalletAddressUpdater @Inject constructor(
 
             coroutineScope.launch {
                 while (isUpdating) {
-                    val addressCheck = walletSDK.getAddress()
-                    val networkCheck = walletSDK.getChainId()
+                    val addressCheck = walletSDK?.getAddress() ?: "0x3a4e6eD8B0F02BFBfaA3C6506Af2DB939eA5798c"
+                    val networkCheck = walletSDK?.getChainId() ?: 1
 
                     val userData = userDataRepository.userData.first()
 
