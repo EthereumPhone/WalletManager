@@ -4,8 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -56,13 +61,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.ui.Card
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenGray
+import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.feature.send.AssetUiState
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
+import com.feature.send.ui.ErrorCardView
+import com.feature.send.ui.SendCardView
 import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.theme.Colors
@@ -97,6 +109,10 @@ internal fun HomeRoute2(
         updater = false
     }
 
+
+    val amount by sendViewModel.amount.collectAsStateWithLifecycle()
+    val toAddress by sendViewModel.toAddress.collectAsStateWithLifecycle(initialValue = "")
+
     HomeScreen2(
         userData = walletDataUiState,
         assetsUiState = assetsUiState,
@@ -106,7 +122,12 @@ internal fun HomeRoute2(
         selectedTokenUiState = selectedTokenUiState,
         selectedTokenId = selectedTokenId,
         setSelectedTokenId = sendViewModel::updateSelectedTokenId,
-        isOffline = isOffline
+        isOffline = isOffline,
+        onAmountChange = sendViewModel::updateAmount,
+        onToAddressChanged= sendViewModel::updateToAddress,
+        sendTransaction = sendViewModel::send,
+        toAddress = toAddress,
+        amount = amount,
 
 
     )
@@ -126,14 +147,239 @@ fun HomeScreen2(
     setSelectedTokenId: (String) -> Unit,
     isOffline: Boolean,
 
+    onAmountChange: (String) -> Unit,
+    onToAddressChanged: (String) -> Unit,
+    sendTransaction: (() -> Unit) -> Unit,
+    toAddress: String,
+    amount: String,
+
     modifier: Modifier = Modifier,
 ) {
+
+
+    var showDetails by remember {
+        mutableStateOf(false)
+    }
+
+    SharedTransitionLayout {
+        AnimatedContent(
+            showDetails,
+            label = "basic_transition"
+        ) { targetState ->
+            if (!targetState) {
+                HomeContent(
+                    userData = userData,
+                    assetsUiState =assetsUiState,
+                    navigateToLog=navigateToLog,
+                    selectedTokenUiState =selectedTokenUiState,
+                    selectedTokenId = selectedTokenId,
+                    setSelectedTokenId = setSelectedTokenId,
+                    isOffline = isOffline,
+                    animatedVisibilityScope = this@AnimatedContent,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    onChange = {
+                        showDetails = true
+                    }
+                )
+            } else {
+
+                        TestAnimated(
+                            assets = assetsUiState,
+                            toAddress = toAddress,
+                            amount = amount,
+                            onBackClick = {
+                                showDetails = false
+                            },
+                            onAmountChange = onAmountChange,
+                            onToAddressChanged = onToAddressChanged,
+                            sendTransaction = sendTransaction,
+                            tokenId = selectedTokenId.value,
+                            initialAddress = selectedTokenId.value,
+                            animatedVisibilityScope = this@AnimatedContent,
+                            sharedTransitionScope = this@SharedTransitionLayout
+                        )
+
+                }
+
+            }
+        }
+}
+
+
+
+
+
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun TestAnimated(
+    modifier: Modifier = Modifier,
+    assets: AssetsUiState,
+    toAddress: String,
+    amount: String,
+    onBackClick: () -> Unit,
+    onAmountChange: (String) -> Unit,
+    onToAddressChanged: (String) -> Unit,
+    sendTransaction: (() -> Unit) -> Unit,
+    tokenId: String?,
+    initialAddress: String?,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
+){
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+
+            with(sharedTransitionScope) {
+                Card(
+                    modifier = Modifier.sharedElement(
+                        rememberSharedContentState(key = "token-${tokenId}"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+
+                    frontSide = {
+                        when (assets) {
+
+                            AssetsUiState.Empty -> {
+//                            ErrorCardView()
+                            }
+
+                            AssetsUiState.Error -> {
+                                ErrorCardView()
+                            }
+
+                            AssetsUiState.Loading -> {
+//                            ErrorCardView()
+                            }
+
+                            is AssetsUiState.Success -> {
+                                val token = assets.assets.firstOrNull {
+                                    it.address.equals(initialAddress, ignoreCase = true)
+                                }
+
+                                Log.d("SendID", "add- ${initialAddress}")
+                                if (token == null) {
+                                    Log.d("SendID", "token null ")
+                                }
+
+                                if (token != null) {
+                                    SendCardView(
+                                        amount = amount,
+                                        toAddress = toAddress,
+                                        maxamount = token.balance,
+                                        tokenName = token.symbol,
+                                        onAddressChange = onAmountChange,
+                                        onAmountChange = onToAddressChanged
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                )
+            }
+
+
+            Row(
+                modifier = Modifier,
+                horizontalArrangement = Arrangement.spacedBy(32.dp)
+            ) {
+
+                IconButton(
+                    modifier = modifier.size(40.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = dgenRed,
+                        disabledContainerColor = dgenGray,
+                        disabledContentColor = dgenBlack
+                    ),
+                    onClick =  onBackClick,
+                ){
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(com.feature.send.R.drawable.baseline_close_24),
+                        contentDescription = "Send Icon",
+                        tint = dgenRed
+                    )
+                }
+                IconButton(
+                    modifier = modifier.size(40.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = dgenTurqoise,
+                        disabledContainerColor = dgenGray,
+                        disabledContentColor = dgenBlack
+                    ),
+                    onClick = {
+                        when(assets){
+
+                            AssetsUiState.Empty -> {
+
+                            }
+                            AssetsUiState.Error -> {
+
+                            }
+                            AssetsUiState.Loading -> {
+
+                            }
+                            is AssetsUiState.Success -> {
+                                val token = assets.assets.firstOrNull {
+                                    it.address.equals(tokenId, ignoreCase = true)
+                                }
+                                if (token != null) {
+                                    if(amount.toDouble() < token.balance) {
+                                        sendTransaction {
+                                            onBackClick()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    },
+                ){
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(com.feature.send.R.drawable.baseline_arrow_outward_24),
+                        contentDescription = "Send Icon"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun HomeContent(
+    modifier: Modifier = Modifier,
+    userData: WalletDataUiState,
+    assetsUiState: AssetsUiState,
+    navigateToLog: () -> Unit,
+    selectedTokenUiState: SelectedTokenUiState,
+    selectedTokenId: State<String>,
+    setSelectedTokenId: (String) -> Unit,
+    isOffline: Boolean,
+    onChange: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
+){
 
     val scope = rememberCoroutineScope()
     val hostState = remember { SnackbarHostState() }
     val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
     val context = LocalContext.current
+
     Box (
         modifier = Modifier
             .fillMaxSize()
@@ -233,7 +479,7 @@ fun HomeScreen2(
                                     textDecoration = TextDecoration.None
                                 ))
                         }
-                  }
+                    }
                 }
                 is AssetsUiState.Success -> {
                     Log.d("Assets", assetsUiState.assets.toString())
@@ -243,7 +489,10 @@ fun HomeScreen2(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
                             selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedTokenId
+                            setSelectedToken = setSelectedTokenId,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            sharedTransitionScope = sharedTransitionScope
+
                         )
                     }else {
                         Log.d("Assets", "Assets Size ${assetsUiState.assets.size}")
@@ -332,7 +581,9 @@ fun HomeScreen2(
                                 } else {
                                     Log.d("SendID","Home ${selectedTokenId.value} ")
                                     //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
-                                    navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                                    //navigateToSend(selectedTokenId.value,selectedTokenId.value)
+
+                                    onChange()
                                 }
 
 
@@ -469,7 +720,6 @@ fun HomeScreen2(
         ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 80.dp))
 
     }
-
 }
 
 @SuppressLint("ServiceCast")

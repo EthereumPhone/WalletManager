@@ -2,6 +2,9 @@ package com.feature.home.ui
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,13 +30,16 @@ import com.core.ui.views.IdleView
 import com.feature.send.SelectedTokenUiState
 import kotlin.math.abs
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("RestrictedApi")
 @Composable
 fun CardCarousel(
     assets: List<TokenAsset>,
     selectedTokenUiState: SelectedTokenUiState,
     setSelectedToken: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
 
@@ -105,29 +111,36 @@ fun CardCarousel(
                 }
             }
 
+            with(sharedTransitionScope) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            scaleX = scaleFactor
+                            scaleY = scaleFactor
+                            alpha = alphaFactor
+                            rotationX = -5f
+                            translationY = frontCardTranslation
+                        }
+                        .sharedElement(
+                            rememberSharedContentState(key = "token-${item.address}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    ,
+                    frontSide = {
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        scaleX = scaleFactor
-                        scaleY = scaleFactor
-                        alpha = alphaFactor
-                        rotationX = -5f
-                        translationY = frontCardTranslation
-                    }
-                ,
-                frontSide = {
+                        val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
+                        IdleView(
+                            amount = item.balance,
+                            tokenName = tokenName,
+                            fiatAmount = item.balance,
+                            icon = item.logoUrl
+                        )
+                    },
+                )
+            }
 
-                    val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
-                    IdleView(
-                        amount = item.balance,
-                        tokenName = tokenName,
-                        fiatAmount = item.balance,
-                        icon = item.logoUrl
-                    )
-                },
-            )
+
 
 
         }
