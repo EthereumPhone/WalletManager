@@ -1,6 +1,9 @@
 package com.feature.send
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -36,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import com.core.model.TokenAsset
 import com.core.ui.Card
 import com.feature.send.ui.ErrorCardView
@@ -47,20 +51,24 @@ import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SendRoute2(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     viewModel: SendViewModel = hiltViewModel(),
 
-) {
+    ) {
     val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
     val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val amount by viewModel.amount.collectAsStateWithLifecycle()
     val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
-    val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
+    //val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
+    val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
 
@@ -69,24 +77,26 @@ fun SendRoute2(
 
 
     SendScreen2(
-
         initialAddress = initialAddress,
         modifier = Modifier,
         onBackClick = onBackClick,
         toAddress = toAddress,
         amount = amount,
         walletDataUiState = walletDataUiState,
-        assets = assets,
+        assets = assetsUiState,
         selectedToken = selectedToken,
         onAmountChange = viewModel::updateAmount,
         onToAddressChanged= viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         txComplete = txComplete,
-        tokenId = tokenId
+        tokenId = tokenId,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
 
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SendScreen2(
     modifier: Modifier = Modifier,
@@ -102,6 +112,8 @@ fun SendScreen2(
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
 ){
 
     var rotated by remember { mutableStateOf(false) }
@@ -120,7 +132,7 @@ fun SendScreen2(
     )
     var translateY by remember { mutableStateOf(0f) }
 
-    Log.d("SendID","tokenId: ${tokenId} ")
+    Log.d("CardAnimation","tokenId: ${tokenId} - initialAddress: ${initialAddress} ")
 
 
 
@@ -138,81 +150,92 @@ fun SendScreen2(
         ) {
 
 
-            Card(
-                modifier = Modifier
+            with(sharedTransitionScope) {
+                Card(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            rotationY = rotation
+                            translationY = -translateY
+                            cameraDistance = 12f * density
+                        }
+                        .sharedElement(
+                            sharedTransitionScope.rememberSharedContentState(key = "token-${initialAddress}"),
+                            animatedVisibilityScope = animatedContentScope
+                        ),
+                    frontSide = {
 
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        rotationY = rotation
-                        translationY = -translateY
+                        when(assets){
 
-                        cameraDistance = 12f * density
-                    },
-                frontSide = {
-
-                    when(assets){
-
-                        AssetUiState.Empty -> {
+                            AssetUiState.Empty -> {
 //                            ErrorCardView()
-                        }
-                        AssetUiState.Error -> {
-                            ErrorCardView()
-                        }
-                        AssetUiState.Loading -> {
-//                            ErrorCardView()
-                        }
-                        is AssetUiState.Success -> {
-                            val token = assets.assets.firstOrNull {
-                                it.address.equals(initialAddress, ignoreCase = true)
                             }
+                            AssetUiState.Error -> {
+                                ErrorCardView()
+                            }
+                            AssetUiState.Loading -> {
+//                            ErrorCardView()
+                            }
+                            is AssetUiState.Success -> {
+                                val token = assets.assets.firstOrNull {
+                                    it.address.equals(initialAddress, ignoreCase = true)
+                                }
+                                Log.d("CardItem", "Assets: ${assets.assets} ")
+                                Log.d("CardItem", "$token ")
 
                                 Log.d("SendID","add- ${initialAddress}")
-                            if(token == null){
-                                Log.d("SendID","token null ")
-                            }
+                                if(token == null){
+                                    Log.d("SendID","token null ")
+                                }
 
-                            if (token != null) {
-                                SendCardView(
-                                    amount = amount,
-                                    toAddress = toAddress,
-                                    maxamount = token.balance,
-                                    tokenName = token.symbol,
-                                    onAddressChange = onAmountChange,
-                                    onAmountChange = onToAddressChanged
-                                )
+                                val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}" else token?.symbol
+
+                                if (token != null) {
+                                    if (tokenName != null) {
+                                        SendCardView(
+                                            amount = amount,
+                                            toAddress = toAddress,
+                                            maxamount = token.balance,
+                                            tokenName = tokenName.uppercase(),
+                                            onAddressChange = onAmountChange,
+                                            onAmountChange = onToAddressChanged
+                                        )
+                                    }
+                                }
                             }
                         }
-                    }
 
-                },
-                rotation = rotation,
-                backSide = {
+                    },
+                    rotation = rotation,
+                    backSide = {
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                rotationY = -180f
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    rotationY = -180f
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
 
-                        Text(
-                            "SEND",
-                            style = TextStyle(
-                                fontFamily = PitagonsSans,
-                                color = dgenWhite,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 128.sp,
-                                lineHeight = 128.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None
-                            ),
-                        )
-                    }
-                },
-            )
+                            Text(
+                                "SEND",
+                                style = TextStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = dgenWhite,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 128.sp,
+                                    lineHeight = 128.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                ),
+                            )
+                        }
+                    },
+                )
+            }
+
 
 
             Row(

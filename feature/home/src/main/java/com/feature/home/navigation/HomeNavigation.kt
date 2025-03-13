@@ -1,5 +1,9 @@
 package com.feature.home.navigation
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -17,8 +21,10 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
     this.navigate(homeGraphRoutePattern, navOptions)
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.homeGraph(
     isOffline: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
@@ -30,6 +36,8 @@ fun NavGraphBuilder.homeGraph(
     ) {
         composable(route = homeRoute) {
             HomeRoute2(
+                sharedTransitionScope = sharedTransitionScope,
+                animatedContentScope = this@composable,
                 isOffline = isOffline,
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,

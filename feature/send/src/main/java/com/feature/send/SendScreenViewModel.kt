@@ -27,7 +27,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
+import com.core.data.repository.NetworkBalanceRepository
 import com.core.domain.GetSwapTokens
+import com.core.model.NetworkChain
 import com.core.model.UserData
 import com.core.result.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,6 +42,7 @@ import java.text.DecimalFormat
 @HiltViewModel
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
+    private val networkBalanceRepository: NetworkBalanceRepository,
     private val sendRepository: SendRepository,
     private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
@@ -70,16 +73,29 @@ class SendViewModel @Inject constructor(
     private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
     val selectedAssetUiState = _selectedAssetUiState.asStateFlow()
 
-    val tokensAssetState: StateFlow<AssetUiState> =
-        assetUiState(
-            userDataRepository,
-            getSwapTokens,
-            searchQuery
-        ).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetUiState.Loading
-        )
+    val tokenAssetState: StateFlow<AssetUiState> =
+        networkBalanceRepository.getNetworksBalance()
+            .map { balances ->
+                val netWorkAssets = balances.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
+                    )
+                }
+                .sortedByDescending { it.balance }
+
+                AssetUiState.Success(netWorkAssets)
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AssetUiState.Loading
+            )
 
 
     private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)

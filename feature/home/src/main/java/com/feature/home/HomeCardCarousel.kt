@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +73,7 @@ import org.ethosmobile.components.library.utils.SnackbarState
 import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 internal fun HomeRoute2(
@@ -79,6 +82,8 @@ internal fun HomeRoute2(
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: () -> Unit,
     isOffline: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
 
@@ -106,7 +111,9 @@ internal fun HomeRoute2(
         selectedTokenUiState = selectedTokenUiState,
         selectedTokenId = selectedTokenId,
         setSelectedTokenId = sendViewModel::updateSelectedTokenId,
-        isOffline = isOffline
+        isOffline = isOffline,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
 
 
     )
@@ -125,7 +132,8 @@ fun HomeScreen2(
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
     isOffline: Boolean,
-
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
 ) {
 
@@ -236,14 +244,16 @@ fun HomeScreen2(
                   }
                 }
                 is AssetsUiState.Success -> {
-                    Log.d("Assets", assetsUiState.assets.toString())
+                    Log.d("CardAnimation Assets", assetsUiState.assets.toString())
                     if(assetsUiState.assets.isNotEmpty()){
                         Log.d("Assets", "Assets is not Empty")
                         CardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
                             selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedTokenId
+                            setSelectedToken = setSelectedTokenId,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedContentScope = animatedContentScope,
                         )
                     }else {
                         Log.d("Assets", "Assets Size ${assetsUiState.assets.size}")
@@ -330,7 +340,7 @@ fun HomeScreen2(
                                         )
                                     }
                                 } else {
-                                    Log.d("SendID","Home ${selectedTokenId.value} ")
+                                    Log.d("CardAnimation","Home ${selectedTokenId.value} ")
                                     //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
                                     navigateToSend(selectedTokenId.value,selectedTokenId.value)
                                 }

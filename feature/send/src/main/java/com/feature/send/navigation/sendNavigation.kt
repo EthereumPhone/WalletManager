@@ -2,6 +2,9 @@ package com.feature.send.navigation
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -30,9 +33,11 @@ fun NavController.navigateToSend(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.sendScreen(
     onBackClick: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
 ) {
     composable(
         route = sendRoute,
@@ -66,7 +71,9 @@ fun NavGraphBuilder.sendScreen(
                 }
             },
             initialAddress = address,
-            tokenId = tokenId
+            tokenId = tokenId,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = this@composable,
         )
     }
 }

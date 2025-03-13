@@ -3,6 +3,8 @@ package org.ethereumphone.walletmanager.navigation
 import android.content.Intent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -29,6 +31,7 @@ import com.feature.swap.navigation.navigateToSwap
 import com.feature.swap.navigation.swapScreen
 import org.ethereumphone.walletmanager.ui.WmAppState
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun WmNavHost(
     appState: WmAppState,
@@ -36,46 +39,49 @@ fun WmNavHost(
     startDestination: String = homeGraphRoutePattern,
 ) {
     val navController = appState.navController
+    SharedTransitionLayout {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = modifier,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) {
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = modifier,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None }
-    ) {
+            homeGraph(
+                isOffline = appState.isOffline.value,
+                sharedTransitionScope = this@SharedTransitionLayout,
+                navigateToSwap = {
+                    navController.navigateToSwap()
+                },
+                navigateToSend = { address, tokenId ->
+                    navController.navigateToSend(address= address, tokenId =tokenId)
+                },
+                navigateToLog = {
+                    navController.navigateToTransaction()
+                },
+                nestedGraphs = {
+                    swapScreen(navController::popBackStack)
+                    sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout)
+                    receiveScreen(navController::popBackStack)
+                }
+            )
+            assetGraph(
+                navigateToAssetDetail = navController::navigateToAssetDetail,
+                nestedGraphs = {
+                    assetDetailScreen(
+                        onBackClick = navController::popBackStack
+                    )
+                }
+            )
+            transactionGraph(
+                navigateBack = navController::popBackStack,
 
-        homeGraph(
-            isOffline = appState.isOffline.value,
-            navigateToSwap = {
-                navController.navigateToSwap()
-            },
-            navigateToSend = { address, tokenId ->
-                navController.navigateToSend(address= address, tokenId =tokenId)
-            },
-            navigateToLog = {
-                navController.navigateToTransaction()
-            },
-            nestedGraphs = {
-                swapScreen(navController::popBackStack)
-                sendScreen(navController::popBackStack, navController)
-                receiveScreen(navController::popBackStack)
-            }
-        )
-        assetGraph(
-            navigateToAssetDetail = navController::navigateToAssetDetail,
-            nestedGraphs = {
-                assetDetailScreen(
-                    onBackClick = navController::popBackStack
+
                 )
-            }
-        )
-        transactionGraph(
-            navigateBack = navController::popBackStack,
-
-
-        )
+        }
     }
+
 }

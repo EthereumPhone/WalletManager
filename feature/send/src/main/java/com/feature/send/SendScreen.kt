@@ -103,36 +103,37 @@ fun SendRoute(
     initialAddress: String?,
     viewModel: SendViewModel = hiltViewModel()
 ) {
-    val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
-    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
-    val amount by viewModel.amount.collectAsStateWithLifecycle()
-    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
-    val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
-    val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
-    val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
-    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
-
-
-
-    SendScreen(
-        currentNetwork = currentNetwork,
-        initialAddress = initialAddress,
-        modifier = Modifier,
-        onBackClick = onBackClick,
-        toAddress = toAddress,
-        amount = amount,
-        walletDataUiState = walletDataUiState,
-        assets = assets,
-        selectedToken = selectedToken,
-        contacts = contacts,
-        onChangeAssetClicked = viewModel::updateSelectedAsset,
-        onAmountChange = viewModel::updateAmount,
-        onToAddressChanged= viewModel::updateToAddress,
-        sendTransaction = viewModel::send,
-        txComplete = txComplete,
-        getContacts = viewModel::getContacts,
-        setMaxAmount = viewModel::setMaxAmount
-    )
+//    val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
+//    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+//    val amount by viewModel.amount.collectAsStateWithLifecycle()
+//    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
+//    val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
+//    val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
+//    val contacts by viewModel.contacts.collectAsStateWithLifecycle(initialValue = emptyList())
+//    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
+//
+//
+//
+//    SendScreen(
+//        currentNetwork = currentNetwork,
+//        initialAddress = initialAddress,
+//        modifier = Modifier,
+//        onBackClick = onBackClick,
+//        toAddress = toAddress,
+//        amount = amount,
+//        walletDataUiState = walletDataUiState,
+//        assets = assets,
+//        selectedToken = selectedToken,
+//        contacts = contacts,
+//        onChangeAssetClicked = viewModel::updateSelectedAsset,
+//        onAmountChange = viewModel::updateAmount,
+//        onToAddressChanged= viewModel::updateToAddress,
+//        sendTransaction = viewModel::send,
+//        txComplete = txComplete,
+//        getContacts = viewModel::getContacts,
+//        setMaxAmount = viewModel::setMaxAmount,
+////        homeViewModel = hiltViewModel()
+//    )
 }
 @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -155,6 +156,7 @@ fun SendScreen(
     contacts: List<Contact>,
     initialAddress: String?,
     setMaxAmount: (BigDecimal,Int) -> Unit,
+    //homeViewModel: HomeViewModel = hiltViewModel()
 ) {
 
 

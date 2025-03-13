@@ -2,6 +2,9 @@ package com.feature.home.ui
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,11 +30,14 @@ import com.core.ui.views.IdleView
 import com.feature.send.SelectedTokenUiState
 import kotlin.math.abs
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("RestrictedApi")
 @Composable
 fun CardCarousel(
     assets: List<TokenAsset>,
     selectedTokenUiState: SelectedTokenUiState,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     setSelectedToken: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -101,33 +107,44 @@ fun CardCarousel(
             LaunchedEffect(scaleFactor) {
                 if (scaleFactor >= 0.69f) { // Check if the card is closest to the target scale
                     setSelectedToken(item.address)
-                    Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name } - ${ item.chainId }")
+//                    Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name } - ${ item.chainId }")
                 }
             }
 
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        scaleX = scaleFactor
-                        scaleY = scaleFactor
-                        alpha = alphaFactor
-                        rotationX = -5f
-                        translationY = frontCardTranslation
-                    }
-                ,
-                frontSide = {
+            Log.d("CardAnimation", " Token Home:  ${ item.address }")
 
-                    val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
-                    IdleView(
-                        amount = item.balance,
-                        tokenName = tokenName,
-                        fiatAmount = item.balance,
-                        icon = item.logoUrl
-                    )
-                },
-            )
+            Log.d("CardItem", "${ item.address }")
+
+            with(sharedTransitionScope) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            scaleX = scaleFactor
+                            scaleY = scaleFactor
+                            alpha = alphaFactor
+                            rotationX = -5f
+                            translationY = frontCardTranslation
+                        }
+                        .sharedElement(
+                            sharedTransitionScope.rememberSharedContentState(key = "token-${item.address}"),
+                            animatedVisibilityScope = animatedContentScope
+                        )
+                    ,
+                    frontSide = {
+
+                        val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
+                        IdleView(
+                            amount = item.balance,
+                            tokenName = tokenName,
+                            fiatAmount = item.balance,
+                            icon = item.logoUrl
+                        )
+                    },
+                )
+            }
+
 
 
         }
