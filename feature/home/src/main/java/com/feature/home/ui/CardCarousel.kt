@@ -75,6 +75,8 @@ fun CardCarousel(
         verticalArrangement = Arrangement.spacedBy((-225).dp), // Overlapping effect
         contentPadding = PaddingValues(top = 100.dp, bottom = 100.dp) // Ensures enough space for scrolling
     ) {
+        val firstVisibleIndex = listState.firstVisibleItemIndex
+        
         itemsIndexed(assets) { index, item ->
             Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name }")
 
@@ -104,10 +106,13 @@ fun CardCarousel(
 
 
             // Detect the front card
-            LaunchedEffect(scaleFactor) {
-                if (scaleFactor >= 0.69f) { // Check if the card is closest to the target scale
+            val isFirstCard = index == firstVisibleIndex
+
+            LaunchedEffect(isFirstCard) {
+                if (isFirstCard) {
+                    Log.d("FirstCard", "Karte mit Index $index ist jetzt die erste sichtbare")
+                    // Weitere Logik, z.B. setSelectedToken(item.address) usw.
                     setSelectedToken(item.address)
-//                    Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name } - ${ item.chainId }")
                 }
             }
 
