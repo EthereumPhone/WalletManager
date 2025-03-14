@@ -5,6 +5,13 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -44,10 +51,32 @@ fun WmNavHost(
             navController = navController,
             startDestination = startDestination,
             modifier = modifier,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+            enterTransition = { fadeIn(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
+            )
+            },
+            exitTransition = { fadeOut(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
+            )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            }
         ) {
 
             homeGraph(

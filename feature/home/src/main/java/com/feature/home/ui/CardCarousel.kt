@@ -9,8 +9,10 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -146,12 +148,12 @@ fun CardCarousel(
                             rotationX = rotX
                             translationY = frontCardTranslation
                         }
-                        .sharedBounds(
-                            rememberSharedContentState(key = "token-${item.address}"),
-                            animatedVisibilityScope = animatedContentScope,
-                            enter = fadeIn(),
-                            exit  = fadeOut(),
-                        )
+//                        .sharedBounds(
+//                            rememberSharedContentState(key = "token-${item.address}"),
+//                            animatedVisibilityScope = animatedContentScope,
+//                            enter = expandIn(),
+//                            exit  = shrinkOut(),
+//                        )
                     ,
                     frontSide = {
 

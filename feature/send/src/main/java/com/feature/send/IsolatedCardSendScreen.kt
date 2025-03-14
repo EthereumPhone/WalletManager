@@ -7,8 +7,10 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -164,12 +166,13 @@ fun SendScreen2(
                             translationY = -translateY
                             cameraDistance = 12f * density
                         }
-                        .sharedBounds(
-                            rememberSharedContentState(key = "token-${initialAddress}"),
-                            animatedVisibilityScope = animatedContentScope,
-                            enter = fadeIn(),
-                            exit  = fadeOut(),
-                        ),
+//                        .sharedBounds(
+//                            rememberSharedContentState(key = "token-${initialAddress}"),
+//                            animatedVisibilityScope = animatedContentScope,
+//                            enter = expandIn(),
+//                            exit  = fadeOut(),
+//                        )
+                    ,
                     frontSide = {
 
                         when(assets){
