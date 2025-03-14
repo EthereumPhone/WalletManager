@@ -51,11 +51,11 @@ fun IdleView(
     }
 
     Box(
-        modifier = Modifier.alpha(0.4f),
+        modifier = modifier.alpha(0.4f),
         contentAlignment = Alignment.Center
     ) {
         Image(
-            modifier = Modifier.size(400.dp).offset(x = 125.dp, y = 50.dp),
+            modifier = modifier.size(400.dp).offset(x = 125.dp, y = 50.dp),
             painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
@@ -63,13 +63,13 @@ fun IdleView(
 
     Column (
         verticalArrangement =  Arrangement.SpaceBetween,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(top = 16.dp,bottom = 8.dp, start = 16.dp, end = 16.dp),
     ){
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
@@ -79,7 +79,7 @@ fun IdleView(
             ) {
 
                     Image(
-                        modifier = Modifier
+                        modifier = modifier
                             .padding(bottom = 2.dp)
                             .size(32.dp),
                         painter = painterResource(R.drawable.placeholer_icon_5),
@@ -116,7 +116,7 @@ fun IdleView(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ){

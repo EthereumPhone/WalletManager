@@ -9,6 +9,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +22,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -27,6 +34,7 @@ import androidx.compose.ui.zIndex
 import com.core.model.TokenAsset
 import com.core.ui.Card
 import com.core.ui.views.IdleView
+import com.feature.home.boundsTransform
 import com.feature.send.SelectedTokenUiState
 import kotlin.math.abs
 
@@ -44,7 +52,7 @@ fun CardCarousel(
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
 
 
-
+    var showColor by remember { mutableStateOf(false) }
 
     // Ensure scrolling starts at the last item
     LaunchedEffect(Unit) {
@@ -75,6 +83,7 @@ fun CardCarousel(
         verticalArrangement = Arrangement.spacedBy((-225).dp), // Overlapping effect
         contentPadding = PaddingValues(top = 100.dp, bottom = 100.dp) // Ensures enough space for scrolling
     ) {
+        val firstVisibleIndex = listState.firstVisibleItemIndex
         itemsIndexed(assets) { index, item ->
             Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name }")
 
@@ -102,14 +111,29 @@ fun CardCarousel(
                 animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
             )
 
+            val isFirstCard = index == firstVisibleIndex
 
-            // Detect the front card
-            LaunchedEffect(scaleFactor) {
-                if (scaleFactor >= 0.69f) { // Check if the card is closest to the target scale
+            LaunchedEffect(isFirstCard) {
+                if (isFirstCard) {
+                    Log.d("FirstCard", "Karte mit Index $index ist jetzt die erste sichtbare")
+                    // Weitere Logik, z.B. setSelectedToken(item.address) usw.
                     setSelectedToken(item.address)
-                    Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name } - ${ item.chainId }")
                 }
             }
+            // Detect the front card
+//            LaunchedEffect(scaleFactor) {
+//                if (scaleFactor > 0.78f) { // Check if the card is closest to the target scale
+//                    //setSelectedToken(item.address)
+//                    showColor = true
+//                    Log.d("scaleFactor", "${ item.address } $scaleFactor")
+//                } else {
+//                    showColor = false
+//
+//                    Log.d("scaleFactor No", "${ item.address } $scaleFactor")
+//                }
+//            }
+
+            //Log.d("scaleFactor", "token-${item.address} - "+scaleFactor.toString())
 
             with(sharedTransitionScope) {
                 Card(
@@ -120,17 +144,23 @@ fun CardCarousel(
                             scaleY = scaleFactor
                             alpha = alphaFactor
                             rotationX = -5f
+
                             translationY = frontCardTranslation
                         }
-                        .sharedElement(
+                        .sharedBounds(
                             rememberSharedContentState(key = "token-${item.address}"),
-                            animatedVisibilityScope = animatedVisibilityScope
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            boundsTransform = boundsTransform
                         )
                     ,
                     frontSide = {
 
                         val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
                         IdleView(
+                            //modifier = Modifier.background( if(showColor) Color.Red else Color.Blue ),
                             amount = item.balance,
                             tokenName = tokenName,
                             fiatAmount = item.balance,

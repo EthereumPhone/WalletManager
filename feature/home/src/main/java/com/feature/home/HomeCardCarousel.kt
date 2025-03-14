@@ -1,15 +1,26 @@
 package com.feature.home
 
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +66,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -208,7 +220,10 @@ fun HomeScreen2(
 
 
 
-
+@OptIn(ExperimentalSharedTransitionApi::class)
+val boundsTransform = BoundsTransform { initialBounds, targetBounds ->
+    spring(stiffness = Spring.StiffnessMediumLow)
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -241,9 +256,13 @@ fun TestAnimated(
 
             with(sharedTransitionScope) {
                 Card(
-                    modifier = Modifier.sharedElement(
+                    modifier = Modifier.sharedBounds(
                         rememberSharedContentState(key = "token-${tokenId}"),
-                        animatedVisibilityScope = animatedVisibilityScope
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        boundsTransform = boundsTransform
                     ),
 
                     frontSide = {
@@ -724,6 +743,6 @@ fun HomeContent(
 
 @SuppressLint("ServiceCast")
 private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboardManager.setText(AnnotatedString(text))
 }
