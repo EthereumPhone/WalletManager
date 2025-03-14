@@ -9,6 +9,8 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.graphics.graphicsLayer
@@ -82,6 +87,12 @@ fun CardCarousel(
 
             Log.d("SendID", "Token: $index - ${ item.name } - ${ item.address }")
 
+            var enabled by remember { mutableStateOf(false) }
+
+            val rotX: Float by animateFloatAsState(if (enabled) -0.5f else -7f, label = "alpha")
+
+
+
             val scrollOffset = listState.firstVisibleItemIndex + listState.firstVisibleItemScrollOffset / 1000f
             val relativeIndex = (index - scrollOffset).coerceIn(-2f, 2f) // Keep relative index in a reasonable range
 
@@ -112,7 +123,10 @@ fun CardCarousel(
                 if (isFirstCard) {
                     Log.d("FirstCard", "Karte mit Index $index ist jetzt die erste sichtbare")
                     // Weitere Logik, z.B. setSelectedToken(item.address) usw.
+                    enabled = true
                     setSelectedToken(item.address)
+                } else {
+                    enabled = false
                 }
             }
 
@@ -129,12 +143,14 @@ fun CardCarousel(
                             scaleX = scaleFactor
                             scaleY = scaleFactor
                             alpha = alphaFactor
-                            rotationX = -5f
+                            rotationX = rotX
                             translationY = frontCardTranslation
                         }
-                        .sharedElement(
-                            sharedTransitionScope.rememberSharedContentState(key = "token-${item.address}"),
-                            animatedVisibilityScope = animatedContentScope
+                        .sharedBounds(
+                            rememberSharedContentState(key = "token-${item.address}"),
+                            animatedVisibilityScope = animatedContentScope,
+                            enter = fadeIn(),
+                            exit  = fadeOut(),
                         )
                     ,
                     frontSide = {

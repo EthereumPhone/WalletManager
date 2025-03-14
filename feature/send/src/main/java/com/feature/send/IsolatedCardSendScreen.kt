@@ -7,6 +7,8 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -151,6 +153,8 @@ fun SendScreen2(
 
 
             with(sharedTransitionScope) {
+                Log.d("CardBounds Send", "token-${initialAddress}")
+
                 Card(
                     modifier = Modifier
                         .graphicsLayer {
@@ -160,9 +164,11 @@ fun SendScreen2(
                             translationY = -translateY
                             cameraDistance = 12f * density
                         }
-                        .sharedElement(
-                            sharedTransitionScope.rememberSharedContentState(key = "token-${initialAddress}"),
-                            animatedVisibilityScope = animatedContentScope
+                        .sharedBounds(
+                            rememberSharedContentState(key = "token-${initialAddress}"),
+                            animatedVisibilityScope = animatedContentScope,
+                            enter = fadeIn(),
+                            exit  = fadeOut(),
                         ),
                     frontSide = {
 
