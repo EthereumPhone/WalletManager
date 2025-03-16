@@ -8,6 +8,7 @@ import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
+import com.core.data.remote.TokenPriceApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
 import com.core.data.util.chainIdToBundler
@@ -191,6 +192,35 @@ object DataModule {
     fun provideEnsApi(): EnsApi {
         return EnsApi()
     }
+
+    //-------------------For TokenPriceApi----------------------------
+
+    @Singleton
+    @Provides
+    fun provideOkHttpClient(): OkHttpClient {
+        val logging = HttpLoggingInterceptor()
+        // logging.setLevel(HttpLoggingInterceptor.Level.BODY) // for debugging if you want
+
+        return OkHttpClient.Builder()
+            // .addInterceptor(logging)
+            .build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideAlchemyApi(
+        moshi: Moshi,
+        client: OkHttpClient
+    ): TokenPriceApi {
+        return Retrofit.Builder()
+            .baseUrl("https://api.g.alchemy.com/") // We'll handle the {apiKey} in the interface’s @GET path
+            .client(client)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(TokenPriceApi::class.java)
+    }
+
+    //-------------------For TokenPriceApi (END)----------------------------
 
 
     private val isEmulator: Boolean

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.ExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.TokenPriceRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
@@ -12,6 +13,7 @@ import com.core.data.util.chainToApiKey
 import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
+import com.core.model.TokenData
 import com.core.model.UserData
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -39,6 +41,7 @@ class HomeViewModel @Inject constructor(
     private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    private val tokenPriceRepository: TokenPriceRepository,
     private val coinbaseExchangeRepository: ExchangeRepository,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
@@ -162,6 +165,21 @@ class HomeViewModel @Inject constructor(
     }
 
     // We’ll store our user input in the SavedStateHandle under a certain key
+
+
+    private val _tokenData = MutableStateFlow<List<TokenData>>(emptyList())
+    val tokenData = _tokenData.asStateFlow()
+
+    fun loadSymbol(symbol: List<String>) {
+        viewModelScope.launch {
+            try {
+                val response = tokenPriceRepository.fetchTokenPrice(symbol)
+                _tokenData.value = response.data ?: emptyList()
+            } catch (e: Exception) {
+                // handle error
+            }
+        }
+    }
 
 }
 

@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.core.model.TokenAsset
+import com.core.model.TokenData
 import com.core.ui.Card
 import com.core.ui.views.IdleView
 import com.feature.send.SelectedTokenUiState
@@ -42,6 +44,8 @@ import kotlin.math.abs
 @Composable
 fun CardCarousel(
     assets: List<TokenAsset>,
+    tokenData: List<TokenData>,
+    loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -49,6 +53,8 @@ fun CardCarousel(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
+
+    val listofTokenSymbol = remember { mutableStateListOf<String>() }
 
 
 
@@ -69,6 +75,33 @@ fun CardCarousel(
             val index = assets.indexOf(token)
             listState.scrollToItem(index)
             //setSelectedToken(token)
+
+            //collect all token symbols
+            for (asset in assets){
+                when(asset.symbol){
+                    "base" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "base added")
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    "mainnet" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "mainnet added")
+
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    else -> {
+                        Log.d("Fetch Card", "${asset.symbol} added")
+                        listofTokenSymbol.add(asset.symbol)
+                    }
+                }
+            }
+
+            //load token price based of token list
+            loadSymbol(listofTokenSymbol)
+
         }
     }
 
@@ -103,13 +136,27 @@ fun CardCarousel(
 
             //val scaleFactor = lerp(0.9f, 0.5f, (abs(relativeIndex) / 5).coerceIn(0f, 1f))
             val scaleFactor by animateFloatAsState(
-                targetValue = lerp(0.8f, 0.55f, (abs(relativeIndex) / 4).coerceIn(0f, 1f)),
-                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                targetValue = when {
+                    abs(relativeIndex) <= 0.5f -> 0.8f  // Vorderste Karte mit konsistentem Skalierungsfaktor
+                    abs(relativeIndex) <= 2f -> lerp(0.8f, 0.55f, (abs(relativeIndex) - 0.5f) / 1.5f)
+                    else -> 0.55f
+                },
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = FastOutSlowInEasing
+                )
             )
 
             val alphaFactor by animateFloatAsState(
-                targetValue = lerp(1f, 0f, (abs(relativeIndex) / 4).coerceIn(0f, 1f)),
-                animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
+                targetValue = when {
+                    abs(relativeIndex) <= 0.5f -> 1f
+                    abs(relativeIndex) <= 2f -> lerp(1f, 0f, abs(relativeIndex) / 2f)
+                    else -> 0f
+                },
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = FastOutSlowInEasing
+                )
             )
 
             val frontCardTranslation by animateFloatAsState(
@@ -132,11 +179,42 @@ fun CardCarousel(
                 }
             }
 
+            //Calculate fiat amount
+            val fiatamount = when(item.symbol){
+                "base" -> {
+                    //get eth value
+                   val tokenasset = tokenData.find { it.symbol == "ETH" }
+                    //set eth value
+                    if (tokenasset == null){
+                        0.0
+                    }else{
+                        tokenasset.prices?.get(0)?.value?.toDouble()
+                    }
+                }
+                "mainnet" -> {
+                    //get eth value
+                    val tokenasset = tokenData.find { it.symbol == "ETH" }
+                    //set eth value
+                    //if tokenasset null turn into 0.00
+                    if (tokenasset == null){
+                        0.0
+                    }else{
+                        tokenasset.prices?.get(0)?.value?.toDouble()
+                    }
+                }
+                else -> {
+                    //get eth value
+                    val tokenasset = tokenData.find { it.symbol == item.symbol }
+                    //set eth value
+                    if (tokenasset == null){
+                        0.0
+                    }else{
+                        tokenasset.prices?.get(0)?.value?.toDouble()
+                    }
+                }
+            }
 
-            Log.d("CardAnimation", " Token Home:  ${ item.address }")
-
-            Log.d("CardItem", "${ item.address }")
-
+            Log.d("fiatamount","${item.symbol} - $fiatamount")
             with(sharedTransitionScope) {
                 Card(
                     modifier = Modifier
@@ -147,23 +225,19 @@ fun CardCarousel(
                             alpha = alphaFactor
                             rotationX = rotX
                             translationY = frontCardTranslation
+                            cameraDistance = 12f * density
                         }
-//                        .sharedBounds(
-//                            rememberSharedContentState(key = "token-${item.address}"),
-//                            animatedVisibilityScope = animatedContentScope,
-//                            enter = expandIn(),
-//                            exit  = shrinkOut(),
-//                        )
                     ,
                     frontSide = {
-
-                        val tokenName = if (item.name == item.symbol)  "ETH-${item.symbol}" else item.symbol
-                        IdleView(
-                            amount = item.balance,
-                            tokenName = tokenName,
-                            fiatAmount = item.balance,
-                            icon = item.logoUrl
-                        )
+                        val tokenName = if (item.name == item.symbol) "ETH-${item.symbol}" else item.symbol
+                        //if (fiatamount != null) {
+                            IdleView(
+                                amount = item.balance,
+                                tokenName = tokenName,
+                                fiatAmount = item.balance * fiatamount!!,
+                                icon = item.logoUrl
+                            )
+                       // }
                     },
                 )
             }
@@ -172,5 +246,6 @@ fun CardCarousel(
 
         }
     }
+
 
 }

@@ -196,7 +196,7 @@ fun SendCardView(
                                 }
                             }
                         },
-                    value = amountCard,
+                    value = amount,
                     onValueChange = { text ->
                         if (text.isEmpty() || text == "." || text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
                             // If it's a valid format or empty, call onAmountChange with the text
@@ -204,7 +204,7 @@ fun SendCardView(
                             amountCard = text
                         }
                     },
-                    cursorBrush = SolidColor(Color.Transparent), // Hide default cursor
+                    cursorBrush = SolidColor(Color.White), // Hide default cursor
                     textStyle = TextStyle(
                         fontFamily = PitagonsSans,
                         color = dgenTurqoise,
@@ -255,7 +255,7 @@ fun SendCardView(
                 BasicTextField(
                     modifier = Modifier.fillMaxWidth()
                     ,
-                    value = toAddressCard,
+                    value = toAddress,
                     onValueChange = {
 
                         onAddressChange(it)
@@ -287,7 +287,7 @@ fun SendCardView(
                             }
                         }
                     },
-                    cursorBrush = SolidColor(Color.Transparent), // Hide default cursor
+                    cursorBrush = SolidColor(Color.White), // Hide default cursor
                     textStyle = TextStyle(
                         fontFamily = PitagonsSans,
                         color = dgenTurqoise,

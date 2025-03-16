@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import com.core.model.TokenAsset
+import com.core.model.TokenData
 import com.core.ui.Card
 import com.feature.send.ui.ErrorCardView
 import com.feature.send.ui.SendCardView
@@ -79,6 +81,7 @@ fun SendRoute2(
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
+    val tokenData by viewModel.tokenData.collectAsState()
 
     SendScreen2(
         initialAddress = initialAddress,
@@ -96,6 +99,8 @@ fun SendRoute2(
         tokenId = tokenId,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
+        tokenData = tokenData,
+        loadSymbol = viewModel::loadSymbol
 
     )
 }
@@ -118,6 +123,8 @@ fun SendScreen2(
     tokenId: String?,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    tokenData:  List<TokenData>,
+    loadSymbol: (List<String>) -> Unit,
 ){
 
     var rotated by remember { mutableStateOf(false) }
@@ -129,15 +136,25 @@ fun SendScreen2(
 
     var isAnimating by remember { mutableStateOf(false) }
 
+    // Angepasste Skalierungswerte für eine glattere Transition
+    val initialScale = 0.8f  // Entspricht dem Skalierungsfaktor aus dem CardCarousel
+    val targetScale = 0.85f  // Ziel-Skalierung für den Send-Screen
+
     val scale by animateFloatAsState(
-        targetValue = if (isAnimating) 0.7f else 0.85f,
-        animationSpec = tween(600, 200),
+        targetValue = if (isAnimating) initialScale else targetScale,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = FastOutSlowInEasing
+        ),
         label = "ScaleAnimation"
     )
     var translateY by remember { mutableStateOf(0f) }
 
     Log.d("CardAnimation","tokenId: ${tokenId} - initialAddress: ${initialAddress} ")
 
+
+    var testamount by remember { mutableStateOf("TEST") }
+    var testaddress by remember { mutableStateOf("TEST") }
 
 
     Box(
@@ -166,55 +183,95 @@ fun SendScreen2(
                             translationY = -translateY
                             cameraDistance = 12f * density
                         }
-//                        .sharedBounds(
-//                            rememberSharedContentState(key = "token-${initialAddress}"),
-//                            animatedVisibilityScope = animatedContentScope,
-//                            enter = expandIn(),
-//                            exit  = fadeOut(),
-//                        )
+
                     ,
                     frontSide = {
 
                         when(assets){
-
                             AssetUiState.Empty -> {
-//                            ErrorCardView()
                             }
                             AssetUiState.Error -> {
                                 ErrorCardView()
                             }
                             AssetUiState.Loading -> {
-//                            ErrorCardView()
                             }
                             is AssetUiState.Success -> {
                                 val token = assets.assets.firstOrNull {
                                     it.address.equals(initialAddress, ignoreCase = true)
                                 }
-                                Log.d("CardItem", "Assets: ${assets.assets} ")
-                                Log.d("CardItem", "$token ")
 
-                                Log.d("SendID","add- ${initialAddress}")
                                 if(token == null){
                                     Log.d("SendID","token null ")
                                 }
 
                                 val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}" else token?.symbol
 
+
                                 if (token != null) {
+                                    when (token.symbol) {
+                                        "base" -> {
+                                            loadSymbol(listOf("ETH"))
+                                        }
+
+                                        "mainnet" -> {
+                                            loadSymbol(listOf("ETH"))
+                                        }
+
+                                        else -> {
+                                            loadSymbol(listOf(token.symbol))
+                                        }
+                                    }
+
+                                    val fiatamount = when (token.symbol) {
+                                        "base" -> {
+                                            //get eth value
+                                            val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                            //set eth value
+                                            if (tokenasset == null) {
+                                                0.0
+                                            } else {
+                                                tokenasset.prices?.get(0)?.value?.toDouble()
+                                            }
+                                        }
+
+                                        "mainnet" -> {
+                                            //get eth value
+                                            val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                            //set eth value
+                                            //if tokenasset null turn into 0.00
+                                            if (tokenasset == null) {
+                                                0.0
+                                            } else {
+                                                tokenasset.prices?.get(0)?.value?.toDouble()
+                                            }
+                                        }
+
+                                        else -> {
+                                            //get eth value
+                                            val tokenasset = tokenData.find { it.symbol == token.symbol }
+                                            //set eth value
+                                            if (tokenasset == null) {
+                                                0.0
+                                            } else {
+                                                tokenasset.prices?.get(0)?.value?.toDouble()
+                                            }
+                                        }
+                                    }
+
+
                                     if (tokenName != null) {
                                         SendCardView(
                                             amount = amount,
                                             toAddress = toAddress,
                                             maxamount = token.balance,
                                             tokenName = tokenName.uppercase(),
-                                            onAddressChange = onAmountChange,
-                                            onAmountChange = onToAddressChanged
+                                            onAddressChange = onToAddressChanged,
+                                            onAmountChange = onAmountChange
                                         )
                                     }
                                 }
                             }
                         }
-
                     },
                     rotation = rotation,
                     backSide = {
@@ -278,6 +335,11 @@ fun SendScreen2(
                         disabledContentColor = dgenBlack
                     ),
                     onClick = {
+                        Log.d("SEND TX vor","$testaddress - ${testamount}  ")
+                        Log.d("SEND TX nach","$testaddress - ${testamount}  ")
+                        Log.d("SEND TX nach nach","$toAddress - ${amount}")
+                        //g.d("SEND TX nach","$toAddress - ${amount.toDouble()}  ")
+
                         when(assets){
 
                             AssetUiState.Empty -> {
@@ -290,9 +352,12 @@ fun SendScreen2(
 
                             }
                             is AssetUiState.Success -> {
+
                                 val token = assets.assets.firstOrNull {
                                     it.address.equals(tokenId, ignoreCase = true)
                                 }
+                                Log.d("SEND TX","$toAddress - ${amount.toDouble()} - ${token?.balance} ")
+
                                 if (token != null) {
                                     if(amount.toDouble() < token.balance) {
                                         sendTransaction {

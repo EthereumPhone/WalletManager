@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +34,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,7 +60,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.domain.GetTokenAssetsBySymbol
 import com.core.model.TokenAsset
+import com.core.model.TokenData
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
@@ -65,7 +70,12 @@ import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.IOException
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
@@ -102,6 +112,8 @@ internal fun HomeRoute2(
         updater = false
     }
 
+    val tokenData by viewModel.tokenData.collectAsState()
+
     HomeScreen2(
         userData = walletDataUiState,
         assetsUiState = assetsUiState,
@@ -114,6 +126,8 @@ internal fun HomeRoute2(
         isOffline = isOffline,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
+        tokenData = tokenData,
+        loadSymbol = viewModel::loadSymbol
 
 
     )
@@ -132,14 +146,35 @@ fun HomeScreen2(
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
     isOffline: Boolean,
+    tokenData:  List<TokenData>,
+    loadSymbol: (List<String>) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
 ) {
 
+
     val scope = rememberCoroutineScope()
     val hostState = remember { SnackbarHostState() }
     val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
+    var apiData by remember { mutableStateOf<String?>(null) }// var for api data
+
+
+    //fetch data
+    LaunchedEffect(Unit) {
+        Log.d("apiData", "Fetch data")
+        //maximal 25 Tokens
+        //loadSymbol(listOf("ETH", "BTC", "SOL"))
+    }
+
+    //display Log
+    if (apiData != null) {
+       Log.d("apiData", "${apiData!!}!!")
+    } else {
+        Log.d("apiData", "Loading Data or its not working")
+        //Text(text = "Lade Daten...")
+    }
+
 
     val context = LocalContext.current
     Box (
@@ -246,10 +281,29 @@ fun HomeScreen2(
                 is AssetsUiState.Success -> {
                     Log.d("CardAnimation Assets", assetsUiState.assets.toString())
                     if(assetsUiState.assets.isNotEmpty()){
-                        Log.d("Assets", "Assets is not Empty")
+
+                        Log.d("Fetching", "${assetsUiState.assets} - ${tokenData}")
+//                        Box(
+//                            Modifier
+//                                .fillMaxWidth()
+//                                .background(Color.Green)
+//                                .align(Alignment.TopCenter)
+//                        ){
+//                            LazyColumn {
+//                                items(tokenData) { tokenData ->
+//                                    Text("Symbol: ${tokenData.symbol}")
+//                                    tokenData.prices?.forEach { p ->
+//                                        Text("Currency: ${p.currency}, Value: ${p.value}")
+//                                    }
+//                                }
+//                            }
+//                        }
+
                         CardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
+                            tokenData = tokenData,
+                            loadSymbol = loadSymbol,
                             selectedTokenUiState = selectedTokenUiState,
                             setSelectedToken = setSelectedTokenId,
                             sharedTransitionScope = sharedTransitionScope,
@@ -487,3 +541,4 @@ private fun copyTextToClipboard(context: Context, text: String) {
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     clipboardManager.setText(AnnotatedString(text))
 }
+

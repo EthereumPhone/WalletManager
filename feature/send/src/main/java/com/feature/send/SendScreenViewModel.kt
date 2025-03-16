@@ -28,8 +28,10 @@ import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.TokenPriceRepository
 import com.core.domain.GetSwapTokens
 import com.core.model.NetworkChain
+import com.core.model.TokenData
 import com.core.model.UserData
 import com.core.result.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +45,7 @@ import java.text.DecimalFormat
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    private val tokenPriceRepository: TokenPriceRepository,
     private val sendRepository: SendRepository,
     private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
@@ -182,6 +185,20 @@ class SendViewModel @Inject constructor(
             val test = sendRepository.maxAllowedSend(maxamount,chainId)
 
             updateAmount(decimalFormat.format(test.toDouble()))
+        }
+    }
+
+    private val _tokenData = MutableStateFlow<List<TokenData>>(emptyList())
+    val tokenData = _tokenData.asStateFlow()
+
+    fun loadSymbol(symbol: List<String>) {
+        viewModelScope.launch {
+            try {
+                val response = tokenPriceRepository.fetchTokenPrice(symbol)
+                _tokenData.value = response.data ?: emptyList()
+            } catch (e: Exception) {
+                // handle error
+            }
         }
     }
 

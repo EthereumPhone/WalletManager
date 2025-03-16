@@ -4,6 +4,7 @@ plugins {
     alias libs.plugins.ksp
 }
 
+
 android {
     namespace 'com.core.data'
     compileSdk 34
@@ -25,7 +26,18 @@ android {
         buildConfigField "String", "POLYGON_API", "\"${properties.getProperty("POLYGON_API")}\""
         buildConfigField "String", "BASE_API", "\"${properties.getProperty("BASE_API")}\""
 
+        
+        buildConfigField "String", "TOKEN_PRICE_API", "\"${properties.getProperty("TOKEN_PRICE_API","fallback_value")}\""
 
+
+
+
+
+
+    }
+
+    buildFeatures {
+        buildConfig = true // <--- Enable BuildConfig generation in a library module
     }
 
     buildTypes {
