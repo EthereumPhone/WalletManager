@@ -11,7 +11,7 @@ class TokenPriceRepository @Inject constructor(
     suspend fun fetchTokenPrice(symbol: List<String>): TokenPriceResponse {
         // Use BuildConfig to get the API key
         return tokenPriceApi.getTokenPrice(
-            BuildConfig.TOKEN_PRICE_API,
+            BuildConfig.ALCHEMY_API,
             symbol
         )
     }
