@@ -12,6 +12,7 @@ import com.core.model.TransferItem
 import com.core.ui.util.abbreviateNumber
 import com.core.ui.util.formatAddress
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import java.text.DecimalFormat
@@ -43,41 +44,32 @@ fun LogEntry(
         decimalFormatSymbols = DecimalFormatSymbols(Locale.US) // Forces the decimal point
     }
 
+    //if the tx was sending something
     if (logEntry.userSent) {
 
         Text(
             buildAnnotatedString {
-                append("Sent ")
+                //append("Sent ")
+                append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
+
                 withStyle(
                     style = SpanStyle(
-                        fontFamily = PitagonsSans,
+                        fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
+                        fontSize = 12.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
                 ) {
-                    append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset} ")
+                    append(" TO ")
                 }
-                append("to ")
-                withStyle(
-                    style = SpanStyle(
-                        fontFamily = PitagonsSans,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                ) {
-                    append(formatAddress(logEntry.to))
-                }
+                append(formatAddress(logEntry.to))
             },
             fontFamily = PitagonsSans,
             color = dgenWhite,
-            fontWeight = FontWeight.Normal,
-            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
+            fontSize = 18.sp,
             letterSpacing = 0.sp,
             textDecoration = TextDecoration.None
         )
@@ -86,37 +78,30 @@ fun LogEntry(
             Text(
 
                 buildAnnotatedString {
-                    append("Received ")
+                    //append("Received ")
+
+                    append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
+
+
+
                     withStyle(style = SpanStyle(
-                        fontFamily = PitagonsSans,
+                        fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
+                        fontSize = 12.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
                     ) {
-                        append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset} ")
-                    }
-                    append("from ")
-
-                    withStyle(style = SpanStyle(
-                        fontFamily = PitagonsSans,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                    ) {
-                        append(formatAddress(logEntry.from))
+                        append(" FROM ")
                     }
 
+                    append(formatAddress(logEntry.from))
                 },
                 fontFamily = PitagonsSans,
                 color = dgenWhite,
-                fontWeight = FontWeight.Normal,
-                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                fontSize = 18.sp,
                 letterSpacing = 0.sp,
                 textDecoration = TextDecoration.None
             )
