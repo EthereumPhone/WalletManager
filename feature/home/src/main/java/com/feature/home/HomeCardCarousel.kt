@@ -157,23 +157,7 @@ fun HomeScreen2(
     val scope = rememberCoroutineScope()
     val hostState = remember { SnackbarHostState() }
     val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
-    var apiData by remember { mutableStateOf<String?>(null) }// var for api data
 
-
-    //fetch data
-    LaunchedEffect(Unit) {
-        Log.d("apiData", "Fetch data")
-        //maximal 25 Tokens
-        //loadSymbol(listOf("ETH", "BTC", "SOL"))
-    }
-
-    //display Log
-    if (apiData != null) {
-       Log.d("apiData", "${apiData!!}!!")
-    } else {
-        Log.d("apiData", "Loading Data or its not working")
-        //Text(text = "Lade Daten...")
-    }
 
 
     val context = LocalContext.current
@@ -281,24 +265,6 @@ fun HomeScreen2(
                 is AssetsUiState.Success -> {
                     Log.d("CardAnimation Assets", assetsUiState.assets.toString())
                     if(assetsUiState.assets.isNotEmpty()){
-
-                        Log.d("Fetching", "${assetsUiState.assets} - ${tokenData}")
-//                        Box(
-//                            Modifier
-//                                .fillMaxWidth()
-//                                .background(Color.Green)
-//                                .align(Alignment.TopCenter)
-//                        ){
-//                            LazyColumn {
-//                                items(tokenData) { tokenData ->
-//                                    Text("Symbol: ${tokenData.symbol}")
-//                                    tokenData.prices?.forEach { p ->
-//                                        Text("Currency: ${p.currency}, Value: ${p.value}")
-//                                    }
-//                                }
-//                            }
-//                        }
-
                         CardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
@@ -309,7 +275,8 @@ fun HomeScreen2(
                             sharedTransitionScope = sharedTransitionScope,
                             animatedContentScope = animatedContentScope,
                         )
-                    }else {
+                    }
+                    else {
                         Log.d("Assets", "Assets Size ${assetsUiState.assets.size}")
                         Box(
                             modifier = modifier.fillMaxSize(),

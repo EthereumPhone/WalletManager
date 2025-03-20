@@ -9,6 +9,8 @@ import com.core.data.repository.UserDataRepository
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
 import com.core.domain.UpdateTokensUseCase
+import com.core.model.NetworkChain
+import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +28,7 @@ import javax.inject.Inject
 class TransactionViewModel @Inject constructor(
     getTransfersUseCase: GetTransfersUseCase,
     private val userDataRepository: UserDataRepository,
-
+    private val networkBalanceRepository: NetworkBalanceRepository,
     private val transferRepository: TransferRepository,
 
     ): ViewModel() {
@@ -38,6 +40,36 @@ class TransactionViewModel @Inject constructor(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = TransfersUiState.Loading
+            )
+
+
+    val tokenAssetState: StateFlow<TokenAssetUiState> =
+        networkBalanceRepository.getNetworksBalance()
+            .map { balances ->
+                val netWorkAssets = balances.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = it.tokenBalance.toDouble(),
+                        decimals = 18
+                    )
+                }
+                    .sortedByDescending { it.balance }
+
+                // Set the first value of selectedTokenAsset to the last item in the list
+                if (netWorkAssets.isNotEmpty()) {
+                    _selectedTokenAsset.value = netWorkAssets.last()
+                }
+
+                AssetsUiState.Success(netWorkAssets)
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AssetsUiState.Loading
             )
 
 

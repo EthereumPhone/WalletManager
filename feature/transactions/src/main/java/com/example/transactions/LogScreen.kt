@@ -1,6 +1,11 @@
 package com.example.transactions
 
+import android.util.Log
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -23,12 +32,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -38,6 +56,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,11 +66,13 @@ import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.example.transactions.ui.LogEntry
 import com.example.transactions.ui.TxEntry
 import com.example.transactions.ui.TxType
+import kotlinx.coroutines.delay
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.walletmanager.ethOSTransferListItem
 import kotlin.random.Random
@@ -59,16 +80,28 @@ import kotlin.random.Random
 @Composable
 fun LogRoute(
     navigateBack: () -> Unit,
+    tokenId: String?,
     viewModel: TransactionViewModel = hiltViewModel()
 ){
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
+//    LogScreen(
+//        transfersUIState = transfersUIState,
+//        onNavigateBack = navigateBack,
+//        refreshState = refreshState,
+//    tokenId = tokenId,
+//        onRefresh = viewModel::refreshData
+//    )
+
+    val txs = generateRandomTransfers()
+
     LogScreen(
-        transfersUIState = transfersUIState,
+        transfersUIState = TransfersUiState.Success(txs),
         onNavigateBack = navigateBack,
-        refreshState = refreshState,
-        onRefresh = viewModel::refreshData
+        refreshState = false,
+        tokenId = tokenId,
+        onRefresh = {}
     )
 }
 @OptIn(ExperimentalMaterialApi::class)
@@ -78,6 +111,7 @@ fun LogScreen(
     transfersUIState: TransfersUiState,
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
+    tokenId: String?,
     onRefresh: () -> Unit,
 ){
 
@@ -87,6 +121,9 @@ fun LogScreen(
             onRefresh()
         }
     )
+
+    val scrollState = rememberLazyListState()
+
 
     Column(
         modifier = Modifier
@@ -98,6 +135,20 @@ fun LogScreen(
             modifier = Modifier.fillMaxWidth().padding(end = 4.dp,
                 start = 4.dp,top = 8.dp)
         ){
+
+            if (tokenId != null) {
+                Text(
+                    text = tokenId,
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenWhite,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
+            }
             IconButton(modifier = Modifier, onClick = onNavigateBack) {
                 Icon(
                     modifier = Modifier.width(16.dp),
@@ -107,6 +158,8 @@ fun LogScreen(
                 )
             }
         }
+
+
 
         Box(modifier = Modifier.fillMaxSize()){
 
@@ -127,7 +180,9 @@ fun LogScreen(
                                 .pullRefresh(pullRefreshState)
                         ) {
                             LazyColumn(
-                                modifier = Modifier
+                                state= scrollState,
+                                modifier = Modifier.verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+//                                    .verticalScroll(scrollState) // Then apply the scrolling behavior
                                     .fillMaxSize().padding(horizontal = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
@@ -196,6 +251,7 @@ fun LogScreen(
                     .fillMaxWidth()
                     .height(32.dp)
                     .align(Alignment.TopCenter)
+
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(dgenBlack,Color.Transparent)
@@ -207,7 +263,7 @@ fun LogScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .height(40.dp)
+                    .height(32.dp)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Transparent, dgenBlack)
@@ -235,6 +291,7 @@ fun LogViewPreview(){
     LogScreen(
         transfersUIState = TransfersUiState.Success(txs),
         refreshState = false,
+        tokenId = "ETH",
         onRefresh = {}
     )
 }
@@ -246,7 +303,7 @@ fun generateRandomTransfers(): List<TransferItem> {
 
     // Beispielhafte Listen für zufällige Werte
     val possibleChainIds = listOf(1, 56, 137, 42)  // z.B. Ethereum, BSC, Polygon, Kovan
-    val possibleAssets = listOf("ETH", "BNB", "MATIC", "USDT", "DAI")
+    val possibleAssets = listOf("$")
 
     // Beispiel-Adressen (typisch 0x + 40 Hex-Stellen, hier verkürzt oder zufällig generiert)
     val sampleAddresses = listOf(
@@ -289,3 +346,181 @@ fun generateRandomTransfers(): List<TransferItem> {
         )
     }
 }
+
+//@Composable
+//fun Modifier.verticalLazyListScrollbar(
+//    lazyListState: LazyListState,
+//    width: Dp = 6.dp,
+//    showScrollBarTrack: Boolean = true,
+//    scrollBarTrackColor: Color = Color.Yellow,
+//    scrollBarColor: Color = Color.Red,
+//    scrollBarCornerRadius: Float = 4f,
+//    endPadding: Float = 12f
+//): Modifier {
+//    return drawWithContent {
+//        drawContent()
+//
+//        val layoutInfo = lazyListState.layoutInfo
+//        val visibleItemsInfo = layoutInfo.visibleItemsInfo
+//        val totalItemsCount = layoutInfo.totalItemsCount
+//
+//        if (visibleItemsInfo.isEmpty() || totalItemsCount == 0) return@drawWithContent
+//
+//        // 1️⃣ Fixed scrollbar track height
+//        val trackHeight = size.height - 64.dp.toPx()
+//
+//        // 2️⃣ Compute thumb height proportionally
+//        val visibleItemCount = visibleItemsInfo.size.toFloat()
+//        val thumbHeight = (visibleItemCount / totalItemsCount) * trackHeight
+//            .coerceAtLeast(40.dp.toPx()) // Ensuring a minimum thumb height
+//
+//        // 3️⃣ Compute actual scrollable range using LazyListState
+//        val firstVisibleItem = lazyListState.firstVisibleItemIndex
+//        val firstItemOffset = lazyListState.firstVisibleItemScrollOffset
+//        val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+//        val totalScrollableItems = totalItemsCount - visibleItemCount
+//
+//        // Estimate total scrollable distance based on LazyListState data
+//        val averageItemHeight = visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
+//        val maxScrollOffset = (totalItemsCount - visibleItemCount) * averageItemHeight
+//
+//        // Current scroll position (fix for glitches)
+//        val scrolledOffset = (firstVisibleItem * averageItemHeight) + firstItemOffset
+//
+//        // Correctly map scrollbar thumb movement to track height
+//        val scrollBarOffsetY = ((scrolledOffset / maxScrollOffset) * (trackHeight - thumbHeight))
+//            .coerceIn(0f, trackHeight - thumbHeight)
+//
+//        // 4️⃣ Draw the scrollbar track
+//        if (showScrollBarTrack) {
+//            drawRoundRect(
+//                color = scrollBarTrackColor,
+//                cornerRadius = CornerRadius(scrollBarCornerRadius),
+//                topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx()),
+//                size = Size(width.toPx(), trackHeight)
+//            )
+//        }
+//
+//        // 5️⃣ Draw the scrollbar thumb (moves smoothly)
+//        drawRoundRect(
+//            color = scrollBarColor,
+//            cornerRadius = CornerRadius(scrollBarCornerRadius),
+//            topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx() + scrollBarOffsetY),
+//            size = Size(width.toPx(), thumbHeight)
+//        )
+//    }
+//}
+@Composable
+fun Modifier.verticalLazyListScrollbar(
+    lazyListState: LazyListState,
+    width: Dp = 6.dp,
+    showScrollBarTrack: Boolean = true,
+    scrollBarTrackColor: Color = dgenOcean,
+    scrollBarColor: Color = dgenTurqoise,
+    scrollBarCornerRadius: Float = 4f,
+    endPadding: Float = 12f
+): Modifier {
+    val coroutineScope = rememberCoroutineScope()
+    var isScrolling by remember { mutableStateOf(false) }
+    var targetAlpha by remember { mutableStateOf(0f) } // Start hidden
+    var targetScrollBarOffset by remember { mutableStateOf(0f) } // Thumb Y position
+
+    // 🔥 Animate alpha for fade-in & fade-out effect
+    val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = 250, easing = LinearEasing)
+    )
+
+    // 🎯 Show scrollbar when scrolling, and fade out after delay
+    LaunchedEffect(lazyListState.isScrollInProgress) {
+        if (lazyListState.isScrollInProgress) {
+            isScrolling = true
+            targetAlpha = 1f // 🔥 Fade in
+        } else {
+            delay(1000) // Wait 1 second before fading out
+            targetAlpha = 0f // 🔥 Fade out smoothly
+        }
+    }
+
+    return this.then(
+        Modifier.drawWithContent {
+            drawContent()
+
+            val layoutInfo = lazyListState.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            val totalItemsCount = layoutInfo.totalItemsCount
+
+            if (visibleItemsInfo.isEmpty() || totalItemsCount == 0) return@drawWithContent
+
+            // 1️⃣ Fixed scrollbar track height
+            val trackHeight = size.height - 64.dp.toPx()
+
+            // 2️⃣ Compute thumb height proportionally
+            val visibleItemCount = visibleItemsInfo.size.toFloat()
+            val thumbHeight = (visibleItemCount / totalItemsCount) * trackHeight
+                .coerceAtLeast(40.dp.toPx()) // Ensuring a minimum thumb height
+
+            // 3️⃣ Compute scrollbar thumb position based on scroll progress
+            val firstVisibleItem = lazyListState.firstVisibleItemIndex
+            val firstItemOffset = lazyListState.firstVisibleItemScrollOffset
+
+            // Estimate total scrollable distance
+            val averageItemHeight = visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
+            val maxScrollOffset = (totalItemsCount - visibleItemCount) * averageItemHeight
+            val scrolledOffset = (firstVisibleItem * averageItemHeight) + firstItemOffset
+
+            // Compute scrollbar thumb position and update animated target
+            targetScrollBarOffset = ((scrolledOffset / maxScrollOffset) * (trackHeight - thumbHeight))
+                .coerceIn(0f, trackHeight - thumbHeight)
+
+            // 4️⃣ Draw the scrollbar track (🔥 Now fades in/out)
+            if (showScrollBarTrack) {
+                drawRoundRect(
+                    color = scrollBarTrackColor.copy(alpha = alpha),
+                    cornerRadius = CornerRadius(scrollBarCornerRadius),
+                    topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx()),
+                    size = Size(width.toPx(), trackHeight)
+                )
+            }
+
+            // 5️⃣ Draw the scrollbar thumb (🔥 Now fades in/out)
+            drawRoundRect(
+                color = scrollBarColor.copy(alpha = alpha),
+                cornerRadius = CornerRadius(scrollBarCornerRadius),
+                topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx() + targetScrollBarOffset),
+                size = Size(width.toPx(), thumbHeight)
+            )
+        }
+    )
+}
+
+
+
+
+
+
+
+
+
+//        val layoutInfo = lazyListState.layoutInfo
+//        val visibleItemsInfo = layoutInfo.visibleItemsInfo
+//
+//        if (visibleItemsInfo.isEmpty()) return@drawWithContent
+//
+//        val firstVisibleItem = visibleItemsInfo.first()
+//        val totalItemsCount = layoutInfo.totalItemsCount
+//
+//        // Approximate total height based on average item size
+//        val averageItemSize = visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
+//        val totalContentHeight = totalItemsCount * averageItemSize
+//
+//        // Compute current scroll position
+//        val scrolledOffset = (firstVisibleItem.index * averageItemSize) + firstVisibleItem.offset
+//
+//        val viewportHeight = size.height
+//        if (totalContentHeight <= 0f) return@drawWithContent
+//
+//        // Compute scrollbar height and position
+//        val scrollBarHeight = (viewportHeight / totalContentHeight) * viewportHeight
+//        val scrollBarOffsetY = (scrolledOffset / totalContentHeight) * viewportHeight
+

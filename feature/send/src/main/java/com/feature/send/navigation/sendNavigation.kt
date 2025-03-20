@@ -12,7 +12,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.feature.send.SendRoute
 import com.feature.send.SendRoute2
 
 const val sendRoute = "send_route?address={address}&tokenId={tokenId}"
