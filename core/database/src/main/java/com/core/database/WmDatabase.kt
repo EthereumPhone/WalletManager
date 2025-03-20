@@ -7,9 +7,9 @@ import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TransferDao
-import com.core.database.model.ExchangeEntity
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenExchangeEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.util.BigDecimalTypeConverter
 import com.core.database.util.Erc1155MetadataConverter
@@ -21,7 +21,7 @@ import com.core.database.util.RawContractConverter
         TransferEntity::class,
         TokenMetadataEntity::class,
         TokenBalanceEntity::class,
-        ExchangeEntity::class
+        TokenExchangeEntity::class
     ],
     version = 1,
     exportSchema = false
