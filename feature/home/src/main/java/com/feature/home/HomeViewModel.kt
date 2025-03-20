@@ -3,13 +3,11 @@ package com.feature.home
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.core.data.repository.ExchangeRepository
+import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
-import com.core.data.repository.TokenPriceRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
-import com.core.data.util.chainToApiKey
 import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -41,8 +39,8 @@ class HomeViewModel @Inject constructor(
     private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    private val tokenPriceRepository: TokenPriceRepository,
-    private val coinbaseExchangeRepository: ExchangeRepository,
+    private val tokenExchangeRepository: TokenExchangeRepository,
+    private val coinbaseTokenExchangeRepository: TokenExchangeRepository,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
@@ -173,8 +171,7 @@ class HomeViewModel @Inject constructor(
     fun loadSymbol(symbol: List<String>) {
         viewModelScope.launch {
             try {
-                val response = tokenPriceRepository.fetchTokenPrice(symbol)
-                _tokenData.value = response.data ?: emptyList()
+                tokenExchangeRepository.fetchExchangeBySymbols(symbol)
             } catch (e: Exception) {
                 // handle error
             }

@@ -3,8 +3,8 @@ package com.core.data.di
 import com.core.data.repository.AlchemyTokenBalanceRepository
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
-import com.core.data.repository.CoinbaseExchangeRepository
-import com.core.data.repository.ExchangeRepository
+import com.core.data.repository.DefaultExchangeRepository
+import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.ProtoUserDataRepository
 import com.core.data.repository.SendRepository
@@ -66,13 +66,13 @@ interface RepositoryModule {
     ): SendRepository
 
     @Binds
-    fun bindsCoinbaseExchangeRepository(
-        coinbaseExchangeRepository: CoinbaseExchangeRepository
-    ): ExchangeRepository
-
-    @Binds
     fun bindsNetworkMonitor(
         networkMonitor: ConnectivityManagerNetworkMonitor,
     ): NetworkMonitor
+
+    @Binds
+    fun bindsTokenExchangeRepository(
+        impl: DefaultExchangeRepository
+    ): TokenExchangeRepository
 
 }

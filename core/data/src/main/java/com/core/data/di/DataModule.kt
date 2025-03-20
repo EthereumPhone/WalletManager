@@ -2,13 +2,11 @@ package com.core.data.di
 
 import android.content.Context
 import android.os.Build
-import com.core.data.remote.CoinbaseTokenExchangeApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
-import com.core.data.remote.TokenPriceApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
 import com.core.data.util.chainIdToBundler
@@ -22,6 +20,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.bouncycastle.util.Fingerprint
@@ -133,18 +132,6 @@ object DataModule {
 
     @Singleton
     @Provides
-    fun provideCoinbaseTokenExchangeApi(
-        moshi: Moshi
-    ): CoinbaseTokenExchangeApi {
-        return Retrofit.Builder()
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .baseUrl("https://api.coinbase.com/")
-            .build()
-            .create(CoinbaseTokenExchangeApi::class.java)
-    }
-
-    @Singleton
-    @Provides
     fun provideUniswapRouterSDK(@ApplicationContext context: Context): UniswapRoutingSDK {
         return UniswapRoutingSDK(
             context = context,
@@ -193,7 +180,6 @@ object DataModule {
         return EnsApi()
     }
 
-    //-------------------For TokenPriceApi----------------------------
 
     @Singleton
     @Provides
@@ -206,21 +192,13 @@ object DataModule {
             .build()
     }
 
-    @Singleton
     @Provides
-    fun provideAlchemyApi(
-        moshi: Moshi,
-        client: OkHttpClient
-    ): TokenPriceApi {
-        return Retrofit.Builder()
-            .baseUrl("https://api.g.alchemy.com/") // We'll handle the {apiKey} in the interface’s @GET path
-            .client(client)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .build()
-            .create(TokenPriceApi::class.java)
+    @Singleton
+    fun providesNetworkJson(): Json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        explicitNulls = false
     }
-
-    //-------------------For TokenPriceApi (END)----------------------------
 
 
     private val isEmulator: Boolean

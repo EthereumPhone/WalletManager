@@ -4,21 +4,46 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.core.database.model.ExchangeEntity
+import com.core.database.model.erc20.TokenExchangeEntity
+import com.core.model.TokenExchange
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TokenExchangeDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(exchangeEntity: ExchangeEntity)
+    @Query(
+        """
+            SELECT * FROM token_exchange
+            LIMIT :limit
+        """
+    )
+    fun getExchanges(limit: Int = -1): Flow<List<TokenExchange>>
 
-    @Query("SELECT * FROM ExchangeEntity WHERE base = :base AND currency = :currency")
-    fun getExchange(base: String, currency: String): Flow<ExchangeEntity?>
+    @Query(
+        """
+            SELECT * FROM token_exchange
+            WHERE symbol = :symbol
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """
+    )
+    fun getLatestExchange(symbol: String): Flow<TokenExchange?>
 
-    @Query("SELECT * FROM ExchangeEntity WHERE base = :base")
-    fun getExchangesByBase(base: String): Flow<List<ExchangeEntity>>
+    @Query(
+        """
+            SELECT * FROM token_exchange
+            WHERE symbol = :symbol
+            ORDER BY timestamp
+        """
+    )
+    fun getHistoricalExchange(symbol: String): Flow<List<TokenExchange>>
 
-    @Query("DELETE FROM ExchangeEntity WHERE base = :base AND currency = :currency")
-    fun deleteExchange(base: String, currency: String)
+
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertExchange(exchangeEntity: TokenExchangeEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertAllExchanges(exchangeEntities: List<TokenExchangeEntity>)
+
 }

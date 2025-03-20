@@ -2,6 +2,7 @@ plugins {
     alias libs.plugins.android.library
     alias libs.plugins.kotlin.android
     alias libs.plugins.ksp
+    id("kotlinx-serialization")
 }
 
 
@@ -80,6 +81,10 @@ dependencies {
     implementation 'com.github.komputing.kethereum:ens:0.85.7'
     implementation 'com.github.komputing.kethereum:rpc:0.85.7'
     implementation 'com.github.komputing.kethereum:model:0.85.7'
+
+    implementation(libs.androidx.tracing.ktx)
+    implementation(libs.kotlinx.serialization.json)
+
 
 
 }
