@@ -65,4 +65,5 @@ dependencies {
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'//36e645b378'//4f74da5c62
 
+    implementation libs.coil.compose
 }

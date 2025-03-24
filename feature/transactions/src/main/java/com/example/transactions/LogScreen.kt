@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
@@ -90,9 +91,11 @@ fun LogRoute(
 //        transfersUIState = transfersUIState,
 //        onNavigateBack = navigateBack,
 //        refreshState = refreshState,
-//    tokenId = tokenId,
+//        tokenId = tokenId,
 //        onRefresh = viewModel::refreshData
 //    )
+    val tokenAssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+
 
     val txs = generateRandomTransfers()
 
@@ -101,6 +104,7 @@ fun LogRoute(
         onNavigateBack = navigateBack,
         refreshState = false,
         tokenId = tokenId,
+        tokenAssetUiState = tokenAssetUiState,
         onRefresh = {}
     )
 }
@@ -112,6 +116,7 @@ fun LogScreen(
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
     tokenId: String?,
+    tokenAssetUiState: TokenAssetUiState,
     onRefresh: () -> Unit,
 ){
 
@@ -132,27 +137,68 @@ fun LogScreen(
 
     ) {
         Row (
-            modifier = Modifier.fillMaxWidth().padding(end = 4.dp,
-                start = 4.dp,top = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    end = 16.dp,
+                    start = 16.dp, top = 16.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ){
 
-            if (tokenId != null) {
-                Text(
-                    text = tokenId,
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        color = dgenWhite,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
+
+
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ){
+                //                TODO: Add Async Images
+
+//                    AsyncImage(
+//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+//                        model = "https://example.com/image.jpg",
+//                        contentDescription = "Translated description of what the image contains"
+//                    )
+                Image(
+                    modifier = Modifier
+                        .size(40.dp),
+                    painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                    contentDescription = "Ethereum"
                 )
+                when(tokenAssetUiState){
+                    TokenAssetUiState.Empty -> {}
+                    TokenAssetUiState.Loading -> {}
+                    is TokenAssetUiState.Success -> {
+                        if (tokenId != null) {
+                            val token = tokenAssetUiState.assets.firstOrNull {
+                                it.symbol.equals(tokenId, ignoreCase = true)
+                            }
+
+                            val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}- $tokenId -${token?.name}" else token?.symbol
+
+
+                            if (tokenName != null) {
+                                Text(
+                                    text = tokenName,
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 18.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
             }
             IconButton(modifier = Modifier, onClick = onNavigateBack) {
                 Icon(
-                    modifier = Modifier.width(16.dp),
-                    painter = painterResource(R.drawable.back_icon),
+                    modifier = Modifier.width(32.dp),
+                    painter = painterResource(R.drawable.baseline_close_24),
                     contentDescription = "Back",
                     tint = dgenTurqoise
                 )
@@ -181,9 +227,10 @@ fun LogScreen(
                         ) {
                             LazyColumn(
                                 state= scrollState,
-                                modifier = Modifier.verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
-//                                    .verticalScroll(scrollState) // Then apply the scrolling behavior
-                                    .fillMaxSize().padding(horizontal = 16.dp),
+                                modifier = Modifier
+                                    .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 item {
@@ -254,7 +301,7 @@ fun LogScreen(
 
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dgenBlack,Color.Transparent)
+                            colors = listOf(dgenBlack, Color.Transparent)
                         )
                     )
 
@@ -269,7 +316,6 @@ fun LogScreen(
                             colors = listOf(Color.Transparent, dgenBlack)
                         )
                     )
-
             )
         }
 
@@ -286,15 +332,72 @@ fun LogScreen(
 @Composable
 fun LogViewPreview(){
 
+    val tokenAssets = listOf(
+        TokenAsset(
+            address = "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+            chainId = 1,
+            symbol = "DAI",
+            name = "Dai Stablecoin",
+            balance = 1534.25,
+            decimals = 18,
+            logoUrl = "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png",
+            swappable = true
+        ),
+        TokenAsset(
+            address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            chainId = 1,
+            symbol = "mainnet",
+            name = "mainnet",
+            balance = 0.753,
+            decimals = 18,
+            logoUrl = "https://cryptologos.cc/logos/wrapped-ether-weth-logo.png",
+            swappable = true
+        ),
+        TokenAsset(
+            address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            chainId = 1,
+            symbol = "USDC",
+            name = "USD Coin",
+            balance = 10420.10,
+            decimals = 6,
+            logoUrl = "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+            swappable = true
+        ),
+        TokenAsset(
+            address = "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            chainId = 1,
+            symbol = "USDT",
+            name = "Tether USD",
+            balance = 256.75,
+            decimals = 6,
+            logoUrl = "https://cryptologos.cc/logos/tether-usdt-logo.png",
+            swappable = true
+        ),
+        TokenAsset(
+            address = "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+            chainId = 1,
+            symbol = "LINK",
+            name = "Chainlink",
+            balance = 89.34,
+            decimals = 18,
+            logoUrl = "https://cryptologos.cc/logos/chainlink-link-logo.png",
+            swappable = true
+        )
+    )
+
     val txs = generateRandomTransfers()
+
 
     LogScreen(
         transfersUIState = TransfersUiState.Success(txs),
         refreshState = false,
-        tokenId = "ETH",
-        onRefresh = {}
+        tokenId = "DAI",
+        onRefresh = {},
+        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
+
     )
 }
+
 
 //method for testing
 @Composable
@@ -307,6 +410,7 @@ fun generateRandomTransfers(): List<TransferItem> {
 
     // Beispiel-Adressen (typisch 0x + 40 Hex-Stellen, hier verkürzt oder zufällig generiert)
     val sampleAddresses = listOf(
+        "emunsi.eth",
         "0x4e83362442B8d1beC281594cEa3050c8EB01311C",
         "0xC0fFee0000000000000000000000000000000000",
         "0x7Bb4fC5D2f9afE98Ed7be9cEB49F2C4dA333b0B3",
@@ -347,69 +451,8 @@ fun generateRandomTransfers(): List<TransferItem> {
     }
 }
 
-//@Composable
-//fun Modifier.verticalLazyListScrollbar(
-//    lazyListState: LazyListState,
-//    width: Dp = 6.dp,
-//    showScrollBarTrack: Boolean = true,
-//    scrollBarTrackColor: Color = Color.Yellow,
-//    scrollBarColor: Color = Color.Red,
-//    scrollBarCornerRadius: Float = 4f,
-//    endPadding: Float = 12f
-//): Modifier {
-//    return drawWithContent {
-//        drawContent()
-//
-//        val layoutInfo = lazyListState.layoutInfo
-//        val visibleItemsInfo = layoutInfo.visibleItemsInfo
-//        val totalItemsCount = layoutInfo.totalItemsCount
-//
-//        if (visibleItemsInfo.isEmpty() || totalItemsCount == 0) return@drawWithContent
-//
-//        // 1️⃣ Fixed scrollbar track height
-//        val trackHeight = size.height - 64.dp.toPx()
-//
-//        // 2️⃣ Compute thumb height proportionally
-//        val visibleItemCount = visibleItemsInfo.size.toFloat()
-//        val thumbHeight = (visibleItemCount / totalItemsCount) * trackHeight
-//            .coerceAtLeast(40.dp.toPx()) // Ensuring a minimum thumb height
-//
-//        // 3️⃣ Compute actual scrollable range using LazyListState
-//        val firstVisibleItem = lazyListState.firstVisibleItemIndex
-//        val firstItemOffset = lazyListState.firstVisibleItemScrollOffset
-//        val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
-//        val totalScrollableItems = totalItemsCount - visibleItemCount
-//
-//        // Estimate total scrollable distance based on LazyListState data
-//        val averageItemHeight = visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
-//        val maxScrollOffset = (totalItemsCount - visibleItemCount) * averageItemHeight
-//
-//        // Current scroll position (fix for glitches)
-//        val scrolledOffset = (firstVisibleItem * averageItemHeight) + firstItemOffset
-//
-//        // Correctly map scrollbar thumb movement to track height
-//        val scrollBarOffsetY = ((scrolledOffset / maxScrollOffset) * (trackHeight - thumbHeight))
-//            .coerceIn(0f, trackHeight - thumbHeight)
-//
-//        // 4️⃣ Draw the scrollbar track
-//        if (showScrollBarTrack) {
-//            drawRoundRect(
-//                color = scrollBarTrackColor,
-//                cornerRadius = CornerRadius(scrollBarCornerRadius),
-//                topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx()),
-//                size = Size(width.toPx(), trackHeight)
-//            )
-//        }
-//
-//        // 5️⃣ Draw the scrollbar thumb (moves smoothly)
-//        drawRoundRect(
-//            color = scrollBarColor,
-//            cornerRadius = CornerRadius(scrollBarCornerRadius),
-//            topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx() + scrollBarOffsetY),
-//            size = Size(width.toPx(), thumbHeight)
-//        )
-//    }
-//}
+
+
 @Composable
 fun Modifier.verticalLazyListScrollbar(
     lazyListState: LazyListState,

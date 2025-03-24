@@ -97,33 +97,33 @@ class WmAppState(
     }
 
 
-    fun navigateToTopLevelDestination(topLevelDestination: Screen) {
-        // Check if the current route is the start destination or opened via a deep link
-        val isStartOrDeepLink = navController.currentBackStackEntry?.destination?.route == navController.graph.startDestinationRoute || navController.previousBackStackEntry == null
-
-        val topLevelNavOptions = navOptions {
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
-
-        if (topLevelDestination.route == homeRoute && !isStartOrDeepLink) {
-            navController.popBackStack(homeRoute, inclusive = false)
-        } else {
-            when (topLevelDestination.route) {
-                homeRoute -> {
-                    if (isStartOrDeepLink) {
-                        // If we are at start destination or deep link, simply navigate to home
-                        navController.navigate(homeRoute)
-                    } else {
-                        navController.navigateToHome(topLevelNavOptions)
-                    }
-                }
-                assetRoute -> navController.navigateToAsset(topLevelNavOptions)
-                transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
-            }
-        }
-    }
+//    fun navigateToTopLevelDestination(topLevelDestination: Screen) {
+//        // Check if the current route is the start destination or opened via a deep link
+//        val isStartOrDeepLink = navController.currentBackStackEntry?.destination?.route == navController.graph.startDestinationRoute || navController.previousBackStackEntry == null
+//
+//        val topLevelNavOptions = navOptions {
+//            popUpTo(navController.graph.findStartDestination().id) {
+//                saveState = true
+//            }
+//            launchSingleTop = true
+//            restoreState = true
+//        }
+//
+//        if (topLevelDestination.route == homeRoute && !isStartOrDeepLink) {
+//            navController.popBackStack(homeRoute, inclusive = false)
+//        } else {
+//            when (topLevelDestination.route) {
+//                homeRoute -> {
+//                    if (isStartOrDeepLink) {
+//                        // If we are at start destination or deep link, simply navigate to home
+//                        navController.navigate(homeRoute)
+//                    } else {
+//                        navController.navigateToHome(topLevelNavOptions)
+//                    }
+//                }
+//                assetRoute -> navController.navigateToAsset(topLevelNavOptions)
+//                transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
+//            }
+//        }
+//    }
 }

@@ -57,19 +57,13 @@ class TransactionViewModel @Inject constructor(
                         decimals = 18
                     )
                 }
-                    .sortedByDescending { it.balance }
-
-                // Set the first value of selectedTokenAsset to the last item in the list
-                if (netWorkAssets.isNotEmpty()) {
-                    _selectedTokenAsset.value = netWorkAssets.last()
-                }
-
-                AssetsUiState.Success(netWorkAssets)
+                .sortedByDescending { it.balance }
+                TokenAssetUiState.Success(netWorkAssets)
             }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetsUiState.Loading
+                initialValue = TokenAssetUiState.Loading
             )
 
 
@@ -92,6 +86,15 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
+}
+
+
+sealed interface TokenAssetUiState {
+    object Loading: TokenAssetUiState
+    object Empty: TokenAssetUiState
+    data class Success(
+        val assets: List<TokenAsset>
+    ): TokenAssetUiState
 }
 
 

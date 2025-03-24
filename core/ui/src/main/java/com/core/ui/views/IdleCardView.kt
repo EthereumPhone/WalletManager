@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.core.ui.R
 import com.core.ui.util.formatSmart
 import com.example.dgenlibrary.ui.theme.PitagonsSans
@@ -55,7 +57,9 @@ fun IdleView(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            modifier = Modifier.size(400.dp).offset(x = 125.dp, y = 50.dp),
+            modifier = Modifier
+                .size(400.dp)
+                .offset(x = 125.dp, y = 50.dp),
             painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
@@ -65,7 +69,7 @@ fun IdleView(
         verticalArrangement =  Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 16.dp,bottom = 8.dp, start = 16.dp, end = 16.dp),
+            .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
     ){
 
         Row(
@@ -78,6 +82,13 @@ fun IdleView(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
 
+//                TODO: Add Async Images
+
+//                    AsyncImage(
+//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+//                        model = "https://example.com/image.jpg",
+//                        contentDescription = "Translated description of what the image contains"
+//                    )
                     Image(
                         modifier = Modifier
                             .padding(bottom = 2.dp)
@@ -85,7 +96,6 @@ fun IdleView(
                         painter = painterResource(R.drawable.placeholer_icon_5),
                         contentDescription = "Ethereum"
                     )
-//                }
 
                 Text(
                     text = tokenName.uppercase(),
@@ -148,7 +158,7 @@ fun IdlePreview(){
         amount = 0.13,
         tokenName = "USDC",
         fiatAmount = 209.47,
-        icon = R.drawable.placeholer_icon_5.toString()
+        icon = "",//R.drawable.placeholer_icon_5.toString()
 
     )
 }

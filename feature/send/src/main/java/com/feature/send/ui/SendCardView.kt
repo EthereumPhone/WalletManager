@@ -92,6 +92,13 @@ fun SendCardView(
         modifier = Modifier.alpha(0.25f),
         contentAlignment = Alignment.Center
     ) {
+        //                TODO: Add Async Images
+
+//                    AsyncImage(
+//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+//                        model = "https://example.com/image.jpg",
+//                        contentDescription = "Translated description of what the image contains"
+//                    )
         Image(
             modifier = Modifier
                 .size(400.dp)

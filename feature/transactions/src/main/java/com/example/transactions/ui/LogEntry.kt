@@ -44,6 +44,20 @@ fun LogEntry(
         decimalFormatSymbols = DecimalFormatSymbols(Locale.US) // Forces the decimal point
     }
 
+    //formating
+    val fromValue = if(logEntry.from.takeLast(4) == ".eth"){
+        logEntry.from
+    } else {
+        formatAddress(logEntry.from)
+    }
+
+    val toValue = if(logEntry.to.takeLast(4) == ".eth"){
+        logEntry.to
+    } else {
+        formatAddress(logEntry.to)
+    }
+
+
     //if the tx was sending something
     if (logEntry.userSent) {
 
@@ -57,14 +71,15 @@ fun LogEntry(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
                 ) {
                     append(" TO ")
                 }
-                append(formatAddress(logEntry.to))
+
+                append(toValue)
             },
             fontFamily = PitagonsSans,
             color = dgenWhite,
@@ -78,17 +93,13 @@ fun LogEntry(
             Text(
 
                 buildAnnotatedString {
-                    //append("Received ")
-
                     append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
-
-
 
                     withStyle(style = SpanStyle(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
@@ -96,7 +107,7 @@ fun LogEntry(
                         append(" FROM ")
                     }
 
-                    append(formatAddress(logEntry.from))
+                    append(fromValue)
                 },
                 fontFamily = PitagonsSans,
                 color = dgenWhite,
