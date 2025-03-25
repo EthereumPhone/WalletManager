@@ -1,26 +1,38 @@
 package com.core.ui.views
 
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,12 +41,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.core.ui.Card
 import com.core.ui.R
 import com.core.ui.util.formatSmart
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import kotlinx.coroutines.launch
+import org.ethosmobile.components.library.utils.SnackbarState
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -46,6 +61,7 @@ fun IdleView(
     tokenName: String,
     fiatAmount: Double,
     icon: String?,
+    navigateToSend: () -> Unit
 ) {
 
     val decimalFormat = DecimalFormat("0.00").apply {
@@ -58,8 +74,8 @@ fun IdleView(
     ) {
         Image(
             modifier = Modifier
-                .size(400.dp)
-                .offset(x = 125.dp, y = 50.dp),
+                .size(700.dp)
+                .offset(x = 100.dp, y = 50.dp),
             painter = painterResource(R.drawable.iso),
             contentDescription = "Ethereum"
         )
@@ -136,13 +152,48 @@ fun IdleView(
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = dgenTurqoise,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 64.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 80.sp,
                     lineHeight = 24.sp,
                     letterSpacing = 0.sp,
                     textDecoration = TextDecoration.None
                 )
             )
+
+            Box(
+                modifier = Modifier.padding(bottom = 8.dp, end = 16.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            navigateToSend()
+                        }
+                    }
+
+            ) {
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
+                        contentDescription = "Back",
+                        tint = dgenTurqoise
+                    )
+                    Text(
+                        text= "SEND",
+                        style = TextStyle(
+                            fontFamily = SpaceMono,
+                            color = dgenTurqoise,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp,
+                            lineHeight = 16.sp,
+                            letterSpacing = 0.sp,
+                            textDecoration = TextDecoration.None
+                        )
+                    )
+                }
+
+            }
         }
     }
 }
@@ -154,11 +205,22 @@ fun IdleView(
 )
 @Composable
 fun IdlePreview(){
-    IdleView(
-        amount = 0.13,
-        tokenName = "USDC",
-        fiatAmount = 209.47,
-        icon = "",//R.drawable.placeholer_icon_5.toString()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+        ,
+        frontSide = {
+            IdleView(
+                amount = 0.13,
+                tokenName = "USDC",
+                fiatAmount = 209.47,
+                icon = "",//R.drawable.placeholer_icon_5.toString()
+                navigateToSend = {  },
 
+            )
+        },
     )
+
 }
+
+

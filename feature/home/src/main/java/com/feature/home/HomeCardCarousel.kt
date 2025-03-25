@@ -270,6 +270,7 @@ fun HomeScreen2(
                             assets = assetsUiState.assets,
                             tokenData = tokenData,
                             loadSymbol = loadSymbol,
+                            navigateToSend = navigateToSend,
                             selectedTokenUiState = selectedTokenUiState,
                             setSelectedToken = setSelectedTokenId,
                             sharedTransitionScope = sharedTransitionScope,

@@ -48,6 +48,7 @@ fun CardCarousel(
     loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     sharedTransitionScope: SharedTransitionScope,
+    navigateToSend: (address: String, tokenId: String) -> Unit,
     animatedContentScope: AnimatedContentScope,
     setSelectedToken: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -217,6 +218,7 @@ fun CardCarousel(
             Log.d("fiatamount","${item.symbol} - $fiatamount")
             with(sharedTransitionScope) {
                 Card(
+                    isFirst = isFirstCard,
                     modifier = Modifier
                         .fillMaxWidth()
                         .graphicsLayer {
@@ -235,7 +237,12 @@ fun CardCarousel(
                                 amount = item.balance,
                                 tokenName = tokenName,
                                 fiatAmount = item.balance * fiatamount!!,
-                                icon = item.logoUrl
+                                icon = item.logoUrl,
+                                navigateToSend = {
+                                    navigateToSend(item.address, item.address)
+                                },
+
+
                             )
                        // }
                     },
