@@ -153,54 +153,24 @@ fun LogScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ){
-                //                TODO: Add Async Images
-
-//                    AsyncImage(
-//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
-//                        model = "https://example.com/image.jpg",
-//                        contentDescription = "Translated description of what the image contains"
-//                    )
-                Image(
-                    modifier = Modifier
-                        .size(40.dp),
-                    painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                    contentDescription = "Ethereum"
+                Text(
+                    text = "ACTIVITY LOG",
+                    style = TextStyle(
+                        fontFamily = SpaceMono,
+                        color = dgenTurqoise,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
                 )
-                when(tokenAssetUiState){
-                    TokenAssetUiState.Empty -> {}
-                    TokenAssetUiState.Loading -> {}
-                    is TokenAssetUiState.Success -> {
-                        if (tokenId != null) {
-                            val token = tokenAssetUiState.assets.firstOrNull {
-                                it.symbol.equals(tokenId, ignoreCase = true)
-                            }
-
-                            val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}- $tokenId -${token?.name}" else token?.symbol
-
-
-                            if (tokenName != null) {
-                                Text(
-                                    text = tokenName,
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 18.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
             }
             IconButton(modifier = Modifier, onClick = onNavigateBack) {
                 Icon(
                     modifier = Modifier.width(32.dp),
                     painter = painterResource(R.drawable.baseline_close_24),
                     contentDescription = "Back",
-                    tint = dgenTurqoise
+                    tint = dgenWhite
                 )
             }
         }
@@ -234,10 +204,12 @@ fun LogScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 item {
-                                    Spacer(Modifier.height(16.dp))
+                                    Spacer(Modifier.height(8.dp))
                                 }
+
                                 items(transfers.reversed()) { transfer ->
-                                    LogEntry(transfer)
+                                    //TODO: Add Logos
+                                    LogEntry(logEntry = transfer)
                                 }
 
                                 item {
