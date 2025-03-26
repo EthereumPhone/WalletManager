@@ -26,7 +26,7 @@ fun NavGraphBuilder.homeGraph(
     sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
-    navigateToLog: () -> Unit,
+    navigateToLog: (String) -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {
     navigation(
