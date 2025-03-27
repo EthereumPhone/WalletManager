@@ -1,5 +1,6 @@
 package com.core.data.repository
 
+import android.util.Log
 import com.core.data.remote.TokenPriceDataSource
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.model.erc20.TokenExchangeEntity
@@ -22,9 +23,15 @@ class DefaultExchangeRepository @Inject constructor(
 
     override suspend fun fetchExchangeBySymbols(symbols: List<String>) {
         try {
+            Log.d("IM HERE", "RIGHT NOW")
+
+
             val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
+
             val entities = data.flatMap { response ->
+                Log.d("price", response.symbol)
                 response.prices.map { price ->
+                    Log.d("CURRENT PRICE", response.prices.first().value)
                     TokenExchangeEntity(
                         symbol = response.symbol,
                         currency = price.currency,
