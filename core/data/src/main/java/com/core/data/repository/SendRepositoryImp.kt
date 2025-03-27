@@ -72,7 +72,6 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     decimalValue,
                     data?: "",
-                    walletSDK.getAddress(),
                     null
                 )
             } catch (exception: NullPointerException) {
