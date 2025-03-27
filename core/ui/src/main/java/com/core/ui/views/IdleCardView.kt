@@ -98,20 +98,33 @@ fun IdleView(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
 
-//                TODO: Add Async Images
-
-//                    AsyncImage(
-//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
-//                        model = "https://example.com/image.jpg",
-//                        contentDescription = "Translated description of what the image contains"
-//                    )
-                    Image(
-                        modifier = Modifier
-                            .padding(bottom = 2.dp)
-                            .size(32.dp),
-                        painter = painterResource(R.drawable.placeholer_icon_5),
-                        contentDescription = "Ethereum"
-                    )
+                when(icon){
+                    "ETH" -> {
+                        Image(
+                            modifier = Modifier
+                                .padding(bottom = 2.dp)
+                                .size(32.dp),
+                            painter = painterResource(R.drawable.ethereum_placeholder),
+                            contentDescription = "Ethereum"
+                        )
+                    }
+                    "" -> {
+                        Image(
+                            modifier = Modifier
+                                .padding(bottom = 2.dp)
+                                .size(32.dp),
+                            painter = painterResource(R.drawable.placeholer_icon_5),
+                            contentDescription = "Ethereum"
+                        )
+                    }
+                    else -> {
+                        AsyncImage(
+                            modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+                            model = icon,
+                            contentDescription = "Translated description of what the image contains"
+                        )
+                    }
+                }
 
                 Text(
                     text = tokenName.uppercase(),

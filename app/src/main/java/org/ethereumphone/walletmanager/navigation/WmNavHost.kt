@@ -88,8 +88,8 @@ fun WmNavHost(
                 navigateToSend = { address, tokenId ->
                     navController.navigateToSend(address= address, tokenId =tokenId)
                 },
-                navigateToLog = {
-                    navController.navigateToTransaction()
+                navigateToLog = { it ->
+                    navController.navigateToTransaction(tokenId = it)
                 },
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)

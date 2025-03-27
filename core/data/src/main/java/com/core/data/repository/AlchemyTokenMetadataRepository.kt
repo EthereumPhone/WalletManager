@@ -48,6 +48,7 @@ class AlchemyTokenMetadataRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             val metadataList = contractAddresses.map { address ->
+                Log.d("refreshTokensMetadata",address)
                 tokenMetadataApi
                     .getTokenMetadata(
                         "https://${network.chainName}.g.alchemy.com/v2/$apiKey",

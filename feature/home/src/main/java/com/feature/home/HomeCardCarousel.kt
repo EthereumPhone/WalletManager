@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.domain.GetTokenAssetsBySymbol
 import com.core.model.TokenAsset
 import com.core.model.TokenData
+import com.core.model.TokenMetadata
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
@@ -90,7 +91,7 @@ internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
-    navigateToLog: () -> Unit,
+    navigateToLog: (String) -> Unit,
     isOffline: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -114,6 +115,9 @@ internal fun HomeRoute2(
 
     val tokenData by viewModel.tokenData.collectAsState()
 
+    val tokenMetadata by viewModel.tokenMetadata.collectAsState()
+
+
     HomeScreen2(
         userData = walletDataUiState,
         assetsUiState = assetsUiState,
@@ -127,6 +131,7 @@ internal fun HomeRoute2(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
         tokenData = tokenData,
+        tokenMetadata = tokenMetadata,
         loadSymbol = viewModel::loadSymbol
 
 
@@ -141,7 +146,8 @@ fun HomeScreen2(
     assetsUiState: AssetsUiState,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
-    navigateToLog: () -> Unit,
+    navigateToLog: (String) -> Unit,
+    tokenMetadata:  List<TokenMetadata>,
     selectedTokenUiState: SelectedTokenUiState,
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
@@ -263,12 +269,16 @@ fun HomeScreen2(
                   }
                 }
                 is AssetsUiState.Success -> {
-                    Log.d("CardAnimation Assets", assetsUiState.assets.toString())
+
+                    Log.d("CardAnimation Assets", "${ tokenMetadata.size }")
+
+
                     if(assetsUiState.assets.isNotEmpty()){
                         CardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
                             tokenData = tokenData,
+                            tokenMetadata = tokenMetadata,
                             loadSymbol = loadSymbol,
                             navigateToSend = navigateToSend,
                             selectedTokenUiState = selectedTokenUiState,
@@ -338,67 +348,6 @@ fun HomeScreen2(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                when(assetsUiState){
-                    AssetsUiState.Empty -> {
-
-                    }
-                    AssetsUiState.Error -> {
-
-                    }
-                    AssetsUiState.Loading -> {
-
-                    }
-                    is AssetsUiState.Success -> {
-                        if(assetsUiState.assets.isNotEmpty()){
-                            IconButton(modifier = Modifier, onClick = {
-
-                                if (isOffline){
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            state = SnackbarState.ERROR,
-                                            message = "You are offline!",
-                                            actionLabel = "UNDO",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
-                                } else {
-                                    Log.d("CardAnimation","Home ${selectedTokenId.value} ")
-                                    //Toast.makeText(context, "Token ${selectedTokenId.value}", Toast.LENGTH_SHORT).show()
-                                    navigateToSend(selectedTokenId.value,selectedTokenId.value)
-                                }
-
-
-                            }) {
-
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.width(16.dp),
-                                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
-                                        contentDescription = "Back",
-                                        tint = dgenTurqoise
-                                    )
-                                    Text(
-                                        text= "SEND",
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 12.sp,
-                                            lineHeight = 12.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None
-                                        )
-                                    )
-                                }
-
-                            }
-                            Spacer(modifier = Modifier.width(32.dp))
-                        }
-
-                    }
-                }
 
                 IconButton(modifier = Modifier, onClick = {
                     if (isOffline){
@@ -411,7 +360,8 @@ fun HomeScreen2(
                             )
                         }
                     } else {
-                        navigateToLog()
+                        navigateToLog(selectedTokenId.value)
+                        //navigateToSend(selectedTokenId.value,selectedTokenId.value)
                     }
                 }) {
 

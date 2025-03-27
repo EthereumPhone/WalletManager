@@ -6,13 +6,8 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.core.model.TokenAsset
 import com.core.model.TokenData
+import com.core.model.TokenMetadata
 import com.core.ui.Card
 import com.core.ui.views.IdleView
 import com.feature.send.SelectedTokenUiState
@@ -45,6 +41,7 @@ import kotlin.math.abs
 fun CardCarousel(
     assets: List<TokenAsset>,
     tokenData: List<TokenData>,
+    tokenMetadata:  List<TokenMetadata>,
     loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     sharedTransitionScope: SharedTransitionScope,
@@ -174,6 +171,7 @@ fun CardCarousel(
                     Log.d("FirstCard", "Karte mit Index $index ist jetzt die erste sichtbare")
                     // Weitere Logik, z.B. setSelectedToken(item.address) usw.
                     enabled = true
+//                    Log.d("ADDRESS", "address ${item.address} - network ${item.chainId} - name ${item.name} - symbol ${item.symbol}")
                     setSelectedToken(item.address)
                 } else {
                     enabled = false
@@ -215,6 +213,19 @@ fun CardCarousel(
                 }
             }
 
+            val logoUrl = when(item.symbol) {
+                "arbitrum" -> {"ETH"}
+                "polygon" -> {"ETH"}
+                "sepolia" -> {"ETH"}
+                "mainnet" -> {"ETH"}
+                "optimism" -> {"ETH"}
+                "base" -> {"ETH"}
+                "zora" -> {"ETH"}
+                else -> {
+                    tokenMetadata.firstOrNull() { item.symbol == it.symbol }?.logo ?: ""
+                }
+            }
+
             Log.d("fiatamount","${item.symbol} - $fiatamount")
             with(sharedTransitionScope) {
                 Card(
@@ -237,7 +248,7 @@ fun CardCarousel(
                                 amount = item.balance,
                                 tokenName = tokenName,
                                 fiatAmount = item.balance * fiatamount!!,
-                                icon = item.logoUrl,
+                                icon = logoUrl,
                                 navigateToSend = {
                                     navigateToSend(item.address, item.address)
                                 },

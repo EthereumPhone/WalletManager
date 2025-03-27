@@ -1,10 +1,12 @@
 package com.feature.home
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
@@ -40,7 +42,7 @@ class HomeViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val tokenExchangeRepository: TokenExchangeRepository,
-    private val coinbaseTokenExchangeRepository: TokenExchangeRepository,
+    private val tokenMetadataRepository: TokenMetadataRepository,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
@@ -54,13 +56,12 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-
-
     val tokenAssetState: StateFlow<AssetsUiState> =
         networkBalanceRepository.getNetworksBalance()
             .map { balances ->
                 val netWorkAssets = balances.map {
                     val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+
                     TokenAsset(
                         address = it.contractAddress,
                         chainId = it.chainId,
@@ -177,6 +178,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    val tokenMetadata = tokenMetadataRepository.getTokensMetadata()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
 }
 

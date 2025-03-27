@@ -1,16 +1,9 @@
 package com.example.assets.ui
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,16 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImagePainter
@@ -95,7 +85,7 @@ fun AssetListItem(
                     Image(
                         modifier = Modifier,
                         contentScale = ContentScale.Crop,
-                        painter = painterResource(id = R.drawable.ethereum_icon),
+                        painter = painterResource(id = R.drawable.ethereum_placeholder),
                         contentDescription = null
                     )
                 }
@@ -289,7 +279,7 @@ fun AssetListDetailItem(
                         Image(
                             modifier = Modifier,
                             contentScale = ContentScale.Crop,
-                            painter = painterResource(id = R.drawable.ethereum_icon),
+                            painter = painterResource(id = R.drawable.ethereum_placeholder),
                             contentDescription = null
                         )
                     }
