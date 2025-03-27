@@ -23,15 +23,10 @@ class DefaultExchangeRepository @Inject constructor(
 
     override suspend fun fetchExchangeBySymbols(symbols: List<String>) {
         try {
-            Log.d("IM HERE", "RIGHT NOW")
-
-
             val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
 
             val entities = data.flatMap { response ->
-                Log.d("price", response.symbol)
                 response.prices.map { price ->
-                    Log.d("CURRENT PRICE", response.prices.first().value)
                     TokenExchangeEntity(
                         symbol = response.symbol,
                         currency = price.currency,
