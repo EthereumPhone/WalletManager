@@ -53,7 +53,6 @@ class Erc20TransferApi @Inject constructor(
             to = erc20ContractAddress,
             value = "0",
             data = data,
-            from = walletSDK.getAddress(),
             callGas = null
         )
     }

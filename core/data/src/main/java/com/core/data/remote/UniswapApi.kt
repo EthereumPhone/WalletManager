@@ -172,7 +172,6 @@ class UniswapApi @Inject constructor(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
-                from = walletSDK.getAddress(),
                 callGas = null
             )
             if (approveTxId == WalletSDK.DECLINE) {
@@ -197,7 +196,6 @@ class UniswapApi @Inject constructor(
         val signature = walletSDK.signMessage(
             message = permit2string,
             chainId = currentChainId,
-            from = walletSDK.getAddress()
         )
         val realEncoder = RealEncoder()
         val permitData = realEncoder.encodePermit(
@@ -238,7 +236,6 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = "0",
             data = universalData,
-            from = walletSDK.getAddress(),
             callGas = null,
         )
     }
@@ -306,7 +303,6 @@ class UniswapApi @Inject constructor(
                 to = fromToken.address,
                 value = "0",
                 data = approveTokenData,
-                from = walletSDK.getAddress(),
                 callGas = null
             )
             if (approveTxId == WalletSDK.DECLINE) {
@@ -330,7 +326,6 @@ class UniswapApi @Inject constructor(
         )
         val signature = walletSDK.signMessage(
             message = permit2string,
-            from = walletSDK.getAddress(),
             chainId = walletSDK.getChainId()
         )
         val realEncoder = RealEncoder()
@@ -378,7 +373,6 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = "0",
             data = universalData,
-            from = walletSDK.getAddress(),
             callGas = null
         )
     }
@@ -459,7 +453,6 @@ class UniswapApi @Inject constructor(
             to = UNISWAP_V3_ADDRESS,
             value = fullAmountToSwap.toString(),
             data = universalData,
-            from = walletSDK.getAddress(),
             callGas = null
         )
     }

@@ -158,7 +158,7 @@ class HomeViewModel @Inject constructor(
 
     fun changeNetwork(network: Int){
         viewModelScope.launch {
-            walletSDK?.changeChain(network, chainIdToRPC(network), chainIdToBundler(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            walletSDK?.changeChain(network, chainIdToRPC(network), chainIdToBundler(network)) // chainIdToBundler(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
             userDataRepository.setWalletNetwork(network.toString())
         }
     }

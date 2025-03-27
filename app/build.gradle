@@ -79,7 +79,7 @@ dependencies {
 
 
     // Web3j
-    implementation 'org.web3j:core:4.8.8-android'
+    implementation 'org.web3j:core:4.9.4'
 
     // Gson
     implementation 'com.google.code.gson:gson:2.10'
