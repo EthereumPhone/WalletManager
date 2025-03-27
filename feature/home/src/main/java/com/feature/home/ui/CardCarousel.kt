@@ -52,7 +52,7 @@ fun CardCarousel(
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
 
-    val listofTokenSymbol = remember { mutableStateListOf<String>() }
+    val listofTokenSymbol = remember { mutableListOf<String>() }
 
 
 
@@ -83,9 +83,44 @@ fun CardCarousel(
                             listofTokenSymbol.add("ETH")
                         }
                     }
-                    "mainnet" -> {
+                    "arbitrum" -> {
                         if(!listofTokenSymbol.contains("ETH")){
                             Log.d("Fetch Card", "mainnet added")
+
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    "mainnet" -> {
+                    if(!listofTokenSymbol.contains("ETH")){
+                        Log.d("Fetch Card", "mainnet added")
+
+                        listofTokenSymbol.add("ETH")
+                    }
+                }
+                    "polygon" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "mainnet added")
+
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    "sepolia" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "mainnet added")
+
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    "optimism" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "optimism added")
+
+                            listofTokenSymbol.add("ETH")
+                        }
+                    }
+                    "zora" -> {
+                        if(!listofTokenSymbol.contains("ETH")){
+                            Log.d("Fetch Card", "optimism added")
 
                             listofTokenSymbol.add("ETH")
                         }
@@ -97,7 +132,13 @@ fun CardCarousel(
                 }
             }
 
+
             //load token price based of token list
+            Log.d("tokendata effect", "Token: $listofTokenSymbol")
+            for (token in listofTokenSymbol){
+                Log.d("tokendata effect loop", "Token: $token")
+            }
+
             loadSymbol(listofTokenSymbol)
 
         }
@@ -119,6 +160,8 @@ fun CardCarousel(
             Log.d("SetToken", "${ item.address } - ${ item.symbol } - ${ item.name }")
 
             Log.d("SendID", "Token: $index - ${ item.name } - ${ item.address }")
+
+            Log.d("tokendata", "Token: $tokenData")
 
             var enabled by remember { mutableStateOf(false) }
 
