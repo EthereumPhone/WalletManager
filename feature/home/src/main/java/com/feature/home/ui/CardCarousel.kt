@@ -165,7 +165,7 @@ fun CardCarousel(
 
             var enabled by remember { mutableStateOf(false) }
 
-            val rotX: Float by animateFloatAsState(if (enabled) -0.5f else -7f, label = "alpha")
+            val rotX: Float by animateFloatAsState ( -10f , label = "alpha")
 
 
 
@@ -295,6 +295,7 @@ fun CardCarousel(
                                 navigateToSend = {
                                     navigateToSend(item.address, item.address)
                                 },
+                                enableSend = item.balance > 0
 
 
                             )

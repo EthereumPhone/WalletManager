@@ -1,12 +1,14 @@
 package com.feature.send.ui
 
 
+import InstantGif
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -89,23 +91,10 @@ fun SendCardView(
     }
 
     Box(
-        modifier = Modifier.alpha(0.25f),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
+        contentAlignment = Alignment.CenterEnd
     ) {
-        //                TODO: Add Async Images
-
-//                    AsyncImage(
-//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
-//                        model = "https://example.com/image.jpg",
-//                        contentDescription = "Translated description of what the image contains"
-//                    )
-        Image(
-            modifier = Modifier
-                .size(400.dp)
-                .offset(x = 100.dp, y = 40.dp),
-            painter = painterResource(R.drawable.iso),
-            contentDescription = "Ethereum"
-        )
+        InstantGif(resId = R.drawable.globespintransparent)
     }
     Column (
         verticalArrangement =  Arrangement.SpaceBetween,

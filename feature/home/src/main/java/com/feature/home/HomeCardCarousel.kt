@@ -220,28 +220,7 @@ fun HomeScreen2(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Image(
-                                modifier = Modifier.size(82.dp),
-                                contentScale = ContentScale.Crop,
-                                painter = painterResource(id = com.core.ui.R.drawable.baseline_error_outline_24),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(Colors.GRAY)
-                            )
-                            Text(text = "Error",
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 24.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
-                                ))
-
-                        }
+                        
                     }
                 }
                 AssetsUiState.Loading -> {

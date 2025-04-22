@@ -23,6 +23,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import com.core.ui.views.IdleView
 import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import java.util.Locale
 
 @SuppressLint("SuspiciousIndentation")
@@ -49,7 +50,7 @@ fun Card(
             .aspectRatio(16f / 9f)
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
-            .border(1.dp, Color.White, RoundedCornerShape(0.dp))
+            .border(1.dp, dgenTurqoise, RoundedCornerShape(0.dp))
     ) {
 
         if (frontVisible) {
