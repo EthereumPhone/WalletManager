@@ -151,7 +151,7 @@ fun CardCarousel(
         modifier = modifier
             .fillMaxSize()
             .zIndex(3f),
-        verticalArrangement = Arrangement.spacedBy((-225).dp), // Overlapping effect
+        verticalArrangement = Arrangement.spacedBy((-240).dp), // Overlapping effect
         contentPadding = PaddingValues(top = 100.dp, bottom = 100.dp) // Ensures enough space for scrolling
     ) {
         val firstVisibleIndex = listState.firstVisibleItemIndex
@@ -165,7 +165,7 @@ fun CardCarousel(
 
             var enabled by remember { mutableStateOf(false) }
 
-            val rotX: Float by animateFloatAsState(if (enabled) -0.5f else -7f, label = "alpha")
+            val rotXFront = -10f    // static tilt
 
 
 
@@ -279,9 +279,9 @@ fun CardCarousel(
                             scaleX = scaleFactor
                             scaleY = scaleFactor
                             alpha = alphaFactor
-                            rotationX = rotX
+                            rotationX = rotXFront
                             translationY = frontCardTranslation
-                            cameraDistance = 12f * density
+                            cameraDistance = 32f * density
                         }
                     ,
                     frontSide = {

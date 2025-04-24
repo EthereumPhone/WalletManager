@@ -11,6 +11,7 @@ import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
 import com.core.domain.UpdateTokensByNetworkUseCase
+import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.TokenData
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -34,6 +36,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okio.IOException
 import org.ethereumphone.walletsdk.WalletSDK
+import java.math.BigDecimal
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,6 +46,7 @@ class HomeViewModel @Inject constructor(
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val tokenExchangeRepository: TokenExchangeRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
+    private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
@@ -57,34 +61,68 @@ class HomeViewModel @Inject constructor(
     )
 
     val tokenAssetState: StateFlow<AssetsUiState> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                val netWorkAssets = balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
-                .sortedByDescending { it.balance }
-
-                // Set the first value of selectedTokenAsset to the last item in the list
-                if (netWorkAssets.isNotEmpty()) {
-                    _selectedTokenAsset.value = netWorkAssets.last()
-                }
-
-                AssetsUiState.Success(netWorkAssets)
+        combine(
+            networkBalanceRepository.getNetworksBalance(),
+            getTokenBalancesWithMetadataUseCase(),
+            ::Pair
+        )
+        .map { (networkBalances, tokenBalances) ->
+            val netWorkAssets = networkBalances.map {
+                val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                
+                TokenAsset(
+                    address = it.contractAddress,
+                    chainId = it.chainId,
+                    symbol = name.lowercase(),
+                    name = name.lowercase(),
+                    balance = formatSmallBalance(it.tokenBalance.toDouble()),
+                    decimals = 18
+                )
             }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetsUiState.Loading
-            )
+            .filter { it.balance > 0 }
+            .sortedByDescending { it.balance }
+            
+            // Add token balances to the list
+            val allAssets = netWorkAssets + tokenBalances
+                .filter { it.balance > 0 }
+                .map { token ->
+                    // Create a copy with properly formatted balance
+                    token.copy(balance = formatSmallBalance(token.balance))
+                }
+                .filter { token ->
+                    // Filter out tokens with URLs in their names or symbols
+                    val name = token.name.lowercase()
+                    val symbol = token.symbol.lowercase()
+                    
+                    val urlPatterns = listOf(
+                        "http://", "https://", "www.", 
+                        ".com", ".io", ".org", ".net", ".xyz", 
+                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
+                    )
+                    
+                    val containsNoUrlPatterns = urlPatterns.none { pattern -> 
+                        name.contains(pattern) || symbol.contains(pattern)
+                    }
+                    
+                    containsNoUrlPatterns
+                }
+            
+            // Set the first value of selectedTokenAsset to the first item in the list
+            if (allAssets.isNotEmpty()) {
+                _selectedTokenAsset.value = allAssets.first()
+            }
+            
+            if (allAssets.isEmpty()) {
+                AssetsUiState.Empty
+            } else {
+                AssetsUiState.Success(allAssets)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AssetsUiState.Loading
+        )
 
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -137,17 +175,7 @@ class HomeViewModel @Inject constructor(
 
 
     fun refreshData() {
-        viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    val userData = userDataRepository.userData.first()
-                    updateTokensByNetworkUseCase(userData.walletAddress, userData.walletNetwork.toInt())
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // Handle exceptions if needed
-            }
-        }
+        refreshAllBalances()
     }
 
     fun setOnboardingComplete(onboardingComplete: Boolean){
@@ -163,7 +191,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // We’ll store our user input in the SavedStateHandle under a certain key
+    // We'll store our user input in the SavedStateHandle under a certain key
 
 
     private val _tokenData = MutableStateFlow<List<TokenData>>(emptyList())
@@ -185,6 +213,50 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    fun refreshAllBalances() {
+        viewModelScope.launch {
+            _refreshState.value = true
+            try {
+                val userData = userDataRepository.userData.first()
+                val walletAddress = userData.walletAddress
+                val networkChains = NetworkChain.getAllNetworkChains().map { it.chainId }
+                
+                // Refresh network balances
+                networkBalanceRepository.refreshNetworkBalance(walletAddress, networkChains)
+                
+                // Refresh token balances for each network
+                networkChains.forEach { chainId ->
+                    updateTokensByNetworkUseCase(walletAddress, chainId)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error refreshing balances", e)
+            } finally {
+                _refreshState.value = false
+            }
+        }
+    }
+
+    /**
+     * Formats very small balances to show up to 6 decimal places.
+     * If the value is smaller than 0.000001, it's rounded up to 0.000001.
+     */
+    private fun formatSmallBalance(balance: Double): Double {
+        if (balance == 0.0) return 0.0
+        
+        val precision = 6
+        val minDisplayableValue = 1.0 / Math.pow(10.0, precision.toDouble())
+        
+        // For very small values (less than minDisplayableValue), return the minimum displayable value
+        if (balance > 0 && balance < minDisplayableValue) {
+            return minDisplayableValue
+        }
+        
+        // Otherwise, round to 6 decimal places
+        val bd = BigDecimal(balance)
+        val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
+        return rounded.toDouble()
+    }
 
 }
 

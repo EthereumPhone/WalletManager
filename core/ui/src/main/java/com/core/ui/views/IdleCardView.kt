@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import coil3.compose.AsyncImage
 import com.core.ui.Card
 import com.core.ui.R
@@ -159,15 +160,17 @@ fun IdleView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ){
-
+            val formattedAmount = formatSmart(amount)
+            val fontSize = calculateFontSize(formattedAmount)
+            
             Text(
-                text= formatSmart(amount),
+                text = formattedAmount,
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = dgenTurqoise,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 80.sp,
-                    lineHeight = 24.sp,
+                    fontSize = fontSize,
+                    lineHeight = fontSize / 3,  // Adjust lineHeight proportionally
                     letterSpacing = 0.sp,
                     textDecoration = TextDecoration.None
                 )
@@ -211,6 +214,20 @@ fun IdleView(
     }
 }
 
+/**
+ * Calculates font size based on the length of the text to display.
+ * Shorter text gets larger font size, longer text gets smaller font size.
+ */
+private fun calculateFontSize(text: String): TextUnit {
+    return when {
+        text.length <= 4 -> 80.sp
+        text.length <= 6 -> 68.sp
+        text.length <= 8 -> 56.sp
+        text.length <= 10 -> 48.sp
+        text.length <= 12 -> 40.sp
+        else -> 36.sp
+    }
+}
 
 @Preview(
     widthDp = 447,
