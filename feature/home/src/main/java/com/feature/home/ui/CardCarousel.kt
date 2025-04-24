@@ -279,7 +279,7 @@ fun CardCarousel(
                             scaleX = scaleFactor
                             scaleY = scaleFactor
                             alpha = alphaFactor
-                            rotationX = rotXFront
+                            rotationX = rotX
                             translationY = frontCardTranslation
                             cameraDistance = 32f * density
                         }
