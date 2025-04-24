@@ -32,11 +32,6 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         )
     )
 
-
-
-
-
-
     background(color)
         .onGloballyPositioned {
             size = it.size

@@ -1,6 +1,9 @@
 package com.core.ui.views
 
 
+import InstantGif
+import android.graphics.Insets.add
+import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,8 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +49,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.TextUnit
-import coil3.compose.AsyncImage
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.core.ui.Card
 import com.core.ui.R
 import com.core.ui.util.formatSmart
@@ -62,24 +74,21 @@ fun IdleView(
     tokenName: String,
     fiatAmount: Double,
     icon: String?,
-    navigateToSend: () -> Unit
+    navigateToSend: () -> Unit,
+    enableSend: Boolean
 ) {
 
     val decimalFormat = DecimalFormat("0.00").apply {
         decimalFormatSymbols = DecimalFormatSymbols(Locale.US) // Forces the decimal point
     }
 
+
+
     Box(
-        modifier = Modifier.alpha(0.4f),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
+        contentAlignment = Alignment.CenterEnd
     ) {
-        Image(
-            modifier = Modifier
-                .size(700.dp)
-                .offset(x = 100.dp, y = 50.dp),
-            painter = painterResource(R.drawable.iso),
-            contentDescription = "Ethereum"
-        )
+        InstantGif(resId = R.drawable.globespintransparent)
     }
 
     Column (
@@ -146,7 +155,7 @@ fun IdleView(
                 text="$" + decimalFormat.format(fiatAmount),
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = dgenWhite,
+                    color = dgenTurqoise,
                     fontWeight = FontWeight.Medium,
                     fontSize = 20.sp,
 
@@ -183,6 +192,7 @@ fun IdleView(
                             navigateToSend()
                         }
                     }
+                    .alpha(if (enableSend) 1f else 0.2f)
 
             ) {
 
@@ -246,6 +256,7 @@ fun IdlePreview(){
                 fiatAmount = 209.47,
                 icon = "",//R.drawable.placeholer_icon_5.toString()
                 navigateToSend = {  },
+                enableSend = false
 
             )
         },

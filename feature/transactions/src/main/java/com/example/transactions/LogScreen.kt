@@ -153,7 +153,7 @@ fun LogScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ){
                 Text(
-                    text = "ACTIVITY LOG - ${tokenId}",
+                    text = "ACTIVITY LOG",
                     style = TextStyle(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,

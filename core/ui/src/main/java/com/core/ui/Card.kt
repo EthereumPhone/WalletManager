@@ -27,8 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import kotlin.math.min
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import java.util.Locale
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
@@ -66,7 +66,8 @@ fun Card(
         modifier = modifier
             .aspectRatio(16f / 9f)
             .fillMaxWidth()
-            .neonBorder(borderBrush, stroke = 2.dp, blur = 18.dp)
+            .clip(RoundedCornerShape(0.dp))
+            .border(1.dp, dgenTurqoise, RoundedCornerShape(0.dp))
     ) {
         // subtle wire‑frame grid (matches the visual reference)
         Box(
