@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -139,8 +141,8 @@ fun LogScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    end = 16.dp,
-                    start = 16.dp, top = 16.dp
+                    end = 24.dp,
+                    start = 24.dp, top = 16.dp
                 ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -164,14 +166,17 @@ fun LogScreen(
                     )
                 )
             }
-            IconButton(modifier = Modifier, onClick = onNavigateBack) {
                 Icon(
-                    modifier = Modifier.width(32.dp),
+                    modifier = Modifier.width(32.dp).pointerInput(Unit){
+                        detectTapGestures {
+                            onNavigateBack()
+                        }
+                    },
                     painter = painterResource(R.drawable.baseline_close_24),
                     contentDescription = "Back",
-                    tint = dgenWhite
+                    tint = dgenTurqoise
                 )
-            }
+
         }
 
 
@@ -379,7 +384,7 @@ fun generateRandomTransfers(): List<TransferItem> {
 
     // Beispielhafte Listen für zufällige Werte
     val possibleChainIds = listOf(1, 56, 137, 42)  // z.B. Ethereum, BSC, Polygon, Kovan
-    val possibleAssets = listOf("$")
+    val possibleAssets = listOf("DAI")
 
     // Beispiel-Adressen (typisch 0x + 40 Hex-Stellen, hier verkürzt oder zufällig generiert)
     val sampleAddresses = listOf(
