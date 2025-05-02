@@ -84,145 +84,150 @@ fun IdleView(
     }
 
 
-
     Box(
-        modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
-        contentAlignment = Alignment.CenterEnd
+        modifier = Modifier.fillMaxSize().aspectRatio(16f/9f),
     ) {
-        InstantGif(resId = R.drawable.globespintransparent)
-    }
-
-    Column (
-        verticalArrangement =  Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
-    ){
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-
-                when(icon){
-                    "ETH" -> {
-                        Image(
-                            modifier = Modifier
-                                .padding(bottom = 2.dp)
-                                .size(32.dp),
-                            painter = painterResource(R.drawable.ethereum_placeholder),
-                            contentDescription = "Ethereum"
-                        )
-                    }
-                    "" -> {
-                        Image(
-                            modifier = Modifier
-                                .padding(bottom = 2.dp)
-                                .size(32.dp),
-                            painter = painterResource(R.drawable.placeholer_icon_5),
-                            contentDescription = "Ethereum"
-                        )
-                    }
-                    else -> {
-                        AsyncImage(
-                            modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
-                            model = icon,
-                            contentDescription = "Translated description of what the image contains"
-                        )
-                    }
-                }
-
-                Text(
-                    text = tokenName.uppercase(),
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 24.sp,
-
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                )
-            }
-
-
-            Text(
-                text="$" + decimalFormat.format(fiatAmount),
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenTurqoise,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 20.sp,
-
-                    textDecoration = TextDecoration.None
-                )
-            )
+        Box(
+            modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            InstantGif(resId = R.drawable.wireframe_globe)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+        Column (
+            verticalArrangement =  Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
         ){
-            val formattedAmount = formatSmart(amount)
-            val fontSize = calculateFontSize(formattedAmount)
-            
-            Text(
-                text = formattedAmount,
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenTurqoise,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = fontSize,
-                    lineHeight = fontSize / 3,  // Adjust lineHeight proportionally
-                    letterSpacing = 0.sp,
-                    textDecoration = TextDecoration.None
-                )
-            )
 
-            Box(
-                modifier = Modifier.padding(bottom = 8.dp, end = 16.dp)
-                    .pointerInput(Unit) {
-                        detectTapGestures {
-                            navigateToSend()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+
+                    when(icon){
+                        "ETH" -> {
+                            Image(
+                                modifier = Modifier
+                                    .padding(bottom = 2.dp)
+                                    .size(32.dp),
+                                painter = painterResource(R.drawable.ethereum_placeholder),
+                                contentDescription = "Ethereum"
+                            )
+                        }
+                        "" -> {
+                            Image(
+                                modifier = Modifier
+                                    .padding(bottom = 2.dp)
+                                    .size(32.dp),
+                                painter = painterResource(R.drawable.placeholer_icon_5),
+                                contentDescription = "Ethereum"
+                            )
+                        }
+                        else -> {
+                            AsyncImage(
+                                modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+                                model = icon,
+                                contentDescription = "Translated description of what the image contains"
+                            )
                         }
                     }
-                    .alpha(if (enableSend) 1f else 0.2f)
 
-            ) {
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
-                        contentDescription = "Back",
-                        tint = dgenTurqoise
-                    )
                     Text(
-                        text= "SEND",
+                        text = tokenName.uppercase(),
                         style = TextStyle(
                             fontFamily = SpaceMono,
                             color = dgenTurqoise,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp,
-                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 24.sp,
+
                             letterSpacing = 0.sp,
                             textDecoration = TextDecoration.None
                         )
                     )
                 }
 
+
+                Text(
+                    text="$" + decimalFormat.format(fiatAmount),
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenTurqoise,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 20.sp,
+
+                        textDecoration = TextDecoration.None
+                    )
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ){
+                val formattedAmount = formatSmart(amount)
+                val fontSize = calculateFontSize(formattedAmount)
+
+                Text(
+                    text = formattedAmount,
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenTurqoise,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = fontSize,
+                        lineHeight = fontSize / 3,  // Adjust lineHeight proportionally
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
+
+                Box(
+                    modifier = Modifier.padding(bottom = 8.dp, end = 16.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                navigateToSend()
+                            }
+                        }
+                        .alpha(if (enableSend) 1f else 0.2f)
+
+                ) {
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(R.drawable.baseline_arrow_outward_24),
+                            contentDescription = "Back",
+                            tint = dgenTurqoise
+                        )
+                        Text(
+                            text= "SEND",
+                            style = TextStyle(
+                                fontFamily = SpaceMono,
+                                color = dgenTurqoise,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = 0.sp,
+                                textDecoration = TextDecoration.None
+                            )
+                        )
+                    }
+
+                }
             }
         }
     }
+
+
 }
 
 /**
@@ -246,7 +251,7 @@ private fun calculateFontSize(text: String): TextUnit {
 )
 @Composable
 fun IdlePreview(){
-    Card(
+    /*Card(
         modifier = Modifier
             .fillMaxWidth()
         ,
@@ -261,6 +266,16 @@ fun IdlePreview(){
 
             )
         },
+    )*/
+
+    IdleView(
+        amount = 0.13,
+        tokenName = "USDC",
+        fiatAmount = 209.47,
+        icon = "",//R.drawable.placeholer_icon_5.toString()
+        navigateToSend = {  },
+        enableSend = false
+
     )
 
 }

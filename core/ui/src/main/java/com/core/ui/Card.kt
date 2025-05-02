@@ -79,6 +79,7 @@ fun Card(
         ) {
             val frontVisible = rotation < 90f
             AnimatedVisibility(
+                modifier = Modifier.fillMaxSize(),
                 visible = frontVisible,
                 enter = fadeIn(tween(300)),
                 exit  = fadeOut(tween(300))
@@ -86,6 +87,7 @@ fun Card(
 
             val backVisible = rotation > 90f
             AnimatedVisibility(
+                modifier = Modifier.fillMaxSize(),
                 visible = backVisible,
                 enter = fadeIn(tween(300)),
                 exit  = fadeOut(tween(300))
