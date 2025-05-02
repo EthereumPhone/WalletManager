@@ -4,6 +4,7 @@ package com.core.ui.views
 import InstantGif
 import android.graphics.Insets.add
 import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,6 +61,7 @@ import com.core.ui.R
 import com.core.ui.util.formatSmart
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import kotlinx.coroutines.launch
@@ -79,19 +81,34 @@ fun IdleView(
     enableSend: Boolean
 ) {
 
+    val context = LocalContext.current
     val decimalFormat = DecimalFormat("0.00").apply {
         decimalFormatSymbols = DecimalFormatSymbols(Locale.US) // Forces the decimal point
     }
 
+    //GIF-Loader for wireframe globe gif
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
 
-    Box(
-        modifier = Modifier.fillMaxSize().aspectRatio(16f/9f),
-    ) {
+
+
         Box(
-            modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
+            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 40.dp).aspectRatio(1f),
             contentAlignment = Alignment.CenterEnd
         ) {
-            InstantGif(resId = R.drawable.wireframe_globe)
+
+            AsyncImage(
+                imageLoader = gifEnabledLoader,
+                model = R.drawable.wireframe_globe,
+                contentDescription = null
+
+            )
         }
 
         Column (
@@ -159,7 +176,7 @@ fun IdleView(
                     style = TextStyle(
                         fontFamily = PitagonsSans,
                         color = dgenTurqoise,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         fontSize = 20.sp,
 
                         textDecoration = TextDecoration.None
@@ -225,9 +242,6 @@ fun IdleView(
                 }
             }
         }
-    }
-
-
 }
 
 /**
@@ -251,7 +265,7 @@ private fun calculateFontSize(text: String): TextUnit {
 )
 @Composable
 fun IdlePreview(){
-    /*Card(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
         ,
@@ -266,17 +280,9 @@ fun IdlePreview(){
 
             )
         },
-    )*/
-
-    IdleView(
-        amount = 0.13,
-        tokenName = "USDC",
-        fiatAmount = 209.47,
-        icon = "",//R.drawable.placeholer_icon_5.toString()
-        navigateToSend = {  },
-        enableSend = false
-
     )
+
+
 
 }
 

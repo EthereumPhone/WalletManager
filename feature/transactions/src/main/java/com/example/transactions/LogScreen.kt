@@ -372,7 +372,6 @@ fun LogViewPreview(){
         tokenId = "DAI",
         onRefresh = {},
 //        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
-
     )
 }
 

@@ -42,40 +42,21 @@ fun Card(
     backSide: @Composable () -> Unit = {},
 ) {
 
-    // ── neon pulse ────────────────────────────────────────────────────────────────
-    val pulse = rememberInfiniteTransition(label = "border‑pulse")
-    val glowAlpha by pulse.animateFloat(
-        initialValue = 0.4f,
-        targetValue   = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(1800, easing = FastOutSlowInEasing),
-            RepeatMode.Reverse
-        ), label = "alpha"
-    )
-
     val baseColor   = if (isFirst) dgenOcean else dgenBlack
-    val borderBrush = Brush.horizontalGradient(
-        0f   to Color(0xFF00F6FF).copy(alpha = glowAlpha),
-        0.33f to Color(0xFF18A8FF).copy(alpha = glowAlpha),
-        0.66f to Color(0xFF7458FF).copy(alpha = glowAlpha),
-        1f   to Color(0xFF9E2BFF).copy(alpha = glowAlpha),
-    )
 
-    // ── card ──────────────────────────────────────────────────────────────────────
     Surface(
         color = baseColor,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(0.dp),
         modifier = modifier
             .aspectRatio(16f / 9f)
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
             .border(1.dp, dgenTurqoise, RoundedCornerShape(0.dp))
     ) {
-        // subtle wire‑frame grid (matches the visual reference)
+
         Box(
             Modifier
                 .fillMaxSize()
-                .drawBehind { drawGrid(8.dp, Color.White.copy(.04f)) }
         ) {
             val frontVisible = rotation < 90f
             AnimatedVisibility(
