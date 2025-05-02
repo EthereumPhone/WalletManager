@@ -94,7 +94,7 @@ fun SendCardView(
         modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
         contentAlignment = Alignment.CenterEnd
     ) {
-        InstantGif(resId = R.drawable.globespintransparent)
+        InstantGif(resId = R.drawable.wireframe_globe)
     }
     Column (
         verticalArrangement =  Arrangement.SpaceBetween,
