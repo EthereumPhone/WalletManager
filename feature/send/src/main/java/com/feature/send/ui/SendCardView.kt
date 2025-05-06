@@ -2,6 +2,7 @@ package com.feature.send.ui
 
 
 import InstantGif
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,10 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +46,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
+import coil.compose.AsyncImage
 import com.core.data.util.chainToApiKey
 import com.core.ui.R
 import com.core.ui.util.abbreviateNumber
@@ -59,6 +64,8 @@ import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
 @Composable
 fun SendCardView(
@@ -74,12 +81,22 @@ fun SendCardView(
     var validSendAddress by remember { mutableStateOf(false) }
 
 
+    var context = LocalContext.current
 
     val cursorVisible = remember { mutableStateOf(true) }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
     var amountCard by remember { mutableStateOf("") }
     var toAddressCard by remember { mutableStateOf("") }
+
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
 
 
     // Create a blinking effect
@@ -91,10 +108,16 @@ fun SendCardView(
     }
 
     Box(
-        modifier = Modifier.alpha(0.25f).offset(x = 100.dp, y = 40.dp).size(100.dp).aspectRatio(1f),
+        modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 40.dp).scale(0.8f).aspectRatio(1f),
         contentAlignment = Alignment.CenterEnd
     ) {
-        InstantGif(resId = R.drawable.wireframe_globe)
+
+        AsyncImage(
+            imageLoader = gifEnabledLoader,
+            model = R.drawable.wireframe_torus,
+            contentDescription = null
+
+        )
     }
     Column (
         verticalArrangement =  Arrangement.SpaceBetween,

@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -99,13 +100,13 @@ fun IdleView(
 
 
         Box(
-            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 40.dp).aspectRatio(1f),
+            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 40.dp).scale(0.8f).aspectRatio(1f),
             contentAlignment = Alignment.CenterEnd
         ) {
 
             AsyncImage(
                 imageLoader = gifEnabledLoader,
-                model = R.drawable.wireframe_globe,
+                model = R.drawable.wireframe_torus,
                 contentDescription = null
 
             )
