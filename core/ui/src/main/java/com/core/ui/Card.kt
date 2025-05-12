@@ -51,7 +51,7 @@ fun Card(
             .aspectRatio(16f / 9f)
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
-            .border(1.dp, dgenTurqoise, RoundedCornerShape(0.dp))
+            .border(2.dp, dgenTurqoise, RoundedCornerShape(0.dp))
     ) {
 
         Box(
