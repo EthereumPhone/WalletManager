@@ -55,6 +55,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Hide the status bar
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.statusBars())
+            // If you also want to hide the navigation bar:
+            controller.hide(WindowInsetsCompat.Type.navigationBars())
+        }
+
         val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
         val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
 
@@ -63,14 +71,9 @@ class MainActivity : ComponentActivity() {
             .then(seedNetworkBalanceWork)
             .enqueue()
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Hide the status bar
-        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.statusBars())
-            // If you also want to hide the navigation bar:
-            controller.hide(WindowInsetsCompat.Type.navigationBars())
-        }
+
+
 
         /*
         WorkManager.getInstance(applicationContext)
