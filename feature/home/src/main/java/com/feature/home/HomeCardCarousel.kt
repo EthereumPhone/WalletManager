@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowOutward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -42,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -78,6 +85,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenGray
+import com.example.dgenlibrary.ui.theme.dgenRed
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -207,17 +215,17 @@ fun HomeScreen2(
                             )
 
                             Text(
-                                text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
+                                text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                 style = TextStyle(
                                     fontFamily = PitagonsSans,
                                     color = dgenTurqoise.copy(0.35f),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp,
                                     letterSpacing = 0.sp,
                                     textDecoration = TextDecoration.None,
                                     textAlign = TextAlign.Center
                                 ),
-                                modifier = Modifier.padding(horizontal = 64.dp)
+                                modifier = Modifier.width(300.dp)
                             )
                         }
                     }
@@ -295,17 +303,17 @@ fun HomeScreen2(
 
                                 )
                                 Text(
-                                    text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
+                                    text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                     style = TextStyle(
                                         fontFamily = PitagonsSans,
                                         color = dgenTurqoise.copy(0.35f),
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 16.sp,
                                         letterSpacing = 0.sp,
                                         textDecoration = TextDecoration.None,
                                         textAlign = TextAlign.Center
                                     ),
-                                    modifier = Modifier.padding(horizontal = 64.dp)
+                                    modifier = Modifier.width(300.dp)
                                 )
                             }
                         }
@@ -341,27 +349,29 @@ fun HomeScreen2(
                 horizontalArrangement = Arrangement.Center
             ) {
 
-                IconButton(modifier = Modifier, onClick = {
-                    if (isOffline){
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                state = SnackbarState.ERROR,
-                                message = "You are offline!",
-                                actionLabel = "UNDO",
-                                duration = SnackbarDuration.Short
-                            )
+                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
+                    onClick = {
+                        if (isOffline){
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    state = SnackbarState.ERROR,
+                                    message = "You are offline!",
+                                    actionLabel = "UNDO",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        } else {
+                            navigateToLog(selectedTokenId.value)
+                            //navigateToSend(selectedTokenId.value,selectedTokenId.value)
                         }
-                    } else {
-                        navigateToLog(selectedTokenId.value)
-                        //navigateToSend(selectedTokenId.value,selectedTokenId.value)
                     }
-                }) {
+                ) {
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            modifier = Modifier.width(16.dp),
+                            modifier = Modifier.size(24.dp),
                             painter = painterResource(R.drawable.baseline_swap_vert_24),
                             contentDescription = "Back",
                             tint = dgenTurqoise
@@ -372,8 +382,8 @@ fun HomeScreen2(
                                 fontFamily = SpaceMono,
                                 color = dgenTurqoise,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
-                                lineHeight = 12.sp,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
                                 letterSpacing = 0.sp,
                                 textDecoration = TextDecoration.None
                             )
@@ -381,62 +391,64 @@ fun HomeScreen2(
                     }
 
                 }
-                Spacer(modifier = Modifier.width(32.dp))
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = dgenTurqoise,
-                        disabledContainerColor = Color.Transparent,
-                        disabledContentColor = Color.Gray
-                    ),
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.width(IntrinsicSize.Max),
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
-
-                        when(userData){
-                            WalletDataUiState.Loading -> {
-                                copyTextToClipboard(context,"Loading...")
-                                Toast.makeText(context, "Failed to copy address", Toast.LENGTH_SHORT).show()
-
-                            }
-                            is WalletDataUiState.Success -> {
-                                copyTextToClipboard(context, userData.userData.walletAddress)
-                                Toast.makeText(context, "Copied Address", Toast.LENGTH_SHORT).show()
-                            }
-
-                        }
+                        //TODO: Implementation QR-Code function
                     }
                 ) {
-
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            modifier = Modifier
-                                .width(16.dp)
-                                .graphicsLayer {
-                                    rotationZ = 90f
-                                },
-                            painter = painterResource(R.drawable.cpyaddress),
+                            modifier = Modifier.size(24.dp).rotate(180f),
+                            imageVector = Icons.Outlined.ArrowOutward,
                             contentDescription = "Back",
                             tint = dgenTurqoise
                         )
                         Text(
-                            text= "CPY ADD",
+                            text= "RECEIVE",
                             style = TextStyle(
                                 fontFamily = SpaceMono,
                                 color = dgenTurqoise,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
-                                lineHeight = 12.sp,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
                                 letterSpacing = 0.sp,
                                 textDecoration = TextDecoration.None
                             )
                         )
                     }
-
                 }
-
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
+                    onClick = {
+                        //TODO: Implementation Buy function
+                    }
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = "Back",
+                            tint = dgenTurqoise
+                        )
+                        Text(
+                            text= "BUY",
+                            style = TextStyle(
+                                fontFamily = SpaceMono,
+                                color = dgenTurqoise,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = 0.sp,
+                                textDecoration = TextDecoration.None
+                            )
+                        )
+                    }
+                }
             }
         }
 
