@@ -165,13 +165,6 @@ fun LogScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
-
-
-
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ){
                 Text(
                     text = "ACTIVITY LOG",
                     style = TextStyle(
@@ -183,7 +176,7 @@ fun LogScreen(
                         textDecoration = TextDecoration.None
                     )
                 )
-            }
+
                 Icon(
                     modifier = Modifier.size(32.dp).pointerInput(Unit){
                         detectTapGestures {
