@@ -160,14 +160,14 @@ fun LogScreen(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp,
+                        fontSize = 24.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
                 )
             }
                 Icon(
-                    modifier = Modifier.width(32.dp).pointerInput(Unit){
+                    modifier = Modifier.size(32.dp).pointerInput(Unit){
                         detectTapGestures {
                             onNavigateBack()
                         }
