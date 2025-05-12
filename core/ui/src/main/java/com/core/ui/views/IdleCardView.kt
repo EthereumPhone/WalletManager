@@ -100,7 +100,7 @@ fun IdleView(
 
 
         Box(
-            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 40.dp).scale(0.8f).aspectRatio(1f),
+            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 60.dp).scale(0.9f).aspectRatio(1f),
             contentAlignment = Alignment.CenterEnd
         ) {
 
