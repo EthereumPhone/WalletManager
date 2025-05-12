@@ -2,10 +2,10 @@ package com.feature.home
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
@@ -20,21 +20,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -54,34 +52,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.core.domain.GetTokenAssetsBySymbol
-import com.core.model.TokenAsset
+import coil.ImageLoader
 import com.core.model.TokenData
 import com.core.model.TokenMetadata
-import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okio.IOException
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
-import org.ethosmobile.components.library.theme.Colors
-import org.ethosmobile.components.library.theme.Fonts
 import org.ethosmobile.components.library.utils.SnackbarState
 import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenGray
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -160,13 +156,21 @@ fun HomeScreen2(
 ) {
 
 
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val hostState = remember { SnackbarHostState() }
     val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
 
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
 
-    val context = LocalContext.current
     Box (
         modifier = Modifier
             .fillMaxSize()
@@ -190,25 +194,29 @@ fun HomeScreen2(
                     ){
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(0.dp),
+                            modifier = Modifier.offset(y= 0.dp)
                         ) {
-                            Image(
-                                modifier = Modifier.size(82.dp),
-                                contentScale = ContentScale.Fit,
-                                painter = painterResource(id = R.drawable.wallet_icon),
+                            AsyncImage(
+                                imageLoader = gifEnabledLoader,
+                                model = com.core.ui.R.drawable.wireframe_torus,
                                 contentDescription = null,
-                                colorFilter = ColorFilter.tint(dgenTurqoise)
+                                modifier = Modifier.size(275.dp),
+                                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.5f))
+
                             )
                             Text(
-                                text = "No assets".uppercase(),
+                                text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
                                 style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
+                                    fontFamily = PitagonsSans,
+                                    color = dgenTurqoise.copy(0.5f),
                                     fontWeight = FontWeight.Normal,
-                                    fontSize = 24.sp,
+                                    fontSize = 14.sp,
                                     letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
-                                )
+                                    textDecoration = TextDecoration.None,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier.padding(horizontal = 64.dp)
                             )
                         }
                     }
@@ -274,25 +282,29 @@ fun HomeScreen2(
                         ){
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(0.dp),
+                                modifier = Modifier.offset(y= 0.dp)
                             ) {
-                                Image(
-                                    modifier = Modifier.size(82.dp),
-                                    contentScale = ContentScale.Fit,
-                                    painter = painterResource(id = R.drawable.wallet_icon),
+                                AsyncImage(
+                                    imageLoader = gifEnabledLoader,
+                                    model = com.core.ui.R.drawable.wireframe_torus,
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(dgenTurqoise)
+                                    modifier = Modifier.size(275.dp),
+                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.5f))
+
                                 )
                                 Text(
-                                    text = "No Assets".uppercase(),
+                                    text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
                                     style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
+                                        fontFamily = PitagonsSans,
+                                        color = dgenTurqoise.copy(0.5f),
                                         fontWeight = FontWeight.Normal,
-                                        fontSize = 24.sp,
+                                        fontSize = 14.sp,
                                         letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 64.dp)
                                 )
                             }
                         }
