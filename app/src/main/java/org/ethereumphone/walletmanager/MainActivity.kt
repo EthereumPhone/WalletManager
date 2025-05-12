@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -60,6 +62,15 @@ class MainActivity : ComponentActivity() {
             .beginWith(seedUniswapTokensWork)
             .then(seedNetworkBalanceWork)
             .enqueue()
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Hide the status bar
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.statusBars())
+            // If you also want to hide the navigation bar:
+            controller.hide(WindowInsetsCompat.Type.navigationBars())
+        }
 
         /*
         WorkManager.getInstance(applicationContext)
