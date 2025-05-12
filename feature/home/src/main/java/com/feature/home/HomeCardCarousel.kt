@@ -98,6 +98,7 @@ internal fun HomeRoute2(
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
+    navigateToReceive: () -> Unit,
     isOffline: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -130,6 +131,7 @@ internal fun HomeRoute2(
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToLog = navigateToLog,
+        navigateToReceive = navigateToReceive,
         selectedTokenUiState = selectedTokenUiState,
         selectedTokenId = selectedTokenId,
         setSelectedTokenId = sendViewModel::updateSelectedTokenId,
@@ -153,6 +155,7 @@ fun HomeScreen2(
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
+    navigateToReceive: () -> Unit,
     tokenMetadata:  List<TokenMetadata>,
     selectedTokenUiState: SelectedTokenUiState,
     selectedTokenId: State<String>,
@@ -394,7 +397,7 @@ fun HomeScreen2(
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
-                        //TODO: Implementation QR-Code function
+                        navigateToReceive()
                     }
                 ) {
                     Column(

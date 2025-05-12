@@ -91,6 +91,7 @@ fun WmNavHost(
                 navigateToLog = { it ->
                     navController.navigateToTransaction(tokenId = it)
                 },
+                navigateToReceive = { navController.navigateToReceive() },
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
                     sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout)
