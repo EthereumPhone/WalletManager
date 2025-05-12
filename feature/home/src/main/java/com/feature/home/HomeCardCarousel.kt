@@ -195,21 +195,22 @@ fun HomeScreen2(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(0.dp),
-                            modifier = Modifier.offset(y= 0.dp)
+                            modifier = Modifier.offset(y= -48.dp)
                         ) {
                             AsyncImage(
                                 imageLoader = gifEnabledLoader,
                                 model = com.core.ui.R.drawable.wireframe_torus,
                                 contentDescription = null,
                                 modifier = Modifier.size(275.dp),
-                                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.5f))
+                                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
 
                             )
+
                             Text(
                                 text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
                                 style = TextStyle(
                                     fontFamily = PitagonsSans,
-                                    color = dgenTurqoise.copy(0.5f),
+                                    color = dgenTurqoise.copy(0.35f),
                                     fontWeight = FontWeight.Normal,
                                     fontSize = 14.sp,
                                     letterSpacing = 0.sp,
@@ -283,21 +284,21 @@ fun HomeScreen2(
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(0.dp),
-                                modifier = Modifier.offset(y= 0.dp)
+                                modifier = Modifier.offset(y= -48.dp)
                             ) {
                                 AsyncImage(
                                     imageLoader = gifEnabledLoader,
                                     model = com.core.ui.R.drawable.wireframe_torus,
                                     contentDescription = null,
                                     modifier = Modifier.size(275.dp),
-                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.5f))
+                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
 
                                 )
                                 Text(
                                     text = "Tap Buy to purchase your first token, or Receive to add assets from another wallet.",
                                     style = TextStyle(
                                         fontFamily = PitagonsSans,
-                                        color = dgenTurqoise.copy(0.5f),
+                                        color = dgenTurqoise.copy(0.35f),
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 14.sp,
                                         letterSpacing = 0.sp,
