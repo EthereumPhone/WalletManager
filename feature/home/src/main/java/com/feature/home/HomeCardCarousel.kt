@@ -59,6 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -85,6 +86,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenGray
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
 
 
@@ -333,7 +335,7 @@ fun HomeScreen2(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp) // Adjust thickness of fading border
+                    .height(32.dp) // Adjust thickness of fading border
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Transparent, dgenBlack)
@@ -366,7 +368,6 @@ fun HomeScreen2(
                         }
                     }
                 ) {
-
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -384,15 +385,14 @@ fun HomeScreen2(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 16.sp,
                                 lineHeight = 16.sp,
-                                letterSpacing = 0.sp,
+                                letterSpacing = 1.sp,
                                 textDecoration = TextDecoration.None
                             )
                         )
                     }
-
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
+                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
                         //TODO: Implementation QR-Code function
                     }
@@ -414,7 +414,7 @@ fun HomeScreen2(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 16.sp,
                                 lineHeight = 16.sp,
-                                letterSpacing = 0.sp,
+                                letterSpacing = 1.sp,
                                 textDecoration = TextDecoration.None
                             )
                         )
@@ -443,7 +443,7 @@ fun HomeScreen2(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 16.sp,
                                 lineHeight = 16.sp,
-                                letterSpacing = 0.sp,
+                                letterSpacing = 1.sp,
                                 textDecoration = TextDecoration.None
                             )
                         )
@@ -452,7 +452,7 @@ fun HomeScreen2(
             }
         }
 
-        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 80.dp))
+        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.TopCenter).padding(start = 24.dp, end = 24.dp, top = 80.dp))
 
     }
 
