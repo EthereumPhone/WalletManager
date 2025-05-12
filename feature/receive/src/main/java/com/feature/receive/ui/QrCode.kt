@@ -10,9 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.WriterException
@@ -68,9 +71,9 @@ fun rememberQrBitmapPainter(
             for (x in 0 until matrixWidth) {
                 for (y in 0 until matrixHeight) {
                     val shouldColorPixel = bitmapMatrix?.get(x, y) ?: false
-                    val pixelColor = if (shouldColorPixel) Color.BLACK else Color.WHITE
+                    val pixelColor = if (shouldColorPixel) dgenTurqoise else dgenBlack
 
-                    newBitmap.setPixel(x, y, pixelColor)
+                    newBitmap.setPixel(x, y, pixelColor.toArgb())
                 }
             }
 

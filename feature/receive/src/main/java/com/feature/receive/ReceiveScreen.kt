@@ -45,6 +45,8 @@ import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.rememberDismissState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,20 +58,24 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,13 +94,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.UserData
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.feature.receive.ui.TruncatedAddress
 import com.feature.receive.ui.rememberQrBitmapPainter
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import net.glxn.qrgen.core.image.ImageType
 import org.ethosmobile.components.library.core.ethOSHeader
+import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
+import org.ethosmobile.components.library.utils.SnackbarState
+import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 import java.io.ByteArrayOutputStream
 
 @Composable
@@ -105,13 +120,14 @@ internal fun ReceiveRoute(
 ) {
     val userData by viewModel.userData.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     
     ReceiveScreen(
         userData = userData,
 //        modifier = modifier,
         onBackClick = onBackClick,
         onCopyClick = {
-            copyTextToClipboard(context, userData.walletAddress)
+            clipboard.setText(AnnotatedString(userData.walletAddress))
         }
     )
 
@@ -132,111 +148,146 @@ fun ReceiveScreen(
 
 ) {
 
-    Column (
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val hostState = remember { SnackbarHostState() }
+    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
+
+    Box {
+        Column (
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxSize()
-                .background(Colors.BLACK)
-                //.padding(horizontal = 32.dp, vertical = 32.dp)
+                .background(dgenBlack)
+            //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
-        ethOSHeader(
-            title="Receive",
-            isBackButton = true,
-            onBackClick = onBackClick,
-        )
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        end = 24.dp,
+                        start = 24.dp, top = 16.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                androidx.compose.material3.Text(
+                    text = "RECEIVE ASSETS",
+                    style = TextStyle(
+                        fontFamily = SpaceMono,
+                        color = dgenTurqoise,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 24.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
+
+                androidx.compose.material3.Icon(
+                    modifier = Modifier.size(32.dp).pointerInput(Unit) {
+                        detectTapGestures {
+                            onBackClick()
+                        }
+                    },
+                    painter = painterResource(R.drawable.baseline_close_24),
+                    contentDescription = "Back",
+                    tint = dgenTurqoise
+                )
+
+            }
 
 
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-
+                modifier = Modifier.weight(1f)
             ){
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Colors.WHITE)
-                        .padding(10.dp)
-                        .size(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        //TODO: Change Address
-                        painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
-                        contentDescription = "wallet address QR",
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .aspectRatio(1f)
-                    )
-                }
+                Image(
+                    //TODO: Change Address
+                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
+                    contentDescription = "wallet address QR",
+                    contentScale = ContentScale.FillBounds,
+                    //colorFilter = ColorFilter.tint(dgenRed),
+                    modifier = Modifier.size(150.dp)
+                        .aspectRatio(1f)
+                )
 
+                Spacer(modifier.height(24.dp))
+                TruncatedAddress(userData.walletAddress)
+                Spacer(modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(48.dp))
-
-                //Address
-                //TODO: Address or ENS
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        modifier = modifier.width(175.dp),
-                        fontSize = 18.sp,
-                        fontFamily = Fonts.INTER,
-                        color = Colors.GRAY,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Normal,
-                        text = "Address"
-                    )
-                    //TODO: Make reveil compasable
-                    Text(
-                        modifier = modifier.width(250.dp),
-                        fontSize = 16.sp,
-                        color = Color.White,
-                        fontFamily = Fonts.INTER,
-                        textAlign = TextAlign.Center,
+                Text(
+                    modifier = modifier.width(300.dp),
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenTurqoise.copy(0.35f),
                         fontWeight = FontWeight.SemiBold,
-                        text = userData.walletAddress
-                    )
+                        fontSize = 16.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None,
+                        textAlign = TextAlign.Center
+                    ),
+                    text = "This is your unique wallet address. You can use it to receive any token."
+                )
 
 
-                }
 
             }
 
 
-        Row (
-            modifier = Modifier.padding(start = 32.dp,end = 32.dp, bottom = 32.dp)
-        ){
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Color.Transparent,
-                    contentColor =  Color.White,
-                ),
-                onClick = onCopyClick
-            ){
-                Row {
-                    Icon(
-                        imageVector = Icons.Rounded.ContentCopy,
-                        contentDescription = "Copy ethereum address",
-                        tint = Colors.WHITE,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Copy address",
-                        fontSize = 16.sp,
-                        color = Colors.WHITE,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(dgenBlack)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+
+                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
+                    onClick = {
+                        onCopyClick()
+
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                state = SnackbarState.DEFAULT,
+                                message = "Copied your address!",
+                                actionLabel = "UNDO",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    }
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(R.drawable.cpyadd),
+                            contentDescription = "Back",
+                            tint = dgenTurqoise
+                        )
+                        Text(
+                            text= "CPY ADD",
+                            style = TextStyle(
+                                fontFamily = SpaceMono,
+                                color = dgenTurqoise,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = 1.sp,
+                                textDecoration = TextDecoration.None
+                            )
+                        )
+                    }
                 }
+
             }
         }
+
+        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.TopCenter).padding(start = 24.dp, end = 24.dp, top = 80.dp))
     }
+
 }
 
 @Preview
