@@ -1,5 +1,6 @@
 package com.example.transactions
 
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,9 +55,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -79,6 +83,10 @@ import kotlinx.coroutines.delay
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.walletmanager.ethOSTransferListItem
 import kotlin.random.Random
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
 @Composable
 fun LogRoute(
@@ -121,6 +129,7 @@ fun LogScreen(
     onRefresh: () -> Unit,
 ){
 
+    val context = LocalContext.current
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
         onRefresh = {
@@ -129,6 +138,15 @@ fun LogScreen(
     )
 
     val scrollState = rememberLazyListState()
+
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
 
 
     Column(
@@ -238,28 +256,33 @@ fun LogScreen(
                         ){
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(0.dp),
+                                modifier = Modifier.offset(y= 0.dp)
                             ) {
-                                Image(
-                                    modifier = Modifier.size(82.dp),
-                                    contentScale = ContentScale.Fit,
-                                    painter = painterResource(id = R.drawable.baseline_swap_vert_24),
+                                AsyncImage(
+                                    imageLoader = gifEnabledLoader,
+                                    model = com.core.ui.R.drawable.wireframe_torus,
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(dgenTurqoise)
-                                )
-                                Text(
-                                    text = "No transactions".uppercase(),
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
+                                    modifier = Modifier.size(275.dp),
+                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
+
                                 )
 
+                                Text(
+                                    text = "Complete your first transaction, or add assets from another wallet.",
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenTurqoise.copy(0.35f),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 16.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier.width(300.dp)
+                                )
                             }
+
                         }
                     }
 
@@ -363,7 +386,7 @@ fun LogViewPreview(){
         )
     )
 
-    val txs = generateRandomTransfers()
+    val txs = emptyList<TransferItem>() //generateRandomTransfers()
 
 
     LogScreen(
