@@ -128,6 +128,7 @@ fun LogScreen(
     tokenId: String?,
     onRefresh: () -> Unit,
 ){
+    Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 
     val context = LocalContext.current
     val pullRefreshState = rememberPullRefreshState(
@@ -199,9 +200,15 @@ fun LogScreen(
 
                 }
                 is TransfersUiState.Success -> {
+                    Log.d("LogScreen", "Original transfers from ViewModel: ${transfersUIState.transfers.size}")
+                    transfersUIState.transfers.forEachIndexed { index, t ->
+                        Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
+                    }
 
-                    val transfers = transfersUIState.transfers.filter {
-                        it.asset == tokenId
+                    val transfers = transfersUIState.transfers
+                    Log.d("LogScreen", "Filtered transfers (it.asset == \"$tokenId\"): ${transfers.size}")
+                    transfers.forEachIndexed { index, t ->
+                        Log.d("LogScreen", "Filtered item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
                     }
 
 

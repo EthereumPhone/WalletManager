@@ -160,15 +160,13 @@ fun TransactionScreen(
 
                             transfers.reversed().forEach { transfer ->
                                 item {
-                                    ethOSTransferListItem(
-                                        asset = transfer.asset,
-                                        value = transfer.value,
-                                        timeStamp = transfer.timeStamp,//Clock.System.now().toString(),
-                                        userSent = transfer.userSent,
-                                        onCardClick = {
-                                            navigateToTxDetail(transfer.txHash)
-                                        }
+                                    // Temporary Debugging Text Composable
+                                    Text(
+                                        text = "DEBUG: Hash=${transfer.txHash}, Asset=${transfer.asset}, Value=${transfer.value}",
+                                        color = Color.Red, // Make it stand out
+                                        fontSize = 10.sp
                                     )
+                                    Log.d("TransactionScreen", "Rendering item: Hash=${transfer.txHash}") // Also log here
                                 }
                             }
                         }

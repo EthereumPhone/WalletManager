@@ -5,6 +5,7 @@ import java.text.DecimalFormatSymbols
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
+import kotlin.math.abs
 
 fun formatSmart(value: Double): String {
     // If it's exactly zero, just return "0"
@@ -42,16 +43,26 @@ fun abbreviateNumber(value: Double): String {
     var num = value
     var index = 0
 
-    while (num >= 1000 && index < suffixes.size - 1) {
+    // scale down by thousands
+    while (abs(num) >= 1000 && index < suffixes.size - 1) {
         num /= 1000
         index++
     }
 
-    // Ensure US number format with commas and dots
+    // US-style formatter, max 2 decimal places
     val symbols = DecimalFormatSymbols(Locale.US)
-    val decimalFormat = DecimalFormat("#,##0.##", symbols)
+    val df = DecimalFormat("#,##0.##", symbols)
+    val formatted = df.format(num)
 
-    return "${decimalFormat.format(num)}${suffixes[index]}"
+    // if it rounded to "0" but was nonzero (e.g. 3.8E-4), fall back to full precision
+    if (formatted == "0" && num != 0.0) {
+        val plain = BigDecimal.valueOf(num)
+            .stripTrailingZeros()
+            .toPlainString()
+        return "$plain${suffixes[index]}"
+    }
+
+    return "$formatted${suffixes[index]}"
 }
 
 fun formatAddress(input: String, visibleChars: Int = 4): String {

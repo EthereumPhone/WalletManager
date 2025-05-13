@@ -35,7 +35,13 @@ class TransactionViewModel @Inject constructor(
 
     val transferState: StateFlow<TransfersUiState> =
         getTransfersUseCase()
-            .map(TransfersUiState::Success)
+            .map { items ->
+                Log.d("TransactionViewModel", "Transfers received from UseCase: ${items.size} items")
+                items.forEachIndexed { index, item ->
+                    Log.d("TransactionViewModel", "Item[$index]: chainId=${item.chainId}, asset=${item.asset}, value=${item.value}, hash=${item.txHash}, to=${item.to}, from=${item.from}")
+                }
+                TransfersUiState.Success(items)
+            }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),

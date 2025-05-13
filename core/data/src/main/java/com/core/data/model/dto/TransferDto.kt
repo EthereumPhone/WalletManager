@@ -27,7 +27,7 @@ data class TransferDto(
     val to: String,
     val tokenId: String?,
     val uniqueId: String,
-    val value: String?,
+    val value: Double?,
     val metadata: TransferMetadata,
 ) {
     data class RawContract(
@@ -73,7 +73,7 @@ data class TransferDto(
             toaddress = to,
             tokenId = tokenId?: "",
             uniqueId = uniqueId,
-            value = value?.toDoubleOrNull() ?: 0.0,
+            value = value ?: 0.0,
             blockTimestamp = Instant.parse(metadata.blockTimestamp),
             userIsSender = userIsSender,
         )
