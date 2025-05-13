@@ -421,7 +421,7 @@ fun HomeScreen2(
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
-                        if (userData is WalletDataUiState.Success) {
+                        /*if (userData is WalletDataUiState.Success) {
                             val address = userData.userData.walletAddress
                             scope.launch {
                                 val json = Uri.encode("{\"eth\":\"$address\"}")
@@ -430,7 +430,7 @@ fun HomeScreen2(
                                     uriHandler.openUri(uri)
                                 }
                             }
-                        }
+                        }*/
                     }
                 ) {
                     Column(

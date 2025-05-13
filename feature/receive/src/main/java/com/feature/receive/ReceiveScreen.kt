@@ -179,11 +179,11 @@ fun ReceiveScreen(
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
-                    modifier = Modifier.size(150.dp)
+                    modifier = Modifier.size(125.dp)
                         .aspectRatio(1f)
                 )
 
-                Spacer(modifier.height(24.dp))
+                Spacer(modifier.height(48.dp))
                 TruncatedAddress(userData.walletAddress)
                 Spacer(modifier.height(8.dp))
 
