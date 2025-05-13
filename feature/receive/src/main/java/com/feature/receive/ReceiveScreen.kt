@@ -1,20 +1,17 @@
 package com.feature.receive
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent.getActivity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.view.Gravity
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,95 +19,54 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
-import androidx.compose.material.DismissValue
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
+import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.rememberDismissState
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
-import net.glxn.qrgen.android.QRCode
 import java.util.Hashtable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.UserData
-import com.core.ui.InfoDialog
-import com.core.ui.TopHeader
+import com.core.ui.SnackbarState
+import com.core.ui.dgenSnackbarHost
+import com.core.ui.rememberSnackbarDelegate
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.receive.ui.TruncatedAddress
 import com.feature.receive.ui.rememberQrBitmapPainter
-import com.google.zxing.MultiFormatWriter
-import com.google.zxing.common.BitMatrix
-import net.glxn.qrgen.core.image.ImageType
-import org.ethosmobile.components.library.core.ethOSHeader
-import org.ethosmobile.components.library.core.ethOSSnackbarHost
-import org.ethosmobile.components.library.theme.Colors
-import org.ethosmobile.components.library.theme.Fonts
-import org.ethosmobile.components.library.utils.SnackbarState
-import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
-import java.io.ByteArrayOutputStream
 
 @Composable
 internal fun ReceiveRoute(
@@ -127,12 +83,26 @@ internal fun ReceiveRoute(
 //        modifier = modifier,
         onBackClick = onBackClick,
         onCopyClick = {
-            clipboard.setText(AnnotatedString(userData.walletAddress))
+            silentlyCopyToClipboard(context, userData.walletAddress)
+            //clipboard.setText(AnnotatedString(userData.walletAddress))
         }
     )
 
 }
+fun silentlyCopyToClipboard(context: Context, text: String) {
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clipData = ClipData.newPlainText("text", text)
 
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        // This flag helps suppress the clipboard overlay on Android 13+
+        clipboardManager.setPrimaryClip(clipData)
+    } else {
+        clipboardManager.setPrimaryClip(clipData)
+    }
+
+    // Optional: Show a toast or some other feedback that doesn't use system UI
+    // Toast.makeText(context, "Text copied", Toast.LENGTH_SHORT).show()
+}
 @SuppressLint("ServiceCast")
 private fun copyTextToClipboard(context: Context, text: String) {
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
@@ -251,7 +221,7 @@ fun ReceiveScreen(
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 state = SnackbarState.DEFAULT,
-                                message = "Copied your address!",
+                                message = "Copied address!",
                                 actionLabel = "UNDO",
                                 duration = SnackbarDuration.Short
                             )
@@ -285,7 +255,7 @@ fun ReceiveScreen(
             }
         }
 
-        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.TopCenter).padding(start = 24.dp, end = 24.dp, top = 80.dp))
+        dgenSnackbarHost(snackbarHostState, modifier = Modifier.width(300.dp).align(Alignment.BottomCenter).padding(start = 24.dp, end = 24.dp, bottom = 100.dp))
     }
 
 }
