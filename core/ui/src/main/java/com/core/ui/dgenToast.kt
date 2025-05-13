@@ -36,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.res.ResourcesCompat
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.dgenOcean
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import android.graphics.Color as AndroidColor
 
 
@@ -74,12 +76,12 @@ fun Context.showCustomToast(
     textColor: Color = Color.White,
     fontFamily: FontFamily? = null,
     fontWeight: FontWeight = FontWeight.Normal,
-    fontSize: Float = 16f,
+    fontSize: Float = 18f,
     lineSpacingMultiplier: Float = 1.0f,
     lineSpacingExtra: Float = 0f,
     paddingHorizontal: Int = 24,
     paddingVertical: Int = 16,
-    cornerRadius: Float = 16f,
+    cornerRadius: Float = 64f,
     maxWidth: Int? = null,
     toastGravity: Int = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
     xOffset: Int = 0,
@@ -218,11 +220,11 @@ fun ToastDemoScreen() {
                 onClick = {
                     // Use custom toast
                     context.showCustomToast(
-                        message = "This uses Pitagons Sans Medium!",
+                        message = "Address copied!",
                         fontFamily = PitagonsSans,
-                        fontWeight = FontWeight.Medium,
-                        backgroundColor = Color(0xFF2C3E50),
-                        textColor = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        backgroundColor = dgenOcean,
+                        textColor = dgenTurqoise
                     )
                 },
                 modifier = Modifier.padding(8.dp)
