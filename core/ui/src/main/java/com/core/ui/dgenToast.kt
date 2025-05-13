@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.graphics.Typeface
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.remember
@@ -28,42 +29,104 @@ import kotlinx.coroutines.launch
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.graphics.drawable.GradientDrawable
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.res.ResourcesCompat
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.SpaceMono
 import android.graphics.Color as AndroidColor
 
 
-// Custom Toast implementation that doesn't use ComposeView directly
-fun Color.toAndroidColor(): Int {
-    return AndroidColor.argb(
-        (alpha * 255).toInt(),
-        (red * 255).toInt(),
-        (green * 255).toInt(),
-        (blue * 255).toInt()
-    )
+object FontResourceMap {
+    private val map = mutableMapOf<Pair<FontFamily, FontWeight>, Int>()
+
+    // Register a font resource
+    fun register(fontFamily: FontFamily, weight: FontWeight, resourceId: Int) {
+        map[Pair(fontFamily, weight)] = resourceId
+    }
+
+    // Get a font resource
+    fun getResourceId(fontFamily: FontFamily, weight: FontWeight): Int? {
+        return map[Pair(fontFamily, weight)]
+    }
 }
 
-// Custom Toast implementation without using ComposeView
+// Initialize the map with your fonts (call this once at app startup)
+fun initializeFontMap(spaceMono: FontFamily, pitagonsSans: FontFamily) {
+    // Register SpaceMono fonts
+    FontResourceMap.register(spaceMono, FontWeight.Bold, R.font.spacemono_bold)
+
+    // Register PitagonsSans fonts
+    FontResourceMap.register(pitagonsSans, FontWeight.Bold, R.font.pitagonsanstext_bold)
+    FontResourceMap.register(pitagonsSans, FontWeight.Medium, R.font.pitagonsanstext_medium)
+    FontResourceMap.register(pitagonsSans, FontWeight.Normal, R.font.pitagonsanstext_regular)
+    FontResourceMap.register(pitagonsSans, FontWeight.SemiBold, R.font.pitagonsanstext_semibold)
+    FontResourceMap.register(pitagonsSans, FontWeight.Light, R.font.pitagonsanstext_light)
+}
+
+// Custom Toast implementation that works with Compose FontFamily
 fun Context.showCustomToast(
     message: String,
     duration: Int = Toast.LENGTH_SHORT,
     backgroundColor: Color = Color(0xFF333333),
-    textColor: Color = Color.White
+    textColor: Color = Color.White,
+    fontFamily: FontFamily? = null,
+    fontWeight: FontWeight = FontWeight.Normal,
+    fontSize: Float = 16f,
+    lineSpacingMultiplier: Float = 1.0f,
+    lineSpacingExtra: Float = 0f,
+    paddingHorizontal: Int = 24,
+    paddingVertical: Int = 16,
+    cornerRadius: Float = 16f,
+    maxWidth: Int? = null,
+    toastGravity: Int = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
+    xOffset: Int = 0,
+    yOffset: Int = 150
 ) {
     val toast = Toast(this)
 
     // Create a layout programmatically
     val layout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(24, 16, 24, 16)
+        setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
+        if (maxWidth != null) {
+            this.minimumWidth = maxWidth
+        }
+    }
+
+    // Get typeface from FontFamily if provided
+    var typeface: Typeface? = null
+    if (fontFamily != null) {
+        val fontResourceId = FontResourceMap.getResourceId(fontFamily, fontWeight)
+        if (fontResourceId != null) {
+            typeface = ResourcesCompat.getFont(this, fontResourceId)
+        }
     }
 
     // Create a text view for the message
     val textView = TextView(this).apply {
         text = message
         setTextColor(textColor.toAndroidColor())
-        textSize = 16f
+        textSize = fontSize
         gravity = Gravity.CENTER
-        font
+
+        // Set font family if provided
+        if (typeface != null) {
+            this.typeface = typeface
+        } else {
+            // Apply standard Android font weight if no custom typeface
+            val androidWeight = when (fontWeight) {
+                FontWeight.Bold -> Typeface.BOLD
+                FontWeight.Normal -> Typeface.NORMAL
+                else -> Typeface.NORMAL
+            }
+            this.typeface = Typeface.create(Typeface.DEFAULT, androidWeight)
+        }
+
+        // Set line spacing
+        setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
     }
 
     // Add text view to layout
@@ -71,7 +134,7 @@ fun Context.showCustomToast(
 
     // Create a background drawable for the toast
     val shape = GradientDrawable().apply {
-        cornerRadius = 60f
+        this.cornerRadius = cornerRadius
         setColor(backgroundColor.toAndroidColor())
     }
 
@@ -80,11 +143,21 @@ fun Context.showCustomToast(
 
     // Set up and show the toast
     toast.apply {
-        setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 150)
+        setGravity(gravity, xOffset, yOffset)
         this.duration = duration
         view = layout
         show()
     }
+}
+
+// Extension function to convert Compose Color to Android Color
+fun Color.toAndroidColor(): Int {
+    return android.graphics.Color.argb(
+        (alpha * 255).toInt(),
+        (red * 255).toInt(),
+        (green * 255).toInt(),
+        (blue * 255).toInt()
+    )
 }
 
 // For system notifications (appears outside the app)
@@ -128,6 +201,7 @@ fun ToastDemoScreen() {
     //val notificationHelper = remember { NotificationHelper(context) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    initializeFontMap(SpaceMono, PitagonsSans)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -143,7 +217,13 @@ fun ToastDemoScreen() {
             Button(
                 onClick = {
                     // Use custom toast
-                    context.showCustomToast("This is a custom toast message!",duration = Toast.LENGTH_LONG)
+                    context.showCustomToast(
+                        message = "This uses Pitagons Sans Medium!",
+                        fontFamily = PitagonsSans,
+                        fontWeight = FontWeight.Medium,
+                        backgroundColor = Color(0xFF2C3E50),
+                        textColor = Color.White
+                    )
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
@@ -153,9 +233,11 @@ fun ToastDemoScreen() {
             Button(
                 onClick = {
                     // Use Snackbar (Compose-friendly alternative)
-                    scope.launch {
-                        snackbarHostState.showSnackbar("This is a Snackbar message!")
-                    }
+                    context.showCustomToast(
+                        message = "This uses Space Mono Bold!",
+                        fontFamily = SpaceMono,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
