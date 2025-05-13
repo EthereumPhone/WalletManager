@@ -142,4 +142,7 @@ dependencies {
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
 
+    //implementation libs.core.splashscreen
+
+
 }

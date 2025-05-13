@@ -53,15 +53,11 @@ import androidx.compose.ui.unit.sp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
-import kotlinx.coroutines.launch
 import java.util.Hashtable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.UserData
-import com.core.ui.SnackbarState
-import com.core.ui.dgenSnackbarHost
 import com.core.ui.initializeFontMap
-import com.core.ui.rememberSnackbarDelegate
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
@@ -126,8 +122,6 @@ fun ReceiveScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val hostState = remember { SnackbarHostState() }
-    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
     Box {
         Column (
@@ -259,8 +253,6 @@ fun ReceiveScreen(
 
             }
         }
-
-        dgenSnackbarHost(snackbarHostState, modifier = Modifier.width(300.dp).align(Alignment.BottomCenter).padding(start = 24.dp, end = 24.dp, bottom = 100.dp))
     }
 
 }

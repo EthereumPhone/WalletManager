@@ -2,22 +2,18 @@ package com.feature.home
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,12 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowOutward
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -46,26 +38,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.core.model.TokenData
@@ -77,17 +65,15 @@ import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
 import kotlinx.coroutines.launch
-import org.ethosmobile.components.library.core.ethOSSnackbarHost
-import org.ethosmobile.components.library.utils.SnackbarState
-import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import coil.request.ImageRequest
+import com.core.ui.initializeFontMap
+import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenWhite
+import kotlin.reflect.KSuspendFunction1
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -124,6 +110,7 @@ internal fun HomeRoute2(
 
     val tokenMetadata by viewModel.tokenMetadata.collectAsState()
 
+    initializeFontMap(SpaceMono, PitagonsSans)
 
     HomeScreen2(
         userData = walletDataUiState,
@@ -140,7 +127,8 @@ internal fun HomeRoute2(
         animatedContentScope = animatedContentScope,
         tokenData = tokenData,
         tokenMetadata = tokenMetadata,
-        loadSymbol = viewModel::loadSymbol
+        loadSymbol = viewModel::loadSymbol,
+        getLink = viewModel::getLink,
 
 
     )
@@ -165,14 +153,14 @@ fun HomeScreen2(
     loadSymbol: (List<String>) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier,
 ) {
 
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val hostState = remember { SnackbarHostState() }
-    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
+    val uriHandler = LocalUriHandler.current
 
 
     val gifEnabledLoader = ImageLoader.Builder(context)
@@ -356,15 +344,22 @@ fun HomeScreen2(
 
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
+                        /*context.showCustomToast(
+                            message = "Please check your internet connection!",
+                            fontFamily = PitagonsSans,
+                            fontWeight = FontWeight.SemiBold,
+                            backgroundColor = dgenRed,
+                            textColor = dgenWhite
+                        )*/
                         if (isOffline){
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    state = SnackbarState.ERROR,
-                                    message = "You are offline!",
-                                    actionLabel = "UNDO",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
+
+                            context.showCustomToast(
+                                message = "Please check your internet connection!",
+                                fontFamily = PitagonsSans,
+                                fontWeight = FontWeight.SemiBold,
+                                backgroundColor = dgenRed,
+                                textColor = dgenWhite
+                            )
                         } else {
                             navigateToLog(selectedTokenId.value)
                             //navigateToSend(selectedTokenId.value,selectedTokenId.value)
@@ -426,7 +421,16 @@ fun HomeScreen2(
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
-                        //TODO: Implementation Buy function
+                        if (userData is WalletDataUiState.Success) {
+                            val address = userData.userData.walletAddress
+                            scope.launch {
+                                val json = Uri.encode("{\"eth\":\"$address\"}")
+                                getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json").let { uri ->
+                                    println("Opening URI: $uri")
+                                    uriHandler.openUri(uri)
+                                }
+                            }
+                        }
                     }
                 ) {
                     Column(
@@ -454,9 +458,6 @@ fun HomeScreen2(
                 }
             }
         }
-
-        ethOSSnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.TopCenter).padding(start = 24.dp, end = 24.dp, top = 80.dp))
-
     }
 
 }

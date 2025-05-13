@@ -41,6 +41,7 @@ fasterxml = "2.12.5"
 material = "1.10.0"
 coil = "3.0.0"
 kotlinxSerializationJson = "1.7.3"
+core-splashscreen = "1.0.1"
 
 
 
@@ -146,6 +147,9 @@ coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 androidx-tracing-ktx = { group = "androidx.tracing", name = "tracing-ktx", version.ref = "androidxTracing" }
+
+#splash screen
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 
 
 [bundles]
