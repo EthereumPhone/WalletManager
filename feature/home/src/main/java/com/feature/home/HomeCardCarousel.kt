@@ -344,22 +344,15 @@ fun HomeScreen2(
 
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
-                        /*context.showCustomToast(
-                            message = "Please check your internet connection!",
+                        if (isOffline){
+
+                            context.showCustomToast(
+                            message = "No internet connection!",
                             fontFamily = PitagonsSans,
                             fontWeight = FontWeight.SemiBold,
                             backgroundColor = dgenRed,
                             textColor = dgenWhite
-                        )*/
-                        if (isOffline){
-
-                            context.showCustomToast(
-                                message = "Please check your internet connection!",
-                                fontFamily = PitagonsSans,
-                                fontWeight = FontWeight.SemiBold,
-                                backgroundColor = dgenRed,
-                                textColor = dgenWhite
-                            )
+                        )
                         } else {
                             navigateToLog(selectedTokenId.value)
                             //navigateToSend(selectedTokenId.value,selectedTokenId.value)
