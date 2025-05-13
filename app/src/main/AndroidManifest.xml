@@ -15,9 +15,8 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/wallet"
+        android:icon="@drawable/black"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/wallet"
         android:supportsRtl="true"
         android:theme="@style/Theme.WalletManager"
         android:fitsSystemWindows="true"
@@ -25,13 +24,14 @@
         tools:targetApi="33"
         android:debuggable="true"
         tools:ignore="HardcodedDebugMode"
+        android:background="#050505"
         >
 
 
         <activity
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustPan"
-            android:theme="@style/Theme.WalletManager.Fullscreen"
+            android:theme="@style/Theme.App.Starting"
             android:exported="true">
 
             <intent-filter>

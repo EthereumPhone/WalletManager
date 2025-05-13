@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.WalletManager" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.WalletManager" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_200</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
@@ -13,5 +13,11 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="android:textColorPrimary">@color/white</item>
         <!-- Customize your theme here. -->
+
+        <item name="android:windowFullscreen">true</item>
+        <!-- Make nav bar transparent/edge-to-edge -->
+        <item name="android:windowTranslucentNavigation">true</item>
+        <!-- (Optional) if you want a cutout: -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>
