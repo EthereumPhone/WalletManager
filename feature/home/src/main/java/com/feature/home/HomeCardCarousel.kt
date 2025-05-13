@@ -68,6 +68,7 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.ui.DgenLoadingMatrix
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
@@ -178,6 +179,7 @@ fun HomeScreen2(
             .background(dgenBlack),
     ) {
 
+
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -240,21 +242,7 @@ fun HomeScreen2(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        Column(
-                            modifier = modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(text = "Loading...",
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 24.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
-                                ))
-                        }
+                        DgenLoadingMatrix()
                   }
                 }
                 is AssetsUiState.Success -> {
