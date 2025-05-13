@@ -60,10 +60,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.UserData
 import com.core.ui.SnackbarState
 import com.core.ui.dgenSnackbarHost
+import com.core.ui.initializeFontMap
 import com.core.ui.rememberSnackbarDelegate
+import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.receive.ui.TruncatedAddress
 import com.feature.receive.ui.rememberQrBitmapPainter
@@ -77,6 +80,9 @@ internal fun ReceiveRoute(
     val userData by viewModel.userData.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
+
+    //initializes fonts for toast
+    initializeFontMap(SpaceMono, PitagonsSans)
     
     ReceiveScreen(
         userData = userData,
@@ -218,14 +224,13 @@ fun ReceiveScreen(
                     onClick = {
                         onCopyClick()
 
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                state = SnackbarState.DEFAULT,
-                                message = "Copied address!",
-                                actionLabel = "UNDO",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
+                        context.showCustomToast(
+                            message = "Address copied!",
+                            fontFamily = PitagonsSans,
+                            fontWeight = FontWeight.SemiBold,
+                            backgroundColor = dgenOcean,
+                            textColor = dgenTurqoise
+                        )
                     }
                 ) {
                     Column(
