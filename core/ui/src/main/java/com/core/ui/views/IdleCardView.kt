@@ -40,6 +40,7 @@ import coil.decode.ImageDecoderDecoder
 import com.core.ui.Card
 import com.core.ui.R
 import com.core.ui.util.formatSmart
+import com.core.ui.util.formatWithSuffix
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
@@ -167,7 +168,7 @@ fun IdleView(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ){
-                val formattedAmount = formatSmart(amount)
+                val formattedAmount = amount.formatWithSuffix() //formatSmart(amount)
                 val fontSize = calculateFontSize(formattedAmount)
 
                 Text(
@@ -198,7 +199,7 @@ fun IdleView(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(32.dp),
                             painter = painterResource(R.drawable.baseline_arrow_outward_24),
                             contentDescription = "Back",
                             tint = dgenTurqoise
@@ -209,8 +210,8 @@ fun IdleView(
                                 fontFamily = SpaceMono,
                                 color = dgenTurqoise,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 18.sp,
-                                lineHeight = 16.sp,
+                                fontSize = 20.sp,
+                                lineHeight = 20.sp,
                                 letterSpacing = 0.sp,
                                 textDecoration = TextDecoration.None
                             )
