@@ -58,7 +58,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.core.model.TokenData
 import com.core.model.TokenMetadata
-import com.feature.home.ui.CardCarousel
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
@@ -68,12 +67,14 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.model.TokenAsset
 import com.core.ui.DgenLoadingMatrix
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.feature.home.ui.TokenCardCarousel
 import kotlin.reflect.KSuspendFunction1
 
 
@@ -163,7 +164,6 @@ fun HomeScreen2(
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
 
-
     val gifEnabledLoader = ImageLoader.Builder(context)
         .components {
             if ( SDK_INT >= 28 ) {
@@ -251,7 +251,7 @@ fun HomeScreen2(
 
 
                     if(assetsUiState.assets.isNotEmpty()){
-                        CardCarousel(
+                        TokenCardCarousel(
                             modifier = Modifier.padding(bottom = 24.dp),
                             assets = assetsUiState.assets,
                             tokenData = tokenData,
