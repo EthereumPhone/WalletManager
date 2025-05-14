@@ -75,7 +75,6 @@ fun SendCardView(
     tokenName: String,
     onAddressChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
-    //chainList: List<Int>,
 ){
 
     var validSendAddress by remember { mutableStateOf(false) }
@@ -424,9 +423,12 @@ fun ErrorCardView(){
 )
 @Composable
 fun SendCardPreviewView(){
-//    SendCardView(
-//        amount = 120.00,
-//        tokenName = "USDC",
-////        chainList = listOf(1,10,8453,42161)
-//    )
+    /*SendCardView(
+        amount = "120.00",
+        tokenName = "USDC",
+        toAddress = TODO(),
+        maxamount = TODO(),
+        onAddressChange = TODO(),
+        onAmountChange = TODO()
+    )*/
 }

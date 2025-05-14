@@ -50,7 +50,8 @@ class SendViewModel @Inject constructor(
     private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi
-): ViewModel() {
+): ViewModel()
+{
 
 
     val currentChain: Flow<String> = userDataRepository.userData.map { it.walletNetwork }
@@ -63,15 +64,18 @@ class SendViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    val toAddress = savedStateHandle.getStateFlow(ADDRESS_QUERY, "")
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
-    val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
-    val amount = savedStateHandle.getStateFlow(AMOUNT, "")
 
+    val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
+
+    private val _toAddress = MutableStateFlow(
+        savedStateHandle.get<String>(ADDRESS_QUERY) ?: ""
+    )
+    val toAddress: StateFlow<String> = _toAddress
+
+    private val _amount = MutableStateFlow(
+        savedStateHandle.get<String>(AMOUNT) ?: ""
+    )
+    val amount: StateFlow<String> = _amount
 
     private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
     val selectedAssetUiState = _selectedAssetUiState.asStateFlow()
@@ -161,11 +165,11 @@ class SendViewModel @Inject constructor(
 
 
     fun updateToAddress(address: String) {
-        savedStateHandle[ADDRESS_QUERY] = address
+        _toAddress.value = address
     }
 
     fun updateAmount(amount: String) {
-        savedStateHandle[AMOUNT] = amount
+        _amount.value = amount
     }
 
     fun updateSelectedAsset(tokenAsset: TokenAsset) {
