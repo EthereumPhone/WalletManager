@@ -42,7 +42,7 @@ fun Card(
     backSide: @Composable () -> Unit = {},
 ) {
 
-    val baseColor   = if (isFirst) dgenOcean else dgenBlack
+    val baseColor by animateColorAsState(if (isFirst) dgenOcean else dgenBlack, tween(300))
 
     Surface(
         color = baseColor,
