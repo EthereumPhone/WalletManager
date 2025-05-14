@@ -153,8 +153,8 @@ fun LogScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(dgenBlack)
-
+            .background(dgenBlack),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Row (
             modifier = Modifier
@@ -224,7 +224,7 @@ fun LogScreen(
                                 modifier = Modifier
                                     .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
                                     .fillMaxSize()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = 24.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 item {
@@ -386,7 +386,7 @@ fun LogViewPreview(){
         )
     )
 
-    val txs = emptyList<TransferItem>() //generateRandomTransfers()
+    val txs = generateRandomTransfers()
 
 
     LogScreen(
@@ -443,7 +443,7 @@ fun generateRandomTransfers(): List<TransferItem> {
             from = sampleAddresses.random(random),
             to = sampleAddresses.random(random),
             asset = possibleAssets.random(random),
-            value = (random.nextInt(1, 1000) + random.nextDouble()).toString(),
+            value = (random.nextInt(1000, 10000) + random.nextDouble()).toString(),
             timeStamp = sampleTimeStamps.random(random),
             userSent = random.nextBoolean(),
             txHash = sampleTxHashes.random(random),

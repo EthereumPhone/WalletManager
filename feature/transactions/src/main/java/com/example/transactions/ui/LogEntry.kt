@@ -3,11 +3,14 @@ package com.example.transactions.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -17,9 +20,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.core.model.TransferItem
 import com.core.ui.util.abbreviateNumber
 import com.core.ui.util.formatAddress
+import com.core.ui.util.formatWithSuffix
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
@@ -75,17 +80,16 @@ fun LogEntry(
     ) {
 
         if(logoUrl != ""){
-            //                TODO: Add Async Images
 
-//                    AsyncImage(
-//                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
-//                        model = "https://example.com/image.jpg",
-//                        contentDescription = "Translated description of what the image contains"
-//                    )
+                    AsyncImage(
+                        modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(24.dp),
+                        model = logoUrl,
+                        contentDescription = "Translated description of what the image contains"
+                    )
 
         }else{
             Image(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(24.dp).padding(top=4.dp),
                 painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
                 contentDescription = "Ethereum"
             )
@@ -117,7 +121,8 @@ fun LogEntry(
                 fontFamily = PitagonsSans,
                 color = dgenWhite,
                 fontWeight = FontWeight.Medium,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
+                lineHeight = 22.sp,
                 letterSpacing = 0.sp,
                 textDecoration = TextDecoration.None
             )
@@ -126,7 +131,7 @@ fun LogEntry(
             Text(
 
                 buildAnnotatedString {
-                    append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
+                    append("${logEntry.value.toDouble().formatWithSuffix()} ${logEntry.asset}")
 
                     withStyle(style = SpanStyle(
                         fontFamily = SpaceMono,
@@ -145,7 +150,8 @@ fun LogEntry(
                 fontFamily = PitagonsSans,
                 color = dgenWhite,
                 fontWeight = FontWeight.Medium,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
+                lineHeight = 22.sp,
                 letterSpacing = 0.sp,
                 textDecoration = TextDecoration.None
             )

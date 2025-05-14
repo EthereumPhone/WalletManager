@@ -65,6 +65,32 @@ fun abbreviateNumber(value: Double): String {
     return "$formatted${suffixes[index]}"
 }
 
+fun Double.formatWithSuffix(maxDecimals: Int = 5): String {
+    val abs = kotlin.math.abs(this)
+    // Determine suffix and divisor
+    val (divisor, suffix) = when {
+        abs >= 1_000_000_000 -> 1_000_000_000.0 to "B"
+        abs >=   1_000_000 ->   1_000_000.0 to "M"
+        abs >=       1_000 ->       1_000.0 to "K"
+        else                ->         1.0 to ""
+    }
+
+    // Build the DecimalFormat pattern, e.g. "#.#####" for maxDecimals = 5
+    val pattern = buildString {
+        append("#")
+        if (maxDecimals > 0) {
+            append(".")
+            repeat(maxDecimals) { append('#') }
+        }
+    }
+    val formatter = DecimalFormat(pattern).apply {
+        roundingMode = RoundingMode.HALF_UP
+    }
+
+    val scaled = this / divisor
+    return formatter.format(scaled) + suffix
+}
+
 fun formatAddress(input: String, visibleChars: Int = 4): String {
     if (input.length <= visibleChars * 2) return input
     return input.take(visibleChars) + "..." + input.takeLast(visibleChars)
