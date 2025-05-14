@@ -310,7 +310,7 @@ fun SendScreen2(
             ) {
 
                 IconButton(
-                    modifier = modifier.size(40.dp),
+                    modifier = modifier.size(56.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = Color.Transparent,
                         contentColor = dgenRed,
@@ -320,14 +320,15 @@ fun SendScreen2(
                     onClick =  onBackClick,
                 ){
                     Icon(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(36.dp),
                         painter = painterResource(R.drawable.baseline_close_24),
                         contentDescription = "Send Icon",
                         tint = dgenRed
                     )
                 }
+
                 IconButton(
-                    modifier = modifier.size(40.dp),
+                    modifier = modifier.size(56.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = Color.Transparent,
                         contentColor = dgenTurqoise,
@@ -371,7 +372,7 @@ fun SendScreen2(
                     },
                 ){
                     Icon(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(36.dp),
                         painter = painterResource(R.drawable.baseline_arrow_outward_24),
                         contentDescription = "Send Icon"
                     )
