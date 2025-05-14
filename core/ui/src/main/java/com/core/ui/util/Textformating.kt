@@ -65,30 +65,54 @@ fun abbreviateNumber(value: Double): String {
     return "$formatted${suffixes[index]}"
 }
 
-fun Double.formatWithSuffix(maxDecimals: Int = 5): String {
-    val abs = kotlin.math.abs(this)
-    // Determine suffix and divisor
+fun Double.formatWithSuffix(maxDecimals: Int = 4): String {
+    val value = this
+    val absValue = abs(value)
+
+    // pick divisor and suffix
     val (divisor, suffix) = when {
-        abs >= 1_000_000_000 -> 1_000_000_000.0 to "B"
-        abs >=   1_000_000 ->   1_000_000.0 to "M"
-        abs >=       1_000 ->       1_000.0 to "K"
-        else                ->         1.0 to ""
+        absValue >= 1_000_000_000_000 -> 1_000_000_000_000.0 to "T"
+        absValue >= 1_000_000_000 -> 1_000_000_000.0 to "B"
+        absValue >=   1_000_000 ->   1_000_000.0 to "M"
+        absValue >=       1_000 ->       1_000.0 to "K"
+        else                     ->           1.0 to ""
     }
 
-    // Build the DecimalFormat pattern, e.g. "#.#####" for maxDecimals = 5
+    // decide how many decimals to allow
+    val decimals = if (suffix.isNotEmpty()) 2 else maxDecimals
+
+    // build a pattern like "#.###" or "#.#####"
     val pattern = buildString {
-        append("#")
-        if (maxDecimals > 0) {
-            append(".")
-            repeat(maxDecimals) { append('#') }
+        append('#')
+        if (decimals > 0) {
+            append('.')
+            repeat(decimals) { append('#') }
         }
     }
-    val formatter = DecimalFormat(pattern).apply {
+
+    val fmt = DecimalFormat(pattern).apply {
         roundingMode = RoundingMode.HALF_UP
     }
 
-    val scaled = this / divisor
-    return formatter.format(scaled) + suffix
+    val scaled = value / divisor
+    return fmt.format(scaled) + suffix
+}
+
+// ——— Sample usage ———
+fun main() {
+    val examples = listOf(
+        950.0,             // no suffix, 0 decimals
+        123.456789,        // no suffix, up to 5 decimals → "123.45679"
+        1_234.0,           // K suffix, up to 3 decimals → "1.234K"
+        1_234.56789,       // K suffix, up to 3 decimals → "1.235K"
+        2_500_000.0,       // M suffix, up to 3 decimals → "2.5M"
+        7_890_123_456.0,   // B suffix, up to 3 decimals → "7.89B"
+        -15_000.3456       // negative K suffix → "-15K"
+    )
+    examples.forEach { println("${it} → ${it.formatWithSuffix()}") }
+
+    // you can also override non-suffix decimals:
+    println(123.456789.formatWithSuffix(maxDecimals = 2))  // "123.46"
 }
 
 fun formatAddress(input: String, visibleChars: Int = 4): String {
