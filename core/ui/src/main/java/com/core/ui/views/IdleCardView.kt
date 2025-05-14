@@ -43,6 +43,7 @@ import com.core.ui.util.formatSmart
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.example.dgenlibrary.ui.theme.dgenWhite
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -76,7 +77,7 @@ fun IdleView(
 
 
         Box(
-            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 60.dp).scale(0.9f).aspectRatio(1f),
+            modifier = Modifier.alpha(0.2f).offset(x = 100.dp, y = 100.dp).scale(0.9f).aspectRatio(1f),
             contentAlignment = Alignment.CenterEnd
         ) {
 
@@ -119,7 +120,7 @@ fun IdleView(
                             Image(
                                 modifier = Modifier
                                     .padding(bottom = 2.dp)
-                                    .size(32.dp),
+                                    .size(48.dp),
                                 painter = painterResource(R.drawable.placeholer_icon_5),
                                 contentDescription = "Ethereum"
                             )
@@ -139,7 +140,7 @@ fun IdleView(
                             fontFamily = SpaceMono,
                             color = dgenTurqoise,
                             fontWeight = FontWeight.Normal,
-                            fontSize = 24.sp,
+                            fontSize = 30.sp,
 
                             letterSpacing = 0.sp,
                             textDecoration = TextDecoration.None
@@ -152,9 +153,9 @@ fun IdleView(
                     text="$" + decimalFormat.format(fiatAmount),
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenTurqoise,
+                        color = dgenWhite,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
+                        fontSize = 26.sp,
 
                         textDecoration = TextDecoration.None
                     )
@@ -208,7 +209,7 @@ fun IdleView(
                                 fontFamily = SpaceMono,
                                 color = dgenTurqoise,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp,
+                                fontSize = 18.sp,
                                 lineHeight = 16.sp,
                                 letterSpacing = 0.sp,
                                 textDecoration = TextDecoration.None
