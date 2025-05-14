@@ -237,7 +237,7 @@ fun ReceiveScreen(
                             tint = dgenTurqoise
                         )
                         Text(
-                            text= "CPY ADD",
+                            text= "COPY",
                             style = TextStyle(
                                 fontFamily = SpaceMono,
                                 color = dgenTurqoise,
