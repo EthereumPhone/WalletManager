@@ -13,13 +13,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import kotlinx.coroutines.delay
 
 @Composable
-fun DgenLoadingMatrix() {
+fun DgenLoadingMatrix(
+    size: Dp = 120.dp,
+    LEDSize: Dp = 30.dp,
+    unactiveLEDColor: Color = dgenOcean,
+    activeLEDColor: Color = dgenTurqoise
+) {
 
     var activatedBox by remember { mutableIntStateOf(0) }
 
@@ -34,21 +41,21 @@ fun DgenLoadingMatrix() {
         Alignment.BottomStart
     )
 
-    Box(Modifier.size(120.dp)) {
+    Box(Modifier.size(size)) {
         Box(
             Modifier
                 .align(Alignment.Center)
-                .size(30.dp)
+                .size(LEDSize)
                 .clip(CircleShape)
-                .background(dgenOcean))
+                .background(unactiveLEDColor))
         alignments.forEachIndexed { index, alignment ->
 
             Box(
                 Modifier
                     .align(alignment)
-                    .size(30.dp)
+                    .size(LEDSize)
                     .clip(CircleShape)
-                    .background(if (activatedBox == index) dgenTurqoise else dgenOcean)
+                    .background(if (activatedBox == index) activeLEDColor else unactiveLEDColor)
             )
         }
     }
