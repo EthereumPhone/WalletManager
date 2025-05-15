@@ -123,7 +123,7 @@ fun ReceiveScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    Box {
+
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
@@ -253,8 +253,6 @@ fun ReceiveScreen(
 
             }
         }
-    }
-
 }
 
 @Preview
