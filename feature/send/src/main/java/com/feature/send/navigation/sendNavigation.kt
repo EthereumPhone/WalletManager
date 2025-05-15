@@ -16,6 +16,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.example.dgenlibrary.ui.theme.largeEnterDuration
+import com.example.dgenlibrary.ui.theme.largeExitDuration
 import com.feature.send.SendRoute2
 
 const val sendRoute = "send_route?address={address}&tokenId={tokenId}"
@@ -62,27 +64,27 @@ fun NavGraphBuilder.sendScreen(
         ),
         enterTransition = { fadeIn(
             animationSpec = tween(
-                durationMillis = 400,
+                durationMillis = largeEnterDuration,
                 easing = FastOutSlowInEasing
             )
         )
         },
         exitTransition = { fadeOut(
             animationSpec = tween(
-                durationMillis = 400,
+                durationMillis = largeExitDuration,
                 easing = FastOutSlowInEasing
             )
         )
         },
         popEnterTransition = {
             fadeIn(animationSpec = tween(
-                durationMillis = 400,
+                durationMillis = largeEnterDuration,
                 easing = FastOutSlowInEasing
             ))
         },
         popExitTransition = {
             fadeOut(animationSpec = tween(
-                durationMillis = 400,
+                durationMillis = largeExitDuration,
                 easing = FastOutSlowInEasing
             ))
         }

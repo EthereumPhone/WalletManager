@@ -93,6 +93,9 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
+import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
+import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
+import com.example.dgenlibrary.ui.theme.smallDuration
 
 @Composable
 fun LogRoute(
@@ -206,8 +209,8 @@ fun LogScreen(
                 transfersUIState,
                 transitionSpec = {
                     fadeIn(
-                        animationSpec = tween(2000)
-                    ) togetherWith fadeOut(animationSpec = tween(2000))
+                        animationSpec = tween(extraLargeEnterDuration)
+                    ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                 },
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content"
@@ -524,7 +527,7 @@ fun Modifier.verticalLazyListScrollbar(
 
     val alpha by animateFloatAsState(
         targetValue = targetAlpha,
-        animationSpec = tween(durationMillis = 250, easing = LinearEasing)
+        animationSpec = tween(durationMillis = smallDuration, easing = LinearEasing)
     )
 
     LaunchedEffect(lazyListState.isScrollInProgress) {

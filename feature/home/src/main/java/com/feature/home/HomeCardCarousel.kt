@@ -82,6 +82,10 @@ import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
+import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
+import com.example.dgenlibrary.ui.theme.mediumEnterDuration
+import com.example.dgenlibrary.ui.theme.mediumExitDuration
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
@@ -208,8 +212,8 @@ fun HomeScreen2(
                 assetsUiState,
                 transitionSpec = {
                     fadeIn(
-                        animationSpec = tween(1000)
-                    ) togetherWith fadeOut(animationSpec = tween(1000))
+                        animationSpec = tween(extraLargeEnterDuration)
+                    ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                 },
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content"
@@ -314,10 +318,10 @@ fun HomeScreen2(
                 AnimatedVisibility(
                     hasTransfer,
                     enter = fadeIn(
-                        animationSpec = tween(400,easing=FastOutSlowInEasing)
+                        animationSpec = tween(mediumEnterDuration,easing=FastOutSlowInEasing)
                     ),
                     exit = fadeOut(
-                        animationSpec = tween(400,easing=FastOutSlowInEasing)
+                        animationSpec = tween(mediumExitDuration,easing=FastOutSlowInEasing)
                     )
                 ){
                     IconButton(modifier = Modifier

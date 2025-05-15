@@ -55,6 +55,10 @@ import com.example.dgenlibrary.ui.theme.dgenOrche
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
+import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
+import com.example.dgenlibrary.ui.theme.largeEnterDuration
+import com.example.dgenlibrary.ui.theme.mediumEnterDuration
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -127,7 +131,7 @@ fun SendScreen2(
 
     val rotation by animateFloatAsState(
         targetValue = if (rotated) 180f else 0f,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+        animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing)
     )
 
     var isAnimating by remember { mutableStateOf(false) }
@@ -139,7 +143,7 @@ fun SendScreen2(
     val scale by animateFloatAsState(
         targetValue = if (isAnimating) initialScale else targetScale,
         animationSpec = tween(
-            durationMillis = 300,
+            durationMillis = mediumEnterDuration,
             easing = FastOutSlowInEasing
         ),
         label = "ScaleAnimation"
@@ -185,8 +189,8 @@ fun SendScreen2(
                             assets,
                             transitionSpec = {
                                 fadeIn(
-                                    animationSpec = tween(1000)
-                                ) togetherWith fadeOut(animationSpec = tween(1000))
+                                    animationSpec = tween(extraLargeEnterDuration)
+                                ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                             },
                             modifier = Modifier.fillMaxSize(),
                             label = "Animated Content"

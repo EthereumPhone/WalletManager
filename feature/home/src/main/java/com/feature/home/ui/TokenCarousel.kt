@@ -45,6 +45,8 @@ import com.core.model.TokenData
 import com.core.model.TokenMetadata
 import com.core.ui.Card
 import com.core.ui.views.IdleView
+import com.example.dgenlibrary.ui.theme.largeEnterDuration
+import com.example.dgenlibrary.ui.theme.smallDuration
 import com.feature.send.SelectedTokenUiState
 import kotlin.collections.find
 import kotlin.math.abs
@@ -197,7 +199,7 @@ fun TokenCardCarousel(
                     abs(relIdx) <= clampRange -> lerp(0.8f, 0.55f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
                     else                      -> 0.55f
                 },
-                tween(240, easing = FastOutSlowInEasing)
+                tween(smallDuration, easing = FastOutSlowInEasing)
             )
 
             val alphafactor by animateFloatAsState(
@@ -206,12 +208,12 @@ fun TokenCardCarousel(
                     abs(relIdx) <= clampRange -> lerp(1f, 0f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
                     else                      -> 0f
                 },
-                tween(300, easing = FastOutSlowInEasing)
+                tween(smallDuration, easing = FastOutSlowInEasing)
             )
 
             val frontCardTranslation by animateFloatAsState(
                 targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)), // Reduced translation range
-                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing)
             )
 
 

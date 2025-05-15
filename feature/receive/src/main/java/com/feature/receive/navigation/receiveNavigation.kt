@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.example.dgenlibrary.ui.theme.largeEnterDuration
+import com.example.dgenlibrary.ui.theme.largeExitDuration
 import com.feature.receive.ReceiveRoute
 import com.feature.receive.ReceiveScreen
 
@@ -29,27 +31,27 @@ fun NavGraphBuilder.receiveScreen(
         route = receiveRoute,
         enterTransition = { fadeIn(
             animationSpec = tween(
-                durationMillis = 400,
+                durationMillis = largeEnterDuration,
                 easing = FastOutSlowInEasing
             )
         )
         },
             exitTransition = { fadeOut(
                 animationSpec = tween(
-                    durationMillis = 400,
+                    durationMillis = largeExitDuration,
                     easing = FastOutSlowInEasing
                 )
             )
             },
             popEnterTransition = {
                 fadeIn(animationSpec = tween(
-                    durationMillis = 400,
+                    durationMillis = largeEnterDuration,
                     easing = FastOutSlowInEasing
                 ))
             },
             popExitTransition = {
                 fadeOut(animationSpec = tween(
-                    durationMillis = 400,
+                    durationMillis = largeExitDuration,
                     easing = FastOutSlowInEasing
                 ))
             }

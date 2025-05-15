@@ -19,7 +19,6 @@ val header0_fontSize = 128.sp
 
 
 //Easing Duration
-//make sure the values are the same in app/Dimension
 
 val smallDuration = 200 //ms
 

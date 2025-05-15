@@ -31,6 +31,7 @@ import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.example.dgenlibrary.ui.theme.smallDuration
 
 @Composable
 fun TruncatedAddress(
@@ -79,10 +80,10 @@ fun TruncatedAddress(
         AnimatedVisibility(
             !expanded,
             enter = fadeIn(
-                animationSpec = tween(400,easing=FastOutSlowInEasing)
+                animationSpec = tween(smallDuration,easing=FastOutSlowInEasing)
             ),
             exit = fadeOut(
-                animationSpec = tween(400,easing=FastOutSlowInEasing)
+                animationSpec = tween(smallDuration,easing=FastOutSlowInEasing)
             )
         ) {
             Icon(
