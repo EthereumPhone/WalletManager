@@ -2,7 +2,10 @@ package com.feature.receive.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -74,7 +77,13 @@ fun TruncatedAddress(
                 //.padding(8.dp)
         )
         AnimatedVisibility(
-            !expanded
+            !expanded,
+            enter = fadeIn(
+                animationSpec = tween(400,easing=FastOutSlowInEasing)
+            ),
+            exit = fadeOut(
+                animationSpec = tween(400,easing=FastOutSlowInEasing)
+            )
         ) {
             Icon(
                 Icons.Outlined.ChevronRight,
