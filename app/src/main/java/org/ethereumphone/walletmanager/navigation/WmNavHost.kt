@@ -21,8 +21,6 @@ import com.example.assets.navigation.assetDetailScreen
 import com.example.assets.navigation.assetGraph
 import com.example.assets.navigation.navigateToAsset
 import com.example.assets.navigation.navigateToAssetDetail
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.largeExitDuration
 import com.example.transactions.navigation.navigateToTransaction
 import com.example.transactions.navigation.navigateToTransactionDetail
 import com.example.transactions.navigation.transactionDetailScreen
@@ -55,27 +53,27 @@ fun WmNavHost(
             modifier = modifier,
             enterTransition = { fadeIn(
                 animationSpec = tween(
-                    durationMillis = largeEnterDuration,
+                    durationMillis = 500,
                     easing = FastOutSlowInEasing
                 )
             )
             },
             exitTransition = { fadeOut(
                 animationSpec = tween(
-                    durationMillis = largeExitDuration,
+                    durationMillis = 400,
                     easing = FastOutSlowInEasing
                 )
             )
             },
             popEnterTransition = {
                 fadeIn(animationSpec = tween(
-                    durationMillis = largeEnterDuration,
+                    durationMillis = 500,
                     easing = FastOutSlowInEasing
                 ))
             },
             popExitTransition = {
                 fadeOut(animationSpec = tween(
-                    durationMillis = largeExitDuration,
+                    durationMillis = 400,
                     easing = FastOutSlowInEasing
                 ))
             }
