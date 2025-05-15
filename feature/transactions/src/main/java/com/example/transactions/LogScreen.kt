@@ -91,6 +91,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.ui.DgenLoadingMatrix
 
 @Composable
 fun LogRoute(
@@ -202,15 +203,17 @@ fun LogScreen(
                 transfersUIState,
                 transitionSpec = {
                     fadeIn(
-                        animationSpec = tween(1000)
-                    ) togetherWith fadeOut(animationSpec = tween(1000))
+                        animationSpec = tween(2000)
+                    ) togetherWith fadeOut(animationSpec = tween(2000))
                 },
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content"
             ) { txState ->
                 when(txState){
                     is TransfersUiState.Loading -> {
-
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            DgenLoadingMatrix()
+                        }
                     }
                     is TransfersUiState.Success -> {
                         Log.d("LogScreen", "Original transfers from ViewModel: ${txState.transfers.size}")
@@ -230,7 +233,8 @@ fun LogScreen(
                             Box(
                                 Modifier
                                     .fillMaxSize()
-                                    .pullRefresh(pullRefreshState)
+                                    .pullRefresh(pullRefreshState),
+                                contentAlignment = Alignment.Center
                             ) {
                                 LazyColumn(
                                     state= scrollState,
