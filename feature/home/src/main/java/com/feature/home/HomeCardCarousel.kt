@@ -5,10 +5,16 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,6 +80,10 @@ import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.feature.home.screens.EmptyHomeScreen
+import com.feature.home.screens.ErrorHomeScreen
+import com.feature.home.screens.HomeScreenContent
+import com.feature.home.screens.LoadingHomeScreen
 import com.feature.home.ui.TokenCardCarousel
 import kotlin.reflect.KSuspendFunction1
 
@@ -158,8 +168,6 @@ fun HomeScreen2(
     getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier,
 ) {
-
-
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
@@ -189,117 +197,83 @@ fun HomeScreen2(
 
         ) {
 
-            when(assetsUiState){
-                AssetsUiState.Empty -> {
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(0.dp),
-                            modifier = Modifier.offset(y= -48.dp)
-                        ) {
-                            AsyncImage(
-                                imageLoader = gifEnabledLoader,
-                                model = com.core.ui.R.drawable.wireframe_torus,
-                                contentDescription = null,
-                                modifier = Modifier.size(275.dp),
-                                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
-
-                            )
-
-                            Text(
-                                text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
-                                style = TextStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = dgenTurqoise.copy(0.35f),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 16.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None,
-                                    textAlign = TextAlign.Center
-                                ),
-                                modifier = Modifier.width(300.dp)
-                            )
-                        }
-                    }
-                }
-                AssetsUiState.Error -> {
-                    Log.d("Assets", "Assets Error")
-
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        
-                    }
-                }
-                AssetsUiState.Loading -> {
-                    Log.d("Assets", "Assets is loading")
-
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        DgenLoadingMatrix()
-                  }
-                }
-                is AssetsUiState.Success -> {
-
-                    Log.d("CardAnimation Assets", "${ tokenMetadata.size }")
-
-
-                    if(assetsUiState.assets.isNotEmpty()){
-                        TokenCardCarousel(
-                            modifier = Modifier.padding(bottom = 24.dp),
-                            assets = assetsUiState.assets,
-                            tokenData = tokenData,
-                            tokenMetadata = tokenMetadata,
-                            loadSymbol = loadSymbol,
-                            navigateToSend = navigateToSend,
-                            selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedTokenId,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedContentScope = animatedContentScope,
+            AnimatedContent(
+                assetsUiState,
+                transitionSpec = {
+                    fadeIn(
+                        animationSpec = tween(1000)
+                    ) togetherWith fadeOut(animationSpec = tween(1000))
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "Animated Content"
+            ) { assetState ->
+                when(assetState){
+                    is AssetsUiState.Empty -> {
+                        EmptyHomeScreen(
+                            gifEnabledLoader = gifEnabledLoader
                         )
                     }
-                    else {
-                        Log.d("Assets", "Assets Size ${assetsUiState.assets.size}")
-                        Box(
-                            modifier = modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ){
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(0.dp),
-                                modifier = Modifier.offset(y= -48.dp)
-                            ) {
-                                AsyncImage(
-                                    imageLoader = gifEnabledLoader,
-                                    model = com.core.ui.R.drawable.wireframe_torus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(275.dp),
-                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
-
-                                )
-                                Text(
-                                    text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
-                                    style = TextStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = dgenTurqoise.copy(0.35f),
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None,
-                                        textAlign = TextAlign.Center
-                                    ),
-                                    modifier = Modifier.width(300.dp)
-                                )
-                            }
-                        }
+                    is AssetsUiState.Error -> {
+                        ErrorHomeScreen(
+                            gifEnabledLoader = gifEnabledLoader
+                        )
                     }
+                    is AssetsUiState.Loading -> {
+                        LoadingHomeScreen()
+                    }
+                    is AssetsUiState.Success -> {
+                        HomeScreenContent(
+                            areAssetsVisible = assetState.assets.isNotEmpty() ,
+                            primaryContent = {
+                                TokenCardCarousel(
+                                    modifier = Modifier.padding(bottom = 24.dp),
+                                    assets = assetState.assets,
+                                    tokenData = tokenData,
+                                    tokenMetadata = tokenMetadata,
+                                    loadSymbol = loadSymbol,
+                                    navigateToSend = navigateToSend,
+                                    selectedTokenUiState = selectedTokenUiState,
+                                    setSelectedToken = setSelectedTokenId,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedContentScope = animatedContentScope,
+                                )
+                            },
+                            secondaryContent = {
+                                Box(
+                                    modifier = modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ){
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(0.dp),
+                                        modifier = Modifier.offset(y= -48.dp)
+                                    ) {
+                                        AsyncImage(
+                                            imageLoader = gifEnabledLoader,
+                                            model = com.core.ui.R.drawable.wireframe_torus,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(275.dp),
+                                            colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
 
+                                        )
+                                        Text(
+                                            text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
+                                            style = TextStyle(
+                                                fontFamily = PitagonsSans,
+                                                color = dgenTurqoise.copy(0.35f),
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 16.sp,
+                                                letterSpacing = 0.sp,
+                                                textDecoration = TextDecoration.None,
+                                                textAlign = TextAlign.Center
+                                            ),
+                                            modifier = Modifier.width(300.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
             }
 
@@ -330,7 +304,11 @@ fun HomeScreen2(
                 horizontalArrangement = Arrangement.Center
             ) {
 
-                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
+                IconButton(modifier = Modifier
+                    .clip(RoundedCornerShape(0.dp))
+                    .width(100.dp)
+                    .height(50.dp)
+                    .padding(bottom = 8.dp),
                     onClick = {
                         if (isOffline){
                             context.showCustomToast(
@@ -370,7 +348,11 @@ fun HomeScreen2(
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
+                IconButton(modifier = Modifier
+                    .clip(RoundedCornerShape(0.dp))
+                    .width(110.dp)
+                    .height(50.dp)
+                    .padding(bottom = 8.dp),
                     onClick = {
                         navigateToReceive()
                     }
@@ -379,7 +361,9 @@ fun HomeScreen2(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            modifier = Modifier.size(24.dp).rotate(180f),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(180f),
                             imageVector = Icons.Outlined.ArrowOutward,
                             contentDescription = "Back",
                             tint = dgenTurqoise
@@ -399,7 +383,11 @@ fun HomeScreen2(
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(100.dp).height(50.dp).padding(bottom = 8.dp),
+                IconButton(modifier = Modifier
+                    .clip(RoundedCornerShape(0.dp))
+                    .width(100.dp)
+                    .height(50.dp)
+                    .padding(bottom = 8.dp),
                     onClick = {
                         if (userData is WalletDataUiState.Success) {
                             val address = userData.userData.walletAddress

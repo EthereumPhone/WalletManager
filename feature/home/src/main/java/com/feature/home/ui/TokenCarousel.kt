@@ -597,6 +597,62 @@ fun TokenCardCarousel(
 }
  */
 
+/*
+
+HomeScreenContent(
+                            areAssetsVisible = testTokenAssets.isNotEmpty() ,
+                            primaryContent = {
+                                TokenCardCarousel(
+                                    modifier = Modifier.padding(bottom = 24.dp),
+                                    assets = testTokenAssets,
+                                    tokenData = tokenData,
+                                    tokenMetadata = tokenMetadata,
+                                    loadSymbol = loadSymbol,
+                                    navigateToSend = navigateToSend,
+                                    selectedTokenUiState = selectedTokenUiState,
+                                    setSelectedToken = setSelectedTokenId,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedContentScope = animatedContentScope,
+                                )
+                            },
+                            secondaryContent = {
+                                Box(
+                                    modifier = modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ){
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(0.dp),
+                                        modifier = Modifier.offset(y= -48.dp)
+                                    ) {
+                                        AsyncImage(
+                                            imageLoader = gifEnabledLoader,
+                                            model = com.core.ui.R.drawable.wireframe_torus,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(275.dp),
+                                            colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
+
+                                        )
+                                        Text(
+                                            text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
+                                            style = TextStyle(
+                                                fontFamily = PitagonsSans,
+                                                color = dgenTurqoise.copy(0.35f),
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 16.sp,
+                                                letterSpacing = 0.sp,
+                                                textDecoration = TextDecoration.None,
+                                                textAlign = TextAlign.Center
+                                            ),
+                                            modifier = Modifier.width(300.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        )
+
+*
+*/
 
 /*
 TESTDATA
