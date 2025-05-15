@@ -2,9 +2,13 @@ package com.example.transactions
 
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -194,103 +198,114 @@ fun LogScreen(
 
 
         Box(modifier = Modifier.fillMaxSize()){
+            AnimatedContent(
+                transfersUIState,
+                transitionSpec = {
+                    fadeIn(
+                        animationSpec = tween(1000)
+                    ) togetherWith fadeOut(animationSpec = tween(1000))
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "Animated Content"
+            ) { txState ->
+                when(txState){
+                    is TransfersUiState.Loading -> {
 
-            when(transfersUIState){
-                is TransfersUiState.Loading -> {
-
-                }
-                is TransfersUiState.Success -> {
-                    Log.d("LogScreen", "Original transfers from ViewModel: ${transfersUIState.transfers.size}")
-                    transfersUIState.transfers.forEachIndexed { index, t ->
-                        Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
                     }
+                    is TransfersUiState.Success -> {
+                        Log.d("LogScreen", "Original transfers from ViewModel: ${txState.transfers.size}")
+                        txState.transfers.forEachIndexed { index, t ->
+                            Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
+                        }
 
-                    val transfers = transfersUIState.transfers
-                    Log.d("LogScreen", "Filtered transfers (it.asset == \"$tokenId\"): ${transfers.size}")
-                    transfers.forEachIndexed { index, t ->
-                        Log.d("LogScreen", "Filtered item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
-                    }
+                        val transfers = txState.transfers
+                        Log.d("LogScreen", "Filtered transfers (it.asset == \"$tokenId\"): ${transfers.size}")
+                        transfers.forEachIndexed { index, t ->
+                            Log.d("LogScreen", "Filtered item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
+                        }
 
 
-                    if (transfers.isNotEmpty()){
+                        if (transfers.isNotEmpty()){
 
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .pullRefresh(pullRefreshState)
-                        ) {
-                            LazyColumn(
-                                state= scrollState,
-                                modifier = Modifier
-                                    .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                            Box(
+                                Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 24.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    .pullRefresh(pullRefreshState)
                             ) {
-                                item {
-                                    Spacer(Modifier.height(8.dp))
+                                LazyColumn(
+                                    state= scrollState,
+                                    modifier = Modifier
+                                        .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                                        .fillMaxSize()
+                                        .padding(horizontal = 24.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    item {
+                                        Spacer(Modifier.height(8.dp))
+                                    }
+
+                                    items(transfers.reversed()) { transfer ->
+                                        //TODO: Add Logos
+                                        LogEntry(logEntry = transfer)
+                                    }
+
+                                    item {
+                                        Spacer(Modifier.height(16.dp))
+                                    }
                                 }
 
-                                items(transfers.reversed()) { transfer ->
-                                    //TODO: Add Logos
-                                    LogEntry(logEntry = transfer)
-                                }
-
-                                item {
-                                    Spacer(Modifier.height(16.dp))
-                                }
-                            }
-
-                            PullRefreshIndicator(
-                                refreshing = refreshState,
-                                state = pullRefreshState,
-                                modifier = Modifier.align(Alignment.TopCenter)
-                            )
-                        }
-
-
-                    }else{
-                        Box(
-                            modifier = modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ){
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(0.dp),
-                                modifier = Modifier.offset(y= 0.dp)
-                            ) {
-                                AsyncImage(
-                                    imageLoader = gifEnabledLoader,
-                                    model = com.core.ui.R.drawable.wireframe_torus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(275.dp),
-                                    colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
-
-                                )
-
-                                Text(
-                                    text = "Complete your first transaction, or add assets from another wallet.",
-                                    style = TextStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = dgenTurqoise.copy(0.35f),
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None,
-                                        textAlign = TextAlign.Center
-                                    ),
-                                    modifier = Modifier.width(300.dp)
+                                PullRefreshIndicator(
+                                    refreshing = refreshState,
+                                    state = pullRefreshState,
+                                    modifier = Modifier.align(Alignment.TopCenter)
                                 )
                             }
 
+
+                        }else{
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ){
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                                    modifier = Modifier.offset(y= 0.dp)
+                                ) {
+                                    AsyncImage(
+                                        imageLoader = gifEnabledLoader,
+                                        model = com.core.ui.R.drawable.wireframe_torus,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(275.dp),
+                                        colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
+
+                                    )
+
+                                    Text(
+                                        text = "Complete your first transaction, or add assets from another wallet.",
+                                        style = TextStyle(
+                                            fontFamily = PitagonsSans,
+                                            color = dgenTurqoise.copy(0.35f),
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 16.sp,
+                                            letterSpacing = 0.sp,
+                                            textDecoration = TextDecoration.None,
+                                            textAlign = TextAlign.Center
+                                        ),
+                                        modifier = Modifier.width(300.dp)
+                                    )
+                                }
+
+                            }
                         }
+
+
+
+
                     }
-
-
-
-
                 }
             }
+
 
 
 
