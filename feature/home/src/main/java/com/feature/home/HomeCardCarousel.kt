@@ -7,8 +7,10 @@ import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -122,6 +124,8 @@ internal fun HomeRoute2(
 
     val tokenMetadata by viewModel.tokenMetadata.collectAsState()
 
+    val hasTransfer by viewModel.hasTransfers.collectAsState()
+
     initializeFontMap(SpaceMono, PitagonsSans)
 
     HomeScreen2(
@@ -141,6 +145,7 @@ internal fun HomeRoute2(
         tokenMetadata = tokenMetadata,
         loadSymbol = viewModel::loadSymbol,
         getLink = viewModel::getLink,
+        hasTransfer = hasTransfer
 
 
     )
@@ -163,11 +168,13 @@ fun HomeScreen2(
     isOffline: Boolean,
     tokenData:  List<TokenData>,
     loadSymbol: (List<String>) -> Unit,
+    hasTransfer: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier,
 ) {
+    
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
@@ -304,50 +311,62 @@ fun HomeScreen2(
                 horizontalArrangement = Arrangement.Center
             ) {
 
-                IconButton(modifier = Modifier
-                    .clip(RoundedCornerShape(0.dp))
-                    .width(100.dp)
-                    .height(50.dp)
-                    .padding(bottom = 8.dp),
-                    onClick = {
-                        if (isOffline){
-                            context.showCustomToast(
-                            message = "No internet connection!",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenRed,
-                            textColor = dgenWhite
-                        )
-                        } else {
-                            navigateToLog(selectedTokenId.value)
-                            //navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                AnimatedVisibility(
+                    hasTransfer,
+                    enter = fadeIn(
+                        animationSpec = tween(400,easing=FastOutSlowInEasing)
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(400,easing=FastOutSlowInEasing)
+                    )
+                ){
+                    IconButton(modifier = Modifier
+                        .clip(RoundedCornerShape(0.dp))
+                        .width(100.dp)
+                        .height(50.dp)
+                        .padding(bottom = 8.dp),
+                        onClick = {
+                            if (isOffline){
+                                context.showCustomToast(
+                                    message = "No internet connection!",
+                                    fontFamily = PitagonsSans,
+                                    fontWeight = FontWeight.SemiBold,
+                                    backgroundColor = dgenRed,
+                                    textColor = dgenWhite
+                                )
+                            } else {
+                                navigateToLog(selectedTokenId.value)
+                                //navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                            }
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                painter = painterResource(R.drawable.baseline_swap_vert_24),
+                                contentDescription = "Back",
+                                tint = dgenTurqoise
+                            )
+                            Text(
+                                text= "LOG",
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenTurqoise,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp,
+                                    lineHeight = 16.sp,
+                                    letterSpacing = 1.sp,
+                                    textDecoration = TextDecoration.None
+                                )
+                            )
                         }
                     }
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(R.drawable.baseline_swap_vert_24),
-                            contentDescription = "Back",
-                            tint = dgenTurqoise
-                        )
-                        Text(
-                            text= "LOG",
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = dgenTurqoise,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp,
-                                lineHeight = 16.sp,
-                                letterSpacing = 1.sp,
-                                textDecoration = TextDecoration.None
-                            )
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+
+
                 IconButton(modifier = Modifier
                     .clip(RoundedCornerShape(0.dp))
                     .width(110.dp)
