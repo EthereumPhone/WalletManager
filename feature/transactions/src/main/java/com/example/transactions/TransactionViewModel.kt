@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
@@ -30,6 +31,7 @@ class TransactionViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val transferRepository: TransferRepository,
+    private val tokenMetadataRepository: TokenMetadataRepository,
 
     ): ViewModel() {
 
@@ -48,6 +50,13 @@ class TransactionViewModel @Inject constructor(
                 initialValue = TransfersUiState.Loading
             )
 
+
+    val tokenMetadata = tokenMetadataRepository.getTokensMetadata()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     val tokenAssetState: StateFlow<TokenAssetUiState> =
         networkBalanceRepository.getNetworksBalance()

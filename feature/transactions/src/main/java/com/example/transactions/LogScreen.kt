@@ -91,6 +91,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
 
 @Composable
@@ -101,12 +102,13 @@ fun LogRoute(
 ){
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val tokenAssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
 
     LogScreen(
         transfersUIState = transfersUIState,
         onNavigateBack = navigateBack,
         refreshState = refreshState,
+        tokenMetadata = tokenMetadata,
         tokenId = tokenId,
         onRefresh = viewModel::refreshData
     )
@@ -128,6 +130,7 @@ fun LogRoute(
 fun LogScreen(
     modifier: Modifier = Modifier,
     transfersUIState: TransfersUiState,
+    tokenMetadata: List<TokenMetadata>,
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
     tokenId: String?,
@@ -216,19 +219,21 @@ fun LogScreen(
                         }
                     }
                     is TransfersUiState.Success -> {
-                        Log.d("LogScreen", "Original transfers from ViewModel: ${txState.transfers.size}")
-                        txState.transfers.forEachIndexed { index, t ->
-                            Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
-                        }
+//                        Log.d("LogScreen", "Original transfers from ViewModel: ${txState.transfers.size}")
+//                        txState.transfers.forEachIndexed { index, t ->
+//                            Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
+//                        }
 
                         val transfers = txState.transfers
-                        Log.d("LogScreen", "Filtered transfers (it.asset == \"$tokenId\"): ${transfers.size}")
-                        transfers.forEachIndexed { index, t ->
-                            Log.d("LogScreen", "Filtered item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
-                        }
+
 
 
                         if (transfers.isNotEmpty()){
+
+                            val metaBySymbol = remember(tokenMetadata) {
+                                tokenMetadata.associateBy { it.symbol }
+                            }
+
 
                             Box(
                                 Modifier
@@ -250,7 +255,9 @@ fun LogScreen(
 
                                     items(transfers.reversed()) { transfer ->
                                         //TODO: Add Logos
-                                        LogEntry(logEntry = transfer)
+                                        Log.d("LogScreen", "transfer.asset ${transfer.asset} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
+
+                                        LogEntry(logEntry = transfer, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
                                     }
 
                                     item {
@@ -407,14 +414,42 @@ fun LogViewPreview(){
 
     val txs = generateRandomTransfers()
 
+    val sampleMetadata = listOf(
+        TokenMetadata(
+            contractAddress = "0x000…eth",
+            decimals        = 18,
+            name            = "Ether",
+            symbol          = "ETH",
+            logo            = "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+            chainId         = 1
+        ),
+        TokenMetadata(
+            contractAddress = "0x000…usdt",
+            decimals        = 6,
+            name            = "Tether USD",
+            symbol          = "USDT",
+            logo            = "https://cryptologos.cc/logos/tether-usdt-logo.png",
+            chainId         = 56
+        ),
+        TokenMetadata(
+            contractAddress = "0x000…usdt",
+            decimals        = 6,
+            name            = "LINK",
+            symbol          = "LINK",
+            logo            = "https://cryptologos.cc/logos/chainlink-link-logo.png",
+            chainId         = 56
+        )
+    )
 
     LogScreen(
         transfersUIState = TransfersUiState.Success(txs),
         refreshState = false,
         tokenId = "DAI",
         onRefresh = {},
+        tokenMetadata = sampleMetadata
 //        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
     )
+
 }
 
 
@@ -425,7 +460,7 @@ fun generateRandomTransfers(): List<TransferItem> {
 
     // Beispielhafte Listen für zufällige Werte
     val possibleChainIds = listOf(1, 56, 137, 42)  // z.B. Ethereum, BSC, Polygon, Kovan
-    val possibleAssets = listOf("DAI")
+    val possibleAssets = listOf("LINK","USDT","ETH")
 
     // Beispiel-Adressen (typisch 0x + 40 Hex-Stellen, hier verkürzt oder zufällig generiert)
     val sampleAddresses = listOf(
