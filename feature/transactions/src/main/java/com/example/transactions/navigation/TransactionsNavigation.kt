@@ -1,5 +1,9 @@
 package com.example.transactions.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -39,7 +43,33 @@ fun NavGraphBuilder.transactionGraph(
                     type = NavType.StringType
                     defaultValue = ""
                 }
+            ),
+            enterTransition = { fadeIn(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
             )
+            },
+            exitTransition = { fadeOut(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
+            )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            }
         ){ backStackEntry ->
             val tokenId = backStackEntry.arguments?.getString("tokenId")
                 LogRoute(
