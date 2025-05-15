@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
+import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
@@ -20,12 +21,14 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +40,7 @@ import okhttp3.ResponseBody
 import okio.IOException
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -46,6 +50,7 @@ class HomeViewModel @Inject constructor(
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val tokenExchangeRepository: TokenExchangeRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
+    private val transferRepository: TransferRepository,
     private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
@@ -124,6 +129,21 @@ class HomeViewModel @Inject constructor(
             initialValue = AssetsUiState.Loading
         )
 
+
+    val hasTransfers: StateFlow<Boolean> = flow {
+        while (true) {
+            // suspend until the first (or only) List<TransferItem> is emitted
+            val items = transferRepository.getTransfers().first()
+            emit(items.isNotEmpty())
+            // wait one minute before the next check
+            delay(TimeUnit.MINUTES.toMillis(1))
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
