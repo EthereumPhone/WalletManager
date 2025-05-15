@@ -1,5 +1,9 @@
 package com.feature.receive.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -21,7 +25,35 @@ fun NavController.navigateToReceive() {
 fun NavGraphBuilder.receiveScreen(
     onBackClick: () -> Unit
 ) {
-    composable(route = receiveRoute) {
+    composable(
+        route = receiveRoute,
+        enterTransition = { fadeIn(
+            animationSpec = tween(
+                durationMillis = 400,
+                easing = FastOutSlowInEasing
+            )
+        )
+        },
+            exitTransition = { fadeOut(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
+            )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ))
+            }
+    ) {
         ReceiveRoute(
             onBackClick = onBackClick
         )
