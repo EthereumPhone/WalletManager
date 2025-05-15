@@ -1,12 +1,16 @@
 package com.feature.send
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -177,167 +181,204 @@ fun SendScreen2(
 
                     ,
                     frontSide = {
-
-                        when(assets){
-                            AssetUiState.Empty -> {
-                                Log.d("DEBUG","Empty")
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                                    ) {
-                                        DgenLoadingMatrix(
-                                            size = 88.dp,
-                                            LEDSize = 24.dp,
-                                            unactiveLEDColor = dgenBlack.copy(0.15f),
-                                            activeLEDColor = dgenTurqoise
-                                        )
-                                        Text(
-                                            text = "NO ASSETS",
-                                            style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenTurqoise,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 24.sp,
-                                                letterSpacing = 0.sp,
-                                                textDecoration = TextDecoration.None,
-                                                textAlign = TextAlign.Center
+                        AnimatedContent(
+                            assets,
+                            transitionSpec = {
+                                fadeIn(
+                                    animationSpec = tween(1000)
+                                ) togetherWith fadeOut(animationSpec = tween(1000))
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                            label = "Animated Content"
+                        ) { assetsState ->
+                            when(assetsState){
+                                AssetUiState.Empty -> {
+                                    Log.d("DEBUG","Empty")
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
                                             )
-                                        )
-                                    }
-                                }
-                            }
-                            AssetUiState.Error -> {
-                                //ErrorCardView()
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                                    ) {
-                                        DgenLoadingMatrix(
-                                            size = 88.dp,
-                                            LEDSize = 24.dp,
-                                            unactiveLEDColor = dgenBlack.copy(0.15f),
-                                            activeLEDColor = dgenTurqoise
-                                        )
-                                        Text(
-                                            text = "ERROR",
-                                            style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenTurqoise,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 24.sp,
-                                                letterSpacing = 0.sp,
-                                                textDecoration = TextDecoration.None,
-                                                textAlign = TextAlign.Center
+                                            Text(
+                                                text = "NO ASSETS",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                )
                                             )
-                                        )
-                                    }
-                                }
-                            }
-                            AssetUiState.Loading -> {
-                                Log.d("DEBUG","Loading")
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                                    ) {
-                                        DgenLoadingMatrix(
-                                            size = 88.dp,
-                                            LEDSize = 24.dp,
-                                            unactiveLEDColor = dgenBlack.copy(0.15f),
-                                            activeLEDColor = dgenTurqoise
-                                        )
-                                        Text(
-                                            text = "LOADING...",
-                                            style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenTurqoise,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 24.sp,
-                                                letterSpacing = 0.sp,
-                                                textDecoration = TextDecoration.None,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                            is AssetUiState.Success -> {
-                                Log.d("DEBUG","Success")
-                                val token = assets.assets.firstOrNull {
-                                    it.address.equals(initialAddress, ignoreCase = true)
-                                }
-
-                                if(token == null){
-                                    Log.d("SendID","token null ")
-                                }
-
-                                val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}" else token?.symbol
-
-
-                                if (token != null) {
-                                    when (token.symbol) {
-                                        "base" -> {
-                                            loadSymbol(listOf("ETH"))
-                                        }
-
-                                        "mainnet" -> {
-                                            loadSymbol(listOf("ETH"))
-                                        }
-
-                                        else -> {
-                                            loadSymbol(listOf(token.symbol))
                                         }
                                     }
+                                }
+                                AssetUiState.Error -> {
+                                    //ErrorCardView()
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
+                                            )
+                                            Text(
+                                                text = "ERROR",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                AssetUiState.Loading -> {
+                                    Log.d("DEBUG","Loading")
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
+                                            )
+                                            Text(
+                                                text = "LOADING...",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                is AssetUiState.Success -> {
+                                    Log.d("DEBUG","Success")
+                                    val token = assetsState.assets.firstOrNull {
+                                        it.address.equals(initialAddress, ignoreCase = true)
+                                    }
 
-                                    val fiatamount = when (token.symbol) {
-                                        "base" -> {
-                                            //get eth value
-                                            val tokenasset = tokenData.find { it.symbol == "ETH" }
-                                            //set eth value
-                                            if (tokenasset == null) {
-                                                0.0
-                                            } else {
-                                                tokenasset.prices?.get(0)?.value?.toDouble()
+                                    if(token == null){
+                                        Log.d("SendID","token null ")
+                                    }
+
+                                    val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}" else token?.symbol
+
+
+                                    if (token != null) {
+                                        when (token.symbol) {
+                                            "base" -> {
+                                                loadSymbol(listOf("ETH"))
+                                            }
+
+                                            "mainnet" -> {
+                                                loadSymbol(listOf("ETH"))
+                                            }
+
+                                            else -> {
+                                                loadSymbol(listOf(token.symbol))
                                             }
                                         }
 
-                                        "mainnet" -> {
-                                            //get eth value
-                                            val tokenasset = tokenData.find { it.symbol == "ETH" }
-                                            //set eth value
-                                            //if tokenasset null turn into 0.00
-                                            if (tokenasset == null) {
-                                                0.0
-                                            } else {
-                                                tokenasset.prices?.get(0)?.value?.toDouble()
+                                        val fiatamount = when (token.symbol) {
+                                            "base" -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                                //set eth value
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
+                                            }
+
+                                            "mainnet" -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                                //set eth value
+                                                //if tokenasset null turn into 0.00
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
+                                            }
+
+                                            else -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == token.symbol }
+                                                //set eth value
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
                                             }
                                         }
 
-                                        else -> {
-                                            //get eth value
-                                            val tokenasset = tokenData.find { it.symbol == token.symbol }
-                                            //set eth value
-                                            if (tokenasset == null) {
-                                                0.0
-                                            } else {
-                                                tokenasset.prices?.get(0)?.value?.toDouble()
+
+                                        Log.d("DEBUG","tokenName $tokenName")
+                                        if (tokenName != null) {
+                                            SendCardView(
+                                                amount = amount,
+                                                toAddress = toAddress,
+                                                maxamount = token.balance,
+                                                tokenName = tokenName.uppercase(),
+                                                onAddressChange = onToAddressChanged,
+                                                onAmountChange = onAmountChange
+                                            )
+                                        } else {
+
+                                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                                                ) {
+                                                    DgenLoadingMatrix(
+                                                        size = 88.dp,
+                                                        LEDSize = 24.dp,
+                                                        unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                        activeLEDColor = dgenTurqoise
+                                                    )
+                                                    Text(
+                                                        text = "TOKENNAME IS NULL",
+                                                        style = TextStyle(
+                                                            fontFamily = PitagonsSans,
+                                                            color = dgenTurqoise,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 24.sp,
+                                                            letterSpacing = 0.sp,
+                                                            textDecoration = TextDecoration.None,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    )
+                                                }
                                             }
                                         }
-                                    }
-
-
-                                    Log.d("DEBUG","tokenName $tokenName")
-                                    if (tokenName != null) {
-                                        SendCardView(
-                                            amount = amount,
-                                            toAddress = toAddress,
-                                            maxamount = token.balance,
-                                            tokenName = tokenName.uppercase(),
-                                            onAddressChange = onToAddressChanged,
-                                            onAmountChange = onAmountChange
-                                        )
                                     } else {
 
                                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
@@ -352,7 +393,7 @@ fun SendScreen2(
                                                     activeLEDColor = dgenTurqoise
                                                 )
                                                 Text(
-                                                    text = "TOKENNAME IS NULL",
+                                                    text = "NON EXISTING TOKEN",
                                                     style = TextStyle(
                                                         fontFamily = PitagonsSans,
                                                         color = dgenTurqoise,
@@ -364,33 +405,6 @@ fun SendScreen2(
                                                     )
                                                 )
                                             }
-                                        }
-                                    }
-                                } else {
-
-                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                                        ) {
-                                            DgenLoadingMatrix(
-                                                size = 88.dp,
-                                                LEDSize = 24.dp,
-                                                unactiveLEDColor = dgenBlack.copy(0.15f),
-                                                activeLEDColor = dgenTurqoise
-                                            )
-                                            Text(
-                                                text = "NON EXISTING TOKEN",
-                                                style = TextStyle(
-                                                    fontFamily = PitagonsSans,
-                                                    color = dgenTurqoise,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 24.sp,
-                                                    letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            )
                                         }
                                     }
                                 }
