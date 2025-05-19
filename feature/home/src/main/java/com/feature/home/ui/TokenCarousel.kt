@@ -72,8 +72,9 @@ fun TokenCardCarousel(
     val listofTokenSymbol = remember { mutableListOf<String>() }
 
     // Ensure scrolling starts at the last item
-    LaunchedEffect(Unit) {
+    LaunchedEffect(assets) {
 
+        Log.d("DEBUG","listofTokenSymbol: $listofTokenSymbol")
         if (assets.isNotEmpty()){
             val token = when(selectedTokenUiState){
                 is SelectedTokenUiState.Unselected -> {
@@ -148,11 +149,12 @@ fun TokenCardCarousel(
 
 
             //load token price based of token list
-            Log.d("tokendata effect", "Token: $listofTokenSymbol")
+            Log.d("DEBUG", "Token: $listofTokenSymbol")
             for (token in listofTokenSymbol){
-                Log.d("tokendata effect loop", "Token: $token")
+                Log.d("DEBUG", "Token: $token")
             }
 
+            Log.d("DEBUG","listofTokenSymbol: $listofTokenSymbol")
             loadSymbol(listofTokenSymbol)
 
         }

@@ -218,6 +218,8 @@ class HomeViewModel @Inject constructor(
     val tokenData = _tokenData.asStateFlow()
 
     fun loadSymbol(symbol: List<String>) {
+        Log.d("DEBUG","inside loadSymbol: $symbol")
+
         viewModelScope.launch {
             try {
                 tokenExchangeRepository.fetchExchangeBySymbols(symbol)
