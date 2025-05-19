@@ -8,5 +8,7 @@ interface TokenExchangeRepository {
     fun getHistoricalExchanges(symbol: String): Flow<List<TokenExchange>>
     suspend fun fetchExchangeBySymbols(symbols: List<String>)
     suspend fun fetchExchangeByAddress(address: String)
+    fun getExchanges(): Flow<List<TokenExchange>>
+
 
 }

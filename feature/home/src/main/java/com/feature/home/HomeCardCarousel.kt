@@ -178,7 +178,8 @@ fun HomeScreen2(
     getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier,
 ) {
-    
+
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
@@ -223,6 +224,19 @@ fun HomeScreen2(
                         EmptyHomeScreen(
                             gifEnabledLoader = gifEnabledLoader
                         )
+
+                        /*TokenCardCarousel(
+                            modifier = Modifier.padding(bottom = 24.dp),
+                            assets = testTokenAssets,
+                            tokenData = tokenData,
+                            tokenMetadata = tokenMetadata,
+                            loadSymbol = loadSymbol,
+                            navigateToSend = navigateToSend,
+                            selectedTokenUiState = selectedTokenUiState,
+                            setSelectedToken = setSelectedTokenId,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedContentScope = animatedContentScope,
+                        )*/
                     }
                     is AssetsUiState.Error -> {
                         ErrorHomeScreen(

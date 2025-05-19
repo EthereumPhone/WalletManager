@@ -46,5 +46,10 @@ class DefaultExchangeRepository @Inject constructor(
         TODO("Not yet implemented")
     }
 
+    override fun getExchanges(): Flow<List<TokenExchange>> {
+        Log.d("DBSTUFF","getExchange executed")
+        return exchangeDao.getExchanges()
+    }
+
 
 }

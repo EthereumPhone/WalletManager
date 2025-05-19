@@ -40,10 +40,10 @@ interface TokenExchangeDao {
 
 
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertExchange(exchangeEntity: TokenExchangeEntity)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAllExchanges(exchangeEntities: List<TokenExchangeEntity>)
 
 }

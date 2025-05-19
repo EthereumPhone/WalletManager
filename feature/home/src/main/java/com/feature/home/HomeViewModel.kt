@@ -11,9 +11,11 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
+import com.core.database.dao.TokenExchangeDao
 import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.model.NetworkChain
+import com.core.model.Price
 import com.core.model.TokenAsset
 import com.core.model.TokenData
 import com.core.model.UserData
@@ -56,6 +58,17 @@ class HomeViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
+
+    init {
+        Log.d("HomeViewModel", "Initializing HomeViewModel")
+        // Collect the flow to trigger database operations
+        viewModelScope.launch {
+            tokenExchangeRepository.getExchanges()
+                .collect { exchanges ->
+                    Log.d("HomeViewModel", "Received ${exchanges.size} exchanges")
+                }
+        }
+    }
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
@@ -214,8 +227,29 @@ class HomeViewModel @Inject constructor(
     // We'll store our user input in the SavedStateHandle under a certain key
 
 
-    private val _tokenData = MutableStateFlow<List<TokenData>>(emptyList())
-    val tokenData = _tokenData.asStateFlow()
+    val tokenData = tokenExchangeRepository.getExchanges()
+        .map { exchanges ->
+            exchanges.groupBy { it.symbol }
+                .map { (symbol, exchangeList) ->
+                    // Get the most recent exchange rate for each symbol
+                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
+                    TokenData(
+                        symbol = symbol,
+                        prices = listOf(
+                            Price(
+                                currency = latestExchange?.currency ?: "",
+                                value = latestExchange?.value?.toString() ?: "0.0",
+                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
+                            )
+                        )
+                    )
+                }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     fun loadSymbol(symbol: List<String>) {
         Log.d("DEBUG","inside loadSymbol: $symbol")

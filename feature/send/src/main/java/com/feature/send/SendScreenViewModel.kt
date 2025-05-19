@@ -32,6 +32,7 @@ import com.core.data.repository.TokenExchangeRepository
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.model.NetworkChain
+import com.core.model.Price
 import com.core.model.TokenData
 import com.core.model.UserData
 import com.core.result.Result
@@ -257,9 +258,29 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    //TODO: refactor pull from the database
-    private val _tokenData = MutableStateFlow<List<TokenData>>(emptyList())
-    val tokenData = _tokenData.asStateFlow()
+    val tokenData = tokenExchangeRepository.getExchanges()
+        .map { exchanges ->
+            exchanges.groupBy { it.symbol }
+                .map { (symbol, exchangeList) ->
+                    // Get the most recent exchange rate for each symbol
+                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
+                    TokenData(
+                        symbol = symbol,
+                        prices = listOf(
+                            Price(
+                                currency = latestExchange?.currency ?: "",
+                                value = latestExchange?.value?.toString() ?: "0.0",
+                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
+                            )
+                        )
+                    )
+                }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     fun loadSymbol(symbol: List<String>) {
         viewModelScope.launch {
