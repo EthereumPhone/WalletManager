@@ -522,21 +522,14 @@ fun Modifier.verticalLazyListScrollbar(
 ): Modifier {
     val coroutineScope = rememberCoroutineScope()
     var isScrolling by remember { mutableStateOf(false) }
-    var targetAlpha by remember { mutableStateOf(0f) } // Start hidden
     var targetScrollBarOffset by remember { mutableStateOf(0f) } // Thumb Y position
 
-    val alpha by animateFloatAsState(
-        targetValue = targetAlpha,
-        animationSpec = tween(durationMillis = smallDuration, easing = LinearEasing)
-    )
 
     LaunchedEffect(lazyListState.isScrollInProgress) {
         if (lazyListState.isScrollInProgress) {
             isScrolling = true
-            targetAlpha = 1f // 🔥 Fade in
         } else {
             delay(1000) // Wait 1 second before fading out
-            targetAlpha = 0f // 🔥 Fade out smoothly
         }
     }
 
@@ -574,7 +567,7 @@ fun Modifier.verticalLazyListScrollbar(
             // 4️⃣ Draw the scrollbar track
             if (showScrollBarTrack) {
                 drawRoundRect(
-                    color = scrollBarTrackColor.copy(alpha = alpha),
+                    color = scrollBarTrackColor,
                     cornerRadius = CornerRadius(scrollBarCornerRadius),
                     topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx()),
                     size = Size(width.toPx(), trackHeight)
@@ -583,7 +576,7 @@ fun Modifier.verticalLazyListScrollbar(
 
             // 5️⃣ Draw the scrollbar thumb
             drawRoundRect(
-                color = scrollBarColor.copy(alpha = alpha),
+                color = scrollBarColor,
                 cornerRadius = CornerRadius(scrollBarCornerRadius),
                 topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx() + targetScrollBarOffset),
                 size = Size(width.toPx(), thumbHeight)
