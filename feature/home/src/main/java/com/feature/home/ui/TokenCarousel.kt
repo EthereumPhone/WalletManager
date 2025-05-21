@@ -5,38 +5,20 @@ import android.util.Log
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Label
-import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.zIndex
@@ -50,10 +32,26 @@ import com.example.dgenlibrary.ui.theme.smallDuration
 import com.feature.send.SelectedTokenUiState
 import kotlin.collections.find
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Velocity
+import dev.chrisbanes.snapper.ExperimentalSnapperApi
+import dev.chrisbanes.snapper.SnapOffsets
+import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalSnapperApi::class)
 @SuppressLint("RestrictedApi")
 @Composable
 fun TokenCardCarousel(
@@ -68,7 +66,11 @@ fun TokenCardCarousel(
     setSelectedToken: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
+    // hier halbieren wir z.B. die Scroll-Geschwindigkeit
+
+    val coroutineScope = rememberCoroutineScope()
     val listofTokenSymbol = remember { mutableListOf<String>() }
 
     Log.d("HomeViewModel", "TokenCardCarousel")
@@ -167,15 +169,41 @@ fun TokenCardCarousel(
     val overlap     = (-cardHeight / visibleCount) *4     // -50.dp
     val clampRange  = (visibleCount - 1).toFloat()     // 3f
 
+
+    // <1 = langsamer scrollen / weniger empfindlich
+    val sensitivity = 0.2f
+
+
+
+    // Connection zum Abfangen und Skalieren der Scroll-Events
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // wir nehmen nur Y, skalieren es und scrollen die Liste
+                val scaledY = available.y * sensitivity
+                // scrollBy ist suspending – hier also über launch
+                CoroutineScope(Dispatchers.Main).launch {
+                    listState.scrollBy(scaledY)
+                }
+                // geben zurück, was wir „verbraucht“ haben
+                return Offset(x = 0f, y = scaledY)
+            }
+        }
+    }
+
+
+
+
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
+            .offset(0.dp,15.dp)
+            .nestedScroll(nestedScrollConnection)
             .zIndex(3f),
         verticalArrangement = Arrangement.spacedBy(overlap-32.dp), // Overlapping effect
         contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp) // Ensures enough space for scrolling
     ) {
-
         itemsIndexed(assets) { index, item ->
             var enabled by remember { mutableStateOf(false) }
 
