@@ -423,12 +423,12 @@ fun ErrorCardView(){
 )
 @Composable
 fun SendCardPreviewView(){
-    /*SendCardView(
+    SendCardView(
         amount = "120.00",
         tokenName = "USDC",
-        toAddress = TODO(),
-        maxamount = TODO(),
-        onAddressChange = TODO(),
-        onAmountChange = TODO()
-    )*/
+        toAddress = "",
+        maxamount = 0.0,
+        onAddressChange = {},
+        onAmountChange = {}
+    )
 }

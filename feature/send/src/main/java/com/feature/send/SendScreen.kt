@@ -764,7 +764,6 @@ fun showCamera(
 @Preview
 @Composable
 fun PreviewSendScreen() {
-    val context = LocalContext.current
     SendScreen(
         currentNetwork = "1",
         onBackClick= {},

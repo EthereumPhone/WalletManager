@@ -207,7 +207,7 @@ class SendViewModel @Inject constructor(
                     val asset = selectedAsset.tokenAsset
                     if(asset.address.contains("0x")) {
                         sendRepository.transferErc20(
-                            userDataRepository.userData.first().walletNetwork.toInt(),
+                            selectedAsset.tokenAsset.chainId,
                             asset,
                             amount.value.toDouble(),
                             toAddress.value
@@ -215,7 +215,7 @@ class SendViewModel @Inject constructor(
 
                     } else {
                         sendRepository.transferEth(
-                            chainId = userDataRepository.userData.first().walletNetwork.toInt(),
+                            chainId = selectedAsset.tokenAsset.chainId,
                             toAddress = toAddress.value,
                             data = "",
                             value = amount.value
@@ -297,8 +297,29 @@ class SendViewModel @Inject constructor(
 
     // OR 2) Expose it as a StateFlow:
      val tokenIdFlow: StateFlow<String> =
-         savedStateHandle.getStateFlow("itemId", "")
+         savedStateHandle.getStateFlow("tokenId", "")
 
+    init {
+        // Initialize selected asset if tokenId is available
+        viewModelScope.launch {
+            tokenIdFlow.collect { tokenId ->
+                Log.d("SendViewModel", "TokenId from navigation: $tokenId")
+                if (tokenId.isNotEmpty()) {
+                    tokenAssetState.collect { assetState ->
+                        if (assetState is AssetUiState.Success) {
+                            Log.d("SendViewModel", "Assets available: ${assetState.assets.size}")
+                            val token = assetState.assets.find { it.address == tokenId }
+                            Log.d("SendViewModel", "Found token: ${token?.symbol}")
+                            token?.let { 
+                                updateSelectedAsset(it)
+                                Log.d("SendViewModel", "Updated selected asset to: ${it.symbol}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     //Contacts
     @SuppressLint("Range")
