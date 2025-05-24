@@ -62,6 +62,7 @@ import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.feature.receive.ui.TruncatedAddress
@@ -191,7 +192,7 @@ fun ReceiveScreen(
                     modifier = modifier.width(300.dp),
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenTurqoise.copy(0.35f),
+                        color = dgenGunMetal,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,

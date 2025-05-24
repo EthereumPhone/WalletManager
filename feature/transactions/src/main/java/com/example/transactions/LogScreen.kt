@@ -93,6 +93,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
 import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
 import com.example.dgenlibrary.ui.theme.smallDuration
@@ -291,15 +292,14 @@ fun LogScreen(
                                         model = com.core.ui.R.drawable.wireframe_torus,
                                         contentDescription = null,
                                         modifier = Modifier.size(275.dp),
-                                        colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
-
+                                        colorFilter = ColorFilter.tint(dgenGunMetal)
                                     )
 
                                     Text(
                                         text = "Complete your first transaction, or add assets from another wallet.",
                                         style = TextStyle(
                                             fontFamily = PitagonsSans,
-                                            color = dgenTurqoise.copy(0.35f),
+                                            color = dgenGunMetal,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 16.sp,
                                             letterSpacing = 0.sp,
@@ -312,15 +312,9 @@ fun LogScreen(
 
                             }
                         }
-
-
-
-
                     }
                 }
             }
-
-
 
 
             Box(
@@ -328,13 +322,11 @@ fun LogScreen(
                     .fillMaxWidth()
                     .height(32.dp)
                     .align(Alignment.TopCenter)
-
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(dgenBlack, Color.Transparent)
                         )
                     )
-
             )
             Box(
                 modifier = Modifier

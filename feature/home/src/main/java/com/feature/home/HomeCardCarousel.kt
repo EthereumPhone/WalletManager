@@ -83,6 +83,7 @@ import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenWhite
@@ -233,6 +234,7 @@ fun HomeScreen2(
                         EmptyHomeScreen(
                             gifEnabledLoader = gifEnabledLoader
                         )
+                        Log.d("DEBUG","AssetsUiState.EMPTY")
 //                        TokenCardCarousel(
 //                            modifier = Modifier.padding(bottom = 24.dp),
 //                            assets = testTokenAssets,
@@ -247,14 +249,17 @@ fun HomeScreen2(
 //                        )
                     }
                     is AssetsUiState.Error -> {
+                        Log.d("DEBUG","AssetsUiState.ERROR")
                         ErrorHomeScreen(
                             gifEnabledLoader = gifEnabledLoader
                         )
                     }
                     is AssetsUiState.Loading -> {
+                        Log.d("DEBUG","AssetsUiState.LOADING")
                         LoadingHomeScreen()
                     }
                     is AssetsUiState.Success -> {
+                        Log.d("DEBUG","AssetsUiState.SUCCESS")
                         HomeScreenContent(
                             areAssetsVisible = assetState.assets.isNotEmpty() ,
                             primaryContent = {
@@ -286,14 +291,13 @@ fun HomeScreen2(
                                             model = R.drawable.wireframe_torus,
                                             contentDescription = null,
                                             modifier = Modifier.size(275.dp),
-                                            colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
-
+                                            colorFilter = ColorFilter.tint(dgenGunMetal)
                                         )
                                         Text(
                                             text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                             style = TextStyle(
                                                 fontFamily = PitagonsSans,
-                                                color = dgenTurqoise.copy(0.35f),
+                                                color = dgenGunMetal,
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 16.sp,
                                                 letterSpacing = 0.sp,

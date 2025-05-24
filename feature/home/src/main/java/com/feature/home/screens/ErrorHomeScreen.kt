@@ -22,6 +22,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.core.ui.R
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 
 @Composable
@@ -43,7 +44,7 @@ fun ErrorHomeScreen(
                 model = R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
+                colorFilter = ColorFilter.tint(dgenGunMetal)
 
             )
 
@@ -51,7 +52,7 @@ fun ErrorHomeScreen(
                 text = "ERROR",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = dgenTurqoise.copy(0.35f),
+                    color = dgenGunMetal,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 24.sp,
                     letterSpacing = 0.sp,

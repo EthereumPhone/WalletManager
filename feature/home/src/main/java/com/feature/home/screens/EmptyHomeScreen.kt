@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 
 @Composable
@@ -42,7 +43,7 @@ fun EmptyHomeScreen(
                 model = com.core.ui.R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
+                colorFilter = ColorFilter.tint(dgenGunMetal)
 
             )
 
@@ -50,7 +51,7 @@ fun EmptyHomeScreen(
                 text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = dgenTurqoise.copy(0.35f),
+                    color = dgenGunMetal,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     letterSpacing = 0.sp,
