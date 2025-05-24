@@ -53,7 +53,8 @@ class Erc20TransferApi @Inject constructor(
             to = erc20ContractAddress,
             value = "0",
             data = data,
-            callGas = null
+            callGas = null,
+            chainId = chainId,
         )
     }
 }

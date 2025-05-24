@@ -72,9 +72,10 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     decimalValue,
                     data?: "",
-                    null
+                    null,
+                    chainId
                 )
-            } catch (exception: NullPointerException) {
+            } catch (exception: Exception) {
                 "error"
             }
             currentTransactionHash.value = res
