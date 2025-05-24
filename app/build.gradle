@@ -55,6 +55,7 @@ dependencies {
     implementation project(path: ':feature:swap')
     implementation project(path: ':feature:send')
     implementation project(path: ':feature:receive')
+    implementation project(path: ':feature:paymaster')
 
     implementation project(path: ':feature:assets')
     implementation project(path: ':feature:transactions')

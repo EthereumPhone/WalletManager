@@ -29,6 +29,8 @@ import com.feature.home.navigation.homeGraph
 import com.feature.home.navigation.homeGraphRoutePattern
 import com.feature.home.navigation.homeRoute
 import com.feature.home.navigation.navigateToHome
+import com.feature.paymaster.navigation.navigateToPayMaster
+import com.feature.paymaster.navigation.payMasterScreen
 import com.feature.receive.navigation.navigateToReceive
 import com.feature.receive.navigation.receiveScreen
 import com.feature.send.navigation.navigateToSend
@@ -92,10 +94,12 @@ fun WmNavHost(
                     navController.navigateToTransaction(tokenId = it)
                 },
                 navigateToReceive = { navController.navigateToReceive() },
+                navigateToPayMaster = { navController.navigateToPayMaster() },
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
                     sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout)
                     receiveScreen(navController::popBackStack)
+                    payMasterScreen(navController::popBackStack)
                 }
             )
             assetGraph(

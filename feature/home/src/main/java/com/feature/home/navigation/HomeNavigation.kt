@@ -28,6 +28,7 @@ fun NavGraphBuilder.homeGraph(
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
+    navigateToPayMaster: () -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,
 ) {
     navigation(
@@ -42,7 +43,8 @@ fun NavGraphBuilder.homeGraph(
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,
                 navigateToLog = navigateToLog,
-                navigateToReceive = navigateToReceive
+                navigateToReceive = navigateToReceive,
+                navigateToPayMaster = navigateToPayMaster
             )
         }
         nestedGraphs()

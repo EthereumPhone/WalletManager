@@ -108,6 +108,7 @@ internal fun HomeRoute2(
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
+    navigateToPayMaster: () -> Unit,
     isOffline: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -154,7 +155,8 @@ internal fun HomeRoute2(
         tokenMetadata = tokenMetadata,
         loadSymbol = viewModel::loadSymbol,
         getLink = viewModel::getLink,
-        hasTransfer = hasTransfer
+        hasTransfer = hasTransfer,
+        navigateToPayMaster = navigateToPayMaster
 
 
     )
@@ -170,6 +172,7 @@ fun HomeScreen2(
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
+    navigateToPayMaster: () -> Unit,
     tokenMetadata:  List<TokenMetadata>,
     selectedTokenUiState: SelectedTokenUiState,
     selectedTokenId: State<String>,
@@ -379,6 +382,7 @@ fun HomeScreen2(
                         backgroundColor = dgenOcean,
                         textColor = dgenTurqoise
                     )
+                    navigateToPayMaster()
 
                 }
             )
