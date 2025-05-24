@@ -1,10 +1,12 @@
 package com.feature.home
 
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
 import android.content.Context
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
@@ -77,9 +79,11 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenAsset
 import com.core.ui.DgenLoadingMatrix
+import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
@@ -90,6 +94,7 @@ import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
+import com.feature.home.ui.BottomBar
 import com.feature.home.ui.TokenCardCarousel
 import kotlin.reflect.KSuspendFunction1
 
@@ -275,7 +280,7 @@ fun HomeScreen2(
                                     ) {
                                         AsyncImage(
                                             imageLoader = gifEnabledLoader,
-                                            model = com.core.ui.R.drawable.wireframe_torus,
+                                            model = R.drawable.wireframe_torus,
                                             contentDescription = null,
                                             modifier = Modifier.size(275.dp),
                                             colorFilter = ColorFilter.tint(dgenTurqoise.copy(0.35f))
@@ -309,7 +314,7 @@ fun HomeScreen2(
                     .align(Alignment.TopCenter)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dgenBlack,Color.Transparent )
+                            colors = listOf(dgenBlack, Color.Transparent)
                         )
                     )
 
@@ -334,7 +339,50 @@ fun HomeScreen2(
                     )
 
             )
-            Row(
+
+            BottomBar(
+                hasTransfer,
+                navigateToLog = {
+                    if (isOffline) {
+                        context.showCustomToast(
+                            message = "No internet connection!",
+                            fontFamily = PitagonsSans,
+                            fontWeight = FontWeight.SemiBold,
+                            backgroundColor = dgenRed,
+                            textColor = dgenWhite
+                        )
+                    } else {
+                        navigateToLog(selectedTokenId.value)
+                        //navigateToSend(selectedTokenId.value,selectedTokenId.value)
+                    }
+                },
+                navigateToReceive = {
+                    navigateToReceive()
+                },
+                navigateToBuy = {
+                    if (userData is WalletDataUiState.Success) {
+                        val address = userData.userData.walletAddress
+                        scope.launch {
+                            val json = Uri.encode("{\"eth\":\"$address\"}")
+                            getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json").let { uri ->
+                                println("Opening URI: $uri")
+                                uriHandler.openUri(uri)
+                            }
+                        }
+                    }
+                },
+                navigateToPayMaster = {
+                    context.showCustomToast(
+                        message = "Navigate to PayMaster!",
+                        fontFamily = PitagonsSans,
+                        fontWeight = FontWeight.SemiBold,
+                        backgroundColor = dgenOcean,
+                        textColor = dgenTurqoise
+                    )
+
+                }
+            )
+            /*Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(dgenBlack)
@@ -474,7 +522,7 @@ fun HomeScreen2(
                         )
                     }
                 }
-            }
+            }*/
         }
     }
 
@@ -482,7 +530,7 @@ fun HomeScreen2(
 
 @SuppressLint("ServiceCast")
 private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboardManager.setText(AnnotatedString(text))
 }
 
