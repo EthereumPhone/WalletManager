@@ -14,3 +14,5 @@ val dgenOrche = Color(0xFFF08E29)
 val dgenOcean = Color(0xFF24353B)
 val dgenTurqoise = Color(0xFFBFD6EA)
 val dgenBurgendy = Color(0xFF3B2424)
+
+val dgenGunMetal = Color(0xFF72808C)
