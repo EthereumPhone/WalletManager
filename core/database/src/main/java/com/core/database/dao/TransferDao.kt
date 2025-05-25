@@ -23,7 +23,7 @@ interface TransferDao {
     @Query("SELECT * FROM transfer WHERE chainID == :chainId AND category IN (:categories)")
     fun getTransfers(chainId: Int, categories: List<String>): Flow<List<TransferEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertTransfers(transfers: List<TransferEntity>)
 
     /**
