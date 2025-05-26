@@ -17,13 +17,19 @@ import com.core.domain.UpdateTokensUseCase
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.workers.work.util.TokenList
 import com.workers.work.util.UniswapToken
+import com.workers.work.util.Version
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
@@ -35,37 +41,25 @@ class SeedUniswapTokensWorker @AssistedInject constructor(
 
 ) : CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val tokens = withContext(Dispatchers.Default) {
-                val listType = Types.newParameterizedType(List::class.java, UniswapToken::class.java)
-                val adapter: JsonAdapter<List<UniswapToken>> = moshi.adapter(listType)
-
-                val inputStream = appContext.resources.openRawResource(R.raw.uniswap_token_list)
-                val jsonString = inputStream.bufferedReader().use { it.readText() }
-                adapter.fromJson(jsonString) ?: emptyList()
-            }
-
-            withContext(Dispatchers.IO) {
-                tokenMetadataRepository.insertTokenMetadata(
-                    tokens.map {
-                        TokenMetadataEntity(
-                            contractAddress = it.address,
-                            decimals = it.decimals,
-                            name = it.name,
-                            symbol = it.symbol,
-                            logo = it.logoURI,
-                            chainId = it.chainId,
-                            swappable = true
-                        )
-                    }
+            val list = buildTokenList(appContext, "1.0.0")
+            val tokens = list.uniswapTokens.map { token ->
+                TokenMetadataEntity(
+                    contractAddress = token.address,
+                    decimals = token.decimals,
+                    name = token.name,
+                    symbol = token.symbol,
+                    logo = token.logoURI,
+                    chainId = token.chainId,
+                    swappable = true
                 )
             }
+            tokenMetadataRepository.insertTokenMetadata(tokens)
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure()
         }
-
         Result.success()
     }
 
@@ -76,4 +70,50 @@ class SeedUniswapTokensWorker @AssistedInject constructor(
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
     }
+}
+
+fun Context.loadTokenListFromRaw(resId: Int): List<UniswapToken> {
+    val json = resources.openRawResource(resId).bufferedReader().use { it.readText() }
+    return Json.decodeFromString(json)
+
+}
+
+fun buildTokenList(context: Context, version: String): TokenList {
+    val parsed = version.split(".").map { it.toInt() }
+
+    val allTokens = listOf(
+        R.raw.mainnet,
+        R.raw.ropsten,
+        R.raw.goerli,
+        R.raw.kovan,
+        R.raw.rinkeby,
+        R.raw.polygon,
+        R.raw.mumbai,
+        R.raw.optimism,
+        R.raw.celo,
+        R.raw.arbitrum,
+        R.raw.bnb,
+        R.raw.sepolia,
+        R.raw.avalanche,
+        R.raw.base,
+        R.raw.blast,
+        R.raw.zksync,
+        R.raw.worldchain,
+        R.raw.zora
+    ).flatMap { context.loadTokenListFromRaw(it) }
+
+    val sortedTokens = allTokens.sortedWith(compareBy<UniswapToken> { it.chainId }.thenBy { it.symbol.lowercase() })
+
+    return TokenList(
+        name = "Uniswap Labs Default",
+        timestamp = Instant.now().toString(),
+        version = Version(
+            major = parsed[0],
+            minor = parsed[1],
+            patch = parsed[2]
+        ),
+        logoURI = "ipfs://QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir",
+        keywords = listOf("uniswap", "default"),
+        uniswapTokens = sortedTokens
+    )
 }
