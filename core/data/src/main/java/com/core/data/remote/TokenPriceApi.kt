@@ -22,7 +22,12 @@ private interface TokenPriceApi {
         @Query("symbols") symbols: List<String>
     ): NetworkResponse<List<NetworkTokenExchange>>
 
-    //TODO: add headers and post request for get by address
+    @GET("/prices/v1/{apiKey}/tokens/by-address")
+    suspend fun getTokenPrice(
+        @Path("apiKey") apiKey: String,
+        @Query("network") network: String,
+        @Query("address") symbols: List<String>
+    ): NetworkResponse<List<NetworkTokenExchange>>
 }
 
 @Serializable

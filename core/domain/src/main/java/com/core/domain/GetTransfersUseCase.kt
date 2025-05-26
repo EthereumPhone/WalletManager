@@ -17,7 +17,7 @@ class GetTransfersUseCase @Inject constructor(
 ) {
 
     operator fun invoke(): Flow<List<TransferItem>> =
-        transferRepository.getTransfers(listOf("external"))
+        transferRepository.getTransfers(listOf("external", "erc20", "erc721", "internal"))
             .map { items ->
                 val sortedItems = items.sortedBy { it.blockTimestamp }
                 sortedItems.map {

@@ -56,7 +56,7 @@ class HomeViewModel @Inject constructor(
     private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
-): ViewModel() {
+) : ViewModel() {
 
 
     init {
@@ -84,63 +84,63 @@ class HomeViewModel @Inject constructor(
             getTokenBalancesWithMetadataUseCase(),
             ::Pair
         )
-        .map { (networkBalances, tokenBalances) ->
-            val netWorkAssets = networkBalances.map {
-                val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                
-                TokenAsset(
-                    address = it.contractAddress,
-                    chainId = it.chainId,
-                    symbol = name.lowercase(),
-                    name = name.lowercase(),
-                    balance = formatSmallBalance(it.tokenBalance.toDouble()),
-                    decimals = 18
-                )
-            }
-            .filter { it.balance > 0 }
-            .sortedByDescending { it.balance }
-            
-            // Add token balances to the list
-            val allAssets = netWorkAssets + tokenBalances
-                .filter { it.balance > 0 }
-                .map { token ->
-                    // Create a copy with properly formatted balance
-                    token.copy(balance = formatSmallBalance(token.balance))
-                }
-                .filter { token ->
-                    // Filter out tokens with URLs in their names or symbols
-                    val name = token.name.lowercase()
-                    val symbol = token.symbol.lowercase()
-                    
-                    val urlPatterns = listOf(
-                        "http://", "https://", "www.", 
-                        ".com", ".io", ".org", ".net", ".xyz", 
-                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
+            .map { (networkBalances, tokenBalances) ->
+                val netWorkAssets = networkBalances.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = formatSmallBalance(it.tokenBalance.toDouble()),
+                        decimals = 18
                     )
-                    
-                    val containsNoUrlPatterns = urlPatterns.none { pattern -> 
-                        name.contains(pattern) || symbol.contains(pattern)
-                    }
-                    
-                    containsNoUrlPatterns
                 }
-            
-            // Set the first value of selectedTokenAsset to the first item in the list
-            if (allAssets.isNotEmpty()) {
-                _selectedTokenAsset.value = allAssets.first()
+                    .filter { it.balance > 0 }
+                    .sortedByDescending { it.balance }
+
+                // Add token balances to the list
+                val allAssets = netWorkAssets + tokenBalances
+                    .filter { it.balance > 0 }
+                    .map { token ->
+                        // Create a copy with properly formatted balance
+                        token.copy(balance = formatSmallBalance(token.balance))
+                    }
+                    .filter { token ->
+                        // Filter out tokens with URLs in their names or symbols
+                        val name = token.name.lowercase()
+                        val symbol = token.symbol.lowercase()
+
+                        val urlPatterns = listOf(
+                            "http://", "https://", "www.",
+                            ".com", ".io", ".org", ".net", ".xyz",
+                            "/", "t.me", "telegram", "twitter", "discord", "t.ly"
+                        )
+
+                        val containsNoUrlPatterns = urlPatterns.none { pattern ->
+                            name.contains(pattern) || symbol.contains(pattern)
+                        }
+
+                        containsNoUrlPatterns
+                    }
+
+                // Set the first value of selectedTokenAsset to the first item in the list
+                if (allAssets.isNotEmpty()) {
+                    _selectedTokenAsset.value = allAssets.first()
+                }
+
+                if (allAssets.isEmpty()) {
+                    AssetsUiState.Empty
+                } else {
+                    AssetsUiState.Success(allAssets)
+                }
             }
-            
-            if (allAssets.isEmpty()) {
-                AssetsUiState.Empty
-            } else {
-                AssetsUiState.Success(allAssets)
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetsUiState.Loading
-        )
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AssetsUiState.Loading
+            )
 
 
     val hasTransfers: StateFlow<Boolean> = flow {
@@ -168,7 +168,7 @@ class HomeViewModel @Inject constructor(
         _selectedTokenAsset.value = tokenAsset
     }
 
-   fun getSelectedTokenAsset(): TokenAsset? {
+    fun getSelectedTokenAsset(): TokenAsset? {
         return _selectedTokenAsset.value
     }
 
@@ -192,7 +192,8 @@ class HomeViewModel @Inject constructor(
                 val responseBody: ResponseBody? = response.body
                 if (responseBody != null) {
                     val moonpayResponse = adapter.fromJson(responseBody.string())
-                    return@withContext moonpayResponse?.link ?: throw IOException("Invalid response format")
+                    return@withContext moonpayResponse?.link
+                        ?: throw IOException("Invalid response format")
                 } else {
                     throw IOException("Empty response")
                 }
@@ -211,15 +212,19 @@ class HomeViewModel @Inject constructor(
         refreshAllBalances()
     }
 
-    fun setOnboardingComplete(onboardingComplete: Boolean){
+    fun setOnboardingComplete(onboardingComplete: Boolean) {
         viewModelScope.launch {
             userDataRepository.setOnboardingCompleted(onboardingComplete)
         }
     }
 
-    fun changeNetwork(network: Int){
+    fun changeNetwork(network: Int) {
         viewModelScope.launch {
-            walletSDK?.changeChain(network, chainIdToRPC(network), chainIdToBundler(network)) // chainIdToBundler(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
+            walletSDK?.changeChain(
+                network,
+                chainIdToRPC(network),
+                chainIdToBundler(network)
+            ) // chainIdToBundler(network))//"https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}")
             userDataRepository.setWalletNetwork(network.toString())
         }
     }
@@ -270,14 +275,17 @@ class HomeViewModel @Inject constructor(
                 val userData = userDataRepository.userData.first()
                 val walletAddress = userData.walletAddress
                 val networkChains = NetworkChain.getAllNetworkChains().map { it.chainId }
-                
+
                 // Refresh network balances
                 networkBalanceRepository.refreshNetworkBalance(walletAddress, networkChains)
-                
+
                 // Refresh token balances for each network
                 networkChains.forEach { chainId ->
                     updateTokensByNetworkUseCase(walletAddress, chainId)
                 }
+
+                tokenExchangeRepository.fetchAllExchanges()
+
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Error refreshing balances", e)
             } finally {
@@ -292,15 +300,15 @@ class HomeViewModel @Inject constructor(
      */
     private fun formatSmallBalance(balance: Double): Double {
         if (balance == 0.0) return 0.0
-        
+
         val precision = 6
         val minDisplayableValue = 1.0 / Math.pow(10.0, precision.toDouble())
-        
+
         // For very small values (less than minDisplayableValue), return the minimum displayable value
         if (balance > 0 && balance < minDisplayableValue) {
             return minDisplayableValue
         }
-        
+
         // Otherwise, round to 6 decimal places
         val bd = BigDecimal(balance)
         val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
@@ -310,15 +318,15 @@ class HomeViewModel @Inject constructor(
 }
 
 sealed interface AssetsUiState {
-    object Loading: AssetsUiState
-    object Error: AssetsUiState
-    object Empty: AssetsUiState
+    object Loading : AssetsUiState
+    object Error : AssetsUiState
+    object Empty : AssetsUiState
     data class Success(
         val assets: List<TokenAsset>
-    ): AssetsUiState
+    ) : AssetsUiState
 }
 
 sealed interface WalletDataUiState {
-    object Loading: WalletDataUiState
-    data class Success(val userData: UserData): WalletDataUiState
+    object Loading : WalletDataUiState
+    data class Success(val userData: UserData) : WalletDataUiState
 }

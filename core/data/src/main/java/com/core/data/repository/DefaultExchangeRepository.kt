@@ -6,6 +6,7 @@ import com.core.database.dao.TokenExchangeDao
 import com.core.database.model.erc20.TokenExchangeEntity
 import com.core.model.TokenExchange
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Instant
@@ -17,7 +18,8 @@ import javax.inject.Inject
 class DefaultExchangeRepository @Inject constructor(
     private val tokenPriceDataSource: TokenPriceDataSource,
     private val exchangeDao: TokenExchangeDao,
-    private val tokenBalanceRepository: TokenBalanceRepository
+    private val tokenBalanceRepository: TokenBalanceRepository,
+    private val tokenMetadataRepository: TokenMetadataRepository
 ): TokenExchangeRepository {
     override fun getLatestExchange(symbol: String): Flow<TokenExchange?> =
         exchangeDao.getLatestExchange(symbol)
@@ -48,25 +50,36 @@ class DefaultExchangeRepository @Inject constructor(
 
     override suspend fun fetchAllExchanges() {
         try {
-            val tokens = tokenBalanceRepository.getTokensBalances()
-                .first()
-                .filter { it.tokenBalance.compareTo(BigDecimal.ZERO) != 0 }
-                .map { it.contractAddress }
+            tokenBalanceRepository.getTokensBalances()
+                .collectLatest { tokens ->
+                    val filteredTokens = tokens
+                        .filter { it.tokenBalance.compareTo(BigDecimal.ZERO) != 0 }
 
-            val data = tokenPriceDataSource.fetchTokenPriceBySymbols(tokens)
+                    val (addresses, networks) = filteredTokens.partition { it.contractAddress.startsWith("0x") }
 
-            val entities = data.flatMap { response ->
-                response.prices.map { price ->
-                    TokenExchangeEntity(
-                        symbol = response.symbol,
-                        currency = price.currency,
-                        value = price.value.toDouble(),
-                        timestamp = Instant.parse(price.lastUpdatedAt)
-                    )
+
+                    val symbols = tokenMetadataRepository.getTokensMetadata(addresses.map { it.contractAddress })
+                        .first()
+                        .map { it.symbol } + networks.map { network ->
+                        if (network.chainId == 137) "MATIC" else "ETH"
+                    }.distinct() // only fetch eth one time
+
+
+                    val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
+
+                    val entities = data.flatMap { response ->
+                        response.prices.map { price ->
+                            TokenExchangeEntity(
+                                symbol = response.symbol,
+                                currency = price.currency,
+                                value = price.value.toDouble(),
+                                timestamp = Instant.parse(price.lastUpdatedAt)
+                            )
+                        }
+                    }
+
+                    exchangeDao.insertAllExchanges(entities)
                 }
-            }
-
-            exchangeDao.insertAllExchanges(entities)
         } catch (e: IOException) {
             e.printStackTrace()
         }
