@@ -12,6 +12,11 @@ data class CompositeToken(
         parentColumn = "contractAddress",
         entityColumn = "contractAddress",
     )
-    val tokenMetadataEntity: TokenMetadataEntity
+    val tokenMetadataEntity: TokenMetadataEntity,
 
+    @Relation(
+        parentColumn = "contractAddress",
+        entityColumn = "contractAddress",
+    )
+    val tokenExchangeEntity: TokenExchangeEntity
 )
