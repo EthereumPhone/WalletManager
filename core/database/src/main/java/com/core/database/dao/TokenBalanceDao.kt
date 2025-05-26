@@ -2,7 +2,9 @@ package com.core.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
+import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -16,6 +18,18 @@ interface TokenBalanceDao {
 
     @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
     fun getTokenBalances(chainId: Int): Flow<List<TokenBalanceEntity>>
+
+    @Transaction
+    @Query("SELECT * FROM token_balance")
+    fun getCompositeTokens(): Flow<List<CompositeToken>>
+
+    @Transaction
+    @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
+    fun getCompositeTokens(chainId: Int): Flow<List<CompositeToken>>
+
+    @Transaction
+    @Query("SELECT * FROM token_balance WHERE contractAddress == :contractAddress")
+    fun getCompositeToken(contractAddress: String): Flow<CompositeToken>
 
     @Upsert
     fun upsertTokenBalances(tokenBalance: List<TokenBalanceEntity>)

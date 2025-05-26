@@ -37,7 +37,6 @@ import java.time.LocalDateTime
 import java.util.Date
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TransferListItem(
     modifier: Modifier = Modifier,
