@@ -56,7 +56,7 @@ class AlchemyTransferRepository @Inject constructor(
                         params = listOf(
                             NetworkTransferRequestBody.NetworkTransferRequestParams(
                                 fromAddress = address,
-                                category = listOf("external", "erc20", "erc721", "internal")
+                                category = listOf("external", "erc20", "erc721")
                             )
                         )
                     )
@@ -79,7 +79,7 @@ class AlchemyTransferRepository @Inject constructor(
                         params = listOf(
                             NetworkTransferRequestBody.NetworkTransferRequestParams(
                                 toAddress = address,
-                                category = listOf("external", "erc20", "erc721", "internal")
+                                category = listOf("external", "erc20", "erc721")
                             )
                         )
                     )

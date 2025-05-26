@@ -17,10 +17,12 @@ class GetTransfersUseCase @Inject constructor(
 ) {
 
     operator fun invoke(): Flow<List<TransferItem>> =
-        transferRepository.getTransfers(listOf("external", "erc20", "erc721", "internal"))
+        transferRepository.getTransfers(listOf("external", "erc20", "erc721"))
             .map { items ->
                 val sortedItems = items.sortedBy { it.blockTimestamp }
                 sortedItems.map {
+                    val asset = truncate(it.asset).trim()
+
                     val networkCurrency = if (it.chainId == 137) "MATIC" else "ETH"
                     //val assetType = it.asset.ifEmpty { networkCurrency }
                     val address = if (it.userIsSender) it.to else it.from
@@ -31,7 +33,7 @@ class GetTransfersUseCase @Inject constructor(
                         chainId = it.chainId,
                         from = it.from,
                         to = it.to,
-                        asset = networkCurrency,
+                        asset = asset,
                         value = formatDouble(it.value),
                         timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
                         userSent = it.userIsSender,
@@ -43,5 +45,13 @@ class GetTransfersUseCase @Inject constructor(
     fun formatDouble(input: Double): String {
         val decimalFormat = DecimalFormat("#.#####")
         return decimalFormat.format(input)
+    }
+}
+
+fun truncate(input: String): String {
+    return if (input.length > 6) {
+        input.take(6) + "..."
+    } else {
+        input
     }
 }
