@@ -252,15 +252,8 @@ class HomeViewModel @Inject constructor(
         )
 
     fun loadSymbol(symbol: List<String>) {
-        Log.d("DEBUG","inside loadSymbol: $symbol")
 
-        viewModelScope.launch {
-            try {
-                tokenExchangeRepository.fetchExchangeBySymbols(symbol)
-            } catch (e: Exception) {
-                // handle error
-            }
-        }
+
     }
 
     val tokenMetadata = tokenMetadataRepository.getTokensMetadata()
