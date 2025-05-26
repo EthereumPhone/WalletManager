@@ -61,7 +61,7 @@ fun BottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(dgenBlack)
-            .padding(8.dp),
+            .padding(start=8.dp, end=8.dp, top=8.dp),
         horizontalArrangement = Arrangement.Center
     ) {
 
@@ -86,9 +86,33 @@ fun BottomBar(
                 },
                 text = "Log"
             )
+
+        }
+        AnimatedVisibility(
+            hasTransfer,
+            enter = fadeIn(
+                animationSpec = tween(mediumEnterDuration,easing= FastOutSlowInEasing)
+            ),
+            exit = fadeOut(
+                animationSpec = tween(mediumExitDuration,easing= FastOutSlowInEasing)
+            )
+        ){
             Spacer(modifier = Modifier.width(8.dp))
         }
 
+        BottomBarButton(
+            onClick = navigateToBuy,
+            icon = {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = "Back",
+                    tint = dgenTurqoise
+                )
+            },
+            text = "Buy"
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
             onClick = navigateToReceive,
             icon = {
@@ -103,20 +127,7 @@ fun BottomBar(
             },
             text = "Receive"
         )
-        Spacer(modifier = Modifier.width(8.dp))
 
-        BottomBarButton(
-            onClick = navigateToBuy,
-            icon = {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Back",
-                    tint = dgenTurqoise
-                )
-            },
-            text = "Buy"
-        )
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
             onClick = navigateToPayMaster,
