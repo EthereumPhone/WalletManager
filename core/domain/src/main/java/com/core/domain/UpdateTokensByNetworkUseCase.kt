@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenExchangeRepository
@@ -19,7 +20,6 @@ class UpdateTokensByNetworkUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val tokenBalanceRepository: TokenBalanceRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    private val tokenExchangeRepository: TokenExchangeRepository
 ) {
     suspend operator fun invoke(address: String, chainId: Int) {
         networkBalanceRepository.refreshNetworkBalanceByNetwork(address, chainId)
@@ -40,12 +40,14 @@ class UpdateTokensByNetworkUseCase @Inject constructor(
         }.first()
 
         withContext(Dispatchers.IO) {
+            Log.d("updating token metadata", "right now")
             tokenMetadataRepository.refreshTokensMetadata(
                 metadataToFetch.map { it.contractAddress },
                 chainId
             )
 
-            tokenExchangeRepository.fetchAllExchanges()
+            Log.d("updating token price", "right now")
+            //tokenExchangeRepository.fetchAllExchanges()
         }
     }
 }
