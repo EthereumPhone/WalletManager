@@ -18,12 +18,15 @@ import java.lang.NullPointerException
 import java.math.BigDecimal
 import java.math.BigInteger
 import javax.inject.Inject
+import com.core.database.dao.TokenBalanceDao
+import com.core.database.model.erc20.TokenBalanceEntity
+import kotlinx.coroutines.flow.first
 
 class SendRepositoryImp @Inject constructor(
     private val web3j: Web3j,
     private val erc20TransferApi: Erc20TransferApi,
-    private val mContext: Context
-
+    private val mContext: Context,
+    private val tokenBalanceDao: TokenBalanceDao
 ): SendRepository {
 
     override val currentTransactionHash = MutableStateFlow("")
@@ -60,10 +63,12 @@ class SendRepositoryImp @Inject constructor(
                 }
             }
 
-            val decimalValue = BigDecimal(value.replace(",",".").replace(" ","")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+            val decimalValue = BigDecimal(value.replace(",",".")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+            val amountDouble = value.replace(",",".").toDouble()
 
-            var gasPrice = web3j.ethGasPrice().send().gasPrice
-            gasPrice = gasPrice.add(gasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
+
+            var ethGasPrice = web3j.ethGasPrice().send().gasPrice
+            ethGasPrice = ethGasPrice.add(ethGasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
 
 
 
@@ -80,6 +85,24 @@ class SendRepositoryImp @Inject constructor(
             }
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
+
+            if (res.lowercase().contains("error")) {
+                // The address for native ETH is stored as its chainId in string format.
+                val currentBalanceEntity = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first().firstOrNull()
+                if (currentBalanceEntity != null) {
+                    val amountInWei = BigDecimal(value.replace(",",".")).multiply(BigDecimal.TEN.pow(18))
+                    val newBalance = currentBalanceEntity.tokenBalance.subtract(amountInWei)
+                    tokenBalanceDao.upsertTokenBalances(
+                        listOf(
+                            TokenBalanceEntity(
+                                contractAddress = chainId.toString(),
+                                chainId = chainId,
+                                tokenBalance = newBalance
+                            )
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -125,6 +148,23 @@ class SendRepositoryImp @Inject constructor(
             }
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
+
+            if (res.lowercase().contains("error")) {
+                val currentBalanceEntity = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first().firstOrNull()
+                if (currentBalanceEntity != null) {
+                    val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                    val newBalance = currentBalanceEntity.tokenBalance.subtract(amountInSmallestUnit)
+                    tokenBalanceDao.upsertTokenBalances(
+                        listOf(
+                            TokenBalanceEntity(
+                                contractAddress = tokenAsset.address,
+                                chainId = tokenAsset.chainId,
+                                tokenBalance = newBalance
+                            )
+                        )
+                    )
+                }
+            }
         }
 
     }

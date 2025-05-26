@@ -205,14 +205,14 @@ class SendViewModel @Inject constructor(
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
                     val asset = selectedAsset.tokenAsset
+                    val amountDouble = amount.value.toDouble()
                     if(asset.address.contains("0x")) {
                         sendRepository.transferErc20(
                             selectedAsset.tokenAsset.chainId,
                             asset,
-                            amount.value.toDouble(),
+                            amountDouble,
                             toAddress.value
                         )
-
                     } else {
                         sendRepository.transferEth(
                             chainId = selectedAsset.tokenAsset.chainId,
