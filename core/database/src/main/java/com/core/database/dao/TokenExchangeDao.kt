@@ -41,9 +41,9 @@ interface TokenExchangeDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertExchange(exchangeEntity: TokenExchangeEntity)
+    suspend fun insertExchange(exchangeEntity: TokenExchangeEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAllExchanges(exchangeEntities: List<TokenExchangeEntity>)
+    suspend fun insertAllExchanges(exchangeEntities: List<TokenExchangeEntity>)
 
 }
