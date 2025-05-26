@@ -2,20 +2,24 @@ package com.core.domain
 
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
+import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.TokenMetadataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UpdateTokensByNetworkUseCase @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val tokenBalanceRepository: TokenBalanceRepository,
-    private val networkBalanceRepository: NetworkBalanceRepository
+    private val networkBalanceRepository: NetworkBalanceRepository,
+    private val tokenExchangeRepository: TokenExchangeRepository
 ) {
     suspend operator fun invoke(address: String, chainId: Int) {
         networkBalanceRepository.refreshNetworkBalanceByNetwork(address, chainId)
@@ -36,12 +40,12 @@ class UpdateTokensByNetworkUseCase @Inject constructor(
         }.first()
 
         withContext(Dispatchers.IO) {
-            async {
-                tokenMetadataRepository.refreshTokensMetadata(
-                    metadataToFetch.map { it.contractAddress },
-                    chainId
-                )
-            }
+            tokenMetadataRepository.refreshTokensMetadata(
+                metadataToFetch.map { it.contractAddress },
+                chainId
+            )
+
+            tokenExchangeRepository.fetchAllExchanges()
         }
     }
 }

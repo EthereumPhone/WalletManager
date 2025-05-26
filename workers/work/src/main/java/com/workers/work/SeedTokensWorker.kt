@@ -8,6 +8,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
+import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
@@ -28,7 +29,8 @@ class SeedTokensWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val updateTokenUseCase: UpdateTokensUseCase,
     private val transferRepository: TransferRepository,
-    private val userDataRepository: UserDataRepository
+    private val userDataRepository: UserDataRepository,
+    private val exchangeRepository: TokenExchangeRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
