@@ -98,7 +98,7 @@ fun PayMasterScreen(
         Column(
 
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             Row(
 
@@ -129,19 +129,6 @@ fun PayMasterScreen(
                                 )
                             ) {
                                 append(" \$")
-                            }
-
-                            withStyle(
-                                style = SpanStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise.copy(0.8f),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 18.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
-                                )
-                            ) {
-                                append("/ETH")
                             }
                         },
                         fontFamily = SpaceMono,
