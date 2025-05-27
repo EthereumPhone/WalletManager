@@ -11,10 +11,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +25,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +76,21 @@ import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
 import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
 import com.example.dgenlibrary.ui.theme.largeEnterDuration
 import com.example.dgenlibrary.ui.theme.mediumEnterDuration
+import com.example.dgenlibrary.ui.theme.label_fontSize
+import com.example.dgenlibrary.ui.theme.largeEnterDuration
+import com.example.dgenlibrary.ui.theme.mediumEnterDuration
+import com.feature.send.ui.SelectableCarousel
+import com.feature.send.ui.TextToggle
+import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import com.core.ui.DgenBasicTextfield
+import com.core.ui.DgenTextfield
+import com.core.ui.HeaderBar
+import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.body1_fontSize
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -172,11 +202,18 @@ fun SendScreen2(
         }
     }
 
+
+    var amount by remember { mutableStateOf(TextFieldValue("")) }
+    var toValue by remember { mutableStateOf(TextFieldValue("")) }
+    var showTokenAmount by remember { mutableStateOf(false) }
+
+
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+            .background(dgenBlack),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -184,8 +221,193 @@ fun SendScreen2(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
+        AnimatedContent(
+            assets,
+            transitionSpec = {
+                fadeIn(
+                    animationSpec = tween(extraLargeEnterDuration)
+                ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "Animated Content"
+        ) { assetsUiState ->
 
-                Log.d("CardBounds Send", "token-${initialAddress}")
+            when(assetsUiState){
+                AssetsUiState.Empty -> {
+                    Column (
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(bottom = 24.dp)
+                    ){
+                        HeaderBar(content = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "SEND",
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 24.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                )
+                                Image(
+                                    modifier = Modifier
+                                        .size(28.dp),
+                                    painter = painterResource(R.drawable.ethereum_placeholder),
+                                    contentDescription = "Ethereum"
+                                )
+                                Text(
+                                    text = "ETH",
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 24.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                )
+                            }
+                        }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
+
+
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp, end = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+
+                                    Column(
+                                        modifier = Modifier
+                                            .drawBehind {
+                                                drawLine(
+                                                    color = dgenGray.copy(0.5f),
+                                                    start = Offset(0f, 15f),
+                                                    end = Offset(0f, size.height-15f),
+                                                    strokeWidth = 8.dp.toPx()
+                                                )
+                                            }
+                                            .padding(start = 8.dp)
+                                    ) {
+                                        TextToggle(
+                                            Modifier.offset(x = 2.dp, y=2.dp),"ETH", "$",
+                                            onToggle = {
+                                                showTokenAmount = !showTokenAmount
+                                            },
+                                            value = showTokenAmount
+                                        )
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                        ){
+                                            DgenBasicTextfield(
+                                                value = amount,
+                                                onValueChange={ new -> amount = new},
+                                                maxLines = 2,
+                                                placeholder = {
+                                                    Row (
+                                                        Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.Start
+                                                    ){
+                                                        Text(
+                                                            modifier = Modifier,
+                                                            text = "0.0",
+                                                            style = TextStyle(
+                                                                fontFamily = PitagonsSans,
+                                                                color = dgenGray,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                fontSize = 42.sp,
+                                                                textAlign = TextAlign.Start
+                                                            ),
+                                                        )
+                                                    }
+
+                                                },
+                                                textStyle = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenWhite,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 42.sp,
+                                                    textAlign = TextAlign.Start
+                                                ),
+                                                keyboardtype =  KeyboardType.Number,
+                                                cursorWidth = 4.dp,
+                                                cursorHeight= 32.dp,
+                                                isAnyFieldFocused= remember { mutableStateOf(false) },
+                                            )
+                                        }
+
+                                    }
+
+
+                                // Sample list
+                                val sampleItems = listOf("base", "mainnet", "zora", "optimism", "arbitrum", "polygon")
+
+                                // Preview state holder
+                                var selected by remember { mutableStateOf<Int?>(null) }
+
+                                SelectableCarousel(
+                                    items = sampleItems,
+                                    itemWidth = 70.dp,
+                                    itemHeight = 70.dp,
+                                    initialSelectedIndex = 0,
+                                    onItemSelected = { index -> selected = index }
+                                )
+
+                            }
+
+                        DgenTextfield(
+                            value = toValue,
+                            onValueChange={ new -> toValue = new},
+                            placeholder = {
+                                Row (
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Start
+                                ){
+                                    Text(
+                                        modifier = Modifier,
+                                        text = "Address",
+                                        style = TextStyle(
+                                            fontFamily = PitagonsSans,
+                                            color = dgenGray,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = body1_fontSize
+                                        ),
+                                    )
+                                }
+
+                            },
+                            keyboardtype =  KeyboardType.Text,
+                            cursorWidth = 16.dp,
+                            cursorHeight= 32.dp,
+                            isAnyFieldFocused= remember { mutableStateOf(false) },
+                            onEditDone = {},
+                            view = LocalView.current
+                        ){
+
+                            Text(
+                                text = "Target Address".uppercase(),
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenTurqoise,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = label_fontSize,
+                                    lineHeight = label_fontSize,
+                                    letterSpacing = 1.sp,
+                                    textDecoration = TextDecoration.None,
+                                    textAlign = TextAlign.Left
+                                ),
+                                color = dgenTurqoise
+                            )
+
 
                 Card(
                     modifier = Modifier
