@@ -189,108 +189,7 @@ fun HomeScreen2(
 ) {
 
 
-    val testTokenAssets = listOf(
-        TokenAsset(
-            address   = "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-            chainId   = 1,
-            symbol    = "DAI",
-            name      = "Dai Stablecoin",
-            balance   = 1234.575878756,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-            chainId   = 1,
-            symbol    = "USDT",
-            name      = "Tether USD",
-            balance   = 7890.12857787857,
-            decimals  = 6,
-            logoUrl   = "https://cryptologos.cc/logos/tether-usdt-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-            chainId   = 1,
-            symbol    = "USDC",
-            name      = "USD Coin",
-            balance   = 311541645.88279937477,
-            decimals  = 6,
-            logoUrl   = "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            chainId   = 1,
-            symbol    = "WETH",
-            name      = "Wrapped Ether",
-            balance   = 2.378785752745,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/wrapped-ether-weth-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0x55d398326f99059fF775485246999027B3197955",
-            chainId   = 56,
-            symbol    = "USDT",
-            name      = "Tether USD",
-            balance   = 10156234.3757878,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/tether-usdt-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-            chainId   = 1,
-            symbol    = "ETH",
-            name      = "Ether",
-            balance   = 0.4718777823,
-            decimals  = 18,
-            logoUrl   = null,
-            swappable = false
-        ),
-        TokenAsset(
-            address   = "0x7D1Afa7B718fb893dB30A3abc0Cfc608AaCfeBB0",
-            chainId   = 137,
-            symbol    = "MATIC",
-            name      = "Polygon",
-            balance   = 1_234_567_890_123.0,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/polygon-matic-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0x4fabb145d64652a948d72533023f6e7a623c7c53",
-            chainId   = 1,
-            symbol    = "BUSD",
-            name      = "Binance USD",
-            balance   = 5500.5875870,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/binance-usd-busd-logo.png",
-            swappable = false
-        ),
-        TokenAsset(
-            address   = "0x0000000000085d4780B73119b644AE5ecd22b376",
-            chainId   = 1,
-            symbol    = "TUSD",
-            name      = "TrueUSD",
-            balance   = 250.2867857865,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/trueusd-tusd-logo.png",
-            swappable = true
-        ),
-        TokenAsset(
-            address   = "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
-            chainId   = 1,
-            symbol    = "MKR",
-            name      = "Maker",
-            balance   = 0.587587875,
-            decimals  = 18,
-            logoUrl   = "https://cryptologos.cc/logos/maker-mkr-logo.png",
-            swappable = false
-        )
-    )
+
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -333,21 +232,8 @@ fun HomeScreen2(
             ) { assetState ->
                 when(assetState){
                     is AssetsUiState.Empty -> {
-//                        EmptyHomeScreen(
-//                            gifEnabledLoader = gifEnabledLoader
-//                        )
-                        Log.d("DEBUG","AssetsUiState.EMPTY")
-                        TokenCardCarousel(
-                            modifier = Modifier.padding(bottom = 24.dp),
-                            assets = testTokenAssets,
-                            tokenData = tokenData,
-                            tokenMetadata = tokenMetadata,
-                            loadSymbol = loadSymbol,
-                            navigateToSend = navigateToSend,
-                            selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedTokenId,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedContentScope = animatedContentScope,
+                        EmptyHomeScreen(
+                            gifEnabledLoader = gifEnabledLoader
                         )
                     }
                     is AssetsUiState.Error -> {
