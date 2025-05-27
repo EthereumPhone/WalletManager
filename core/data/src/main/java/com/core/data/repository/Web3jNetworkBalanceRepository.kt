@@ -39,21 +39,20 @@ class Web3jNetworkBalanceRepository @Inject constructor(
     private val tokenBalanceDao: TokenBalanceDao
 ): NetworkBalanceRepository {
     override fun getNetworkTokens(): Flow<List<TokenAsset>> =
-        tokenBalanceDao.getTokenBalances().map { items ->
-            items.map {
-                val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                TokenAsset(
-                    address = it.contractAddress,
-                    chainId = it.chainId,
-                    symbol = name.lowercase(),
-                    name = name.lowercase(),
-                    balance = formatSmallBalance(it.tokenBalance.toDouble()),
-                    decimals = 18
-                )
+        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
+            .map { items ->
+                items.map {
+                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                    TokenAsset(
+                        address = it.contractAddress,
+                        chainId = it.chainId,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = formatSmallBalance(it.tokenBalance.toDouble()),
+                        decimals = 18
+                    )
+                }
             }
-        }
-
-
 
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
         tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))

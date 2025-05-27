@@ -17,10 +17,20 @@ class GetAllTokensUsecase @Inject constructor(
             tokenBalanceRepository.getTokens(),
             networkBalanceRepository.getNetworkTokens()
         ) { erc20, network ->
+
+
+            if (network.any { it.symbol == "DEGEN" }) {
+                println("test now")
+            }
+
+            (erc20 + network)
+            /*
             (network + erc20).map {
                 it.copy(
                     balance = formatSmallBalance(it.balance)
                 )
             }
+             */
+
         }
 }

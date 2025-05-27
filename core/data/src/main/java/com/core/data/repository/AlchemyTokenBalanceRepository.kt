@@ -28,7 +28,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
     private val tokenBalanceDao: TokenBalanceDao,
 ): TokenBalanceRepository {
     override fun getTokens(): Flow<List<TokenAsset>> =
-        tokenBalanceDao.getCompositeTokens().map { it.map(CompositeToken::toExternalModel) }
+        tokenBalanceDao.getCompositeTokens().map {
+            it.map(CompositeToken::toExternalModel)
+        }
 
 
     override fun getTokensBalances(): Flow<List<TokenBalance>> =
