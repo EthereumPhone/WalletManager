@@ -292,11 +292,13 @@ fun SendScreen2(
                                                 drawLine(
                                                     color = dgenGray.copy(0.5f),
                                                     start = Offset(0f, 15f),
-                                                    end = Offset(0f, size.height-15f),
+                                                    end = Offset(0f, size.height-0f),
                                                     strokeWidth = 8.dp.toPx()
                                                 )
                                             }
-                                            .padding(start = 8.dp)
+                                            .padding(start = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+
                                     ) {
                                         TextToggle(
                                             Modifier.offset(x = 2.dp, y=2.dp),"ETH", "$",
@@ -310,8 +312,15 @@ fun SendScreen2(
                                         ){
                                             DgenBasicTextfield(
                                                 value = amount,
-                                                onValueChange={ new -> amount = new},
-                                                maxLines = 2,
+                                                onValueChange={ new -> 
+                                                    // Check if the new value contains more than one dot
+                                                    val dotCount = new.text.count { it == '.' }
+                                                    if (dotCount <= 1) {
+                                                        amount = new
+                                                    }
+                                                },
+                                                maxLines = 1,
+                                                maxLength = 15,
                                                 placeholder = {
                                                     Row (
                                                         Modifier.fillMaxWidth(),
@@ -339,7 +348,7 @@ fun SendScreen2(
                                                     textAlign = TextAlign.Start
                                                 ),
                                                 keyboardtype =  KeyboardType.Number,
-                                                cursorWidth = 4.dp,
+                                                cursorWidth = 24.dp,
                                                 cursorHeight= 32.dp,
                                                 isAnyFieldFocused= remember { mutableStateOf(false) },
                                             )
@@ -366,7 +375,16 @@ fun SendScreen2(
 
                         DgenTextfield(
                             value = toValue,
+                            maxLines = 4,
+                            maxLength = 42,
+                            scrollHorizontally = false,
                             onValueChange={ new -> toValue = new},
+                            textStyle = TextStyle(
+                                fontFamily = PitagonsSans,
+                                color = dgenWhite,
+                                fontWeight = FontWeight. SemiBold,
+                                fontSize = 25.sp
+                            ),
                             placeholder = {
                                 Row (
                                     Modifier.fillMaxWidth(),
@@ -379,7 +397,7 @@ fun SendScreen2(
                                             fontFamily = PitagonsSans,
                                             color = dgenGray,
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = body1_fontSize
+                                            fontSize = 24.sp
                                         ),
                                     )
                                 }

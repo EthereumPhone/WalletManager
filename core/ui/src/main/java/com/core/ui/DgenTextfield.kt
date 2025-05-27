@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.text.Layout
 import android.view.View
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -25,6 +26,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -84,6 +86,8 @@ fun DgenTextfield(
     readOnly: Boolean = false,
     minLines: Int = 1,
     maxLines: Int = 100,
+    maxLength: Int = Int.MAX_VALUE,
+    scrollHorizontally: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(0.dp),
     backgroundColor: Color = dgenTurqoise,
@@ -170,9 +174,16 @@ fun DgenTextfield(
 
         DgenBasicTextfield(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { newValue ->
+                // Apply max length restriction
+                if (newValue.text.length <= maxLength) {
+                    onValueChange(newValue)
+                }
+            },
             modifier = modifier
+                .animateContentSize()
                 .fillMaxWidth()
+                .heightIn(max=600.dp)
                 .padding(end = 32.dp)
                 .onFocusChanged { focusState ->
                     if (isFocused && !focusState.isFocused) {
@@ -187,6 +198,8 @@ fun DgenTextfield(
             readOnly = readOnly,
             minLines = minLines,
             maxLines = maxLines,
+            maxLength = maxLength,
+            scrollHorizontally = scrollHorizontally,
             keyboardtype = keyboardtype,
             interactionSource = interactionSource,
             cursorColor =  cursorColor,
@@ -215,6 +228,8 @@ fun DgenBasicTextfield(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     visualTransformation: VisualTransformation = VisualTransformation.None,
     maxLines: Int = 100,
+    maxLength: Int = Int.MAX_VALUE,
+    scrollHorizontally: Boolean = true,
     cursorColor: Color = dgenWhite,
     cursorWidth: Dp = 18.dp,
     cursorHeight: Dp = 32.dp,
@@ -243,44 +258,55 @@ fun DgenBasicTextfield(
     val scrollState = rememberScrollState()
 
     val density = LocalDensity.current
-    val lineHeight = with(density) { textStyle.fontSize.toDp() }
-    val maxHeight = if (maxLines != Int.MAX_VALUE) {
-        lineHeight * maxLines + 32.dp  // Mehr Padding für bessere Darstellung
-    } else {
-        Dp.Unspecified
-    }
 
     // Auto-scroll to cursor position when text changes
-    LaunchedEffect(value.selection.start, textLayoutResult) {
+    LaunchedEffect(value.selection.start, textLayoutResult, value.text) {
         textLayoutResult?.let { layoutResult ->
-            if (isFocused && value.selection.collapsed) {
+            if (isFocused) {
                 val cursorRect = layoutResult.getCursorRect(value.selection.start)
-                val lineHeight = with(density) { textStyle.fontSize.toPx() }
-                val maxVisibleHeight = lineHeight * maxLines
                 
-                // Calculate target scroll position to keep cursor visible
-                val cursorTop = cursorRect.top
-                val cursorBottom = cursorRect.bottom
-                val currentScroll = scrollState.value.toFloat()
-                
-                // Ensure the cursor line is always visible with better logic
-                val targetScroll = when {
-                    cursorTop < currentScroll -> {
-                        // Cursor is above visible area - scroll up to show it
-                        cursorTop.coerceAtLeast(0f)
+                if (scrollHorizontally) {
+                    // Horizontal scrolling logic
+                    val cursorLeft = cursorRect.left
+                    val cursorRight = cursorRect.right
+                    val currentScroll = scrollState.value.toFloat()
+                    val viewportWidth = scrollState.viewportSize.toFloat()
+                    
+                    val targetScroll = when {
+                        viewportWidth <= 0 -> null
+                        cursorRight > currentScroll + viewportWidth - 20f -> {
+                            (cursorRight - viewportWidth + 20f).coerceAtLeast(0f)
+                        }
+                        cursorLeft < currentScroll + 20f -> {
+                            (cursorLeft - 20f).coerceAtLeast(0f)
+                        }
+                        else -> null
                     }
-                    cursorBottom > currentScroll + maxVisibleHeight -> {
-                        // Cursor is below visible area - scroll down to show it
-                        (cursorBottom - maxVisibleHeight).coerceAtLeast(0f)
+                    
+                    targetScroll?.let {
+                        scrollState.scrollTo(it.toInt())
                     }
-                    else -> {
-                        // Cursor is visible, no need to scroll
-                        null
+                } else {
+                    // Vertical scrolling logic
+                    val lineHeight = with(density) { textStyle.fontSize.toPx() }
+                    val maxVisibleHeight = lineHeight * maxLines
+                    val cursorTop = cursorRect.top
+                    val cursorBottom = cursorRect.bottom
+                    val currentScroll = scrollState.value.toFloat()
+                    
+                    val targetScroll = when {
+                        cursorTop < currentScroll -> {
+                            cursorTop.coerceAtLeast(0f)
+                        }
+                        cursorBottom > currentScroll + maxVisibleHeight -> {
+                            (cursorBottom - maxVisibleHeight).coerceAtLeast(0f)
+                        }
+                        else -> null
                     }
-                }
-                
-                targetScroll?.let {
-                    scrollState.animateScrollTo(it.toInt())
+                    
+                    targetScroll?.let {
+                        scrollState.animateScrollTo(it.toInt())
+                    }
                 }
             }
         }
@@ -289,8 +315,9 @@ fun DgenBasicTextfield(
     Box(
         modifier = modifier
             .then(
-                if (maxHeight != Dp.Unspecified) {
-                    Modifier.heightIn(max = maxHeight)
+                if (!scrollHorizontally && maxLines != Int.MAX_VALUE) {
+                    val lineHeight = with(density) { textStyle.fontSize.toDp() }
+                    Modifier.heightIn(max = lineHeight * maxLines + 16.dp)
                 } else {
                     Modifier
                 }
@@ -305,11 +332,22 @@ fun DgenBasicTextfield(
 
         BasicTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { newValue ->
+                // Apply max length restriction
+                if (newValue.text.length <= maxLength) {
+                    onValueChange(newValue)
+                }
+            },
             textStyle = textStyle,
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
+                .then(
+                    if (scrollHorizontally) {
+                        Modifier.horizontalScroll(scrollState)
+                    } else {
+                        Modifier.verticalScroll(scrollState)
+                    }
+                )
                 .drawBehind {
                     if (isFocused){
                         textLayoutResult
@@ -317,32 +355,45 @@ fun DgenBasicTextfield(
                             ?.let { tlr ->
                                 val rect = tlr.getCursorRect(value.selection.start)
                                 
-                                // Calculate the line height and max visible lines
-                                val lineHeight = with(density) { textStyle.fontSize.toPx() }
-                                
-                                // Calculate which line the cursor is on
-                                val currentLine = (rect.top / lineHeight).toInt()
-                                
-                                // Determine the Y position for the cursor
-                                val cursorY = if (maxLines != Int.MAX_VALUE && currentLine >= maxLines - 1) {
-                                    // Fix cursor on the last visible line when max lines is reached
-                                    (maxLines - 1) * lineHeight
+                                if (scrollHorizontally) {
+                                    // Calculate cursor position adjusted for horizontal scroll
+                                    val cursorX = rect.left - scrollState.value
+                                    val cursorY = rect.top
+                                    
+                                    // Use the actual line height from the text layout for cursor height
+                                    val actualCursorHeight = rect.height
+                                    
+                                    // Draw cursor at the correct horizontal position
+                                    drawRect(
+                                        color = cursorColor.copy(alpha = blinkAlpha),
+                                        topLeft = Offset(cursorX, cursorY),
+                                        size = Size(cursorWidth.toPx(), actualCursorHeight)
+                                    )
                                 } else {
-                                    // Use normal cursor position for lines within max
-                                    rect.top
+                                    // Calculate cursor position adjusted for vertical scroll
+                                    val lineHeight = with(density) { textStyle.fontSize.toPx() }
+                                    val currentLine = (rect.top / lineHeight).toInt()
+                                    
+                                    // Determine if cursor should be fixed at bottom
+                                    val cursorY = if (maxLines != Int.MAX_VALUE && currentLine >= maxLines - 1) {
+                                        // Fix cursor on the last visible line when max lines is reached
+                                        val fixedY = (maxLines - 1) * lineHeight
+                                        fixedY - scrollState.value
+                                    } else {
+                                        // Use normal cursor position for lines within max
+                                        rect.top - scrollState.value
+                                    }
+                                    
+                                    val cursorX = rect.left
+                                    val actualCursorHeight = rect.height
+                                    
+                                    // Draw cursor at the correct vertical position
+                                    drawRect(
+                                        color = cursorColor.copy(alpha = blinkAlpha),
+                                        topLeft = Offset(cursorX, cursorY),
+                                        size = Size(cursorWidth.toPx(), actualCursorHeight)
+                                    )
                                 }
-                                
-                                val adjustedY = cursorY - scrollState.value
-                                
-                                // Use the actual line height from the text layout for cursor height
-                                val actualCursorHeight = rect.height
-                                
-                                // Draw cursor with fixed or normal position
-                                drawRect(
-                                    color = cursorColor.copy(alpha = blinkAlpha),
-                                    topLeft = Offset(rect.left, adjustedY),
-                                    size = Size(cursorWidth.toPx(), actualCursorHeight)
-                                )
                             }
                     }
                 }

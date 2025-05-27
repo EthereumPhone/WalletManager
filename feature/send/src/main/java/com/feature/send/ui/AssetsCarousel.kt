@@ -98,13 +98,13 @@ fun SelectableCarousel(
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             when(item) {
                                 "base" -> {
                                     Image(
                                         modifier = Modifier
-                                            .size(32.dp),
+                                            .size(34.dp),
                                         painter = painterResource(R.drawable.base),
                                         contentDescription = "Base"
                                     )
@@ -112,7 +112,7 @@ fun SelectableCarousel(
                                 "mainnet" -> {
                                     Image(
                                         modifier = Modifier
-                                            .size(32.dp),
+                                            .size(34.dp),
                                         painter = painterResource(R.drawable.mainnet),
                                         contentDescription = "Mainnet"
                                     )
@@ -120,7 +120,7 @@ fun SelectableCarousel(
                                 "zora" -> {
                                     Image(
                                         modifier = Modifier
-                                            .size(32.dp),
+                                            .size(34.dp),
                                         painter = painterResource(id = R.drawable.zorb),
                                         contentDescription = "Zorb"
                                     )
@@ -128,21 +128,21 @@ fun SelectableCarousel(
                                 "optimism" -> {
                                     Image(
                                         modifier = Modifier
-                                            .size(32.dp),
+                                            .size(34.dp),
                                         painter = painterResource(id = R.drawable.optimism),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "arbitrum" -> {
                                     Image(
-                                        modifier = Modifier.size(32.dp),
+                                        modifier = Modifier.size(34.dp),
                                         painter = painterResource(id = R.drawable.arbitrum),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "polygon" -> {
                                     Image(
-                                        modifier = Modifier.size(32.dp),
+                                        modifier = Modifier.size(34.dp),
                                         painter = painterResource(id = R.drawable.polygon),
                                         contentDescription = "Optimism"
                                     )
