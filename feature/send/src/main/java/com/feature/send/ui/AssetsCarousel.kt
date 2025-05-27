@@ -3,9 +3,12 @@ package com.feature.send.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,11 +52,21 @@ fun SelectableCarousel(
         onItemSelected(selectedIndex)
     }
 
+    val listState = rememberLazyListState()
+
     Box(Modifier.fillMaxWidth()){
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
+            state = listState,
+            flingBehavior = remember {
+                object : FlingBehavior {
+                    override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                        return 0f
+                    }
+                }
+            },
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 //            item {

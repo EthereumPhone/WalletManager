@@ -11,20 +11,22 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +52,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,9 +63,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.body2_fontSize
-import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 
@@ -124,6 +127,13 @@ fun DgenTextfield(
                     size = size, // Füllt den gesamten Platz aus
                     topLeft = Offset(0f, 0f), // Startposition
                     alpha = 0.2f
+                )
+                
+                drawLine(
+                    color = backgroundColor,
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, size.height),
+                    strokeWidth = 2f
                 )
             }
             .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)
@@ -232,15 +242,60 @@ fun DgenBasicTextfield(
 
     val scrollState = rememberScrollState()
 
-    /*val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    val lineHeight = with(density) { textStyle.fontSize.toDp() }
+    val maxHeight = if (maxLines != Int.MAX_VALUE) {
+        lineHeight * maxLines + 32.dp  // Mehr Padding für bessere Darstellung
+    } else {
+        Dp.Unspecified
+    }
 
-    LaunchedEffect(scrollState.maxValue) {
-        scrollState.scrollTo(scrollState.maxValue)
-    }*/
+    // Auto-scroll to cursor position when text changes
+    LaunchedEffect(value.selection.start, textLayoutResult) {
+        textLayoutResult?.let { layoutResult ->
+            if (isFocused && value.selection.collapsed) {
+                val cursorRect = layoutResult.getCursorRect(value.selection.start)
+                val lineHeight = with(density) { textStyle.fontSize.toPx() }
+                val maxVisibleHeight = lineHeight * maxLines
+                
+                // Calculate target scroll position to keep cursor visible
+                val cursorTop = cursorRect.top
+                val cursorBottom = cursorRect.bottom
+                val currentScroll = scrollState.value.toFloat()
+                
+                // Ensure the cursor line is always visible with better logic
+                val targetScroll = when {
+                    cursorTop < currentScroll -> {
+                        // Cursor is above visible area - scroll up to show it
+                        cursorTop.coerceAtLeast(0f)
+                    }
+                    cursorBottom > currentScroll + maxVisibleHeight -> {
+                        // Cursor is below visible area - scroll down to show it
+                        (cursorBottom - maxVisibleHeight).coerceAtLeast(0f)
+                    }
+                    else -> {
+                        // Cursor is visible, no need to scroll
+                        null
+                    }
+                }
+                
+                targetScroll?.let {
+                    scrollState.animateScrollTo(it.toInt())
+                }
+            }
+        }
+    }
 
     Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
+        modifier = modifier
+            .then(
+                if (maxHeight != Dp.Unspecified) {
+                    Modifier.heightIn(max = maxHeight)
+                } else {
+                    Modifier
+                }
+            ),
+        contentAlignment = Alignment.TopStart
     ) {
         if (value.text.isEmpty()) {
             if (placeholder != null && !isFocused) {
@@ -248,191 +303,78 @@ fun DgenBasicTextfield(
             }
         }
 
-
-
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             textStyle = textStyle,
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
                 .drawBehind {
                     if (isFocused){
                         textLayoutResult
                             ?.takeIf { value.selection.collapsed }
                             ?.let { tlr ->
                                 val rect = tlr.getCursorRect(value.selection.start)
-
-                                // subtract scroll to bring into view
-                                //val y = rect.top + (rect.height - 32.dp.toPx()) / 2f + 48.dp.toPx()
-                                val y = ((rect.top + rect.bottom) / 2 ) - (cursorHeight.toPx() /2)
+                                
+                                // Calculate the line height and max visible lines
+                                val lineHeight = with(density) { textStyle.fontSize.toPx() }
+                                
+                                // Calculate which line the cursor is on
+                                val currentLine = (rect.top / lineHeight).toInt()
+                                
+                                // Determine the Y position for the cursor
+                                val cursorY = if (maxLines != Int.MAX_VALUE && currentLine >= maxLines - 1) {
+                                    // Fix cursor on the last visible line when max lines is reached
+                                    (maxLines - 1) * lineHeight
+                                } else {
+                                    // Use normal cursor position for lines within max
+                                    rect.top
+                                }
+                                
+                                val adjustedY = cursorY - scrollState.value
+                                
+                                // Use the actual line height from the text layout for cursor height
+                                val actualCursorHeight = rect.height
+                                
+                                // Draw cursor with fixed or normal position
                                 drawRect(
-                                    color   = cursorColor.copy(alpha = if (isFocused) blinkAlpha else 0f),
-                                    topLeft = Offset(rect.left, y),
-                                    size    = Size(cursorWidth.toPx(), cursorHeight.toPx())
+                                    color = cursorColor.copy(alpha = blinkAlpha),
+                                    topLeft = Offset(rect.left, adjustedY),
+                                    size = Size(cursorWidth.toPx(), actualCursorHeight)
                                 )
                             }
-                        /*textLayoutResult?.let {
-                            val cursorRect = it.getCursorRect(value.selection.start)
-                            drawRect(
-                                color = cursorColor,
-                                topLeft = Offset(cursorRect.left, ((cursorRect.top + cursorRect.bottom) / 2 ) - (cursorHeight.toPx() /2)),
-                                size = androidx.compose.ui.geometry.Size(cursorWidth.toPx(), cursorHeight.toPx()),
-                                alpha = blinkAlpha
-                            )
-                        }*/
                     }
-
                 }
-                .onFocusChanged { isFocused = it.isFocused },
-            visualTransformation = VisualTransformation.None, // Ensure no transformations
-            cursorBrush = SolidColor(Color.Unspecified),
-            onTextLayout = { layoutResult ->
-                textLayoutResult = layoutResult
-
-            },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
-                keyboardType = keyboardtype
-            ),
-            keyboardActions = KeyboardActions(
-                onGo = {
-                    isFocused = true
+                .onFocusChanged { 
+                    isFocused = it.isFocused 
+                    isAnyFieldFocused.value = it.isFocused
                 },
-                onDone = {
-                    focusManager.clearFocus() // Fokus entfernen, wenn Enter gedrückt wird
-                    isFocused = false
-                }
-            )
-
-        )
-
-
-
-        /*BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = textStyle,
             visualTransformation = visualTransformation,
-            modifier = modifier
-                .fillMaxWidth()
-                .onFocusChanged { isFocused = it.isFocused },
-            cursorBrush = SolidColor(Color.Transparent),
+            cursorBrush = SolidColor(Color.Unspecified),
             onTextLayout = { layoutResult ->
                 textLayoutResult = layoutResult
             },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done,
+                keyboardType = keyboardtype
+            ),
+            keyboardActions = KeyboardActions(
+                onGo = {
+                    isFocused = true
+                },
+                onDone = {
+                    focusManager.clearFocus()
+                    isFocused = false
+                }
+            ),
             singleLine = false,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
-                keyboardType = keyboardtype
-            ),
-            keyboardActions = KeyboardActions(
-                onGo = {
-                    isFocused = true
-                },
-                onDone = {
-                    focusManager.clearFocus() // Fokus entfernen, wenn Enter gedrückt wird
-                    isFocused = false
-                }
-            ),
-
-        ) { innerTextField ->
-            // 4) draw text + custom cursor, offset by scrollState.value
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .drawWithContent {
-                        drawContent()
-                        textLayoutResult
-                            ?.takeIf { value.selection.collapsed }
-                            ?.let { tlr ->
-                                val rect = tlr.getCursorRect(value.selection.start)
-
-                                // subtract scroll to bring into view
-                                val y = rect.top
-                                - scrollState.value
-                                + (rect.height - cursorHeight.toPx()) / 2f
-                                + 18.dp.toPx()
-
-                                drawRect(
-                                    color   = cursorColor.copy(alpha = if (isFocused) blinkAlpha else 0f),
-                                    topLeft = Offset(rect.left, y),
-                                    size    = Size(cursorWidth.toPx(), cursorHeight.toPx())
-                                )
-                            }
-                    }
-            ) {
-                innerTextField()
-            }
-        }*/
-
-
-
-        /*BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = modifier
-                .fillMaxWidth()
-                .drawBehind {
-                    if (isFocused){
-                        textLayoutResult
-                            ?.takeIf { value.selection.collapsed }
-                            ?.let { tlr ->
-                                val rect = tlr.getCursorRect(value.selection.start)
-
-                                // subtract scroll to bring into view
-                                //val y = rect.top + (rect.height - 32.dp.toPx()) / 2f + 48.dp.toPx()
-                                val y = ((rect.top + rect.bottom) / 2 ) - (cursorHeight.toPx() /2)
-                                drawRect(
-                                    color   = cursorColor.copy(alpha = if (isFocused) blinkAlpha else 0f),
-                                    topLeft = Offset(rect.left, y),
-                                    size    = Size(18.dp.toPx(), 32.dp.toPx())
-                                )
-                            }
-                        /*textLayoutResult?.let {
-                            val cursorRect = it.getCursorRect(value.selection.start)
-                            drawRect(
-                                color = cursorColor,
-                                topLeft = Offset(cursorRect.left, ((cursorRect.top + cursorRect.bottom) / 2 ) - (cursorHeight.toPx() /2)),
-                                size = androidx.compose.ui.geometry.Size(cursorWidth.toPx(), cursorHeight.toPx()),
-                                alpha = blinkAlpha
-                            )
-                        }*/
-                    }
-
-                }
-                .onFocusChanged { focusState ->
-                    isFocused = focusState.isFocused
-                    isAnyFieldFocused.value = focusState.isFocused
-                }
-            ,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
-                keyboardType = keyboardtype
-            ),
-
-            keyboardActions = KeyboardActions(
-                onGo = {
-                    isFocused = true
-                },
-                onDone = {
-                    focusManager.clearFocus() // Fokus entfernen, wenn Enter gedrückt wird
-                    isFocused = false
-                }
-            ),
-            textStyle = textStyle,
-            visualTransformation = VisualTransformation.None, // Ensure no transformations
-            enabled = enabled,
-            readOnly = readOnly,
-            cursorBrush = SolidColor(Color.Unspecified),
             minLines = minLines,
             maxLines = maxLines,
-            interactionSource = interactionSource,
-            onTextLayout = { textLayoutResult = it }
-        )*/
-
-
-
+            enabled = enabled,
+            readOnly = readOnly,
+            interactionSource = interactionSource
+        )
     }
 
 }
