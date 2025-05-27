@@ -213,7 +213,7 @@ fun SendScreen2(
         ) { assetsUiState ->
 
             when(assetsUiState){
-                AssetUiState.Empty -> {
+                AssetsUiState.Empty -> {
                     Column (
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.SpaceBetween,
@@ -413,7 +413,7 @@ fun SendScreen2(
 //                            )
 //                    }
                 }
-                AssetUiState.Error -> {
+                AssetsUiState.Error -> {
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -433,7 +433,7 @@ fun SendScreen2(
                         )
                     }
                 }
-                AssetUiState.Loading -> {
+                AssetsUiState.Loading -> {
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -441,7 +441,7 @@ fun SendScreen2(
                         DgenLoadingMatrix()
                     }
                 }
-                is AssetUiState.Success -> {
+                is AssetsUiState.Success -> {
                     Column (
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.SpaceBetween,
