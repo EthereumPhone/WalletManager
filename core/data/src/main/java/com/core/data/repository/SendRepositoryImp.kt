@@ -85,24 +85,6 @@ class SendRepositoryImp @Inject constructor(
             }
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
-
-            if (res.lowercase().contains("error")) {
-                // The address for native ETH is stored as its chainId in string format.
-                val currentBalanceEntity = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first().firstOrNull()
-                if (currentBalanceEntity != null) {
-                    val amountInWei = BigDecimal(value.replace(",",".")).multiply(BigDecimal.TEN.pow(18))
-                    val newBalance = currentBalanceEntity.tokenBalance.subtract(amountInWei)
-                    tokenBalanceDao.upsertTokenBalances(
-                        listOf(
-                            TokenBalanceEntity(
-                                contractAddress = chainId.toString(),
-                                chainId = chainId,
-                                tokenBalance = newBalance
-                            )
-                        )
-                    )
-                }
-            }
         }
     }
 
@@ -136,35 +118,39 @@ class SendRepositoryImp @Inject constructor(
             }
 
             val res = try {
-                erc20TransferApi.sendErc20Token(
+                val txHash = erc20TransferApi.sendErc20Token(
                     toAddress,
                     tokenAsset.address,
                     amount,
                     tokenAsset.decimals,
                     chainId
                 )
-            } catch (exception: NullPointerException) {
+                
+                // If the transaction was successful (we got a valid transaction hash)
+                if (txHash.isNotEmpty() && txHash != "error") {
+                    // Get the current balance from the database
+                    val currentBalances = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first()
+                    val currentBalance = currentBalances.firstOrNull { it.contractAddress == tokenAsset.address && it.chainId == chainId }
+                    
+                    if (currentBalance != null) {
+                        // Convert the amount to the smallest unit (e.g., wei) using the token's decimals
+                        val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                        
+                        // Calculate the new balance by subtracting the sent amount
+                        val newBalance = currentBalance.tokenBalance - amountInSmallestUnit
+                        
+                        // Update the balance in the database
+                        val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
+                        tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
+                    }
+                }
+                
+                txHash
+            } catch (exception: Exception) {
                 "error"
             }
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
-
-            if (res.lowercase().contains("error")) {
-                val currentBalanceEntity = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first().firstOrNull()
-                if (currentBalanceEntity != null) {
-                    val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
-                    val newBalance = currentBalanceEntity.tokenBalance.subtract(amountInSmallestUnit)
-                    tokenBalanceDao.upsertTokenBalances(
-                        listOf(
-                            TokenBalanceEntity(
-                                contractAddress = tokenAsset.address,
-                                chainId = tokenAsset.chainId,
-                                tokenBalance = newBalance
-                            )
-                        )
-                    )
-                }
-            }
         }
 
     }
