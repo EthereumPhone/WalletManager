@@ -26,7 +26,7 @@ fun TokenBalanceDto.asEntity(chainId: Int): TokenBalanceEntity {
 
 
     return TokenBalanceEntity(
-        contractAddress = contractAddress,
+        contractAddress = contractAddress.lowercase(),
         chainId = chainId,
         tokenBalance = BigDecimal(BigInteger(tokenBalance.removePrefix("0x").uppercase(), 16))
     )
