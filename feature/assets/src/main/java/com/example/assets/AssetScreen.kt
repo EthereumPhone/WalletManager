@@ -66,13 +66,17 @@ import java.text.DecimalFormat
 import com.core.ui.R
 import com.example.assets.ui.AssetDialog
 
+/*
+
+
+
 @Composable
 fun AssetRoute(
     modifier: Modifier = Modifier,
     navigateToAssetDetail: (String) -> Unit,
     viewModel: AssetViewModel = hiltViewModel(),
 ) {
-    val assetsUiState: AssetUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    //val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val userData: WalletDataUiState by viewModel.userData.collectAsStateWithLifecycle()
     val refreshState: Boolean by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
@@ -454,3 +458,5 @@ fun ethOSTabRowPreview() {
         onClick = setSelected,
     )
 }
+
+ */

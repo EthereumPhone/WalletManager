@@ -35,6 +35,8 @@ class DefaultExchangeRepository @Inject constructor(
                 response.prices.map { price ->
                     TokenExchangeEntity(
                         symbol = response.symbol,
+                        address = null,
+                        chainId = null,
                         currency = price.currency,
                         value = price.value.toDouble(),
                         timestamp = Instant.parse(price.lastUpdatedAt)
@@ -49,40 +51,7 @@ class DefaultExchangeRepository @Inject constructor(
     }
 
     override suspend fun fetchAllExchanges() {
-        try {
-            tokenBalanceRepository.getTokensBalances()
-                .collectLatest { tokens ->
-                    val filteredTokens = tokens
-                        .filter { it.tokenBalance.compareTo(BigDecimal.ZERO) != 0 }
 
-                    val (addresses, networks) = filteredTokens.partition { it.contractAddress.startsWith("0x") }
-
-
-                    val symbols = tokenMetadataRepository.getTokensMetadata(addresses.map { it.contractAddress })
-                        .first()
-                        .map { it.symbol } + networks.map { network ->
-                        if (network.chainId == 137) "MATIC" else "ETH"
-                    }.distinct() // only fetch eth one time
-
-
-                    val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
-
-                    val entities = data.flatMap { response ->
-                        response.prices.map { price ->
-                            TokenExchangeEntity(
-                                symbol = response.symbol,
-                                currency = price.currency,
-                                value = price.value.toDouble(),
-                                timestamp = Instant.parse(price.lastUpdatedAt)
-                            )
-                        }
-                    }
-
-                    exchangeDao.insertAllExchanges(entities)
-                }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
     }
 
     override suspend fun fetchExchangeByAddress(address: String) {

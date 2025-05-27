@@ -20,15 +20,24 @@ interface TokenBalanceDao {
     fun getTokenBalances(chainId: Int): Flow<List<TokenBalanceEntity>>
 
     @Transaction
-    @Query("SELECT * FROM token_balance")
+    @Query("""SELECT * FROM token_balance""")
     fun getCompositeTokens(): Flow<List<CompositeToken>>
 
     @Transaction
-    @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
-    fun getCompositeTokens(chainId: Int): Flow<List<CompositeToken>>
-
-    @Transaction
-    @Query("SELECT * FROM token_balance WHERE contractAddress == :contractAddress")
+    @Query("""
+        SELECT tb.* FROM token_balance tb
+        LEFT JOIN token_metadata tm ON tb.contractAddress = tm.contractAddress
+        LEFT JOIN (
+            SELECT te.* 
+            FROM token_exchange te
+            INNER JOIN (
+                SELECT symbol, MAX(timestamp) as max_timestamp
+                FROM token_exchange
+                GROUP BY symbol
+            ) latest ON te.symbol = latest.symbol AND te.timestamp = latest.max_timestamp
+        ) te ON tm.symbol = te.symbol
+        WHERE tb.contractAddress = :contractAddress
+    """)
     fun getCompositeToken(contractAddress: String): Flow<CompositeToken>
 
     @Upsert

@@ -41,6 +41,10 @@ import com.example.assets.ui.AssetListDetailItem
 import com.example.assets.ui.LoadingAssetListDetailItem
 import org.ethosmobile.components.library.theme.Colors
 
+
+/*
+
+
 @Composable
 fun AssetDetailRoute(
     modifier: Modifier = Modifier,
@@ -301,3 +305,4 @@ fun PreviewAssetNetworkDetail(){
 }
 
 
+ */

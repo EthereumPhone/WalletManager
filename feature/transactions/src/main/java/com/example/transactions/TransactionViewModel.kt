@@ -7,9 +7,7 @@ import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
-import com.core.domain.GetTokenBalancesWithMetadataUseCase
 import com.core.domain.GetTransfersUseCase
-import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
@@ -57,29 +55,6 @@ class TransactionViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
-
-    val tokenAssetState: StateFlow<TokenAssetUiState> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                val netWorkAssets = balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
-                .sortedByDescending { it.balance }
-                TokenAssetUiState.Success(netWorkAssets)
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = TokenAssetUiState.Loading
-            )
 
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)

@@ -4,6 +4,7 @@ import android.util.Log
 import com.core.data.remote.NetworkBalanceApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
@@ -37,10 +38,22 @@ class Web3jNetworkBalanceRepository @Inject constructor(
     private val networkBalanceApi: NetworkBalanceApi,
     private val tokenBalanceDao: TokenBalanceDao
 ): NetworkBalanceRepository {
-    override fun getNetworksBalance(): Flow<List<TokenBalance>> =
-        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains()
-            .map { it.chainId.toString() }
-        ).map { it.map(TokenBalanceEntity::asExternalModule) }
+    override fun getNetworkTokens(): Flow<List<TokenAsset>> =
+        tokenBalanceDao.getTokenBalances().map { items ->
+            items.map {
+                val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                TokenAsset(
+                    address = it.contractAddress,
+                    chainId = it.chainId,
+                    symbol = name.lowercase(),
+                    name = name.lowercase(),
+                    balance = formatSmallBalance(it.tokenBalance.toDouble()),
+                    decimals = 18
+                )
+            }
+        }
+
+
 
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
         tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))
@@ -119,4 +132,21 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             }
         }
     }
+}
+
+fun formatSmallBalance(balance: Double): Double {
+    if (balance == 0.0) return 0.0
+
+    val precision = 6
+    val minDisplayableValue = 1.0 / Math.pow(10.0, precision.toDouble())
+
+    // For very small values (less than minDisplayableValue), return the minimum displayable value
+    if (balance > 0 && balance < minDisplayableValue) {
+        return minDisplayableValue
+    }
+
+    // Otherwise, round to 6 decimal places
+    val bd = BigDecimal(balance)
+    val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
+    return rounded.toDouble()
 }

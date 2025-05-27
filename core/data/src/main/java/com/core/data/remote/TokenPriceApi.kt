@@ -22,6 +22,7 @@ private interface TokenPriceApi {
         @Query("symbols") symbols: List<String>
     ): NetworkResponse<List<NetworkTokenExchange>>
 
+    //FIX: This won't work.
     @GET("/prices/v1/{apiKey}/tokens/by-address")
     suspend fun getTokenPrice(
         @Path("apiKey") apiKey: String,
@@ -52,8 +53,10 @@ class RetrofitTokenPrice @Inject constructor(
             .create(TokenPriceApi::class.java)
     }
 
-    override suspend fun fetchTokenPriceByAddresses(addresses: List<String>): List<NetworkTokenExchange> {
-        TODO("Not yet implemented")
+    override suspend fun fetchTokenPriceByAddresses(
+        networks: List<String>,
+        addresses: List<String>): List<NetworkTokenExchange> {
+        TODO()
     }
 
     override suspend fun fetchTokenPriceBySymbols(symbols: List<String>): List<NetworkTokenExchange> =

@@ -1,12 +1,13 @@
 package com.core.data.repository
 
+import com.core.database.model.erc20.CompositeToken
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.TokenBalance
 import kotlinx.coroutines.flow.Flow
 
 interface NetworkBalanceRepository {
-    fun getNetworksBalance(): Flow<List<TokenBalance>>
+    fun getNetworkTokens(): Flow<List<TokenAsset>>
     fun getNetworkBalance(chainId: Int): Flow<TokenBalance>
     suspend fun refreshNetworkBalance(
         toAddress: String,

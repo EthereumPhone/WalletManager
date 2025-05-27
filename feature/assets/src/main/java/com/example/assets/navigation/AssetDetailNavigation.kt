@@ -9,8 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.example.assets.AssetDetailRoute
-import com.example.assets.AssetRoute
+
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -33,22 +32,4 @@ fun NavController.navigateToAssetDetail(symbol: String) {
     this.navigate("$assetDetailRoute/$encodedSymbol") {
         launchSingleTop = true
     }
-}
-
-fun NavGraphBuilder.assetDetailScreen(
-    onBackClick: () -> Unit,
-) {
-
-    composable(
-        route = "$assetDetailRoute/{$symbolArg}",
-        arguments = listOf(
-            navArgument(symbolArg) { type = NavType.StringType },
-        ),
-    ) {
-        AssetDetailRoute(
-            navigateToAsset = onBackClick
-        )
-    }
-
-
 }

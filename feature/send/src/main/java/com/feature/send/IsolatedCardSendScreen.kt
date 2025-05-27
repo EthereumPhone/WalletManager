@@ -101,9 +101,7 @@ fun SendRoute2(
         sendTransaction = viewModel::send,
         txComplete = txComplete,
         tokenId = tokenId,
-        tokenData = tokenData,
-        loadSymbol = viewModel::loadSymbol
-
+        tokenData = tokenData
     )
 }
 
@@ -114,7 +112,7 @@ fun SendScreen2(
     toAddress: String,
     amount: String,
     walletDataUiState: WalletDataUiState,
-    assets: AssetUiState,
+    assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (() -> Unit) -> Unit,
@@ -123,8 +121,7 @@ fun SendScreen2(
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
-    tokenData:  List<TokenData>,
-    loadSymbol: (List<String>) -> Unit,
+    tokenData:  List<TokenData>
 ){
 
     var rotated by remember { mutableStateOf(false) }
@@ -196,7 +193,7 @@ fun SendScreen2(
                             label = "Animated Content"
                         ) { assetsState ->
                             when(assetsState){
-                                AssetUiState.Empty -> {
+                                AssetsUiState.Empty -> {
                                     Log.d("DEBUG","Empty")
                                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
                                         Column(
@@ -224,7 +221,7 @@ fun SendScreen2(
                                         }
                                     }
                                 }
-                                AssetUiState.Error -> {
+                                AssetsUiState.Error -> {
                                     //ErrorCardView()
                                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
                                         Column(
@@ -252,7 +249,7 @@ fun SendScreen2(
                                         }
                                     }
                                 }
-                                AssetUiState.Loading -> {
+                                AssetsUiState.Loading -> {
                                     Log.d("DEBUG","Loading")
                                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
                                         Column(
@@ -280,7 +277,7 @@ fun SendScreen2(
                                         }
                                     }
                                 }
-                                is AssetUiState.Success -> {
+                                is AssetsUiState.Success -> {
                                     Log.d("DEBUG","Success")
                                     val token = assetsState.assets.firstOrNull {
                                         it.address.equals(initialAddress, ignoreCase = true)
@@ -296,15 +293,15 @@ fun SendScreen2(
                                     if (token != null) {
                                         when (token.symbol) {
                                             "base" -> {
-                                                loadSymbol(listOf("ETH"))
+                                                //loadSymbol(listOf("ETH"))
                                             }
 
                                             "mainnet" -> {
-                                                loadSymbol(listOf("ETH"))
+                                                //loadSymbol(listOf("ETH"))
                                             }
 
                                             else -> {
-                                                loadSymbol(listOf(token.symbol))
+                                                //loadSymbol(listOf(token.symbol))
                                             }
                                         }
 
@@ -485,16 +482,16 @@ fun SendScreen2(
 
                         when(assets){
 
-                            AssetUiState.Empty -> {
+                            AssetsUiState.Empty -> {
 
                             }
-                            AssetUiState.Error -> {
+                            AssetsUiState.Error -> {
 
                             }
-                            AssetUiState.Loading -> {
+                            AssetsUiState.Loading -> {
 
                             }
-                            is AssetUiState.Success -> {
+                            is AssetsUiState.Success -> {
 
                                 val token = assets.assets.firstOrNull {
                                     it.address.equals(tokenId, ignoreCase = true)

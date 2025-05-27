@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class GetGroupedTokenAssets @Inject constructor(
-    private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase
+    private val getAllTokensUsecase: GetAllTokensUsecase
 ) {
 
     operator fun invoke(): Flow<Map<String, List<TokenAsset>>> =
-        getTokenBalancesWithMetadataUseCase().map { assets ->
+        getAllTokensUsecase().map { assets ->
             assets.groupBy { it.symbol }
     }
 }

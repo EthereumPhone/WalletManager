@@ -37,7 +37,8 @@ import coil.compose.rememberImagePainter
 import com.core.data.model.dto.Contact
 import com.core.model.TokenAsset
 import com.core.ui.WmListItem
-import com.feature.send.AssetUiState
+import com.core.ui.util.formatDouble
+import com.feature.send.AssetsUiState
 import com.feature.send.R
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts
@@ -46,7 +47,7 @@ import org.ethosmobile.components.library.theme.Fonts
 fun AssetPickerSheet(
     //balancesState: AssetUiState,
     //getContacts: (Context) -> Unit,
-    assets: AssetUiState,
+    assets: AssetsUiState,
     onChangeAssetClicked: (TokenAsset) -> Unit, //method, when asset is selected
     chainId: Int
     //swapTokenUiState: SwapTokenUiState,
@@ -83,7 +84,7 @@ fun AssetPickerSheet(
             contentAlignment = Alignment.Center
         ) {
             when(assets){
-                is AssetUiState.Loading -> {
+                is AssetsUiState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
                         contentAlignment = Alignment.Center
@@ -99,7 +100,7 @@ fun AssetPickerSheet(
 
 
                 }
-                is AssetUiState.Empty -> {
+                is AssetsUiState.Empty -> {
                     Box(
                         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
                         contentAlignment = Alignment.Center
@@ -121,7 +122,7 @@ fun AssetPickerSheet(
 
 
                 }
-                is AssetUiState.Error -> {
+                is AssetsUiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
                         contentAlignment = Alignment.Center
@@ -143,7 +144,7 @@ fun AssetPickerSheet(
                     }
 
                 }
-                is AssetUiState.Success -> {
+                is AssetsUiState.Success -> {
 
                     val filteredAssets = assets.assets
                     var sortedTokens = filteredAssets.sortedByDescending {
@@ -267,7 +268,7 @@ fun ethOSListItem(
 fun AssetPickerSheetPreview(){
     AssetPickerSheet(
 
-        AssetUiState.Success(
+        AssetsUiState.Success(
             listOf(
                 TokenAsset(
                     chainId = 10,

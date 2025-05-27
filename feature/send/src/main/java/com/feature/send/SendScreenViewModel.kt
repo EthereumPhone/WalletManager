@@ -5,13 +5,11 @@ import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
 import com.core.data.repository.SendRepository
 import com.core.data.repository.UserDataRepository
-import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +28,7 @@ import com.core.data.remote.EnsApi
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenExchangeRepository
 import com.core.domain.GetSwapTokens
-import com.core.domain.GetTokenBalancesWithMetadataUseCase
+import com.core.domain.GetAllTokensUsecase
 import com.core.model.NetworkChain
 import com.core.model.Price
 import com.core.model.TokenData
@@ -44,14 +42,13 @@ import kotlinx.coroutines.flow.update
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import kotlin.collections.filter
-import kotlin.collections.first
 import kotlin.collections.map
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
+    private val getAllTokensUsecase: GetAllTokensUsecase,
     private val tokenExchangeRepository: TokenExchangeRepository,
     private val sendRepository: SendRepository,
     private val getSwapTokens: GetSwapTokens,
@@ -110,64 +107,38 @@ class SendViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = AssetUiState.Loading
             )*/
-    val tokenAssetState: StateFlow<AssetUiState> =
-        combine(
-            networkBalanceRepository.getNetworksBalance(),
-            getTokenBalancesWithMetadataUseCase(),
-            ::Pair
-        )
-            .map { (networkBalances, tokenBalances) ->
-                val netWorkAssets = networkBalances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+    val tokenAssetState: StateFlow<AssetsUiState> = getAllTokensUsecase()
+        .map { tokens ->
+            val filteredTokens = tokens
+                .filter { it.balance > 0 }
+                .filter { token -> // Filter out tokens with URLs in their names or symbols
+                    val name = token.name.lowercase()
+                    val symbol = token.symbol.lowercase()
 
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = formatSmallBalance(it.tokenBalance.toDouble()),
-                        decimals = 18
+                    val urlPatterns = listOf(
+                        "http://", "https://", "www.",
+                        ".com", ".io", ".org", ".net", ".xyz",
+                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
                     )
-                }
-                    .filter { it.balance > 0 }
-                    .sortedByDescending { it.balance }
 
-                // Add token balances to the list
-                val allAssets = netWorkAssets + tokenBalances
-                    .filter { it.balance > 0 }
-                    .map { token ->
-                        // Create a copy with properly formatted balance
-                        token.copy(balance = formatSmallBalance(token.balance))
+                    val containsNoUrlPatterns = urlPatterns.none { pattern ->
+                        name.contains(pattern) || symbol.contains(pattern)
                     }
-                    .filter { token ->
-                        // Filter out tokens with URLs in their names or symbols
-                        val name = token.name.lowercase()
-                        val symbol = token.symbol.lowercase()
-
-                        val urlPatterns = listOf(
-                            "http://", "https://", "www.",
-                            ".com", ".io", ".org", ".net", ".xyz",
-                            "/", "t.me", "telegram", "twitter", "discord", "t.ly"
-                        )
-
-                        val containsNoUrlPatterns = urlPatterns.none { pattern ->
-                            name.contains(pattern) || symbol.contains(pattern)
-                        }
-
-                        containsNoUrlPatterns
-                    }
-
-                if (allAssets.isEmpty()) {
-                    AssetUiState.Empty
-                } else {
-                    AssetUiState.Success(allAssets)
+                    containsNoUrlPatterns
                 }
+
+            if (filteredTokens.isEmpty()) {
+                AssetsUiState.Empty
+            } else {
+                AssetsUiState.Success(filteredTokens)
             }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetUiState.Loading
-            )
+
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AssetsUiState.Loading
+        )
 
 
 
@@ -302,6 +273,7 @@ class SendViewModel @Inject constructor(
     init {
         // Initialize selected asset if tokenId is available
         viewModelScope.launch {
+            /*
             tokenIdFlow.collect { tokenId ->
                 Log.d("SendViewModel", "TokenId from navigation: $tokenId")
                 if (tokenId.isNotEmpty()) {
@@ -310,7 +282,7 @@ class SendViewModel @Inject constructor(
                             Log.d("SendViewModel", "Assets available: ${assetState.assets.size}")
                             val token = assetState.assets.find { it.address == tokenId }
                             Log.d("SendViewModel", "Found token: ${token?.symbol}")
-                            token?.let { 
+                            token?.let {
                                 updateSelectedAsset(it)
                                 Log.d("SendViewModel", "Updated selected asset to: ${it.symbol}")
                             }
@@ -318,6 +290,9 @@ class SendViewModel @Inject constructor(
                     }
                 }
             }
+             */
+
+
         }
     }
 
@@ -441,35 +416,6 @@ class SendViewModel @Inject constructor(
 
 }
 
-
-
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun assetUiState(
-    userDataRepository: UserDataRepository,
-    getSwapTokens: GetSwapTokens,
-    searchQuery: Flow<String>
-): Flow<AssetUiState> =
-    searchQuery.flatMapLatest { query ->
-        getSwapTokens(
-            query,
-            userDataRepository.userData.first().walletNetwork.toInt()
-        ).asResult()
-            .mapLatest { result ->
-                when(result) {
-                    is Result.Error -> { AssetUiState.Error }
-                    is Result.Loading -> { AssetUiState.Loading }
-                    is Result.Success -> {
-                        if (result.data.isEmpty()) {
-                            AssetUiState.Empty
-                        } else {
-                            AssetUiState.Success(result.data)
-                        }
-                    }
-                }
-            }
-    }
-
 sealed interface TxCompleteUiState {
     object UnComplete: TxCompleteUiState
     object Complete: TxCompleteUiState
@@ -480,13 +426,13 @@ sealed interface SelectedTokenUiState {
     data class Selected(val tokenAsset: TokenAsset): SelectedTokenUiState
 }
 
-sealed interface AssetUiState {
-    object Loading: AssetUiState
-    object Error: AssetUiState
-    object Empty: AssetUiState
+sealed interface AssetsUiState {
+    object Loading : AssetsUiState
+    object Error : AssetsUiState
+    object Empty : AssetsUiState
     data class Success(
         val assets: List<TokenAsset>
-    ): AssetUiState
+    ) : AssetsUiState
 }
 
 sealed interface WalletDataUiState {

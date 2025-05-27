@@ -144,7 +144,7 @@ fun SendScreen(
     toAddress: String,
     amount: String,
     walletDataUiState: WalletDataUiState,
-    assets: AssetUiState,
+    assets: AssetsUiState,
     onChangeAssetClicked: (TokenAsset) -> Unit,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
@@ -314,7 +314,7 @@ fun SendScreen(
         var startTokenSet by remember { mutableStateOf(false) }
 
         when(assets){
-            is AssetUiState.Success -> {
+            is AssetsUiState.Success -> {
                 Log.d("NETWORK vor","$currentChainId - $currentNetwork $chain")
                 if(!startTokenSet){
                     val filteredAssets = assets.assets
@@ -768,7 +768,7 @@ fun PreviewSendScreen() {
         currentNetwork = "1",
         onBackClick= {},
         toAddress="qwertyuio",
-        assets=  AssetUiState.Success(listOf(
+        assets=  AssetsUiState.Success(listOf(
             TokenAsset(
                 "0xggrh32335n5dsiwjr",
                 1,

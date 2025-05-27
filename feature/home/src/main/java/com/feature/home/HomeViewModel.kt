@@ -11,9 +11,8 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
-import com.core.database.dao.TokenExchangeDao
 import com.core.domain.UpdateTokensByNetworkUseCase
-import com.core.domain.GetTokenBalancesWithMetadataUseCase
+import com.core.domain.GetAllTokensUsecase
 import com.core.model.NetworkChain
 import com.core.model.Price
 import com.core.model.TokenAsset
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -53,22 +53,10 @@ class HomeViewModel @Inject constructor(
     private val tokenExchangeRepository: TokenExchangeRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val transferRepository: TransferRepository,
-    private val getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
+    private val getAllTokensUsecase: GetAllTokensUsecase,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-
-    init {
-        Log.d("HomeViewModel", "Initializing HomeViewModel")
-        // Collect the flow to trigger database operations
-        viewModelScope.launch {
-            tokenExchangeRepository.getExchanges()
-                .collect { exchanges ->
-                    Log.d("HomeViewModel", "Received ${exchanges.size} exchanges")
-                }
-        }
-    }
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
@@ -78,69 +66,39 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    val tokenAssetState: StateFlow<AssetsUiState> =
-        combine(
-            networkBalanceRepository.getNetworksBalance(),
-            getTokenBalancesWithMetadataUseCase(),
-            ::Pair
-        )
-            .map { (networkBalances, tokenBalances) ->
-                val netWorkAssets = networkBalances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
 
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = formatSmallBalance(it.tokenBalance.toDouble()),
-                        decimals = 18
+    val tokenAssetState: StateFlow<AssetsUiState> = getAllTokensUsecase()
+        .map { tokens ->
+            val filteredTokens = tokens
+                .filter { it.balance > 0 }
+                .filter { token -> // Filter out tokens with URLs in their names or symbols
+                    val name = token.name.lowercase()
+                    val symbol = token.symbol.lowercase()
+
+                    val urlPatterns = listOf(
+                        "http://", "https://", "www.",
+                        ".com", ".io", ".org", ".net", ".xyz",
+                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
                     )
-                }
-                    .filter { it.balance > 0 }
-                    .sortedByDescending { it.balance }
 
-                // Add token balances to the list
-                val allAssets = netWorkAssets + tokenBalances
-                    .filter { it.balance > 0 }
-                    .map { token ->
-                        // Create a copy with properly formatted balance
-                        token.copy(balance = formatSmallBalance(token.balance))
+                    val containsNoUrlPatterns = urlPatterns.none { pattern ->
+                        name.contains(pattern) || symbol.contains(pattern)
                     }
-                    .filter { token ->
-                        // Filter out tokens with URLs in their names or symbols
-                        val name = token.name.lowercase()
-                        val symbol = token.symbol.lowercase()
-
-                        val urlPatterns = listOf(
-                            "http://", "https://", "www.",
-                            ".com", ".io", ".org", ".net", ".xyz",
-                            "/", "t.me", "telegram", "twitter", "discord", "t.ly"
-                        )
-
-                        val containsNoUrlPatterns = urlPatterns.none { pattern ->
-                            name.contains(pattern) || symbol.contains(pattern)
-                        }
-
-                        containsNoUrlPatterns
-                    }
-
-                // Set the first value of selectedTokenAsset to the first item in the list
-                if (allAssets.isNotEmpty()) {
-                    _selectedTokenAsset.value = allAssets.first()
+                    containsNoUrlPatterns
                 }
 
-                if (allAssets.isEmpty()) {
-                    AssetsUiState.Empty
-                } else {
-                    AssetsUiState.Success(allAssets)
-                }
+            if (filteredTokens.isEmpty()) {
+                AssetsUiState.Empty
+            } else {
+                AssetsUiState.Success(filteredTokens)
             }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetsUiState.Loading
-            )
+
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AssetsUiState.Loading
+        )
 
 
     val hasTransfers: StateFlow<Boolean> = flow {

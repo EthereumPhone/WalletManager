@@ -17,8 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.assets.navigation.assetDetailScreen
-import com.example.assets.navigation.assetGraph
+
 import com.example.assets.navigation.navigateToAsset
 import com.example.assets.navigation.navigateToAssetDetail
 import com.example.transactions.navigation.navigateToTransaction
@@ -102,14 +101,7 @@ fun WmNavHost(
                     payMasterScreen(navController::popBackStack)
                 }
             )
-            assetGraph(
-                navigateToAssetDetail = navController::navigateToAssetDetail,
-                nestedGraphs = {
-                    assetDetailScreen(
-                        onBackClick = navController::popBackStack
-                    )
-                }
-            )
+
             transactionGraph(
                 navigateBack = navController::popBackStack,
             )
