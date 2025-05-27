@@ -12,26 +12,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,56 +34,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
-import coil.compose.AsyncImage
+import com.core.model.TokenAsset
 import com.core.model.TokenData
 import com.core.ui.Card
-import com.core.ui.DgenBasicTextfield
 import com.core.ui.DgenLoadingMatrix
-import com.core.ui.DgenTextfield
-import com.core.ui.HeaderBar
-import com.core.ui.R
 import com.feature.send.ui.SendCardView
 import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.body1_fontSize
-import com.example.dgenlibrary.ui.theme.body2_fontSize
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
 import com.example.dgenlibrary.ui.theme.dgenGreen
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOrche
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
 import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
-import com.example.dgenlibrary.ui.theme.header2_fontSize
-import com.example.dgenlibrary.ui.theme.header3_fontSize
-import com.example.dgenlibrary.ui.theme.label_fontSize
 import com.example.dgenlibrary.ui.theme.largeEnterDuration
 import com.example.dgenlibrary.ui.theme.mediumEnterDuration
-import com.feature.send.ui.SelectableCarousel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -130,6 +101,7 @@ fun SendRoute2(
         onAmountChange = viewModel::updateAmount,
         onToAddressChanged= viewModel::updateToAddress,
         sendTransaction = viewModel::send,
+        updateSelectedAsset = viewModel::updateSelectedAsset,
         txComplete = txComplete,
         tokenId = tokenId,
         tokenData = tokenData
@@ -147,6 +119,7 @@ fun SendScreen2(
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (() -> Unit) -> Unit,
+    updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
@@ -154,11 +127,6 @@ fun SendScreen2(
     tokenId: String?,
     tokenData:  List<TokenData>
 ){
-
-    val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
-    val view = LocalView.current
-
 
     var rotated by remember { mutableStateOf(false) }
 
@@ -185,415 +153,391 @@ fun SendScreen2(
 
     Log.d("CardAnimation","tokenId: ${tokenId} - initialAddress: ${initialAddress} ")
 
+
+    var testamount by remember { mutableStateOf("TEST") }
+    var testaddress by remember { mutableStateOf("TEST") }
+
     Log.d("DEBUG","initialAddress: $initialAddress, tokenId: $tokenId")
 
-
-
-    var amount by remember { mutableStateOf(TextFieldValue("")) }
-    var toValue by remember { mutableStateOf(TextFieldValue("")) }
-
-
-
+    // Set the selected asset when the screen loads with a tokenId
+    LaunchedEffect(tokenId, assets) {
+        if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
+            val token = assets.assets.firstOrNull {
+                it.address.equals(tokenId, ignoreCase = true)
+            }
+            token?.let {
+                updateSelectedAsset(it)
+                Log.d("SendScreen2", "Selected asset set to: ${it.symbol}")
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
-            .fillMaxSize().background(dgenBlack),
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
         contentAlignment = Alignment.Center
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
 
-        AnimatedContent(
-            assets,
-            transitionSpec = {
-                fadeIn(
-                    animationSpec = tween(extraLargeEnterDuration)
-                ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
-            },
-            modifier = Modifier.fillMaxSize(),
-            label = "Animated Content"
-        ) { assetsUiState ->
+                Log.d("CardBounds Send", "token-${initialAddress}")
 
-            when(assetsUiState){
-                AssetsUiState.Empty -> {
-                    Column (
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = modifier
-                            .fillMaxSize().padding(bottom = 24.dp)
-                    ){
-                        HeaderBar(content = {
-                            Row {
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                            }
-                        }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
-
-
-
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Spacer(Modifier
-                                        .height(77.dp)
-                                        .width(8.dp)
-                                        .background(dgenGray.copy(0.5f))
-                                    )
-                                    Column {
-                                        Text(
-                                            buildAnnotatedString {
-                                                //append("Sent ")
-                                                append("ETH")
-
-                                                append("/")
-
-                                                withStyle(
-                                                    style = SpanStyle(
-                                                        fontFamily = PitagonsSans,
-                                                        color = dgenTurqoise,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        fontSize = 17.sp,
-                                                        letterSpacing = 0.sp,
-                                                        textDecoration = TextDecoration.None
-                                                    )
-                                                ) {
-                                                    append(" \$")
-                                                }
-                                            },
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 18.sp,
-                                            lineHeight = 18.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None,
-                                            modifier = Modifier.offset(y=0.dp)
-
-                                        )
-                                        DgenBasicTextfield(
-                                            value = amount,
-                                            onValueChange={ new -> amount = new},
-                                            placeholder = {
-                                                Row (
-                                                    Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.Start
-                                                ){
-                                                    Text(
-                                                        modifier = Modifier,
-                                                        text = "0.0",
-                                                        style = TextStyle(
-                                                            fontFamily = PitagonsSans,
-                                                            color = dgenGray,
-                                                            fontWeight = FontWeight.SemiBold,
-                                                            fontSize = header2_fontSize,
-                                                            textAlign = TextAlign.Start
-                                                        ),
-                                                    )
-                                                }
-
-                                            },
-                                            textStyle = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenWhite,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = header2_fontSize,
-                                                textAlign = TextAlign.Start
-                                            ),
-                                            keyboardtype =  KeyboardType.Text,
-                                            cursorWidth = 16.dp,
-                                            cursorHeight= 48.dp,
-                                            isAnyFieldFocused= remember { mutableStateOf(false) },
-                                        )
-                                    }
-                                }
-
-                                // Sample list
-                                val sampleItems = listOf("base", "mainnet", "zora", "optimism", "arbitrum", "polygon")
-
-                                // Preview state holder
-                                var selected by remember { mutableStateOf<Int?>(null) }
-
-                                SelectableCarousel(
-                                    items = sampleItems,
-                                    itemWidth = 70.dp,
-                                    itemHeight = 70.dp,
-                                    initialSelectedIndex = 0,
-                                    onItemSelected = { index -> selected = index }
-                                )
-
-                            }
-
-                        DgenTextfield(
-                            value = toValue,
-                            onValueChange={ new -> toValue = new},
-                            placeholder = {
-                                Row (
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Start
-                                ){
-                                    Text(
-                                        modifier = Modifier,
-                                        text = "Address",
-                                        style = TextStyle(
-                                            fontFamily = PitagonsSans,
-                                            color = dgenGray,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = body1_fontSize
-                                        ),
-                                    )
-                                }
-
-                            },
-                            keyboardtype =  KeyboardType.Text,
-                            cursorWidth = 16.dp,
-                            cursorHeight= 32.dp,
-                            isAnyFieldFocused= remember { mutableStateOf(false) },
-                            onEditDone = {},
-                            view = view
-                        ){
-
-                            Text(
-                                text = "Target Address".uppercase(),
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = label_fontSize,
-                                    lineHeight = label_fontSize,
-                                    letterSpacing = 1.sp,
-                                    textDecoration = TextDecoration.None,
-                                    textAlign = TextAlign.Left
-                                ),
-                                color = dgenTurqoise
-                            )
-
-
+                Card(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            rotationY = rotation
+                            translationY = -translateY
+                            cameraDistance = 12f * density
                         }
-                    }
-//                    Box(
-//                        modifier = modifier.fillMaxSize(),
-//                        contentAlignment = Alignment.Center
-//                    ){
-//                            Text(
-//                                text = "EMPTY",
-//                                style = TextStyle(
-//                                    fontFamily = PitagonsSans,
-//                                    color = dgenGunMetal,
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontSize = 24.sp,
-//                                    letterSpacing = 0.sp,
-//                                    textDecoration = TextDecoration.None,
-//                                    textAlign = TextAlign.Center
-//                                ),
-//                                modifier = Modifier.width(300.dp)
-//                            )
-//                    }
-                }
-                AssetsUiState.Error -> {
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        Text(
-                            text = "ERROR",
-                            style = TextStyle(
-                                fontFamily = PitagonsSans,
-                                color = dgenGunMetal,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 24.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None,
-                                textAlign = TextAlign.Center
-                            ),
-                            modifier = Modifier.width(300.dp)
-                        )
-                    }
-                }
-                AssetsUiState.Loading -> {
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        DgenLoadingMatrix()
-                    }
-                }
-                is AssetsUiState.Success -> {
-                    Column (
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
-                    ){
-                        HeaderBar(content = {
-                            Row {
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
 
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                            }
-                        }, onClick = onBackClick)
-
-                        Column(
-
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(32.dp)
-                        ) {
-                            Row(
-
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Spacer(Modifier
-                                    .offset(y = 5.dp)
-                                    .height(77.dp)
-                                    .width(8.dp)
-                                    .background(dgenGray.copy(0.5f))
-                                    .padding(end = 16.dp)
-                                )
-                                Column {
-                                    Text(
-                                        buildAnnotatedString {
-                                            //append("Sent ")
-                                            append("ETH")
-
-                                            withStyle(
-                                                style = SpanStyle(
+                    ,
+                    frontSide = {
+                        AnimatedContent(
+                            assets,
+                            transitionSpec = {
+                                fadeIn(
+                                    animationSpec = tween(extraLargeEnterDuration)
+                                ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                            label = "Animated Content"
+                        ) { assetsState ->
+                            when(assetsState){
+                                AssetsUiState.Empty -> {
+                                    Log.d("DEBUG","Empty")
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
+                                            )
+                                            Text(
+                                                text = "NO ASSETS",
+                                                style = TextStyle(
                                                     fontFamily = PitagonsSans,
                                                     color = dgenTurqoise,
                                                     fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 17.sp,
+                                                    fontSize = 24.sp,
                                                     letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
                                                 )
-                                            ) {
-                                                append(" \$")
-                                            }
-                                        },
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 18.sp,
-                                        lineHeight = 18.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None,
-                                        modifier = Modifier.offset(y=8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                AssetsUiState.Error -> {
+                                    //ErrorCardView()
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
+                                            )
+                                            Text(
+                                                text = "ERROR",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                AssetsUiState.Loading -> {
+                                    Log.d("DEBUG","Loading")
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                                        ) {
+                                            DgenLoadingMatrix(
+                                                size = 88.dp,
+                                                LEDSize = 24.dp,
+                                                unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                activeLEDColor = dgenTurqoise
+                                            )
+                                            Text(
+                                                text = "LOADING...",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                is AssetsUiState.Success -> {
+                                    Log.d("DEBUG","Success")
+                                    val token = assetsState.assets.firstOrNull {
+                                        it.address.equals(tokenId, ignoreCase = true)
+                                    }
 
-                                    )
-                                    //TODO: Change Amount to Gas Amount
-                                    Text(
-                                        "\$206.19",
-                                        fontFamily = PitagonsSans,
-                                        color = dgenWhite,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 48.sp,
-                                        lineHeight = 48.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
+                                    if(token == null){
+                                        Log.d("SendID","token null ")
+                                    }
+
+                                    val tokenName = if (token?.name == token?.symbol)  "ETH-${token?.symbol}" else token?.symbol
+
+
+                                    if (token != null) {
+                                        when (token.symbol) {
+                                            "base" -> {
+                                                //loadSymbol(listOf("ETH"))
+                                            }
+
+                                            "mainnet" -> {
+                                                //loadSymbol(listOf("ETH"))
+                                            }
+
+                                            else -> {
+                                                //loadSymbol(listOf(token.symbol))
+                                            }
+                                        }
+
+                                        val fiatamount = when (token.symbol) {
+                                            "base" -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                                //set eth value
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
+                                            }
+
+                                            "mainnet" -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == "ETH" }
+                                                //set eth value
+                                                //if tokenasset null turn into 0.00
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
+                                            }
+
+                                            else -> {
+                                                //get eth value
+                                                val tokenasset = tokenData.find { it.symbol == token.symbol }
+                                                //set eth value
+                                                if (tokenasset == null) {
+                                                    0.0
+                                                } else {
+                                                    tokenasset.prices?.get(0)?.value?.toDouble()
+                                                }
+                                            }
+                                        }
+
+
+                                        Log.d("DEBUG","tokenName $tokenName")
+                                        if (tokenName != null) {
+                                            SendCardView(
+                                                amount = amount,
+                                                toAddress = toAddress,
+                                                maxamount = token.balance,
+                                                tokenName = tokenName.uppercase(),
+                                                onAddressChange = onToAddressChanged,
+                                                onAmountChange = onAmountChange
+                                            )
+                                        } else {
+
+                                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                                                ) {
+                                                    DgenLoadingMatrix(
+                                                        size = 88.dp,
+                                                        LEDSize = 24.dp,
+                                                        unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                        activeLEDColor = dgenTurqoise
+                                                    )
+                                                    Text(
+                                                        text = "TOKENNAME IS NULL",
+                                                        style = TextStyle(
+                                                            fontFamily = PitagonsSans,
+                                                            color = dgenTurqoise,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 24.sp,
+                                                            letterSpacing = 0.sp,
+                                                            textDecoration = TextDecoration.None,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+
+                                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(24.dp)
+                                            ) {
+                                                DgenLoadingMatrix(
+                                                    size = 88.dp,
+                                                    LEDSize = 24.dp,
+                                                    unactiveLEDColor = dgenBlack.copy(0.15f),
+                                                    activeLEDColor = dgenTurqoise
+                                                )
+                                                Text(
+                                                    text = "NON EXISTING TOKEN",
+                                                    style = TextStyle(
+                                                        fontFamily = PitagonsSans,
+                                                        color = dgenTurqoise,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 24.sp,
+                                                        letterSpacing = 0.sp,
+                                                        textDecoration = TextDecoration.None,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
-
-// Sample list
-                            val sampleItems = listOf("Card A", "Card B", "Card C", "Card D")
-
-                            // Preview state holder
-                            var selected by remember { mutableStateOf<Int?>(null) }
-
-                            SelectableCarousel(
-                                items = sampleItems,
-                                onItemSelected = { index -> selected = index }
-                            )
-
                         }
+                    },
+                    rotation = rotation,
+                    backSide = {
 
-                        DgenTextfield(
-                            value = toValue,
-                            onValueChange={ new -> toValue = new},
-                            placeholder = {
-                                Text(
-                                    modifier = Modifier,
-                                    text = "Address",
-                                    style = TextStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = dgenGray,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = body2_fontSize
-                                    ),
-                                )
-                            },
-                            keyboardtype =  KeyboardType.Text,
-                            cursorWidth = 16.dp,
-                            cursorHeight= 32.dp,
-                            isAnyFieldFocused= remember { mutableStateOf(false) },
-                            onEditDone = {},
-                            view = view
-                        ){
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    rotationY = -180f
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+
                             Text(
-                                text = "Target Address".uppercase(),
+                                "SEND",
                                 style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
+                                    fontFamily = PitagonsSans,
+                                    color = dgenWhite,
                                     fontWeight = FontWeight.SemiBold,
-                                    fontSize = label_fontSize,
-                                    lineHeight = label_fontSize,
-                                    letterSpacing = 1.sp,
+                                    fontSize = 128.sp,
+                                    lineHeight = 128.sp,
+                                    letterSpacing = 0.sp,
                                     textDecoration = TextDecoration.None
                                 ),
-                                color = dgenTurqoise
                             )
                         }
+                    },
+                )
 
 
-                    }
+
+
+            Row(
+                modifier = Modifier,
+                horizontalArrangement = Arrangement.spacedBy(32.dp)
+            ) {
+
+                IconButton(
+                    modifier = modifier.size(56.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = dgenRed,
+                        disabledContainerColor = dgenGray,
+                        disabledContentColor = dgenBlack
+                    ),
+                    onClick =  onBackClick,
+                ){
+                    Icon(
+                        modifier = Modifier.size(36.dp),
+                        painter = painterResource(R.drawable.baseline_close_24),
+                        contentDescription = "Send Icon",
+                        tint = dgenRed
+                    )
+                }
+
+                IconButton(
+                    modifier = modifier.size(56.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = dgenTurqoise,
+                        disabledContainerColor = dgenGray,
+                        disabledContentColor = dgenBlack
+                    ),
+                    onClick = {
+                        Log.d("SEND TX vor","$testaddress - ${testamount}  ")
+                        Log.d("SEND TX nach","$testaddress - ${testamount}  ")
+                        Log.d("SEND TX nach nach","$toAddress - ${amount}")
+                        //g.d("SEND TX nach","$toAddress - ${amount.toDouble()}  ")
+
+                        when(assets){
+
+                            AssetsUiState.Empty -> {
+
+                            }
+                            AssetsUiState.Error -> {
+
+                            }
+                            AssetsUiState.Loading -> {
+
+                            }
+                            is AssetsUiState.Success -> {
+
+                                val token = assets.assets.firstOrNull {
+                                    it.address.equals(tokenId, ignoreCase = true)
+                                }
+                                Log.d("SEND TX","$toAddress - ${amount.toDouble()} - ${token?.balance} ")
+
+                                if (token != null) {
+                                    // Update the selected asset in the view model before sending
+                                    updateSelectedAsset(token)
+                                    
+                                    if(amount.toDouble() < token.balance) {
+                                        sendTransaction {
+                                            onBackClick()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    },
+                ){
+                    Icon(
+                        modifier = Modifier.size(36.dp),
+                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
+                        contentDescription = "Send Icon"
+                    )
                 }
             }
-
         }
-
     }
 
 }

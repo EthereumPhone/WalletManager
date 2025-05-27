@@ -23,35 +23,27 @@ import com.example.dgenlibrary.ui.theme.dgenTurqoise
 
 @Composable
 fun HeaderBar(
-    modifier: Modifier = Modifier,
-    text: String = "",
-    content: @Composable () -> Unit = {},
-    onClick: () -> Unit,
-
+    text: String,
+    onClick: () -> Unit
 ){
     Row (
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ){
-        if(text == ""){
-            content()
-        }else{
-            Text(
-                text = text.uppercase(),
-                style = TextStyle(
-                    fontFamily = SpaceMono,
-                    color = dgenTurqoise,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 24.sp,
-                    letterSpacing = 0.sp,
-                    textDecoration = TextDecoration.None
-                )
+        Text(
+            text = text.uppercase(),
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = dgenTurqoise,
+                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                letterSpacing = 0.sp,
+                textDecoration = TextDecoration.None
             )
-        }
-
+        )
 
         Icon(
             modifier = Modifier
