@@ -1,5 +1,6 @@
 package com.feature.send
 
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
@@ -86,6 +89,10 @@ import com.feature.send.ui.TextToggle
 import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -192,6 +199,15 @@ fun SendScreen2(
     var toValue by remember { mutableStateOf(TextFieldValue("")) }
     var showTokenAmount by remember { mutableStateOf(false) }
 
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
+
 
 
 
@@ -201,6 +217,13 @@ fun SendScreen2(
             .background(dgenBlack),
         contentAlignment = Alignment.Center
     ) {
+
+        AsyncImage(
+            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.1f).aspectRatio(1f),
+            imageLoader = gifEnabledLoader,
+            model = R.drawable.wireframe_globe,
+            contentDescription = null
+        )
 
         AnimatedContent(
             assets,
