@@ -66,4 +66,9 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.2.1")
 
     implementation project(path: ':core:ui')
+
+    implementation libs.okhttp
+    implementation libs.ethos.wallet
+    implementation libs.web3j.android
+    implementation libs.moshi
 }
