@@ -51,7 +51,46 @@ class DefaultExchangeRepository @Inject constructor(
     }
 
     override suspend fun fetchAllExchanges() {
+        // Get the latest token balances.
+        // TokenBalanceEntity has 'contractAddress' and 'tokenBalance'
+        val allBalances = tokenBalanceRepository.getTokensBalances().first()
 
+        // Filter for balances > 0
+        val balancesWithSufficientAmount = allBalances
+            .filter { it.tokenBalance > BigDecimal.ZERO }
+
+        if (balancesWithSufficientAmount.isEmpty()) {
+            Log.d("fetchAllExchanges", "No token balances greater than zero found.")
+            return // No balances to process
+        }
+
+        // Get all contract addresses for tokens with balance > 0
+        val contractAddresses = balancesWithSufficientAmount.map { it.contractAddress }
+
+        // Fetch metadata for all these addresses at once
+        val metadataList = tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
+
+        // Extract unique symbols from the metadata
+        val symbolsToFetch = metadataList.map { it.symbol }.distinct()
+
+        if (symbolsToFetch.isEmpty()) {
+            Log.d("fetchAllExchanges", "No symbols could be determined for tokens with balance > 0.")
+            return // No symbols to fetch
+        }
+
+        Log.d("fetchAllExchanges", "Symbols to fetch: ${symbolsToFetch.joinToString()}")
+
+        // API has a 25 symbol limit per call, so chunk the list of symbols
+        val chunkSize = 25
+        symbolsToFetch.chunked(chunkSize).forEach { chunk ->
+            try {
+                fetchExchangeBySymbols(chunk)
+            } catch (e: IOException) {
+                // The fetchExchangeBySymbols method already has its own try-catch.
+                // Log error for this specific chunk.
+                Log.e("fetchAllExchanges", "Error fetching exchange data for chunk ${chunk.joinToString()}", e)
+            }
+        }
     }
 
     override suspend fun fetchExchangeByAddress(address: String) {

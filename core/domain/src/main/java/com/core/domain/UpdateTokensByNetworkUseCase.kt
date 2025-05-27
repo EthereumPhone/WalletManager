@@ -40,13 +40,10 @@ class UpdateTokensByNetworkUseCase @Inject constructor(
         }.first()
 
         withContext(Dispatchers.IO) {
-            Log.d("updating token metadata", "right now")
             tokenMetadataRepository.refreshTokensMetadata(
                 metadataToFetch.map { it.contractAddress },
                 chainId
             )
-
-            Log.d("updating token price", "right now")
             //tokenExchangeRepository.fetchAllExchanges()
         }
     }

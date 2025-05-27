@@ -19,12 +19,7 @@ data class CompositeToken(
     val tokenBalanceEntity: TokenBalanceEntity?,
 )
 
-fun CompositeToken.toExternalModel(): TokenAsset {
-    if (tokenMetadataEntity.symbol == "DEGEN") {
-        println("test")
-    }
-
-    val test = TokenAsset(
+fun CompositeToken.toExternalModel(): TokenAsset = TokenAsset(
         address = tokenMetadataEntity.contractAddress,
         chainId = tokenMetadataEntity.chainId,
         symbol = tokenMetadataEntity.symbol,
@@ -37,12 +32,3 @@ fun CompositeToken.toExternalModel(): TokenAsset {
         logoUrl = tokenMetadataEntity.logo,
         swappable = tokenMetadataEntity.swappable
     )
-
-    if (tokenMetadataEntity.symbol == "DEGEN") {
-        println("test")
-    }
-
-
-    return test
-}
-
