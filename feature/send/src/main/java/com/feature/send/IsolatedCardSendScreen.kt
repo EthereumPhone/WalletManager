@@ -1,5 +1,6 @@
 package com.feature.send
 
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
@@ -91,6 +94,11 @@ import com.core.ui.DgenTextfield
 import com.core.ui.HeaderBar
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.body1_fontSize
+import androidx.compose.ui.draw.scale
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -207,6 +215,15 @@ fun SendScreen2(
     var toValue by remember { mutableStateOf(TextFieldValue("")) }
     var showTokenAmount by remember { mutableStateOf(false) }
 
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
+
 
 
 
@@ -216,11 +233,14 @@ fun SendScreen2(
             .background(dgenBlack),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+
+        AsyncImage(
+            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.1f).aspectRatio(1f),
+            imageLoader = gifEnabledLoader,
+            model = R.drawable.wireframe_globe,
+            contentDescription = null
+        )
+
         AnimatedContent(
             assets,
             transitionSpec = {
