@@ -74,14 +74,35 @@ class DefaultExchangeRepository @Inject constructor(
             return // No balances to process
         }
 
-        // Get all contract addresses for tokens with balance > 0
-        val contractAddresses = balancesWithSufficientAmount.map { it.contractAddress }
+        // Separate network currencies from ERC20 tokens
+        val (networkCurrencies, erc20Tokens) = balancesWithSufficientAmount.partition {
+            !it.contractAddress.startsWith("0x")
+        }
 
-        // Fetch metadata for all these addresses at once
-        val metadataList = tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
+        // Handle network currencies
+        val networkSymbols = networkCurrencies.mapNotNull { balance ->
+            val chainId = balance.contractAddress.toIntOrNull()
+            when (chainId) {
+                137 -> "MATIC"    // Polygon
+                else -> "ETH"      // Unknown chain, skip
+            }
+        }.distinct()
+
+        // Get all contract addresses for ERC20 tokens
+        val contractAddresses = erc20Tokens.map { it.contractAddress }
+
+        // Fetch metadata for ERC20 tokens
+        val metadataList = if (contractAddresses.isNotEmpty()) {
+            tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
+        } else {
+            emptyList()
+        }
 
         // Extract unique symbols from the metadata
-        val symbolsToFetch = metadataList.map { it.symbol }.distinct()
+        val erc20Symbols = metadataList.map { it.symbol }.distinct()
+
+        // Combine network symbols and ERC20 symbols
+        val symbolsToFetch = (networkSymbols + erc20Symbols).distinct()
 
         if (symbolsToFetch.isEmpty()) {
             Log.d("fetchAllExchanges", "No symbols could be determined for tokens with balance > 0.")
