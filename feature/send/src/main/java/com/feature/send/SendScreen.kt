@@ -748,19 +748,6 @@ fun calculateFontSize(length: Int, defaultSize: Int ): TextUnit {
 }
 
 
-fun showCamera(
-    cameraLauncher: ManagedActivityResultLauncher<ScanOptions?, ScanIntentResult?>
-) {
-    val options = ScanOptions()
-    options.setCaptureActivity(ToolbarCaptureActivity::class.java)
-    options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-    options.setPrompt("Scan QR Code")
-    options.setCameraId(0)
-    options.setBeepEnabled(false)
-    options.setOrientationLocked(false)
-    cameraLauncher.launch(options)
-}
-
 @Preview
 @Composable
 fun PreviewSendScreen() {

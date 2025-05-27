@@ -87,7 +87,8 @@
             />
 
         <activity android:name="com.feature.send.ui.ToolbarCaptureActivity"
-            android:screenOrientation="fullSensor">
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.AppCompat.Light">
             <!-- If `ToolbarCaptureActivity` requires specific intent filters, add them here -->
         </activity>
     </application>

@@ -1,7 +1,10 @@
 package com.feature.send
 
+import android.Manifest
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -31,8 +34,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -93,6 +101,13 @@ import androidx.compose.ui.draw.scale
 import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.feature.send.ui.ToolbarCaptureActivity
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
+import org.ethosmobile.components.library.theme.Colors
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -141,7 +156,7 @@ fun SendRoute2(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SendScreen2(
     modifier: Modifier = Modifier,
@@ -199,6 +214,8 @@ fun SendScreen2(
     var toValue by remember { mutableStateOf(TextFieldValue("")) }
     var showTokenAmount by remember { mutableStateOf(false) }
 
+
+    //Loader for GIF
     val gifEnabledLoader = ImageLoader.Builder(context)
         .components {
             if ( SDK_INT >= 28 ) {
@@ -207,6 +224,52 @@ fun SendScreen2(
                 add(GifDecoder.Factory())
             }
         }.build()
+
+
+
+    //Variables for QR Scanner
+    val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            if(result.contents == null) {
+                // Optional: Handle cancelled scan
+            } else {
+                val address = result.contents.removePrefix("ethereum:")
+                onToAddressChanged(address)
+            }
+        }
+    )
+
+    var showCameraWithPerm by remember {
+        mutableStateOf(false)
+    }
+
+    val scanningPermissionsToRequest = listOf(
+        Manifest.permission.CAMERA
+    )
+
+    val multiplePermissionsState = rememberMultiplePermissionsState(
+        permissions = scanningPermissionsToRequest
+    )
+
+    LaunchedEffect(showCameraWithPerm) {
+        if (showCameraWithPerm) {
+            if (multiplePermissionsState.allPermissionsGranted) {
+                showCamera(barCodeLauncher)
+                showCameraWithPerm = false // Reset the state after launching
+            } else {
+                multiplePermissionsState.launchMultiplePermissionRequest()
+            }
+        }
+    }
+
+    // Handle permission result
+    LaunchedEffect(multiplePermissionsState.allPermissionsGranted) {
+        if (showCameraWithPerm && multiplePermissionsState.allPermissionsGranted) {
+            showCamera(barCodeLauncher)
+            showCameraWithPerm = false // Reset the state after launching
+        }
+    }
 
 
 
@@ -415,22 +478,32 @@ fun SendScreen2(
                             view = view
                         ){
 
-                            Text(
-                                text = "Target Address".uppercase(),
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenTurqoise,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = label_fontSize,
-                                    lineHeight = label_fontSize,
-                                    letterSpacing = 1.sp,
-                                    textDecoration = TextDecoration.None,
-                                    textAlign = TextAlign.Left
-                                ),
-                                color = dgenTurqoise
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Target Address".uppercase(),
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = dgenTurqoise,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = label_fontSize,
+                                        lineHeight = label_fontSize,
+                                        letterSpacing = 1.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Left
+                                    ),
+                                    color = dgenTurqoise
+                                )
 
-
+                                IconButton(onClick = {
+                                    Log.d("QRScanner", "QR Scanner button clicked")
+                                    showCameraWithPerm = true
+                                }) {
+                                    Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint= dgenTurqoise, modifier = modifier.size(28.dp))
+                                }
+                            }
                         }
                     }
 //                    Box(
@@ -635,4 +708,22 @@ fun SendScreen2(
 
     }
 
+}
+
+
+fun showCamera(
+    cameraLauncher: ManagedActivityResultLauncher<ScanOptions?, ScanIntentResult?>
+) {
+    try {
+        val options = ScanOptions()
+        options.setCaptureActivity(ToolbarCaptureActivity::class.java)
+        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        options.setPrompt("Scan QR Code")
+        options.setCameraId(0)
+        options.setBeepEnabled(false)
+        options.setOrientationLocked(false)
+        cameraLauncher.launch(options)
+    } catch (e: Exception) {
+        Log.e("QRScanner", "Error launching camera: ${e.message}", e)
+    }
 }
