@@ -93,7 +93,7 @@ fun PayMasterScreen(
             .background(dgenBlack)
             .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
     ){
-        HeaderBar("Gas",onBackClick)
+        HeaderBar(text = "Gas", onClick = onBackClick)
 
         Column(
 
