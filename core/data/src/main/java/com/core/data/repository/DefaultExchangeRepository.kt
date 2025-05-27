@@ -31,21 +31,31 @@ class DefaultExchangeRepository @Inject constructor(
         try {
             val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
 
-            val entities = data.flatMap { response ->
-                response.prices.map { price ->
-                    TokenExchangeEntity(
-                        symbol = response.symbol,
-                        address = null,
-                        chainId = null,
-                        currency = price.currency,
-                        value = price.value.toDouble(),
-                        timestamp = Instant.parse(price.lastUpdatedAt)
-                    )
+            val entities = data
+                .filter { response -> 
+                    // Only process tokens that don't have errors and have price data
+                    response.error == null && response.prices.isNotEmpty()
                 }
-            }
+                .flatMap { response ->
+                    response.prices.map { price ->
+                        TokenExchangeEntity(
+                            symbol = response.symbol,
+                            address = null,
+                            chainId = null,
+                            currency = price.currency,
+                            value = price.value.toDouble(),
+                            timestamp = Instant.parse(price.lastUpdatedAt)
+                        )
+                    }
+                }
 
-            exchangeDao.insertAllExchanges(entities)
-        } catch (e: IOException) {
+            if (entities.isNotEmpty()) {
+                exchangeDao.insertAllExchanges(entities)
+            } else {
+                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $symbols")
+            }
+        } catch (e: Exception) {
+            Log.e("DefaultExchangeRepository", "Error fetching exchange data for symbols: $symbols", e)
             e.printStackTrace()
         }
     }
