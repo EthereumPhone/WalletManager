@@ -12,6 +12,7 @@ import com.core.database.model.erc20.asExternalModel
 import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenMetadata
+import com.squareup.moshi.JsonDataException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -47,16 +48,26 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         val apiKey = chainToApiKey(network.chainName)
 
         withContext(Dispatchers.IO) {
-            val metadataList = contractAddresses.map { address ->
-                Log.d("refreshTokensMetadata",address)
-                tokenMetadataApi
-                    .getTokenMetadata(
-                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
-                        TokenMetadataRequestBody(params = listOf(address))
-                    ).result.asEntity(
+            val metadataList = contractAddresses.mapNotNull { address ->
+                try {
+                    Log.d("refreshTokensMetadata", address)
+                    val response = tokenMetadataApi
+                        .getTokenMetadata(
+                            "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
+                            TokenMetadataRequestBody(params = listOf(address))
+                        )
+                    response.result.asEntity(
                         contractAddress = address,
                         chainId = chainId
                     )
+                } catch (e: com.squareup.moshi.JsonDataException) {
+                    // This happens when the API returns an error object instead of result
+                    Log.w("refreshTokensMetadata", "Token metadata not found for $address: ${e.message}")
+                    null
+                } catch (e: Exception) {
+                    Log.e("refreshTokensMetadata", "Exception fetching metadata for $address", e)
+                    null
+                }
             }
             tokenMetadataDao.upsertTokensMetadata(metadataList)
         }
@@ -66,15 +77,25 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         val apiKey = chainToApiKey(network.chainName)
 
         withContext(Dispatchers.IO) {
-            val metadataList = contractAddresses.map { address ->
-                tokenMetadataApi
-                    .getTokenMetadata(
-                        "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
-                        TokenMetadataRequestBody(params = listOf(address))
-                    ).result.asEntity(
+            val metadataList = contractAddresses.mapNotNull { address ->
+                try {
+                    val response = tokenMetadataApi
+                        .getTokenMetadata(
+                            "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
+                            TokenMetadataRequestBody(params = listOf(address))
+                        )
+                    response.result.asEntity(
                         contractAddress = address,
                         chainId = network.chainId
                     )
+                } catch (e: com.squareup.moshi.JsonDataException) {
+                    // This happens when the API returns an error object instead of result
+                    Log.w("refreshTokensMetadataByNetwork", "Token metadata not found for $address: ${e.message}")
+                    null
+                } catch (e: Exception) {
+                    Log.e("refreshTokensMetadataByNetwork", "Exception fetching metadata for $address", e)
+                    null
+                }
             }
             tokenMetadataDao.upsertTokensMetadata(metadataList)
         }
