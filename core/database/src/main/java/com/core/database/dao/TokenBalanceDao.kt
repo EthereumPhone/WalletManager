@@ -20,16 +20,9 @@ interface TokenBalanceDao {
     fun getTokenBalances(chainId: Int): Flow<List<TokenBalanceEntity>>
 
     @Transaction
-    @Query("SELECT * FROM token_balance")
+    @Query("""SELECT * FROM token_metadata""")
     fun getCompositeTokens(): Flow<List<CompositeToken>>
 
-    @Transaction
-    @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
-    fun getCompositeTokens(chainId: Int): Flow<List<CompositeToken>>
-
-    @Transaction
-    @Query("SELECT * FROM token_balance WHERE contractAddress == :contractAddress")
-    fun getCompositeToken(contractAddress: String): Flow<CompositeToken>
 
     @Upsert
     fun upsertTokenBalances(tokenBalance: List<TokenBalanceEntity>)

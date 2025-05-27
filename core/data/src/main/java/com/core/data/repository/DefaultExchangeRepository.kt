@@ -31,57 +31,96 @@ class DefaultExchangeRepository @Inject constructor(
         try {
             val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
 
-            val entities = data.flatMap { response ->
-                response.prices.map { price ->
-                    TokenExchangeEntity(
-                        symbol = response.symbol,
-                        currency = price.currency,
-                        value = price.value.toDouble(),
-                        timestamp = Instant.parse(price.lastUpdatedAt)
-                    )
+            val entities = data
+                .filter { response -> 
+                    // Only process tokens that don't have errors and have price data
+                    response.error == null && response.prices.isNotEmpty()
                 }
-            }
+                .flatMap { response ->
+                    response.prices.map { price ->
+                        TokenExchangeEntity(
+                            symbol = response.symbol,
+                            address = null,
+                            chainId = null,
+                            currency = price.currency,
+                            value = price.value.toDouble(),
+                            timestamp = Instant.parse(price.lastUpdatedAt)
+                        )
+                    }
+                }
 
-            exchangeDao.insertAllExchanges(entities)
-        } catch (e: IOException) {
+            if (entities.isNotEmpty()) {
+                exchangeDao.insertAllExchanges(entities)
+            } else {
+                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $symbols")
+            }
+        } catch (e: Exception) {
+            Log.e("DefaultExchangeRepository", "Error fetching exchange data for symbols: $symbols", e)
             e.printStackTrace()
         }
     }
 
     override suspend fun fetchAllExchanges() {
-        try {
-            tokenBalanceRepository.getTokensBalances()
-                .collectLatest { tokens ->
-                    val filteredTokens = tokens
-                        .filter { it.tokenBalance.compareTo(BigDecimal.ZERO) != 0 }
+        // Get the latest token balances.
+        // TokenBalanceEntity has 'contractAddress' and 'tokenBalance'
+        val allBalances = tokenBalanceRepository.getTokensBalances().first()
 
-                    val (addresses, networks) = filteredTokens.partition { it.contractAddress.startsWith("0x") }
+        // Filter for balances > 0
+        val balancesWithSufficientAmount = allBalances
+            .filter { it.tokenBalance > BigDecimal.ZERO }
 
+        if (balancesWithSufficientAmount.isEmpty()) {
+            Log.d("fetchAllExchanges", "No token balances greater than zero found.")
+            return // No balances to process
+        }
 
-                    val symbols = tokenMetadataRepository.getTokensMetadata(addresses.map { it.contractAddress })
-                        .first()
-                        .map { it.symbol } + networks.map { network ->
-                        if (network.chainId == 137) "MATIC" else "ETH"
-                    }.distinct() // only fetch eth one time
+        // Separate network currencies from ERC20 tokens
+        val (networkCurrencies, erc20Tokens) = balancesWithSufficientAmount.partition {
+            !it.contractAddress.startsWith("0x")
+        }
 
+        // Handle network currencies
+        val networkSymbols = networkCurrencies.mapNotNull { balance ->
+            val chainId = balance.contractAddress.toIntOrNull()
+            when (chainId) {
+                137 -> "MATIC"    // Polygon
+                else -> "ETH"      // Unknown chain, skip
+            }
+        }.distinct()
 
-                    val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
+        // Get all contract addresses for ERC20 tokens
+        val contractAddresses = erc20Tokens.map { it.contractAddress }
 
-                    val entities = data.flatMap { response ->
-                        response.prices.map { price ->
-                            TokenExchangeEntity(
-                                symbol = response.symbol,
-                                currency = price.currency,
-                                value = price.value.toDouble(),
-                                timestamp = Instant.parse(price.lastUpdatedAt)
-                            )
-                        }
-                    }
+        // Fetch metadata for ERC20 tokens
+        val metadataList = if (contractAddresses.isNotEmpty()) {
+            tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
+        } else {
+            emptyList()
+        }
 
-                    exchangeDao.insertAllExchanges(entities)
-                }
-        } catch (e: IOException) {
-            e.printStackTrace()
+        // Extract unique symbols from the metadata
+        val erc20Symbols = metadataList.map { it.symbol }.distinct()
+
+        // Combine network symbols and ERC20 symbols
+        val symbolsToFetch = (networkSymbols + erc20Symbols).distinct()
+
+        if (symbolsToFetch.isEmpty()) {
+            Log.d("fetchAllExchanges", "No symbols could be determined for tokens with balance > 0.")
+            return // No symbols to fetch
+        }
+
+        Log.d("fetchAllExchanges", "Symbols to fetch: ${symbolsToFetch.joinToString()}")
+
+        // API has a 25 symbol limit per call, so chunk the list of symbols
+        val chunkSize = 25
+        symbolsToFetch.chunked(chunkSize).forEach { chunk ->
+            try {
+                fetchExchangeBySymbols(chunk)
+            } catch (e: IOException) {
+                // The fetchExchangeBySymbols method already has its own try-catch.
+                // Log error for this specific chunk.
+                Log.e("fetchAllExchanges", "Error fetching exchange data for chunk ${chunk.joinToString()}", e)
+            }
         }
     }
 

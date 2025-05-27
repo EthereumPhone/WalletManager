@@ -1,5 +1,9 @@
 package com.core.ui.util
 
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
+
 fun chainIdToName(name: String): String = when(name) {
     "1" -> "Mainnet"
     "11155111" -> "Sepola"
@@ -11,3 +15,5 @@ fun chainIdToName(name: String): String = when(name) {
         "N/A"
     }
 }
+
+

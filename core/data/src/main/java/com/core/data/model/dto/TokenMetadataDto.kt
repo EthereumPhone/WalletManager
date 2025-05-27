@@ -22,7 +22,7 @@ fun TokenMetadataDto.asEntity(
     chainId: Int
 ): TokenMetadataEntity {
     return TokenMetadataEntity(
-        contractAddress = contractAddress,
+        contractAddress = contractAddress.lowercase(),
         name = name,
         decimals = decimals,
         symbol = symbol,

@@ -8,9 +8,12 @@ import com.core.data.remote.TokenBalanceApi
 import com.core.data.util.chainToApiKey
 import com.core.data.util.spamTokens
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.asExternalModule
+import com.core.database.model.erc20.toExternalModel
 import com.core.model.NetworkChain
+import com.core.model.TokenAsset
 import com.core.model.TokenBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,6 +27,12 @@ class AlchemyTokenBalanceRepository @Inject constructor(
     private val tokenBalanceApi: TokenBalanceApi,
     private val tokenBalanceDao: TokenBalanceDao,
 ): TokenBalanceRepository {
+    override fun getTokens(): Flow<List<TokenAsset>> =
+        tokenBalanceDao.getCompositeTokens().map {
+            it.map(CompositeToken::toExternalModel)
+        }
+
+
     override fun getTokensBalances(): Flow<List<TokenBalance>> =
         tokenBalanceDao.getTokenBalances()
             .map { it.map(TokenBalanceEntity::asExternalModule) }

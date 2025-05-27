@@ -132,9 +132,7 @@ fun SendRoute2(
         sendTransaction = viewModel::send,
         txComplete = txComplete,
         tokenId = tokenId,
-        tokenData = tokenData,
-        loadSymbol = viewModel::loadSymbol
-
+        tokenData = tokenData
     )
 }
 
@@ -145,7 +143,7 @@ fun SendScreen2(
     toAddress: String,
     amount: String,
     walletDataUiState: WalletDataUiState,
-    assets: AssetUiState,
+    assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (() -> Unit) -> Unit,
@@ -154,8 +152,7 @@ fun SendScreen2(
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
-    tokenData:  List<TokenData>,
-    loadSymbol: (List<String>) -> Unit,
+    tokenData:  List<TokenData>
 ){
 
     val context = LocalContext.current

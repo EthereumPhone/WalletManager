@@ -46,7 +46,7 @@ class SeedUniswapTokensWorker @AssistedInject constructor(
             val list = buildTokenList(appContext, "1.0.0")
             val tokens = list.uniswapTokens.map { token ->
                 TokenMetadataEntity(
-                    contractAddress = token.address,
+                    contractAddress = token.address.lowercase(),
                     decimals = token.decimals,
                     name = token.name,
                     symbol = token.symbol,

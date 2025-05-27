@@ -1,15 +1,20 @@
 package com.core.data.model.dto
 
-import kotlinx.serialization.Serializable
+import com.squareup.moshi.JsonClass
 
-@Serializable
+@JsonClass(generateAdapter = true)
 data class NetworkTokenExchange(
     val symbol: String,
     val prices: List<PriceResponse>,
-    val error: String?
+    val error: TokenPriceError? = null
 )
 
-@Serializable
+@JsonClass(generateAdapter = true)
+data class TokenPriceError(
+    val message: String
+)
+
+@JsonClass(generateAdapter = true)
 data class PriceResponse(
     val currency: String,
     val value: String,

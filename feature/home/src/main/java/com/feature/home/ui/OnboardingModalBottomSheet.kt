@@ -41,10 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.data.model.dto.Contact
 import com.core.model.TokenAsset
+import com.core.ui.util.formatDouble
 import com.feature.home.AssetsUiState
 import com.feature.home.R
 import com.feature.home.WalletDataUiState
-import com.feature.home.formatDouble
 import com.feature.home.util.OnboardingItem
 import org.ethosmobile.components.library.core.ethOSButton
 import org.ethosmobile.components.library.core.ethOSListItem

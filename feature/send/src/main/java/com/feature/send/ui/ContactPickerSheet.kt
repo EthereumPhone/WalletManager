@@ -35,7 +35,6 @@ import coil.compose.rememberImagePainter
 import com.core.data.model.dto.Contact
 import com.core.model.TokenAsset
 import com.core.ui.WmListItem
-import com.feature.send.AssetUiState
 import com.feature.send.R
 import org.ethosmobile.components.library.theme.Colors
 import org.ethosmobile.components.library.theme.Fonts

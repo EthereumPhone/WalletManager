@@ -1,15 +1,13 @@
 package com.example.assets
 
 import android.util.Log
-import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.spamTokens
 import com.core.datastore.ExclusionListManager
-import com.core.datastore.proto.ExclusionListProto
-import com.core.domain.GetTokenBalancesWithMetadataUseCase
+import com.core.domain.GetAllTokensUsecase
 import com.core.domain.UpdateTokensUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -32,9 +30,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
+
+
 @HiltViewModel
 class AssetViewModel @Inject constructor(
-    getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
+    getAllTokensUsecase: GetAllTokensUsecase,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val updateTokensUseCase: UpdateTokensUseCase,
     private val userDataRepository: UserDataRepository,
@@ -67,16 +67,6 @@ class AssetViewModel @Inject constructor(
     )
 
 
-    val tokenAssetState: StateFlow<AssetUiState> =
-        assetUiState(
-            getTokenBalancesWithMetadataUseCase,
-            networkBalanceRepository
-        ).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetUiState.Loading
-        )
-
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
@@ -100,73 +90,6 @@ class AssetViewModel @Inject constructor(
 
 }
 
-fun assetUiState(
-    getTokenBalancesWithMetadataUseCase: GetTokenBalancesWithMetadataUseCase,
-    networkBalanceRepository: NetworkBalanceRepository
-): Flow<AssetUiState> {
-
-    // observe erc20 tokens
-    val erc20Tokens: Flow<List<TokenAsset>> =
-        getTokenBalancesWithMetadataUseCase().flowOn(Dispatchers.IO)
-
-    // observe network currency
-    val networkToken: Flow<List<TokenAsset>> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = if(name.contains("POLYGON")) "matic" else "eth",
-                        name = if(name.contains("POLYGON")) "matic" else "eth",
-                        balance = it.tokenBalance.toDouble(),
-                        logoUrl = "",
-                        decimals = 18
-                    )
-                }
-            }.flowOn(Dispatchers.IO)
-
-    val res = combine(
-        erc20Tokens,
-        networkToken,
-        ::Pair
-    ).asResult()
-        .map { tokenToTokeResult ->
-            when(tokenToTokeResult) {
-                is Result.Success -> {
-                    val (tokens, networkTokens) = tokenToTokeResult.data
-                    val filteredAssets = networkTokens.filter { it.balance != 0.0 } + tokens.filter { it.balance != 0.0 }.filter { it.address !in spamTokens }
-                    if(filteredAssets.isEmpty()) {
-                        AssetUiState.Empty
-                    } else {
-
-                        AssetUiState.Success(filteredAssets
-                            .filter { it.chainId != 5 }
-                            .groupBy { it.symbol }
-                        )
-                    }
-                }
-                is Result.Loading -> {
-                    AssetUiState.Loading
-                }
-                is Result.Error -> {
-                    AssetUiState.Error
-                }
-            }
-        }
-
-    return res
-}
-
-sealed interface AssetUiState {
-    object Loading: AssetUiState
-    object Error: AssetUiState
-    object Empty: AssetUiState
-    data class Success(
-        val assets: Map<String, List<TokenAsset>>
-    ): AssetUiState
-}
 
 sealed interface WalletDataUiState {
     object Loading: WalletDataUiState

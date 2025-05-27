@@ -3,8 +3,8 @@ package com.core.data.remote
 import androidx.tracing.trace
 import com.core.data.BuildConfig
 import com.core.data.model.dto.NetworkTokenExchange
+import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -22,6 +22,7 @@ private interface TokenPriceApi {
         @Query("symbols") symbols: List<String>
     ): NetworkResponse<List<NetworkTokenExchange>>
 
+    //FIX: This won't work.
     @GET("/prices/v1/{apiKey}/tokens/by-address")
     suspend fun getTokenPrice(
         @Path("apiKey") apiKey: String,
@@ -30,7 +31,7 @@ private interface TokenPriceApi {
     ): NetworkResponse<List<NetworkTokenExchange>>
 }
 
-@Serializable
+@JsonClass(generateAdapter = true)
 private data class NetworkResponse<T>(
     val data: T
 )
@@ -52,8 +53,10 @@ class RetrofitTokenPrice @Inject constructor(
             .create(TokenPriceApi::class.java)
     }
 
-    override suspend fun fetchTokenPriceByAddresses(addresses: List<String>): List<NetworkTokenExchange> {
-        TODO("Not yet implemented")
+    override suspend fun fetchTokenPriceByAddresses(
+        networks: List<String>,
+        addresses: List<String>): List<NetworkTokenExchange> {
+        TODO()
     }
 
     override suspend fun fetchTokenPriceBySymbols(symbols: List<String>): List<NetworkTokenExchange> =
