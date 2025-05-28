@@ -7,6 +7,7 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -51,6 +52,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,12 +108,15 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.ui.BottomBarButton
+import com.example.dgenlibrary.ui.theme.smallDuration
 import com.feature.send.ui.ToolbarCaptureActivity
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlinx.coroutines.delay
 import org.ethosmobile.components.library.theme.Colors
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -180,6 +185,13 @@ fun SendScreen2(
     tokenData:  List<TokenData>
 ){
 
+
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val view = LocalView.current
+    val scope = rememberCoroutineScope()
+
+
     var rotated by remember { mutableStateOf(false) }
 
     val rotation by animateFloatAsState(
@@ -226,8 +238,9 @@ fun SendScreen2(
 
 
     var amount by remember { mutableStateOf(TextFieldValue("")) }
+    var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
     var toValue by remember { mutableStateOf(TextFieldValue("")) }
-    var showTokenAmount by remember { mutableStateOf(false) }
+    var useDollarAmount by remember { mutableStateOf(false) }
 
 
     //Loader for GIF
@@ -315,128 +328,198 @@ fun SendScreen2(
         ) { assetsUiState ->
 
             when(assetsUiState){
-                AssetsUiState.Empty -> {
-                    Column (
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(bottom = 24.dp)
-                    ){
-                        HeaderBar(content = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                                Image(
-                                    modifier = Modifier
-                                        .size(28.dp),
-                                    painter = painterResource(R.drawable.ethereum_placeholder),
-                                    contentDescription = "Ethereum"
-                                )
-                                Text(
-                                    text = "ETH",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                            }
-                        }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
-
-
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 24.dp, end = 24.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-
-                                    Column(
-                                        modifier = Modifier
-                                            .drawBehind {
-                                                drawLine(
-                                                    color = dgenGray.copy(0.5f),
-                                                    start = Offset(0f, 15f),
-                                                    end = Offset(0f, size.height-0f),
-                                                    strokeWidth = 8.dp.toPx()
-                                                )
-                                            }
-                                            .padding(start = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-
-                                    ) {
-                                        TextToggle(
-                                            Modifier.offset(x = 2.dp, y=2.dp),"ETH", "$",
-                                            onToggle = {
-                                                showTokenAmount = !showTokenAmount
-                                            },
-                                            value = showTokenAmount
+                AssetUiState.Empty -> {
+                    Box(
+                        Modifier.fillMaxSize()
+                    ) {
+                        Column (
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            modifier = modifier
+                                .fillMaxSize()
+                                .padding(bottom = 24.dp)
+                        ){
+                            HeaderBar(content = {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "SEND",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = dgenTurqoise,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 24.sp,
+                                            letterSpacing = 0.sp,
+                                            textDecoration = TextDecoration.None
                                         )
-                                        Row(
-                                            Modifier.fillMaxWidth(),
-                                        ){
-                                            DgenBasicTextfield(
-                                                value = amount,
-                                                onValueChange={ new -> 
-                                                    // Check if the new value contains more than one dot
-                                                    val dotCount = new.text.count { it == '.' }
-                                                    if (dotCount <= 1) {
-                                                        amount = new
-                                                    }
-                                                },
-                                                maxLines = 1,
-                                                maxLength = 15,
-                                                placeholder = {
-                                                    Row (
-                                                        Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.Start
-                                                    ){
-                                                        Text(
-                                                            modifier = Modifier,
-                                                            text = "0.0",
-                                                            style = TextStyle(
-                                                                fontFamily = PitagonsSans,
-                                                                color = dgenGray,
-                                                                fontWeight = FontWeight.SemiBold,
-                                                                fontSize = 42.sp,
-                                                                textAlign = TextAlign.Start
-                                                            ),
-                                                        )
-                                                    }
+                                    )
+                                    Image(
+                                        modifier = Modifier
+                                            .size(28.dp),
+                                        painter = painterResource(R.drawable.ethereum_placeholder),
+                                        contentDescription = "Ethereum"
+                                    )
+                                    Text(
+                                        text = "ETH",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = dgenTurqoise,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 24.sp,
+                                            letterSpacing = 0.sp,
+                                            textDecoration = TextDecoration.None
+                                        )
+                                    )
+                                }
+                            }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
 
-                                                },
-                                                textStyle = TextStyle(
-                                                    fontFamily = PitagonsSans,
-                                                    color = dgenWhite,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 42.sp,
-                                                    textAlign = TextAlign.Start
-                                                ),
-                                                keyboardtype =  KeyboardType.Number,
-                                                cursorWidth = 24.dp,
-                                                cursorHeight= 32.dp,
-                                                isAnyFieldFocused= remember { mutableStateOf(false) },
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 24.dp, end = 24.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+
+                                Column(
+                                    modifier = Modifier
+                                        .drawBehind {
+                                            drawLine(
+                                                color = dgenGray.copy(0.5f),
+                                                start = Offset(0f, 15f),
+                                                end = Offset(0f, size.height-0f),
+                                                strokeWidth = 8.dp.toPx()
                                             )
                                         }
+                                        .padding(start = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
 
+                                ) {
+                                    TextToggle(
+                                        Modifier.offset(x = 2.dp, y=2.dp),"ETH", "$",
+                                        onToggle = {
+                                            useDollarAmount = !useDollarAmount
+                                            scope.launch{
+                                                delay(200)
+                                                dollarAmount = TextFieldValue("")
+                                                amount = TextFieldValue("")
+                                            }
+
+                                        },
+                                        value = useDollarAmount
+                                    )
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                    ){
+                                        Crossfade(
+                                            useDollarAmount,
+                                            animationSpec = tween(smallDuration),
+                                        ) { usedollar ->
+                                            if(usedollar){
+                                                DgenBasicTextfield(
+                                                    value = dollarAmount,
+                                                    onValueChange={ new ->
+                                                        // Check if the new value contains more than one dot
+                                                        val dotCount = new.text.count { it == '.' }
+                                                        if (dotCount <= 1) {
+                                                            dollarAmount = new
+                                                        }
+                                                    },
+                                                    maxLines = 1,
+                                                    maxLength = 15,
+                                                    placeholder = {
+                                                        Row (
+                                                            Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.Start
+                                                        ){
+                                                            Text(
+                                                                modifier = Modifier,
+                                                                text =  buildAnnotatedString {
+                                                                    withStyle(
+                                                                        style = SpanStyle(
+                                                                            fontFamily = PitagonsSans,
+                                                                            color = dgenGray,
+                                                                            fontWeight = FontWeight.SemiBold,
+                                                                            fontSize = 39.sp,
+                                                                        )
+                                                                    ){
+                                                                        append("\$")
+                                                                    }
+                                                                    append("0.0")
+                                                                },
+                                                                style = TextStyle(
+                                                                    fontFamily = PitagonsSans,
+                                                                    color = dgenGray,
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    fontSize = 42.sp,
+                                                                    textAlign = TextAlign.Start
+                                                                ),
+                                                            )
+                                                        }
+
+                                                    },
+                                                    textStyle = TextStyle(
+                                                        fontFamily = PitagonsSans,
+                                                        color = dgenWhite,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 42.sp,
+                                                        textAlign = TextAlign.Start
+                                                    ),
+                                                    keyboardtype =  KeyboardType.Number,
+                                                    cursorWidth = 24.dp,
+                                                    cursorHeight= 32.dp,
+                                                    isAnyFieldFocused= remember { mutableStateOf(false) },
+                                                )
+                                            }else{
+                                                DgenBasicTextfield(
+                                                    value = amount,
+                                                    onValueChange={ new ->
+                                                        // Check if the new value contains more than one dot
+                                                        val dotCount = new.text.count { it == '.' }
+                                                        if (dotCount <= 1) {
+                                                            amount = new
+                                                        }
+                                                    },
+                                                    maxLines = 1,
+                                                    maxLength = 15,
+                                                    placeholder = {
+                                                        Row (
+                                                            Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.Start
+                                                        ){
+                                                            Text(
+                                                                modifier = Modifier,
+                                                                text = "0.0",
+                                                                style = TextStyle(
+                                                                    fontFamily = PitagonsSans,
+                                                                    color = dgenGray,
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    fontSize = 42.sp,
+                                                                    textAlign = TextAlign.Start
+                                                                ),
+                                                            )
+                                                        }
+
+                                                    },
+                                                    textStyle = TextStyle(
+                                                        fontFamily = PitagonsSans,
+                                                        color = dgenWhite,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 42.sp,
+                                                        textAlign = TextAlign.Start
+                                                    ),
+                                                    keyboardtype =  KeyboardType.Number,
+                                                    cursorWidth = 24.dp,
+                                                    cursorHeight= 32.dp,
+                                                    isAnyFieldFocused= remember { mutableStateOf(false) },
+                                                )
+                                            }
+                                            
+                                        }
                                     }
+
+                                }
 
 
                                 // Sample list
@@ -455,117 +538,157 @@ fun SendScreen2(
 
                             }
 
-                        DgenTextfield(
-                            value = toValue,
-                            maxLines = 4,
-                            maxLength = 42,
-                            scrollHorizontally = false,
-                            onValueChange={ new -> toValue = new},
-                            textStyle = TextStyle(
-                                fontFamily = PitagonsSans,
-                                color = dgenWhite,
-                                fontWeight = FontWeight. SemiBold,
-                                fontSize = 25.sp
-                            ),
-                            placeholder = {
-                                Row (
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Start
-                                ){
+                            DgenTextfield(
+                                value = toValue,
+                                maxLines = 4,
+                                maxLength = 42,
+                                scrollHorizontally = false,
+                                onValueChange={ new -> toValue = new},
+                                textStyle = TextStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = dgenWhite,
+                                    fontWeight = FontWeight. SemiBold,
+                                    fontSize = 25.sp
+                                ),
+                                placeholder = {
+                                    Row (
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Start
+                                    ){
+                                        Text(
+                                            modifier = Modifier,
+                                            text = "Address",
+                                            style = TextStyle(
+                                                fontFamily = PitagonsSans,
+                                                color = dgenGray,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 24.sp
+                                            ),
+                                        )
+                                    }
+
+                                },
+                                keyboardtype =  KeyboardType.Text,
+                                cursorWidth = 16.dp,
+                                cursorHeight= 32.dp,
+                                isAnyFieldFocused= remember { mutableStateOf(false) },
+                                onEditDone = {},
+                                view = view
+                            ){
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
                                     Text(
-                                        modifier = Modifier,
-                                        text = "Address",
+                                        text = "Target Address".uppercase(),
                                         style = TextStyle(
-                                            fontFamily = PitagonsSans,
-                                            color = dgenGray,
+                                            fontFamily = SpaceMono,
+                                            color = dgenTurqoise,
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 24.sp
+                                            fontSize = label_fontSize,
+                                            lineHeight = label_fontSize,
+                                            letterSpacing = 1.sp,
+                                            textDecoration = TextDecoration.None,
+                                            textAlign = TextAlign.Left
                                         ),
+                                        color = dgenTurqoise
                                     )
+                                    IconButton(onClick = {
+                                        showCameraWithPerm = true
+                                    }) {
+                                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan", tint= dgenTurqoise, modifier = modifier.size(24.dp))
+                                    }
                                 }
 
-                            },
-                            keyboardtype =  KeyboardType.Text,
-                            cursorWidth = 16.dp,
-                            cursorHeight= 32.dp,
-                            isAnyFieldFocused= remember { mutableStateOf(false) },
-                            onEditDone = {},
-                            view = LocalView.current
-                        ){
+//                        Row(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .background(dgenBlack).align(Alignment.BottomCenter)
+//                                .padding(start=8.dp, end=8.dp, top=8.dp),
+//                            horizontalArrangement = Arrangement.Center
+//                        ) {
+//                            BottomBarButton(
+//                                onClick = {
+//                                    Log.d("QRScanner", "QR Scanner button clicked")
+//                                    showCameraWithPerm = true
+//                                },
+//                                icon = {
+//                                    Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint= dgenTurqoise, modifier = modifier.size(28.dp))
+//                                },
+//                                text = "Log"
+//                            )
+//                        }
+                    }
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
+//                    Box(
+//                        modifier = modifier.fillMaxSize(),
+//                        contentAlignment = Alignment.Center
+//                    ){
+//                            Text(
+//                                text = "EMPTY",
+//                                style = TextStyle(
+//                                    fontFamily = PitagonsSans,
+//                                    color = dgenGunMetal,
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontSize = 24.sp,
+//                                    letterSpacing = 0.sp,
+//                                    textDecoration = TextDecoration.None,
+//                                    textAlign = TextAlign.Center
+//                                ),
+//                                modifier = Modifier.width(300.dp)
+//                            )
+//                    }
+
+                }
+                AssetUiState.Error -> {
+                    Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(
+                            text = "ERROR",
+                            style = TextStyle(
+                                fontFamily = PitagonsSans,
+                                color = dgenGunMetal,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 24.sp,
+                                letterSpacing = 0.sp,
+                                textDecoration = TextDecoration.None,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = Modifier.width(300.dp)
+                        )
+                    }
+                }
+                AssetUiState.Loading -> {
+                    Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        DgenLoadingMatrix()
+                    }
+                }
+                is AssetUiState.Success -> {
+                    Column (
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                    ){
+                        HeaderBar(content = {
+                            Row {
                                 Text(
-                                    text = "Target Address".uppercase(),
+                                    text = "SEND",
                                     style = TextStyle(
                                         fontFamily = SpaceMono,
                                         color = dgenTurqoise,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = label_fontSize,
-                                        lineHeight = label_fontSize,
-                                        letterSpacing = 1.sp,
-                                        textDecoration = TextDecoration.None,
-                                        textAlign = TextAlign.Left
-                                    ),
-                                    color = dgenTurqoise
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 24.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
                                 )
-
-                                IconButton(onClick = {
-                                    Log.d("QRScanner", "QR Scanner button clicked")
-                                    showCameraWithPerm = true
-                                }) {
-                                    Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint= dgenTurqoise, modifier = modifier.size(28.dp))
-                                }
-                            }
-                        }
-                        
-
-
-
-
-            Row(
-                modifier = Modifier,
-                horizontalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-
-                IconButton(
-                    modifier = modifier.size(56.dp),
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = dgenRed,
-                        disabledContainerColor = dgenGray,
-                        disabledContentColor = dgenBlack
-                    ),
-                    onClick =  onBackClick,
-                ){
-                    Icon(
-                        modifier = Modifier.size(36.dp),
-                        painter = painterResource(R.drawable.baseline_close_24),
-                        contentDescription = "Send Icon",
-                        tint = dgenRed
-                    )
-                }
-
-                IconButton(
-                    modifier = modifier.size(56.dp),
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = dgenTurqoise,
-                        disabledContainerColor = dgenGray,
-                        disabledContentColor = dgenBlack
-                    ),
-                    onClick = {
-                        Log.d("SEND TX vor","$testaddress - ${testamount}  ")
-                        Log.d("SEND TX nach","$testaddress - ${testamount}  ")
-                        Log.d("SEND TX nach nach","$toAddress - ${amount}")
-                        //g.d("SEND TX nach","$toAddress - ${amount.toDouble()}  ")
-
-                        when(assets){
-
-                            AssetsUiState.Empty -> {
-
                             }
                             AssetsUiState.Error -> {
 
