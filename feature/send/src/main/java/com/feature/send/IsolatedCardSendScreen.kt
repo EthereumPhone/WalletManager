@@ -120,10 +120,17 @@ import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 import org.ethosmobile.components.library.theme.Colors
 import android.widget.Toast
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -256,6 +263,23 @@ fun SendScreen2(
     LaunchedEffect(toAddress) {
         if (toAddress != toValue.text) {
             toValue = TextFieldValue(toAddress)
+        }
+    }
+    
+    // Lade Wechselkurse für ausgewähltes Token
+    LaunchedEffect(selectedToken) {
+        when (selectedToken) {
+            is SelectedTokenUiState.Selected -> {
+                val symbols = listOf(
+                    selectedToken.tokenAsset.symbol.uppercase(),
+                    "ETH" // Lade auch ETH für Vergleichszwecke
+                )
+                loadSymbol(symbols)
+            }
+            else -> {
+                // Lade ETH Wechselkurs wenn kein Token ausgewählt ist
+                loadSymbol(listOf("ETH"))
+            }
         }
     }
 
@@ -760,71 +784,164 @@ fun SendScreen2(
 
                             }
 
-                            DgenTextfield(
-                                value = toValue,
-                                maxLines = 4,
-                                maxLength = 42,
-                                scrollHorizontally = false,
-                                onValueChange={ new -> 
-                                    toValue = new
-                                    onToAddressChanged(new.text)
-                                },
-                                textStyle = TextStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = dgenWhite,
-                                    fontWeight = FontWeight. SemiBold,
-                                    fontSize = 25.sp
-                                ),
-                                placeholder = {
-                                    Row (
-                                        Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Start
-                                    ){
+
+                                DgenTextfield(
+                                    value = toValue,
+                                    maxLines = 4,
+                                    maxLength = 42,
+                                    scrollHorizontally = false,
+                                    onValueChange = { new ->
+                                        toValue = new
+                                        onToAddressChanged(new.text)
+                                    },
+                                    textStyle = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenWhite,
+                                        fontWeight = FontWeight. SemiBold,
+                                        fontSize = 25.sp
+                                    ),
+                                    placeholder = {
+                                        Row (
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Start
+                                        ){
+                                            Text(
+                                                modifier = Modifier,
+                                                text = "Address",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenGray,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp
+                                                ),
+                                            )
+                                        }
+
+                                    },
+                                    keyboardtype =  KeyboardType.Text,
+                                    cursorWidth = 16.dp,
+                                    cursorHeight= 32.dp,
+                                    isAnyFieldFocused= remember { mutableStateOf(false) },
+                                    onEditDone = {},
+                                    view = view
+                                ){
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
                                         Text(
-                                            modifier = Modifier,
-                                            text = "Address",
+                                            text = "Target Address".uppercase(),
                                             style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenGray,
+                                                fontFamily = SpaceMono,
+                                                color = dgenTurqoise,
                                                 fontWeight = FontWeight.SemiBold,
-                                                fontSize = 24.sp
+                                                fontSize = label_fontSize,
+                                                lineHeight = label_fontSize,
+                                                letterSpacing = 1.sp,
+                                                textDecoration = TextDecoration.None,
+                                                textAlign = TextAlign.Left
                                             ),
+                                            color = dgenTurqoise
                                         )
+                                        IconButton(onClick = {
+                                            showCameraWithPerm = true
+                                        }) {
+                                            Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan", tint= dgenTurqoise, modifier = modifier.size(24.dp))
+                                        }
                                     }
 
-                                },
-                                keyboardtype =  KeyboardType.Text,
-                                cursorWidth = 16.dp,
-                                cursorHeight= 32.dp,
-                                isAnyFieldFocused= remember { mutableStateOf(false) },
-                                onEditDone = {},
-                                view = view
-                            ){
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Text(
-                                        text = "Target Address".uppercase(),
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = label_fontSize,
-                                            lineHeight = label_fontSize,
-                                            letterSpacing = 1.sp,
-                                            textDecoration = TextDecoration.None,
-                                            textAlign = TextAlign.Left
-                                        ),
-                                        color = dgenTurqoise
-                                    )
-                                    IconButton(onClick = {
-                                        showCameraWithPerm = true
-                                    }) {
-                                        Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan", tint= dgenTurqoise, modifier = modifier.size(24.dp))
-                                    }
                                 }
 
+
+
+
+                            Surface(
+                                color = dgenTurqoise,
+                                shape = CircleShape,
+                                modifier = modifier.padding(start = 24.dp)
+                                    .animateContentSize()
+                                    .border(1.dp, dgenTurqoise, CircleShape).pointerInput(Unit){
+                                        detectTapGestures {
+                                            // Hole den aktuellen Dollar-Betrag und Token-Symbol
+                                            val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
+                                            val currentTokenAmount = if (!useDollarAmount) amount.text else ""
+                                            
+                                            val tokenSymbol = when (selectedToken) {
+                                                is SelectedTokenUiState.Selected -> {
+                                                    selectedToken.tokenAsset.symbol.uppercase()
+                                                }
+                                                else -> {
+                                                    "ETH"
+                                                }
+                                            }
+                                            
+                                            // Zeige Toast mit beiden Beträgen
+                                            if (useDollarAmount && currentDollarAmount.isNotEmpty()) {
+                                                // Wenn Dollar-Modus aktiv ist, konvertiere zu Token
+                                                convertDollarToToken(currentDollarAmount, tokenSymbol)
+                                            } else if (!useDollarAmount && currentTokenAmount.isNotEmpty()) {
+                                                // Wenn Token-Modus aktiv ist, berechne Dollar-Wert
+                                                scope.launch {
+                                                    try {
+                                                        val tokenAmount = currentTokenAmount.toDoubleOrNull() ?: return@launch
+                                                        
+                                                        // Finde den aktuellen Wechselkurs
+                                                        val currentPrice = tokenData.find { 
+                                                            it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                        }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                        
+                                                        if (currentPrice != null) {
+                                                            val dollarValue = tokenAmount * currentPrice
+                                                            val decimalFormat = DecimalFormat("#.##")
+                                                            withContext(Dispatchers.Main) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "$currentTokenAmount $tokenSymbol = $${decimalFormat.format(dollarValue)}",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                            }
+                                                        } else {
+                                                            withContext(Dispatchers.Main) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "$currentTokenAmount $tokenSymbol (Wechselkurs wird geladen...)",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                            }
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        withContext(Dispatchers.Main) {
+                                                            Toast.makeText(
+                                                                context,
+                                                                "$currentTokenAmount $tokenSymbol",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                // Wenn kein Betrag eingegeben wurde
+                                                Toast.makeText(
+                                                    context,
+                                                    "Bitte geben Sie einen Betrag ein",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    },
+                                ){
+                                Text(text= "SEND", color = dgenOcean ,
+                                    modifier = modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                                    style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenOcean,
+                                    fontWeight = FontWeight. SemiBold,
+                                    fontSize = 18.sp
+                                ))
+                            }
+
+
+                        }
 //                        Row(
 //                            modifier = Modifier
 //                                .fillMaxWidth()

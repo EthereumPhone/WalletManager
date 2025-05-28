@@ -2,6 +2,7 @@ package com.core.ui
 
 import android.annotation.SuppressLint
 import android.text.Layout
+import android.util.Log
 import android.view.View
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -112,10 +113,10 @@ fun DgenTextfield(
     val focusManager = textfieldFocusManager ?: LocalFocusManager.current
 
 
-    val backgroundColor by animateColorAsState(
+    val animatedBackgroundColor by animateColorAsState(
         targetValue = if (isFocused) backgroundColor else Color.Transparent,
-        animationSpec = tween(durationMillis = 500),
-        label = "backgroundColor" // Dauer der Animation in Millisekunden
+        animationSpec = tween(durationMillis = 300),
+        label = "backgroundColor"
     )
 
     val haptics = LocalHapticFeedback.current
@@ -127,18 +128,17 @@ fun DgenTextfield(
             .clip(shape)
             .drawBehind {
                 drawRect(
-                    color = backgroundColor, // Farbe des Rechtecks
-                    size = size, // Füllt den gesamten Platz aus
-                    topLeft = Offset(0f, 0f), // Startposition
+                    color = animatedBackgroundColor,
+                    size = size,
+                    topLeft = Offset(0f, 0f),
                     alpha = 0.2f
                 )
-                
-                drawLine(
-                    color = backgroundColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(0f, size.height),
-                    strokeWidth = 2f
-                )
+//                drawLine(
+//                    color = animatedBackgroundColor,
+//                    start = Offset(0f, 0f),
+//                    end = Offset(0f, size.height),
+//                    strokeWidth = 2f
+//                )
             }
             .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)
             .pointerInput(Unit) {
@@ -184,15 +184,7 @@ fun DgenTextfield(
                 .animateContentSize()
                 .fillMaxWidth()
                 .heightIn(max=600.dp)
-                .padding(end = 32.dp)
-                .onFocusChanged { focusState ->
-                    if (isFocused && !focusState.isFocused) {
-                        // Send Toast when losing focus
-                        onEditDone()
-                    }
-                    isFocused = focusState.isFocused
-                }
-            ,
+                .padding(end = 32.dp),
             textStyle = textStyle,
             enabled = enabled,
             readOnly = readOnly,
@@ -206,7 +198,16 @@ fun DgenTextfield(
             cursorWidth = cursorWidth,
             cursorHeight = cursorHeight,
             placeholder = placeholder,
-            isAnyFieldFocused = isAnyFieldFocused
+            isAnyFieldFocused = isAnyFieldFocused,
+            onFocusChanged = { focusState ->
+                if (isFocused && !focusState) {
+                    // Send Toast when losing focus
+                    onEditDone()
+                }
+                Log.d("DEBUG","isFocused: $isFocused - focusState: $focusState")
+                isFocused = focusState
+                Log.d("DEBUG","After- isFocused: $isFocused - focusState: $focusState")
+            }
         )
 
     }
@@ -240,6 +241,7 @@ fun DgenBasicTextfield(
         fontSize = body2_fontSize
     ),
     placeholder: @Composable() (() -> Unit)? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
@@ -400,6 +402,7 @@ fun DgenBasicTextfield(
                 .onFocusChanged { 
                     isFocused = it.isFocused 
                     isAnyFieldFocused.value = it.isFocused
+                    onFocusChanged?.invoke(it.isFocused)
                 },
             visualTransformation = visualTransformation,
             cursorBrush = SolidColor(Color.Unspecified),
