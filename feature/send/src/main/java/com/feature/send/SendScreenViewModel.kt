@@ -15,6 +15,7 @@ import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,6 +47,8 @@ import java.text.DecimalFormat
 import kotlin.collections.filter
 import kotlin.collections.first
 import kotlin.collections.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
@@ -56,7 +59,8 @@ class SendViewModel @Inject constructor(
     private val sendRepository: SendRepository,
     private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
-    private val ensApi: EnsApi
+    private val ensApi: EnsApi,
+    @ApplicationContext private val context: Context
 ): ViewModel()
 {
 
@@ -437,6 +441,55 @@ class SendViewModel @Inject constructor(
         val bd = BigDecimal(balance)
         val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
         return rounded.toDouble()
+    }
+
+    fun convertDollarToToken(dollarAmount: String, tokenSymbol: String) {
+        viewModelScope.launch {
+            try {
+                val dollarValue = dollarAmount.toDoubleOrNull() ?: return@launch
+                
+                // Hole den aktuellen Wechselkurs für das Token
+                tokenExchangeRepository.getLatestExchange(tokenSymbol)
+                    .first()
+                    ?.let { exchange ->
+                        // exchange.value ist der Preis für 1 Token in USD
+                        val tokenAmount = dollarValue / exchange.value
+                        
+                        // Formatiere das Ergebnis
+                        val decimalFormat = DecimalFormat("#.######")
+                        val formattedAmount = decimalFormat.format(tokenAmount)
+                        
+                        // Zeige Toast
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                "$${dollarAmount} = $formattedAmount $tokenSymbol",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        
+                        // Update den amount Wert
+                        updateAmount(formattedAmount)
+                    } ?: run {
+                        // Falls kein Wechselkurs gefunden wurde
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                "Kein Wechselkurs für $tokenSymbol gefunden",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Fehler bei der Umrechnung: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
     }
 
 }

@@ -75,6 +75,7 @@ import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
+import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.ui.TokenCardCarousel
 import kotlin.reflect.KSuspendFunction1
 
@@ -312,21 +313,8 @@ fun HomeScreen2(
             ) { assetState ->
                 when(assetState){
                     is AssetsUiState.Empty -> {
-//                        EmptyHomeScreen(
-//                            gifEnabledLoader = gifEnabledLoader
-//                        )
-                        Log.d("DEBUG","AssetsUiState.EMPTY")
-                        TokenCardCarousel(
-                            modifier = Modifier.padding(bottom = 24.dp),
-                            assets = testTokenAssets,
-                            tokenData = tokenData,
-                            tokenMetadata = tokenMetadata,
-                            loadSymbol = loadSymbol,
-                            navigateToSend = navigateToSend,
-                            selectedTokenUiState = selectedTokenUiState,
-                            setSelectedToken = setSelectedTokenId,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedContentScope = animatedContentScope,
+                        EmptyHomeScreen(
+                            gifEnabledLoader = gifEnabledLoader
                         )
                     }
                     is AssetsUiState.Error -> {
