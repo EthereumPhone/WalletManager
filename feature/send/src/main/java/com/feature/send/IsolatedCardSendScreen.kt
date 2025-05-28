@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.Icon
@@ -118,6 +119,10 @@ import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 import org.ethosmobile.components.library.theme.Colors
+import android.widget.Toast
+import androidx.compose.ui.draw.clip
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -161,7 +166,9 @@ fun SendRoute2(
         updateSelectedAsset = viewModel::updateSelectedAsset,
         txComplete = txComplete,
         tokenId = tokenId,
-        tokenData = tokenData
+        tokenData = tokenData,
+        loadSymbol = viewModel::loadSymbol,
+        convertDollarToToken = viewModel::convertDollarToToken
     )
 }
 
@@ -182,7 +189,9 @@ fun SendScreen2(
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
-    tokenData:  List<TokenData>
+    tokenData:  List<TokenData>,
+    loadSymbol: (List<String>) -> Unit,
+    convertDollarToToken: (String, String) -> Unit,
 ){
 
 
@@ -330,6 +339,55 @@ fun SendScreen2(
             when(assetsUiState){
                 AssetUiState.Empty -> {
                     Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                            Text(
+                                text = "EMPTY",
+                                style = TextStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = dgenGunMetal,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 24.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier.width(300.dp)
+                            )
+                    }
+
+                }
+                AssetUiState.Error -> {
+                    Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(
+                            text = "ERROR",
+                            style = TextStyle(
+                                fontFamily = PitagonsSans,
+                                color = dgenGunMetal,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 24.sp,
+                                letterSpacing = 0.sp,
+                                textDecoration = TextDecoration.None,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = Modifier.width(300.dp)
+                        )
+                    }
+                }
+                AssetUiState.Loading -> {
+                    Box(
+                        modifier = modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        DgenLoadingMatrix()
+                    }
+                }
+                is AssetUiState.Success -> {
+                    Box(
                         Modifier.fillMaxSize()
                     ) {
                         Column (
@@ -355,23 +413,66 @@ fun SendScreen2(
                                             textDecoration = TextDecoration.None
                                         )
                                     )
-                                    Image(
-                                        modifier = Modifier
-                                            .size(28.dp),
-                                        painter = painterResource(R.drawable.ethereum_placeholder),
-                                        contentDescription = "Ethereum"
-                                    )
-                                    Text(
-                                        text = "ETH",
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 24.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None
-                                        )
-                                    )
+                                    
+                                    // Zeige Token-Logo basierend auf selectedToken
+                                    when (selectedToken) {
+                                        is SelectedTokenUiState.Selected -> {
+                                            val token = selectedToken.tokenAsset
+                                            
+                                            // Token Logo
+                                            if (!token.logoUrl.isNullOrEmpty()) {
+                                                AsyncImage(
+                                                    model = token.logoUrl,
+                                                    contentDescription = token.name,
+                                                    modifier = Modifier
+                                                        .size(28.dp)
+                                                        .clip(CircleShape),
+                                                    placeholder = painterResource(R.drawable.ethereum_placeholder),
+                                                    error = painterResource(R.drawable.ethereum_placeholder)
+                                                )
+                                            } else {
+                                                Image(
+                                                    modifier = Modifier
+                                                        .size(28.dp),
+                                                    painter = painterResource(R.drawable.placeholer_icon_5),
+                                                    contentDescription = token.name
+                                                )
+                                            }
+                                            
+                                            // Token Symbol
+                                            Text(
+                                                text = token.symbol.uppercase(),
+                                                style = TextStyle(
+                                                    fontFamily = SpaceMono,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None
+                                                )
+                                            )
+                                        }
+                                        else -> {
+                                            // Fallback zu ETH wenn kein Token ausgewählt ist
+                                            Image(
+                                                modifier = Modifier
+                                                    .size(28.dp),
+                                                painter = painterResource(R.drawable.ethereum_placeholder),
+                                                contentDescription = "Ethereum"
+                                            )
+                                            Text(
+                                                text = "ETH",
+                                                style = TextStyle(
+                                                    fontFamily = SpaceMono,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None
+                                                )
+                                            )
+                                        }
+                                    }
                                 }
                             }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
 
@@ -397,7 +498,12 @@ fun SendScreen2(
 
                                 ) {
                                     TextToggle(
-                                        Modifier.offset(x = 2.dp, y=2.dp),"ETH", "$",
+                                        Modifier.offset(x = 2.dp, y=2.dp),
+                                        when (selectedToken) {
+                                            is SelectedTokenUiState.Selected -> selectedToken.tokenAsset.symbol.uppercase()
+                                            else -> "ETH"
+                                        }, 
+                                        "$",
                                         onToggle = {
                                             useDollarAmount = !useDollarAmount
                                             scope.launch{
@@ -515,25 +621,128 @@ fun SendScreen2(
                                                     isAnyFieldFocused= remember { mutableStateOf(false) },
                                                 )
                                             }
-                                            
+
+                                        }
+                                    }
+
+
+                                    LaunchedEffect(dollarAmount.text, useDollarAmount, selectedToken) {
+                                        if (useDollarAmount && dollarAmount.text.isNotEmpty()) {
+                                            delay(500)
+
+                                            val tokenSymbol = when (selectedToken) {
+                                                is SelectedTokenUiState.Selected -> {
+                                                    selectedToken.tokenAsset.symbol.uppercase()
+                                                }
+                                                else -> {
+                                                    "ETH"
+                                                }
+                                            }
+
+                                            convertDollarToToken(dollarAmount.text, tokenSymbol)
                                         }
                                     }
 
                                 }
 
 
-                                // Sample list
-                                val sampleItems = listOf("base", "mainnet", "zora", "optimism", "arbitrum", "polygon")
+                                // Chain-Auswahl basierend auf Token-Verfügbarkeit
+                                val availableChains = remember(selectedToken, assetsUiState.assets) {
+                                    when (selectedToken) {
+                                        is SelectedTokenUiState.Selected -> {
+                                            // Finde alle Chains, auf denen dieser Token verfügbar ist
+                                            val tokenSymbol = selectedToken.tokenAsset.symbol
+                                            val chainsWithToken = assetsUiState.assets
+                                                .filter { it.symbol.equals(tokenSymbol, ignoreCase = true) }
+                                                .map { it.chainId }
+                                                .distinct()
+                                            
+                                            // Mappe chainIds zu Chain-Namen
+                                            chainsWithToken.mapNotNull { chainId ->
+                                                when (chainId) {
+                                                    1 -> "mainnet"
+                                                    11155111 -> "sepolia"
+                                                    10 -> "optimism"
+                                                    137 -> "polygon"
+                                                    42161 -> "arbitrum"
+                                                    8453 -> "base"
+                                                    7777777 -> "zora"
+                                                    else -> null
+                                                }
+                                            }
+                                        }
+                                        else -> {
+                                            // Wenn kein Token ausgewählt ist, zeige alle Chains mit ETH/MATIC
+                                            val nativeTokenChains = assetsUiState.assets
+                                                .filter { 
+                                                    it.symbol.equals("ETH", ignoreCase = true) || 
+                                                    it.symbol.equals("MATIC", ignoreCase = true) ||
+                                                    it.symbol.equals("mainnet", ignoreCase = true) ||
+                                                    it.symbol.equals("sepolia", ignoreCase = true) ||
+                                                    it.symbol.equals("optimism", ignoreCase = true) ||
+                                                    it.symbol.equals("polygon", ignoreCase = true) ||
+                                                    it.symbol.equals("arbitrum", ignoreCase = true) ||
+                                                    it.symbol.equals("base", ignoreCase = true) ||
+                                                    it.symbol.equals("zora", ignoreCase = true)
+                                                }
+                                                .map { it.chainId }
+                                                .distinct()
+                                            
+                                            nativeTokenChains.mapNotNull { chainId ->
+                                                when (chainId) {
+                                                    1 -> "mainnet"
+                                                    11155111 -> "sepolia"
+                                                    10 -> "optimism"
+                                                    137 -> "polygon"
+                                                    42161 -> "arbitrum"
+                                                    8453 -> "base"
+                                                    7777777 -> "zora"
+                                                    else -> null
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
 
-                                // Preview state holder
-                                var selected by remember { mutableStateOf<Int?>(null) }
+                                // Ausgewählte Chain
+                                var selectedChainIndex by remember { mutableStateOf(0) }
+                                
+                                // Setze die initiale Chain basierend auf dem ausgewählten Token
+                                LaunchedEffect(selectedToken, availableChains) {
+                                    when (selectedToken) {
+                                        is SelectedTokenUiState.Selected -> {
+                                            // Finde den Index der Chain des ausgewählten Tokens
+                                            val tokenChainId = selectedToken.tokenAsset.chainId
+                                            val chainName = when (tokenChainId) {
+                                                1 -> "mainnet"
+                                                11155111 -> "sepolia"
+                                                10 -> "optimism"
+                                                137 -> "polygon"
+                                                42161 -> "arbitrum"
+                                                8453 -> "base"
+                                                7777777 -> "zora"
+                                                else -> null
+                                            }
+                                            
+                                            chainName?.let { name ->
+                                                val index = availableChains.indexOf(name)
+                                                if (index >= 0) {
+                                                    selectedChainIndex = index
+                                                }
+                                            }
+                                        }
+                                        else -> {}
+                                    }
+                                }
 
                                 SelectableCarousel(
-                                    items = sampleItems,
+                                    items = availableChains,
                                     itemWidth = 70.dp,
                                     itemHeight = 70.dp,
-                                    initialSelectedIndex = 0,
-                                    onItemSelected = { index -> selected = index }
+                                    initialSelectedIndex = selectedChainIndex,
+                                    onItemSelected = { index -> 
+                                        selectedChainIndex = index ?: 0
+                                    }
                                 )
 
                             }
@@ -619,110 +828,6 @@ fun SendScreen2(
 //                            )
 //                        }
                     }
-
-//                    Box(
-//                        modifier = modifier.fillMaxSize(),
-//                        contentAlignment = Alignment.Center
-//                    ){
-//                            Text(
-//                                text = "EMPTY",
-//                                style = TextStyle(
-//                                    fontFamily = PitagonsSans,
-//                                    color = dgenGunMetal,
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontSize = 24.sp,
-//                                    letterSpacing = 0.sp,
-//                                    textDecoration = TextDecoration.None,
-//                                    textAlign = TextAlign.Center
-//                                ),
-//                                modifier = Modifier.width(300.dp)
-//                            )
-//                    }
-
-                }
-                AssetUiState.Error -> {
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        Text(
-                            text = "ERROR",
-                            style = TextStyle(
-                                fontFamily = PitagonsSans,
-                                color = dgenGunMetal,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 24.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None,
-                                textAlign = TextAlign.Center
-                            ),
-                            modifier = Modifier.width(300.dp)
-                        )
-                    }
-                }
-                AssetUiState.Loading -> {
-                    Box(
-                        modifier = modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        DgenLoadingMatrix()
-                    }
-                }
-                is AssetUiState.Success -> {
-                    Column (
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
-                    ){
-                        HeaderBar(content = {
-                            Row {
-                                Text(
-                                    text = "SEND",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = dgenTurqoise,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 24.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                )
-                            }
-                            AssetsUiState.Error -> {
-
-                            }
-                            AssetsUiState.Loading -> {
-
-                            }
-                            is AssetsUiState.Success -> {
-
-                                val token = assets.assets.firstOrNull {
-                                    it.address.equals(tokenId, ignoreCase = true)
-                                }
-                                Log.d("SEND TX","$toAddress - ${amount.toDouble()} - ${token?.balance} ")
-
-                                if (token != null) {
-                                    // Update the selected asset in the view model before sending
-                                    updateSelectedAsset(token)
-                                    
-                                    if(amount.toDouble() < token.balance) {
-                                        sendTransaction {
-                                            onBackClick()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                    },
-                ){
-                    Icon(
-                        modifier = Modifier.size(36.dp),
-                        painter = painterResource(R.drawable.baseline_arrow_outward_24),
-                        contentDescription = "Send Icon"
-                    )
                 }
             }
         }
