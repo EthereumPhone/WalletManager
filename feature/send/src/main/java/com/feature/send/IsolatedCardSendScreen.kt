@@ -126,6 +126,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -254,17 +255,34 @@ fun SendScreen2(
     }
 
 
-    var amount by remember { mutableStateOf(TextFieldValue("")) }
     var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
-    var toValue by remember { mutableStateOf(TextFieldValue("")) }
     var useDollarAmount by remember { mutableStateOf(false) }
     
-    // Synchronisiere toValue mit toAddress (für QR-Scanner und andere Updates)
-    LaunchedEffect(toAddress) {
-        if (toAddress != toValue.text) {
-            toValue = TextFieldValue(toAddress)
+    // TextFieldValue für amount, um Cursor-Position beizubehalten
+    var amountFieldValue by remember { mutableStateOf(TextFieldValue("")) }
+    
+    // Synchronisiere amountFieldValue mit amount aus ViewModel
+    LaunchedEffect(amount) {
+        // Nur aktualisieren, wenn sich der Text unterscheidet (vermeidet Cursor-Reset)
+        if (amount != amountFieldValue.text) {
+            amountFieldValue = TextFieldValue(amount)
         }
     }
+    
+    // TextFieldValue für toAddress, um Cursor-Position beizubehalten
+    var toAddressFieldValue by remember { mutableStateOf(TextFieldValue("")) }
+    
+    // Synchronisiere toAddressFieldValue mit toAddress aus ViewModel
+    LaunchedEffect(toAddress) {
+        // Nur aktualisieren, wenn sich der Text unterscheidet (vermeidet Cursor-Reset)
+        if (toAddress != toAddressFieldValue.text) {
+            toAddressFieldValue = TextFieldValue(toAddress)
+        }
+    }
+    
+    // Neue Variablen für Fehlervalidierung
+    var isAmountError by remember { mutableStateOf(false) }
+    var convertedTokenAmount by remember { mutableStateOf("") }
     
     // Lade Wechselkurse für ausgewähltes Token
     LaunchedEffect(selectedToken) {
@@ -300,15 +318,15 @@ fun SendScreen2(
         contract = ScanContract(),
         onResult = { result ->
             Log.d("QRScanner", "Scan result received: ${result.contents}")
-            Toast.makeText(context, "Scan result: ${result.contents}", Toast.LENGTH_LONG).show()
+            //Toast.makeText(context, "Scan result: ${result.contents}", Toast.LENGTH_LONG).show()
             if(result.contents == null) {
                 // Optional: Handle cancelled scan
                 Log.d("QRScanner", "Scan was cancelled or no content found")
-                Toast.makeText(context, "Scan cancelled", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(context, "Scan cancelled", Toast.LENGTH_SHORT).show()
             } else {
                 val address = result.contents.removePrefix("ethereum:")
                 Log.d("QRScanner", "Extracted address: $address")
-                Toast.makeText(context, "Address found: $address", Toast.LENGTH_LONG).show()
+                //Toast.makeText(context, "Address found: $address", Toast.LENGTH_LONG).show()
                 onToAddressChanged(address)
             }
         }
@@ -520,6 +538,39 @@ fun SendScreen2(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
+                                // Hole die verfügbare Balance
+                                val availableBalance = when (selectedToken) {
+                                    is SelectedTokenUiState.Selected -> selectedToken.tokenAsset.balance
+                                    else -> {
+                                        // Für ETH die Balance aus den Assets holen
+                                        assetsUiState.assets
+                                            .filter { 
+                                                it.symbol.equals("ETH", ignoreCase = true) || 
+                                                it.symbol.equals("mainnet", ignoreCase = true) ||
+                                                it.symbol.equals("sepolia", ignoreCase = true) ||
+                                                it.symbol.equals("optimism", ignoreCase = true) ||
+                                                it.symbol.equals("polygon", ignoreCase = true) ||
+                                                it.symbol.equals("arbitrum", ignoreCase = true) ||
+                                                it.symbol.equals("base", ignoreCase = true) ||
+                                                it.symbol.equals("zora", ignoreCase = true)
+                                            }
+                                            .firstOrNull()?.balance ?: 0.0
+                                    }
+                                }
+                                
+                                // Validiere den Betrag
+                                LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount) {
+                                    if (useDollarAmount) {
+                                        // Bei Dollar-Eingabe, prüfe den konvertierten Token-Betrag
+                                        val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
+                                        isAmountError = tokenAmount > availableBalance
+                                    } else {
+                                        // Bei Token-Eingabe, prüfe direkt
+                                        val tokenAmount = amount.toDoubleOrNull() ?: 0.0
+                                        isAmountError = tokenAmount > availableBalance
+                                    }
+                                }
+
                                 Column(
                                     modifier = Modifier
                                         .drawBehind {
@@ -546,7 +597,8 @@ fun SendScreen2(
                                             scope.launch{
                                                 delay(200)
                                                 dollarAmount = TextFieldValue("")
-                                                amount = TextFieldValue("")
+                                                amountFieldValue = TextFieldValue("")
+                                                onAmountChange("")
                                             }
 
                                         },
@@ -604,7 +656,7 @@ fun SendScreen2(
                                                     },
                                                     textStyle = TextStyle(
                                                         fontFamily = PitagonsSans,
-                                                        color = dgenWhite,
+                                                        color = if (isAmountError) dgenRed else dgenWhite,
                                                         fontWeight = FontWeight.SemiBold,
                                                         fontSize = 42.sp,
                                                         textAlign = TextAlign.Start
@@ -616,12 +668,13 @@ fun SendScreen2(
                                                 )
                                             }else{
                                                 DgenBasicTextfield(
-                                                    value = amount,
+                                                    value = amountFieldValue,
                                                     onValueChange={ new ->
                                                         // Check if the new value contains more than one dot
                                                         val dotCount = new.text.count { it == '.' }
                                                         if (dotCount <= 1) {
-                                                            amount = new
+                                                            amountFieldValue = new
+                                                            onAmountChange(new.text)
                                                         }
                                                     },
                                                     maxLines = 1,
@@ -647,7 +700,7 @@ fun SendScreen2(
                                                     },
                                                     textStyle = TextStyle(
                                                         fontFamily = PitagonsSans,
-                                                        color = dgenWhite,
+                                                        color = if (isAmountError) dgenRed else dgenWhite,
                                                         fontWeight = FontWeight.SemiBold,
                                                         fontSize = 42.sp,
                                                         textAlign = TextAlign.Start
@@ -677,6 +730,22 @@ fun SendScreen2(
                                             }
 
                                             convertDollarToToken(dollarAmount.text, tokenSymbol)
+                                            
+                                            // Berechne den konvertierten Token-Betrag für die Validierung
+                                            try {
+                                                val dollarValue = dollarAmount.text.toDoubleOrNull() ?: 0.0
+                                                val currentPrice = tokenData.find { 
+                                                    it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                
+                                                if (currentPrice != null && currentPrice > 0) {
+                                                    convertedTokenAmount = (dollarValue / currentPrice).toString()
+                                                }
+                                            } catch (e: Exception) {
+                                                // Fehlerbehandlung
+                                            }
+                                        } else if (!useDollarAmount) {
+                                            convertedTokenAmount = ""
                                         }
                                     }
 
@@ -687,26 +756,21 @@ fun SendScreen2(
                                 val availableChains = remember(selectedToken, assetsUiState.assets) {
                                     when (selectedToken) {
                                         is SelectedTokenUiState.Selected -> {
-                                            // Finde alle Chains, auf denen dieser Token verfügbar ist
-                                            val tokenSymbol = selectedToken.tokenAsset.symbol
-                                            val chainsWithToken = assetsUiState.assets
-                                                .filter { it.symbol.equals(tokenSymbol, ignoreCase = true) }
-                                                .map { it.chainId }
-                                                .distinct()
-                                            
-                                            // Mappe chainIds zu Chain-Namen
-                                            chainsWithToken.mapNotNull { chainId ->
-                                                when (chainId) {
-                                                    1 -> "mainnet"
-                                                    11155111 -> "sepolia"
-                                                    10 -> "optimism"
-                                                    137 -> "polygon"
-                                                    42161 -> "arbitrum"
-                                                    8453 -> "base"
-                                                    7777777 -> "zora"
-                                                    else -> null
-                                                }
+                                            // Zeige nur die Chain des ausgewählten Tokens
+                                            val tokenChainId = selectedToken.tokenAsset.chainId
+                                            val chainName = when (tokenChainId) {
+                                                1 -> "mainnet"
+                                                11155111 -> "sepolia"
+                                                10 -> "optimism"
+                                                137 -> "polygon"
+                                                42161 -> "arbitrum"
+                                                8453 -> "base"
+                                                7777777 -> "zora"
+                                                else -> null
                                             }
+                                            
+                                            // Gib nur die eine Chain zurück, auf der dieser spezifische Token ist
+                                            listOfNotNull(chainName)
                                         }
                                         else -> {
                                             // Wenn kein Token ausgewählt ist, zeige alle Chains mit ETH/MATIC
@@ -746,30 +810,9 @@ fun SendScreen2(
                                 
                                 // Setze die initiale Chain basierend auf dem ausgewählten Token
                                 LaunchedEffect(selectedToken, availableChains) {
-                                    when (selectedToken) {
-                                        is SelectedTokenUiState.Selected -> {
-                                            // Finde den Index der Chain des ausgewählten Tokens
-                                            val tokenChainId = selectedToken.tokenAsset.chainId
-                                            val chainName = when (tokenChainId) {
-                                                1 -> "mainnet"
-                                                11155111 -> "sepolia"
-                                                10 -> "optimism"
-                                                137 -> "polygon"
-                                                42161 -> "arbitrum"
-                                                8453 -> "base"
-                                                7777777 -> "zora"
-                                                else -> null
-                                            }
-                                            
-                                            chainName?.let { name ->
-                                                val index = availableChains.indexOf(name)
-                                                if (index >= 0) {
-                                                    selectedChainIndex = index
-                                                }
-                                            }
-                                        }
-                                        else -> {}
-                                    }
+                                    // Da wir jetzt nur eine Chain für ausgewählte Tokens haben,
+                                    // ist der Index immer 0
+                                    selectedChainIndex = 0
                                 }
 
                                 SelectableCarousel(
@@ -786,12 +829,12 @@ fun SendScreen2(
 
 
                                 DgenTextfield(
-                                    value = toValue,
+                                    value = toAddressFieldValue,
                                     maxLines = 4,
                                     maxLength = 42,
                                     scrollHorizontally = false,
                                     onValueChange = { new ->
-                                        toValue = new
+                                        toAddressFieldValue = new
                                         onToAddressChanged(new.text)
                                     },
                                     textStyle = TextStyle(
@@ -856,15 +899,41 @@ fun SendScreen2(
 
 
                             Surface(
-                                color = dgenTurqoise,
+                                color = if (isAmountError || toAddress.isEmpty()) dgenGray else dgenTurqoise,
                                 shape = CircleShape,
                                 modifier = modifier.padding(start = 24.dp)
                                     .animateContentSize()
-                                    .border(1.dp, dgenTurqoise, CircleShape).pointerInput(Unit){
+                                    .border(1.dp, if (isAmountError || toAddress.isEmpty()) dgenGray else dgenTurqoise, CircleShape)
+                                    .pointerInput(isAmountError, toAddress){
                                         detectTapGestures {
+                                            // Prüfe ob Button deaktiviert ist
+                                            if (isAmountError || toAddress.isEmpty()) {
+                                                // Zeige spezifische Fehlermeldung
+                                                if (isAmountError) {
+                                                    context.showCustomToast(
+                                                        "Insufficient balance",
+                                                        Toast.LENGTH_SHORT,
+                                                        fontFamily = PitagonsSans,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        backgroundColor = dgenRed,
+                                                        textColor = dgenWhite
+                                                    )
+                                                } else if (toAddress.isEmpty()) {
+                                                    context.showCustomToast(
+                                                        "Enter target address",
+                                                        Toast.LENGTH_SHORT,
+                                                        fontFamily = PitagonsSans,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        backgroundColor = dgenRed,
+                                                        textColor = dgenWhite
+                                                    )
+                                                }
+                                                return@detectTapGestures
+                                            }
+                                            
                                             // Hole den aktuellen Dollar-Betrag und Token-Symbol
                                             val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
-                                            val currentTokenAmount = if (!useDollarAmount) amount.text else ""
+                                            val currentTokenAmount = if (!useDollarAmount) amount else ""
                                             
                                             val tokenSymbol = when (selectedToken) {
                                                 is SelectedTokenUiState.Selected -> {
@@ -894,47 +963,72 @@ fun SendScreen2(
                                                             val dollarValue = tokenAmount * currentPrice
                                                             val decimalFormat = DecimalFormat("#.##")
                                                             withContext(Dispatchers.Main) {
-                                                                Toast.makeText(
-                                                                    context,
+                                                                context.showCustomToast(
                                                                     "$currentTokenAmount $tokenSymbol = $${decimalFormat.format(dollarValue)}",
-                                                                    Toast.LENGTH_LONG
-                                                                ).show()
+                                                                    Toast.LENGTH_SHORT,
+                                                                    fontFamily = PitagonsSans,
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    backgroundColor = dgenOcean,
+                                                                    textColor = dgenTurqoise
+                                                                )
                                                             }
                                                         } else {
                                                             withContext(Dispatchers.Main) {
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "$currentTokenAmount $tokenSymbol (Wechselkurs wird geladen...)",
-                                                                    Toast.LENGTH_LONG
-                                                                ).show()
+
                                                             }
                                                         }
                                                     } catch (e: Exception) {
                                                         withContext(Dispatchers.Main) {
-                                                            Toast.makeText(
-                                                                context,
+                                                            context.showCustomToast(
                                                                 "$currentTokenAmount $tokenSymbol",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
+                                                                Toast.LENGTH_SHORT,
+                                                                fontFamily = PitagonsSans,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                backgroundColor = dgenOcean,
+                                                                textColor = dgenTurqoise
+                                                            )
                                                         }
                                                     }
                                                 }
                                             } else {
                                                 // Wenn kein Betrag eingegeben wurde
-                                                Toast.makeText(
-                                                    context,
-                                                    "Bitte geben Sie einen Betrag ein",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                context.showCustomToast(
+                                                    "Type in an amount",
+                                                    Toast.LENGTH_SHORT,
+                                                    fontFamily = PitagonsSans,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    backgroundColor = dgenOcean,
+                                                    textColor = dgenTurqoise
+                                                )
+                                            }
+                                            
+                                            // Führe die Send-Transaktion aus, wenn alles gültig ist
+                                            if (!isAmountError && toAddress.isNotEmpty() && 
+                                                ((!useDollarAmount && currentTokenAmount.isNotEmpty()) || 
+                                                 (useDollarAmount && currentDollarAmount.isNotEmpty()))) {
+                                                
+                                                // Aktualisiere den Amount im ViewModel
+                                                val finalAmount = if (useDollarAmount) {
+                                                    convertedTokenAmount
+                                                } else {
+                                                    currentTokenAmount
+                                                }
+                                                
+                                                if (finalAmount.isNotEmpty()) {
+                                                    onAmountChange(finalAmount)
+                                                    sendTransaction {
+                                                        // Callback nach erfolgreichem Senden
+                                                    }
+                                                }
                                             }
                                         }
                                     },
                                 ){
-                                Text(text= "SEND", color = dgenOcean ,
+                                Text(text= "SEND", color = if (isAmountError || toAddress.isEmpty()) dgenGunMetal else dgenOcean ,
                                     modifier = modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                     style = TextStyle(
                                     fontFamily = SpaceMono,
-                                    color = dgenOcean,
+                                    color = if (isAmountError || toAddress.isEmpty()) dgenGunMetal else dgenOcean,
                                     fontWeight = FontWeight. SemiBold,
                                     fontSize = 18.sp
                                 ))
