@@ -122,16 +122,22 @@ import org.ethosmobile.components.library.theme.Colors
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.core.data.util.chainToApiKey
 import com.core.ui.showCustomToast
+import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
+import org.bouncycastle.util.Arrays.append
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -424,7 +430,7 @@ fun SendScreen2(
         AsyncImage(
             modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
-            model = R.drawable.wireframe_globe,
+            model = R.drawable.globe_wireframe,
             contentDescription = null
         )
 
@@ -440,7 +446,7 @@ fun SendScreen2(
         ) { assetsUiState ->
 
             when(assetsUiState){
-                AssetUiState.Empty -> {
+                AssetsUiState.Empty -> {
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -461,7 +467,7 @@ fun SendScreen2(
                     }
 
                 }
-                AssetUiState.Error -> {
+                AssetsUiState.Error -> {
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -481,7 +487,7 @@ fun SendScreen2(
                         )
                     }
                 }
-                AssetUiState.Loading -> {
+                AssetsUiState.Loading -> {
                     Box(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -489,7 +495,7 @@ fun SendScreen2(
                         DgenLoadingMatrix()
                     }
                 }
-                is AssetUiState.Success -> {
+                is AssetsUiState.Success -> {
                     // Hole die verfügbare Balance
                     val availableBalance = when (selectedToken) {
                         is SelectedTokenUiState.Selected -> selectedToken.tokenAsset.balance
@@ -542,84 +548,6 @@ fun SendScreen2(
                                 .fillMaxSize()
                                 .padding(bottom = 24.dp)
                         ){
-                            HeaderBar(content = {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "SEND",
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 24.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None
-                                        )
-                                    )
-                                    
-                                    // Zeige Token-Logo basierend auf selectedToken
-                                    when (selectedToken) {
-                                        is SelectedTokenUiState.Selected -> {
-                                            val token = selectedToken.tokenAsset
-                                            
-                                            // Token Logo
-                                            if (!token.logoUrl.isNullOrEmpty()) {
-                                                AsyncImage(
-                                                    model = token.logoUrl,
-                                                    contentDescription = token.name,
-                                                    modifier = Modifier
-                                                        .size(28.dp)
-                                                        .clip(CircleShape),
-                                                    placeholder = painterResource(R.drawable.ethereum_placeholder),
-                                                    error = painterResource(R.drawable.ethereum_placeholder)
-                                                )
-                                            } else {
-                                                Image(
-                                                    modifier = Modifier
-                                                        .size(28.dp),
-                                                    painter = painterResource(R.drawable.placeholer_icon_5),
-                                                    contentDescription = token.name
-                                                )
-                                            }
-                                            
-                                            // Token Symbol
-                                            Text(
-                                                text = token.symbol.uppercase(),
-                                                style = TextStyle(
-                                                    fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 24.sp,
-                                                    letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None
-                                                )
-                                            )
-                                        }
-                                        else -> {
-                                            // Fallback zu ETH wenn kein Token ausgewählt ist
-                                            Image(
-                                                modifier = Modifier
-                                                    .size(28.dp),
-                                                painter = painterResource(R.drawable.ethereum_placeholder),
-                                                contentDescription = "Ethereum"
-                                            )
-                                            Text(
-                                                text = "ETH",
-                                                style = TextStyle(
-                                                    fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 24.sp,
-                                                    letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
 
                             Column(
                                 modifier = Modifier
