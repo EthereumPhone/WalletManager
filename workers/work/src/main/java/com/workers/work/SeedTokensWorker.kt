@@ -8,6 +8,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
+import com.core.data.remote.EnsApi
+import com.core.data.repository.EnsRepository
 import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
@@ -15,6 +17,8 @@ import com.core.domain.UpdateTokensUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -30,7 +34,9 @@ class SeedTokensWorker @AssistedInject constructor(
     private val updateTokenUseCase: UpdateTokensUseCase,
     private val transferRepository: TransferRepository,
     private val userDataRepository: UserDataRepository,
-    private val exchangeRepository: TokenExchangeRepository
+    private val exchangeRepository: TokenExchangeRepository,
+    private val ensApi: EnsApi,
+    private val ensRepository: EnsRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -43,16 +49,75 @@ class SeedTokensWorker @AssistedInject constructor(
 
         try {
             coroutineScope {
-                launch  { transferRepository.refreshTransfers(address.walletAddress) }
+                // First, refresh transfers and update tokens
+                launch { transferRepository.refreshTransfers(address.walletAddress) }
                 launch { updateTokenUseCase(address.walletAddress) }
             }
+            
+            // After transfers are refreshed, resolve ENS names for addresses
+            resolveEnsForTransfers()
+            
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure()
+            return@withContext Result.failure()
         }
 
         Result.success()
     }
+    
+    private suspend fun resolveEnsForTransfers() {
+        try {
+            // Get all transfers to extract unique addresses
+            val transfers = transferRepository.getTransfers().first()
+            
+            // Extract unique addresses from transfers
+            val uniqueAddresses = transfers
+                .flatMap { listOf(it.from, it.to) }
+                .distinct()
+                .filter { it.isNotBlank() && it.startsWith("0x", ignoreCase = true) }
+            
+            Log.d("ENS Resolution", "Found ${uniqueAddresses.size} unique addresses to resolve")
+            
+            // Get already cached ENS names
+            val cachedEnsMap = ensRepository.getEnsNames(uniqueAddresses)
+            val cachedAddresses = cachedEnsMap.keys.toSet()
+            
+            // Filter addresses that need resolution
+            val addressesToResolve = uniqueAddresses.filter { 
+                it.lowercase() !in cachedAddresses 
+            }
+            
+            Log.d("ENS Resolution", "Need to resolve ${addressesToResolve.size} new addresses")
+            
+            // Resolve ENS names in parallel batches
+            val batchSize = 10
+            addressesToResolve.chunked(batchSize).forEach { batch ->
+                coroutineScope {
+                    val resolvedPairs = batch.map { address ->
+                        async {
+                            try {
+                                val ensName = ensApi.resolveAddressToEns(address)
+                                Log.d("ENS Resolution", "Resolved $address to $ensName")
+                                address to ensName
+                            } catch (e: Exception) {
+                                Log.e("ENS Resolution", "Failed to resolve $address", e)
+                                address to null
+                            }
+                        }
+                    }.awaitAll()
+                    
+                    // Save resolved ENS names to repository
+                    ensRepository.saveEnsNames(resolvedPairs)
+                }
+            }
+            
+            Log.d("ENS Resolution", "ENS resolution completed")
+            
+        } catch (e: Exception) {
+            Log.e("ENS Resolution", "Error during ENS resolution", e)
+        }
+    }
+    
     companion object {
 
         fun startSeedNetworkBalanceWork() =

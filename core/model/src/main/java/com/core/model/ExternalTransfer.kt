@@ -11,5 +11,5 @@ data class TransferItem(
     val value: String,
     val timeStamp: String,
     var userSent: Boolean,
-    val txHash: String,
+    val txHash: String
 )

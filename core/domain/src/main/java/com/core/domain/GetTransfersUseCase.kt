@@ -1,5 +1,6 @@
 package com.core.domain
 
+import com.core.data.repository.EnsRepository
 import com.core.data.repository.TransferRepository
 import com.core.model.Transfer
 import com.core.model.TransferItem
@@ -13,54 +14,92 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class GetTransfersUseCase @Inject constructor(
-    private val transferRepository: TransferRepository
+    private val transferRepository: TransferRepository,
+    private val ensRepository: EnsRepository
 ) {
 
     operator fun invoke(): Flow<List<TransferItem>> =
-        transferRepository.getTransfers(listOf("external", "erc20", "erc721"))
-            .map { items ->
-                items
-                    .asSequence()
-                    .filter { transfer ->
-                        val name = transfer.asset.lowercase()
-                        name.isNotBlank() && urlPatterns.none { name.contains(it) }
-                    }
-                    .sortedBy { it.blockTimestamp }
-                    .map { transfer ->
-                        val truncatedAsset = truncate(transfer.asset).trim()
-                        val dateTime = transfer.blockTimestamp
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-
-                        TransferItem(
-                            chainId = transfer.chainId,
-                            from = transfer.from,
-                            to = transfer.to,
-                            asset = truncatedAsset,
-                            value = formatDouble(transfer.value),
-                            timeStamp = "${dateTime.date} ${dateTime.time}",
-                            userSent = transfer.userIsSender,
-                            txHash = transfer.txHash
-                        )
-                    }
-                    .toList()
+        transferRepository.getTransfers(TRANSFER_CATEGORIES)
+            .map { transfers ->
+                // Filter out spam/scam tokens
+                val validTransfers = transfers.filterValidTransfers()
+                
+                // Resolve ENS names for all addresses
+                val ensMap = resolveEnsNames(validTransfers)
+                
+                // Transform to UI model
+                validTransfers.map { transfer ->
+                    transfer.toTransferItem(ensMap)
+                }
             }
 
-    fun formatDouble(input: Double): String {
-        val decimalFormat = DecimalFormat("#.#####")
-        return decimalFormat.format(input)
+    private fun List<Transfer>.filterValidTransfers(): List<Transfer> =
+        asSequence()
+            .filter { transfer ->
+                val assetName = transfer.asset.lowercase()
+                assetName.isNotBlank() && !assetName.containsSpamPattern()
+            }
+            .sortedBy { it.blockTimestamp }
+            .toList()
+
+    private fun String.containsSpamPattern(): Boolean =
+        SPAM_PATTERNS.any { pattern -> this.contains(pattern) }
+
+    private suspend fun resolveEnsNames(transfers: List<Transfer>): Map<String, String?> {
+        val uniqueAddresses = transfers
+            .flatMap { listOf(it.from, it.to) }
+            .distinct()
+            .filter { it.isNotBlank() }
+        
+        return if (uniqueAddresses.isNotEmpty()) {
+            ensRepository.getEnsNames(uniqueAddresses)
+        } else {
+            emptyMap()
+        }
+    }
+
+    private fun Transfer.toTransferItem(ensMap: Map<String, String?>): TransferItem {
+        val dateTime = blockTimestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+        
+        return TransferItem(
+            chainId = chainId,
+            from = ensMap[from.lowercase()] ?: from,
+            to = ensMap[to.lowercase()] ?: to,
+            asset = asset.truncateAssetName(),
+            value = value.formatAmount(),
+            timeStamp = "${dateTime.date} ${dateTime.time}",
+            userSent = userIsSender,
+            txHash = txHash
+        )
+    }
+
+    private fun String.truncateAssetName(): String =
+        if (length > MAX_ASSET_NAME_LENGTH) {
+            "${take(MAX_ASSET_NAME_LENGTH)}..."
+        } else {
+            this
+        }.trim()
+
+    private fun Double.formatAmount(): String =
+        DECIMAL_FORMAT.format(this)
+
+    companion object {
+        private const val MAX_ASSET_NAME_LENGTH = 10
+        private val DECIMAL_FORMAT = DecimalFormat("#.####")
+        
+        private val TRANSFER_CATEGORIES = listOf("external", "erc20", "erc721")
+        
+        private val SPAM_PATTERNS = listOf(
+            // URL patterns
+            "http://", "https://", "www.", ".com", ".org", ".net", ".io", ".xyz", ".info",
+            // File/image patterns
+            "ipfs://", "data:", "image/", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
+            // Social media patterns
+            "telegram", "discord", "twitter", "t.me", "t.ly",
+            // Common spam patterns
+            "visit", "claim", "airdrop", "free", "bonus",
+            // Path separators
+            "/"
+        )
     }
 }
-
-fun truncate(input: String): String {
-    return if (input.length > 6) {
-        input.take(6) + "..."
-    } else {
-        input
-    }
-}
-
-private val urlPatterns = listOf(
-    "http://", "https://", "www.",
-    ".com", ".io", ".org", ".net", ".xyz",
-    "/", "t.me", "telegram", "twitter", "discord", "t.ly"
-)
