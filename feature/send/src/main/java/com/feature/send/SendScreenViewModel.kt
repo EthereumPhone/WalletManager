@@ -479,6 +479,7 @@ class SendViewModel @Inject constructor(
 
 }
 
+
 sealed interface TxCompleteUiState {
     object UnComplete: TxCompleteUiState
     object Complete: TxCompleteUiState

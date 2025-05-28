@@ -137,7 +137,6 @@ import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
-import org.bouncycastle.util.Arrays.append
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -971,7 +970,6 @@ fun SendScreen2(
                                             // Hole den aktuellen Dollar-Betrag und Token-Symbol
                                             val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
                                             val currentTokenAmount = if (!useDollarAmount) amount else ""
-                                            
                                             val tokenSymbol = when (selectedToken) {
                                                 is SelectedTokenUiState.Selected -> {
                                                     selectedToken.tokenAsset.symbol.uppercase()
@@ -1070,8 +1068,6 @@ fun SendScreen2(
                                     fontSize = 18.sp
                                 ))
                             }
-
-
                         }
 //                        Row(
 //                            modifier = Modifier
