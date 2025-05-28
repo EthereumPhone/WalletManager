@@ -42,7 +42,7 @@ class AlchemyTransferRepository @Inject constructor(
         transferDao.getTransfers(chainId, categories)
             .map { it.map(TransferEntity::asExternalModel) }
 
-    override suspend fun refreshTransfers(address: String) = coroutineScope {
+    override suspend fun refreshTransfers(address: String) = withContext(Dispatchers.IO) {
         val networks = NetworkChain.getAllNetworkChains()
 
 

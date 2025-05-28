@@ -19,6 +19,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import javax.inject.Inject
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
 import kotlinx.coroutines.flow.first
 
@@ -26,7 +27,8 @@ class SendRepositoryImp @Inject constructor(
     private val web3j: Web3j,
     private val erc20TransferApi: Erc20TransferApi,
     private val mContext: Context,
-    private val tokenBalanceDao: TokenBalanceDao
+    private val tokenBalanceDao: TokenBalanceDao,
+    private val transferRepository: TransferRepository
 ): SendRepository {
 
     override val currentTransactionHash = MutableStateFlow("")
@@ -102,6 +104,8 @@ class SendRepositoryImp @Inject constructor(
                     val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
                     tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
                 }
+
+
             }
             
             currentTransactionHash.value = res

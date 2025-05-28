@@ -114,7 +114,7 @@ fun LogRoute(
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
-        onRefresh = viewModel::refreshData
+        //onRefresh = viewModel::refreshData
     )
 }
 @OptIn(ExperimentalMaterialApi::class)
@@ -126,7 +126,7 @@ fun LogScreen(
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
     tokenId: String?,
-    onRefresh: () -> Unit,
+    //onRefresh: () -> Unit,
 ){
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 
@@ -134,7 +134,7 @@ fun LogScreen(
     val pullRefreshState = rememberPullRefreshState(
         refreshing = refreshState,
         onRefresh = {
-            onRefresh()
+            //onRefresh()
         }
     )
 
@@ -419,7 +419,7 @@ fun LogViewPreview(){
         transfersUIState = TransfersUiState.Success(txs),
         refreshState = false,
         tokenId = "DAI",
-        onRefresh = {},
+        //onRefresh = {},
         tokenMetadata = sampleMetadata
 //        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
     )
