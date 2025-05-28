@@ -118,6 +118,7 @@ import android.widget.Toast
 import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.feature.send.ui.CustomCaptureActivity
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -227,7 +228,13 @@ fun SendScreen2(
     var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
     var toValue by remember { mutableStateOf(TextFieldValue("")) }
     var useDollarAmount by remember { mutableStateOf(false) }
-
+    
+    // Synchronisiere toValue mit toAddress (für QR-Scanner und andere Updates)
+    LaunchedEffect(toAddress) {
+        if (toAddress != toValue.text) {
+            toValue = TextFieldValue(toAddress)
+        }
+    }
 
     //Loader for GIF
     val gifEnabledLoader = ImageLoader.Builder(context)
@@ -245,10 +252,16 @@ fun SendScreen2(
     val barCodeLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
         onResult = { result ->
+            Log.d("QRScanner", "Scan result received: ${result.contents}")
+            Toast.makeText(context, "Scan result: ${result.contents}", Toast.LENGTH_LONG).show()
             if(result.contents == null) {
                 // Optional: Handle cancelled scan
+                Log.d("QRScanner", "Scan was cancelled or no content found")
+                Toast.makeText(context, "Scan cancelled", Toast.LENGTH_SHORT).show()
             } else {
                 val address = result.contents.removePrefix("ethereum:")
+                Log.d("QRScanner", "Extracted address: $address")
+                Toast.makeText(context, "Address found: $address", Toast.LENGTH_LONG).show()
                 onToAddressChanged(address)
             }
         }
@@ -729,7 +742,10 @@ fun SendScreen2(
                                 maxLines = 4,
                                 maxLength = 42,
                                 scrollHorizontally = false,
-                                onValueChange={ new -> toValue = new},
+                                onValueChange={ new -> 
+                                    toValue = new
+                                    onToAddressChanged(new.text)
+                                },
                                 textStyle = TextStyle(
                                     fontFamily = PitagonsSans,
                                     color = dgenWhite,
@@ -825,12 +841,13 @@ fun showCamera(
 ) {
     try {
         val options = ScanOptions()
-        options.setCaptureActivity(ToolbarCaptureActivity::class.java)
+        // Verwende die neue CustomCaptureActivity
+        options.setCaptureActivity(CustomCaptureActivity::class.java)
         options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-        options.setPrompt("Scan QR Code")
+        options.setPrompt("") // Kein Prompt, da wir unseren eigenen Text haben
         options.setCameraId(0)
         options.setBeepEnabled(false)
-        options.setOrientationLocked(false)
+        options.setOrientationLocked(true) // Portrait only
         cameraLauncher.launch(options)
     } catch (e: Exception) {
         Log.e("QRScanner", "Error launching camera: ${e.message}", e)
