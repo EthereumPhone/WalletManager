@@ -100,7 +100,11 @@
         
         <activity android:name="com.feature.send.ui.CustomCaptureActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
+            android:theme="@style/FullscreenCaptureTheme"
+            android:windowSoftInputMode="stateHidden"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
     </application>
 
