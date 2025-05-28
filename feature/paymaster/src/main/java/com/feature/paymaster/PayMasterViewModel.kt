@@ -21,7 +21,7 @@ import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 
 // Data classes for API interaction
-data class InitiateBalanceRequest(val userId: String, val amount: String = "1.0")
+data class InitiateBalanceRequest(val userId: String, val amount: String)
 data class InitiateBalanceResponse(val daimoPaymentId: String?, val daimoPaymentUrl: String?, val message: String?, val internalPaymentId: String?)
 
 @HiltViewModel
@@ -70,7 +70,7 @@ class PayMasterViewModel @Inject constructor(
         }
     }
 
-    suspend fun topUp(): String? = withContext(Dispatchers.IO) {
+    suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         try {
             val userId = walletSDK?.getAddress() ?: "" // Get address from WalletSDK
             if (userId.isBlank()) {
@@ -80,7 +80,7 @@ class PayMasterViewModel @Inject constructor(
             }
 
             val requestAdapter = moshi.adapter(InitiateBalanceRequest::class.java)
-            val requestBodyJson = requestAdapter.toJson(InitiateBalanceRequest(userId))
+            val requestBodyJson = requestAdapter.toJson(InitiateBalanceRequest(userId, amount))
 
             val request = Request.Builder()
                 .url(INITIATE_BALANCE_URL)
