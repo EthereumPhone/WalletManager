@@ -17,4 +17,8 @@
     <string name="sent_to">Sent to</string>
     <string name="recieved_from">received from</string>
 
+    <!-- Content Provider Permission -->
+    <string name="permission_read_token_metadata_label">Read Token Metadata</string>
+    <string name="permission_read_token_metadata_description">Allows an app to read token metadata from WalletManager</string>
+
 </resources>

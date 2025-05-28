@@ -9,6 +9,12 @@
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
+    <!-- Custom permission for reading token metadata -->
+    <permission
+        android:name="com.walletmanager.permission.READ_TOKEN_METADATA"
+        android:protectionLevel="normal"
+        android:label="@string/permission_read_token_metadata_label"
+        android:description="@string/permission_read_token_metadata_description" />
 
     <application
         android:name=".WmApplication"

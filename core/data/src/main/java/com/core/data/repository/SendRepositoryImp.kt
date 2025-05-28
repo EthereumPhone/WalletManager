@@ -83,6 +83,27 @@ class SendRepositoryImp @Inject constructor(
             } catch (exception: Exception) {
                 "error"
             }
+            
+            // If the transaction was successful (we got a valid transaction hash)
+            if (res.isNotEmpty() && res != "error" && res != "decline") {
+                // Get the current ETH balance from the database
+                // For ETH, the contractAddress is the chainId as a string
+                val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
+                val currentBalance = currentBalances.firstOrNull { it.contractAddress == chainId.toString() && it.chainId == chainId }
+                
+                if (currentBalance != null) {
+                    // ETH has 18 decimals, amount is already in wei format (decimalValue)
+                    val amountInWei = BigDecimal(decimalValue)
+                    
+                    // Calculate the new balance by subtracting the sent amount
+                    val newBalance = currentBalance.tokenBalance - amountInWei
+                    
+                    // Update the balance in the database
+                    val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
+                    tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
+                }
+            }
+            
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
         }
@@ -127,7 +148,7 @@ class SendRepositoryImp @Inject constructor(
                 )
                 
                 // If the transaction was successful (we got a valid transaction hash)
-                if (txHash.isNotEmpty() && txHash != "error") {
+                if (txHash.isNotEmpty() && txHash != "error" && txHash != "decline") {
                     // Get the current balance from the database
                     val currentBalances = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first()
                     val currentBalance = currentBalances.firstOrNull { it.contractAddress == tokenAsset.address && it.chainId == chainId }
