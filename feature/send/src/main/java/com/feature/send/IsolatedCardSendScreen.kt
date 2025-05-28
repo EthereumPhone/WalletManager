@@ -547,6 +547,85 @@ fun SendScreen2(
                                 .fillMaxSize()
                                 .padding(bottom = 24.dp)
                         ){
+                            HeaderBar(content = {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "SEND",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = dgenTurqoise,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 24.sp,
+                                            letterSpacing = 0.sp,
+                                            textDecoration = TextDecoration.None
+                                        )
+                                    )
+
+                                    // Zeige Token-Logo basierend auf selectedToken
+                                    when (selectedToken) {
+                                        is SelectedTokenUiState.Selected -> {
+                                            val token = selectedToken.tokenAsset
+
+                                            // Token Logo
+                                            if (!token.logoUrl.isNullOrEmpty()) {
+                                                AsyncImage(
+                                                    model = token.logoUrl,
+                                                    contentDescription = token.name,
+                                                    modifier = Modifier
+                                                        .size(28.dp)
+                                                        .clip(CircleShape),
+                                                    placeholder = painterResource(R.drawable.ethereum_placeholder),
+                                                    error = painterResource(R.drawable.ethereum_placeholder)
+                                                )
+                                            } else {
+                                                Image(
+                                                    modifier = Modifier
+                                                        .size(28.dp),
+                                                    painter = painterResource(R.drawable.placeholer_icon_5),
+                                                    contentDescription = token.name
+                                                )
+                                            }
+
+                                            // Token Symbol
+                                            Text(
+                                                text = token.symbol.uppercase(),
+                                                style = TextStyle(
+                                                    fontFamily = SpaceMono,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None
+                                                )
+                                            )
+                                        }
+                                        else -> {
+                                            // Fallback zu ETH wenn kein Token ausgewählt ist
+                                            Image(
+                                                modifier = Modifier
+                                                    .size(28.dp),
+                                                painter = painterResource(R.drawable.ethereum_placeholder),
+                                                contentDescription = "Ethereum"
+                                            )
+                                            Text(
+                                                text = "ETH",
+                                                style = TextStyle(
+                                                    fontFamily = SpaceMono,
+                                                    color = dgenTurqoise,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 24.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
+
 
                             Column(
                                 modifier = Modifier
