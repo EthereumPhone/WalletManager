@@ -4,6 +4,8 @@ import com.core.data.repository.AlchemyTokenBalanceRepository
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.DefaultExchangeRepository
+import com.core.data.repository.EnsRepository
+import com.core.data.repository.EnsRepositoryImpl
 import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.ProtoUserDataRepository
@@ -55,24 +57,27 @@ interface RepositoryModule {
     ): UserDataRepository
 
     @Binds
-    fun bindsSwapRepository(
-        swapRepositoryImp: SwapRepositoryImp
-    ): SwapRepository
+    fun bindsTokenExchangeRepository(
+        tokenExchangeRepository: DefaultExchangeRepository
+    ): TokenExchangeRepository
 
     @Binds
-    @Singleton
     fun bindsSendRepository(
-        sendRepositoryImp: SendRepositoryImp
+        sendRepository: SendRepositoryImp
     ): SendRepository
 
     @Binds
-    fun bindsNetworkMonitor(
-        networkMonitor: ConnectivityManagerNetworkMonitor,
-    ): NetworkMonitor
+    fun bindsSwapRepository(
+        swapRepository: SwapRepositoryImp
+    ): SwapRepository
 
     @Binds
-    fun bindsTokenExchangeRepository(
-        impl: DefaultExchangeRepository
-    ): TokenExchangeRepository
-
+    fun bindsNetworkMonitor(
+        networkMonitor: ConnectivityManagerNetworkMonitor
+    ): NetworkMonitor
+    
+    @Binds
+    fun bindsEnsRepository(
+        ensRepository: EnsRepositoryImpl
+    ): EnsRepository
 }

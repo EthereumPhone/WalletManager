@@ -1,6 +1,7 @@
 package com.core.database.di
 
 import com.core.database.WmDatabase
+import com.core.database.dao.EnsDao
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenMetadataDao
@@ -34,4 +35,9 @@ object DaosModule {
     fun provideTokenExchangeDao(
         database: WmDatabase
     ): TokenExchangeDao = database.tokenExchangeDao
+
+    @Provides
+    fun provideEnsDao(
+        database: WmDatabase
+    ): EnsDao = database.ensDao
 }

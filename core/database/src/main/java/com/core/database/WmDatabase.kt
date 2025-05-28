@@ -3,10 +3,12 @@ package com.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.core.database.dao.EnsDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TransferDao
+import com.core.database.model.EnsEntity
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenExchangeEntity
@@ -21,9 +23,10 @@ import com.core.database.util.RawContractConverter
         TransferEntity::class,
         TokenMetadataEntity::class,
         TokenBalanceEntity::class,
-        TokenExchangeEntity::class
+        TokenExchangeEntity::class,
+        EnsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 
@@ -38,4 +41,5 @@ abstract class WmDatabase: RoomDatabase() {
     abstract val tokenBalanceDao: TokenBalanceDao
     abstract val tokenMetadataDao: TokenMetadataDao
     abstract val tokenExchangeDao: TokenExchangeDao
+    abstract val ensDao: EnsDao
 }
