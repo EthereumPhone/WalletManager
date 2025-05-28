@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -125,6 +126,21 @@ internal fun HomeRoute2(
 
     var updater by remember { mutableStateOf(true) }
 
+    // Log recomposition
+    SideEffect {
+        Log.d("RECOMPOSE", "HomeRoute2 recomposed")
+        Log.d("RECOMPOSE", "walletDataUiState: $walletDataUiState")
+        Log.d("RECOMPOSE", "assetsUiState type: ${assetsUiState::class.simpleName}")
+        if (assetsUiState is AssetsUiState.Success) {
+            Log.d(
+                "RECOMPOSE",
+                "assets count: ${(assetsUiState as AssetsUiState.Success).assets.size}"
+            )
+        }
+        Log.d("RECOMPOSE", "selectedTokenUiState: $selectedTokenUiState")
+        Log.d("RECOMPOSE", "selectedTokenId: ${selectedTokenId.value}")
+    }
+
     if(updater) {
         Log.d("automatic updater", "TEST")
         viewModel.refreshData()
@@ -136,6 +152,13 @@ internal fun HomeRoute2(
     val tokenMetadata by viewModel.tokenMetadata.collectAsState()
 
     val hasTransfer by viewModel.hasTransfers.collectAsState()
+
+    // Log token data changes
+    SideEffect {
+        Log.d("RECOMPOSE", "tokenData size: ${tokenData.size}")
+        Log.d("RECOMPOSE", "tokenMetadata size: ${tokenMetadata.size}")
+        Log.d("RECOMPOSE", "hasTransfer: $hasTransfer")
+    }
 
     initializeFontMap(SpaceMono, PitagonsSans)
 
@@ -187,21 +210,31 @@ fun HomeScreen2(
     getLink: KSuspendFunction1<String, String>,
     modifier: Modifier = Modifier,
 ) {
-
-
+    // Log HomeScreen2 recomposition
+    SideEffect {
+        Log.d("RECOMPOSE", "HomeScreen2 recomposed")
+        Log.d("RECOMPOSE", "HomeScreen2 - userData: $userData")
+        Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${assetsUiState::class.simpleName}")
+        Log.d("RECOMPOSE", "HomeScreen2 - tokenData size: ${tokenData.size}")
+        Log.d("RECOMPOSE", "HomeScreen2 - tokenMetadata size: ${tokenMetadata.size}")
+        Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
+        Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
+    }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
 
-    val gifEnabledLoader = ImageLoader.Builder(context)
-        .components {
-            if ( SDK_INT >= 28 ) {
-                add(ImageDecoderDecoder.Factory())
-            } else {
-                add(GifDecoder.Factory())
-            }
-        }.build()
+    val gifEnabledLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components {
+                if ( SDK_INT >= 28 ) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }.build()
+    }
 
     Box (
         modifier = Modifier
@@ -220,15 +253,32 @@ fun HomeScreen2(
         ) {
 
             AnimatedContent(
-                assetsUiState,
+                targetState = assetsUiState,
+                contentKey = { state ->
+                    // Provide a stable key based on the *type* of state
+                    when (state) {
+                        is AssetsUiState.Success -> "SuccessState"
+                        is AssetsUiState.Empty -> "EmptyState"
+                        is AssetsUiState.Error -> "ErrorState"
+                        is AssetsUiState.Loading -> "LoadingState"
+                    }
+                },
                 transitionSpec = {
                     fadeIn(
                         animationSpec = tween(extraLargeEnterDuration)
                     ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                 },
                 modifier = Modifier.fillMaxSize(),
-                label = "Animated Content"
+                label = "Animated Content Assets"
             ) { assetState ->
+                // Log state changes
+                SideEffect {
+                    Log.d(
+                        "RECOMPOSE",
+                        "AnimatedContent - assetState changed to: ${assetState::class.simpleName}"
+                    )
+                }
+
                 when(assetState){
                     is AssetsUiState.Empty -> {
                         EmptyHomeScreen(
@@ -260,6 +310,10 @@ fun HomeScreen2(
                     }
                     is AssetsUiState.Success -> {
                         Log.d("DEBUG","AssetsUiState.SUCCESS")
+                        Log.d(
+                            "RECOMPOSE",
+                            "Success state - assets count: ${assetState.assets.size}"
+                        )
                         HomeScreenContent(
                             areAssetsVisible = assetState.assets.isNotEmpty() ,
                             primaryContent = {

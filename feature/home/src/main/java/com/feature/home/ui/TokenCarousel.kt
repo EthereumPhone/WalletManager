@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import dev.chrisbanes.snapper.SnapOffsets
 import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
@@ -66,101 +68,80 @@ fun TokenCardCarousel(
     setSelectedToken: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
+    var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
+    var autoScrollDone by rememberSaveable { mutableStateOf(false) }
+    var isUserScrolling by remember { mutableStateOf(false) }
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = assets.lastIndex)
-    // hier halbieren wir z.B. die Scroll-Geschwindigkeit
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = savedScrollIndex,
+        initialFirstVisibleItemScrollOffset = savedScrollOffset
+    )
+
+    LaunchedEffect(listState.isScrollInProgress, isUserScrolling) {
+        if (!listState.isScrollInProgress && isUserScrolling) {
+            savedScrollIndex = listState.firstVisibleItemIndex
+            savedScrollOffset = listState.firstVisibleItemScrollOffset
+            Log.d("ScrollSave", "User scroll FINISHED. Saved: index=${savedScrollIndex}, offset=${savedScrollOffset}")
+            isUserScrolling = false
+        }
+    }
 
     val coroutineScope = rememberCoroutineScope()
     val listofTokenSymbol = remember { mutableListOf<String>() }
+    var scrollJob by remember { mutableStateOf<Job?>(null) }
 
-    Log.d("HomeViewModel", "TokenCardCarousel")
+    Log.d("TokenCardCarousel", "Recomposing. autoScrollDone: $autoScrollDone. Assets: ${assets.size}. Selected: $selectedTokenUiState. Saved: $savedScrollIndex @ $savedScrollOffset. UserScrolling: $isUserScrolling")
 
-    // Ensure scrolling starts at the last item
-    LaunchedEffect(Unit) {
-        Log.d("HomeViewModel", "inside TokenCardCarousel")
-
-        if (assets.isNotEmpty()){
-            val token = when(selectedTokenUiState){
-                is SelectedTokenUiState.Unselected -> {
-                    assets.last()
+    LaunchedEffect(assets, selectedTokenUiState) {
+        Log.d("TokenCardCarousel", "Effect: Assets/SelectedToken changed. Assets: ${assets.size}, autoScrollDone: $autoScrollDone, Selected: $selectedTokenUiState")
+        if (assets.isNotEmpty()) {
+            if (!autoScrollDone) {
+                autoScrollDone = true
+                Log.d("TokenCardCarousel", "Attempting auto-scroll, autoScrollDone set to true immediately.")
+                scrollJob?.cancel()
+                isUserScrolling = false
+                val targetToken = when (selectedTokenUiState) {
+                    is SelectedTokenUiState.Unselected -> assets.lastOrNull()
+                    is SelectedTokenUiState.Selected -> {
+                        assets.find { it.address == selectedTokenUiState.tokenAsset.address && it.chainId == selectedTokenUiState.tokenAsset.chainId }
+                            ?: assets.lastOrNull()
+                    }
                 }
 
-                is SelectedTokenUiState.Selected -> {
-                    selectedTokenUiState.tokenAsset
-                }
-            }
-            val index = assets.indexOf(token)
-            listState.scrollToItem(index)
-            //setSelectedToken(token)
-
-            //collect all token symbols
-            for (asset in assets){
-                when(asset.symbol){
-                    "base" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "base added")
-                            listofTokenSymbol.add("ETH")
+                targetToken?.let { token ->
+                    val targetIndex = assets.indexOf(token)
+                    if (targetIndex != -1) {
+                        Log.d("TokenCardCarousel", "Auto-scrolling to ${token.symbol} at index $targetIndex")
+                        scrollJob = coroutineScope.launch {
+                            listState.scrollToItem(targetIndex)
+                            savedScrollIndex = targetIndex
+                            savedScrollOffset = 0
+                            Log.d("ScrollSave", "Auto-scroll COMPLETED & SAVED. New saved: index=$savedScrollIndex, offset=$savedScrollOffset.")
+                            setSelectedToken(token.address)
                         }
+                    } else {
+                        Log.d("TokenCardCarousel", "Auto-scroll target token not found in assets.")
                     }
-                    "arbitrum" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "mainnet added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    "mainnet" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "mainnet added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    "polygon" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "mainnet added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    "sepolia" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "mainnet added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    "optimism" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "optimism added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    "zora" -> {
-                        if(!listofTokenSymbol.contains("ETH")){
-                            Log.d("Fetch Card", "optimism added")
-
-                            listofTokenSymbol.add("ETH")
-                        }
-                    }
-                    else -> {
-                        Log.d("Fetch Card", "${asset.symbol} added")
-                        listofTokenSymbol.add(asset.symbol)
-                    }
+                } ?: run {
+                    Log.d("TokenCardCarousel", "No target token for auto-scroll.")
                 }
             }
 
-
-            //load token price based of token list
-            Log.d("DEBUG", "Token: $listofTokenSymbol")
-            for (token in listofTokenSymbol){
-                Log.d("DEBUG", "Token: $token")
+            listofTokenSymbol.clear()
+            assets.forEach { asset ->
+                val symbolToAdd = when (asset.symbol.lowercase()) {
+                    "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> "ETH"
+                    else -> asset.symbol
+                }
+                if (!listofTokenSymbol.contains(symbolToAdd)) {
+                    listofTokenSymbol.add(symbolToAdd)
+                }
             }
-
-            Log.d("DEBUG","listofTokenSymbol: $listofTokenSymbol")
-            loadSymbol(listofTokenSymbol)
-
+            if (listofTokenSymbol.isNotEmpty()) {
+                Log.d("TokenCardCarousel", "Loading symbols: $listofTokenSymbol")
+                loadSymbol(listofTokenSymbol.distinct())
+            }
         }
     }
 
@@ -169,30 +150,29 @@ fun TokenCardCarousel(
     val overlap     = (-cardHeight / visibleCount) *4     // -50.dp
     val clampRange  = (visibleCount - 1).toFloat()     // 3f
 
-
-    // <1 = langsamer scrollen / weniger empfindlich
     val sensitivity = 0.2f
 
-
-
-    // Connection zum Abfangen und Skalieren der Scroll-Events
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                // wir nehmen nur Y, skalieren es und scrollen die Liste
-                val scaledY = available.y * sensitivity
-                // scrollBy ist suspending – hier also über launch
-                CoroutineScope(Dispatchers.Main).launch {
-                    listState.scrollBy(scaledY)
+                if (source == NestedScrollSource.Drag) {
+                    if (!isUserScrolling) {
+                        Log.d("ScrollState", "User scroll STARTED via Drag")
+                        isUserScrolling = true
+                        scrollJob?.cancel()
+                    }
                 }
-                // geben zurück, was wir „verbraucht“ haben
-                return Offset(x = 0f, y = scaledY)
+                val scaledY = available.y * sensitivity
+                if (isUserScrolling) {
+                    coroutineScope.launch {
+                        listState.scrollBy(scaledY)
+                    }
+                    return Offset(x = 0f, y = scaledY)
+                }
+                return Offset.Zero
             }
         }
     }
-
-
-
 
     LazyColumn(
         state = listState,
@@ -201,20 +181,24 @@ fun TokenCardCarousel(
             .offset(0.dp,15.dp)
             .nestedScroll(nestedScrollConnection)
             .zIndex(3f),
-        verticalArrangement = Arrangement.spacedBy(overlap-32.dp), // Overlapping effect
-        contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp) // Ensures enough space for scrolling
+        verticalArrangement = Arrangement.spacedBy(overlap-32.dp),
+        contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp)
     ) {
-        itemsIndexed(assets) { index, item ->
-            var enabled by remember { mutableStateOf(false) }
-
+        itemsIndexed(assets, key = { _, asset -> asset.address + "_" + asset.chainId }) { index, item ->
             val rotX: Float by animateFloatAsState ( -25f , label = "rotX")
 
             val firstVisibleIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+            val isFirstCard = index == firstVisibleIndex
+
+            LaunchedEffect(isFirstCard, item.address, listState.isScrollInProgress) {
+                if (isFirstCard && !listState.isScrollInProgress && !isUserScrolling) {
+                    Log.d("FirstCard", "Card $index (${item.symbol}) is first & settled. setSelectedToken.")
+                    setSelectedToken(item.address)
+                }
+            }
 
             val firstVisibleOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
-
             val scrollOffset = firstVisibleIndex + firstVisibleOffset / 1000f
-
             val relIdx = (index - scrollOffset).coerceIn(-clampRange, clampRange)
 
             val scale by animateFloatAsState(
@@ -223,7 +207,7 @@ fun TokenCardCarousel(
                     abs(relIdx) <= clampRange -> lerp(0.8f, 0.55f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
                     else                      -> 0.55f
                 },
-                tween(smallDuration, easing = FastOutSlowInEasing)
+                animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "scaleAnimation"
             )
 
             val alphafactor by animateFloatAsState(
@@ -232,79 +216,28 @@ fun TokenCardCarousel(
                     abs(relIdx) <= clampRange -> lerp(1f, 0f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
                     else                      -> 0f
                 },
-                tween(smallDuration, easing = FastOutSlowInEasing)
+                animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "alphaAnimation"
             )
 
             val frontCardTranslation by animateFloatAsState(
-                targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)), // Reduced translation range
-                animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing)
+                targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)),
+                animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
             )
 
-
-            // Detect the front card
-            val isFirstCard = index == firstVisibleIndex
-
-            LaunchedEffect(isFirstCard) {
-                if (isFirstCard) {
-                    Log.d("FirstCard", "Karte mit Index $index ist jetzt die erste sichtbare")
-                    // Weitere Logik, z.B. setSelectedToken(item.address) usw.
-                    enabled = true
-//                    Log.d("ADDRESS", "address ${item.address} - network ${item.chainId} - name ${item.name} - symbol ${item.symbol}")
-                    setSelectedToken(item.address)
-                } else {
-                    enabled = false
-                }
-            }
-
-            //Calculate fiat amount
-            val fiatamount = when(item.symbol){
-                "base" -> {
-                    //get eth value
-                    val tokenasset = tokenData.find { it.symbol == "ETH" }
-                    //set eth value
-                    if (tokenasset == null){
-                        0.0
-                    }else{
-                        tokenasset.prices?.get(0)?.value?.toDouble()
-                    }
-                }
-                "mainnet" -> {
-                    //get eth value
-                    val tokenasset = tokenData.find { it.symbol == "ETH" }
-                    //set eth value
-                    //if tokenasset null turn into 0.00
-                    if (tokenasset == null){
-                        0.0
-                    }else{
-                        tokenasset.prices?.get(0)?.value?.toDouble()
-                    }
+            val fiatamount = when(item.symbol.lowercase()) {
+                "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> {
+                    tokenData.find { it.symbol == "ETH" }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
                 }
                 else -> {
-                    //get eth value
-                    val tokenasset = tokenData.find { it.symbol == item.symbol }
-                    //set eth value
-                    if (tokenasset == null){
-                        0.0
-                    }else{
-                        tokenasset.prices?.get(0)?.value?.toDouble()
-                    }
+                    tokenData.find { it.symbol == item.symbol }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
                 }
             }
 
-            val logoUrl = when(item.symbol) {
-                "arbitrum" -> {"ETH"}
-                "polygon" -> {"ETH"}
-                "sepolia" -> {"ETH"}
-                "mainnet" -> {"ETH"}
-                "optimism" -> {"ETH"}
-                "base" -> {"ETH"}
-                "zora" -> {"ETH"}
-                else -> {
-                    tokenMetadata.firstOrNull() { item.symbol == it.symbol }?.logo ?: ""
-                }
+            val logoUrl = when(item.symbol.lowercase()) {
+                "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> "ETH"
+                else -> tokenMetadata.firstOrNull() { it.symbol == item.symbol }?.logo ?: ""
             }
 
-            Log.d("fiatamount","${item.symbol} - $fiatamount")
             with(sharedTransitionScope) {
                 Card(
                     isFirst = isFirstCard,
@@ -320,31 +253,29 @@ fun TokenCardCarousel(
                             cameraDistance = 32f * density
                         },
                     frontSide = {
-                        val tokenName =
-                            if (item.name == item.symbol) "ETH-${item.symbol}" else item.symbol
-                        //if (fiatamount != null) {
+                        val tokenName = if (item.name.equals(item.symbol, ignoreCase = true) && item.symbol.equals("ETH", ignoreCase=true)) {
+                            if (item.name.isNotEmpty() && !item.name.equals(item.symbol, ignoreCase = true)) item.name else item.symbol
+                        } else if (item.name.equals(item.symbol, ignoreCase = true)) {
+                            item.symbol
+                        } else {
+                            item.symbol
+                        }
+
                         IdleView(
                             amount = item.balance,
                             tokenName = tokenName,
-                            fiatAmount = item.balance * fiatamount!!,
+                            fiatAmount = item.balance * fiatamount,
                             icon = logoUrl,
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)
                             },
                             enableSend = item.balance > 0
-
-
                         )
-                        // }
                     },
                 )
             }
-
-
-
         }
     }
-
 }
 
 
