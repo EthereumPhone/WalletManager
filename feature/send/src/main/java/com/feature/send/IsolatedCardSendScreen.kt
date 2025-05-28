@@ -121,12 +121,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import com.core.data.util.chainToApiKey
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.HttpEthereumRPC
+import org.web3j.crypto.WalletUtils
 import java.text.DecimalFormat
+import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -260,6 +267,47 @@ fun SendScreen2(
     // Neue Variablen für Fehlervalidierung
     var isAmountError by remember { mutableStateOf(false) }
     var convertedTokenAmount by remember { mutableStateOf("") }
+    
+    // ENS Resolution State
+    var isResolvingENS by remember { mutableStateOf(false) }
+    var ensError by remember { mutableStateOf<String?>(null) }
+    
+    // ENS Resolution
+    LaunchedEffect(toAddressFieldValue.text) {
+        val address = toAddressFieldValue.text
+        if (address.endsWith(".eth") && ENSName(address.lowercase()).isPotentialENSDomain()) {
+            isResolvingENS = true
+            ensError = null
+            
+            try {
+                withContext(Dispatchers.IO) {
+                    val ens = ENS(
+                        HttpEthereumRPC(
+                            "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+                        )
+                    )
+                    val ensAddr = ens.getAddress(ENSName(address.lowercase()))
+                    
+                    withContext(Dispatchers.Main) {
+                        ensAddr?.let { resolvedAddress ->
+                            // Update the address in ViewModel with the resolved address
+                            onToAddressChanged(resolvedAddress.hex)
+                            // Don't update toAddressFieldValue here to keep the ENS name visible
+                        } ?: run {
+                            ensError = "ENS name not found"
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                ensError = "Failed to resolve ENS: ${e.message}"
+            } finally {
+                isResolvingENS = false
+            }
+        } else {
+            isResolvingENS = false
+            ensError = null
+        }
+    }
     
     // Lade Wechselkurse für ausgewähltes Token
     LaunchedEffect(selectedToken) {
@@ -419,6 +467,48 @@ fun SendScreen2(
                     }
                 }
                 is AssetUiState.Success -> {
+                    // Hole die verfügbare Balance
+                    val availableBalance = when (selectedToken) {
+                        is SelectedTokenUiState.Selected -> selectedToken.tokenAsset.balance
+                        else -> {
+                            // Für ETH die Balance aus den Assets holen
+                            assetsUiState.assets
+                                .filter { 
+                                    it.symbol.equals("ETH", ignoreCase = true) || 
+                                    it.symbol.equals("mainnet", ignoreCase = true) ||
+                                    it.symbol.equals("sepolia", ignoreCase = true) ||
+                                    it.symbol.equals("optimism", ignoreCase = true) ||
+                                    it.symbol.equals("polygon", ignoreCase = true) ||
+                                    it.symbol.equals("arbitrum", ignoreCase = true) ||
+                                    it.symbol.equals("base", ignoreCase = true) ||
+                                    it.symbol.equals("zora", ignoreCase = true)
+                                }
+                                .firstOrNull()?.balance ?: 0.0
+                        }
+                    }
+                    
+                    // Validiere die Adresse
+                    val isValidAddress = remember(toAddress, toAddressFieldValue.text, isResolvingENS, ensError) {
+                        when {
+                            toAddress.isEmpty() -> false
+                            toAddressFieldValue.text.endsWith(".eth") -> !isResolvingENS && ensError == null && toAddress.isNotEmpty()
+                            else -> WalletUtils.isValidAddress(toAddress)
+                        }
+                    }
+                    
+                    // Validiere den Betrag
+                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance) {
+                        if (useDollarAmount) {
+                            // Bei Dollar-Eingabe, prüfe den konvertierten Token-Betrag
+                            val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
+                            isAmountError = tokenAmount > availableBalance
+                        } else {
+                            // Bei Token-Eingabe, prüfe direkt
+                            val tokenAmount = amount.toDoubleOrNull() ?: 0.0
+                            isAmountError = tokenAmount > availableBalance
+                        }
+                    }
+                    
                     Box(
                         Modifier.fillMaxSize()
                     ) {
@@ -515,39 +605,6 @@ fun SendScreen2(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
-                                // Hole die verfügbare Balance
-                                val availableBalance = when (selectedToken) {
-                                    is SelectedTokenUiState.Selected -> selectedToken.tokenAsset.balance
-                                    else -> {
-                                        // Für ETH die Balance aus den Assets holen
-                                        assetsUiState.assets
-                                            .filter { 
-                                                it.symbol.equals("ETH", ignoreCase = true) || 
-                                                it.symbol.equals("mainnet", ignoreCase = true) ||
-                                                it.symbol.equals("sepolia", ignoreCase = true) ||
-                                                it.symbol.equals("optimism", ignoreCase = true) ||
-                                                it.symbol.equals("polygon", ignoreCase = true) ||
-                                                it.symbol.equals("arbitrum", ignoreCase = true) ||
-                                                it.symbol.equals("base", ignoreCase = true) ||
-                                                it.symbol.equals("zora", ignoreCase = true)
-                                            }
-                                            .firstOrNull()?.balance ?: 0.0
-                                    }
-                                }
-                                
-                                // Validiere den Betrag
-                                LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount) {
-                                    if (useDollarAmount) {
-                                        // Bei Dollar-Eingabe, prüfe den konvertierten Token-Betrag
-                                        val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
-                                        isAmountError = tokenAmount > availableBalance
-                                    } else {
-                                        // Bei Token-Eingabe, prüfe direkt
-                                        val tokenAmount = amount.toDoubleOrNull() ?: 0.0
-                                        isAmountError = tokenAmount > availableBalance
-                                    }
-                                }
-
                                 Column(
                                     modifier = Modifier
                                         .drawBehind {
@@ -593,10 +650,14 @@ fun SendScreen2(
                                                     value = dollarAmount,
                                                     onValueChange={ new ->
                                                         // Check if the new value contains more than one dot
-                                                        val dotCount = new.text.count { it == '.' }
-                                                        if (dotCount <= 1) {
+                                                        if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
+                                                            // If it's a valid format or empty, call onAmountChange with the text
                                                             dollarAmount = new
                                                         }
+//                                                        val dotCount = new.text.count { it == '.' }
+//                                                        if (dotCount <= 1) {
+//                                                            dollarAmount = new
+//                                                        }
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -647,12 +708,18 @@ fun SendScreen2(
                                                 DgenBasicTextfield(
                                                     value = amountFieldValue,
                                                     onValueChange={ new ->
-                                                        // Check if the new value contains more than one dot
-                                                        val dotCount = new.text.count { it == '.' }
-                                                        if (dotCount <= 1) {
+
+                                                        if (amountFieldValue.text.isEmpty() || amountFieldValue.text == "." || amountFieldValue.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
+                                                            // If it's a valid format or empty, call onAmountChange with the text
                                                             amountFieldValue = new
                                                             onAmountChange(new.text)
                                                         }
+//                                                        // Check if the new value contains more than one dot
+//                                                        val dotCount = new.text.count { it == '.' }
+//                                                        if (dotCount <= 1) {
+//                                                            amountFieldValue = new
+//                                                            onAmountChange(new.text)
+//                                                        }
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -850,10 +917,20 @@ fun SendScreen2(
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         Text(
-                                            text = "Target Address".uppercase(),
+                                            text = when {
+                                                isResolvingENS -> "Resolving ENS...".uppercase()
+                                                ensError != null -> "ENS Error".uppercase()
+                                                toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> "ENS Resolved".uppercase()
+                                                else -> "Target Address".uppercase()
+                                            },
                                             style = TextStyle(
                                                 fontFamily = SpaceMono,
-                                                color = dgenTurqoise,
+                                                color = when {
+                                                    isResolvingENS -> dgenOrche
+                                                    ensError != null -> dgenRed
+                                                    toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
+                                                    else -> dgenTurqoise
+                                                },
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = label_fontSize,
                                                 lineHeight = label_fontSize,
@@ -861,7 +938,12 @@ fun SendScreen2(
                                                 textDecoration = TextDecoration.None,
                                                 textAlign = TextAlign.Left
                                             ),
-                                            color = dgenTurqoise
+                                            color = when {
+                                                isResolvingENS -> dgenOrche
+                                                ensError != null -> dgenRed
+                                                toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
+                                                else -> dgenTurqoise
+                                            }
                                         )
                                         IconButton(onClick = {
                                             showCameraWithPerm = true
@@ -876,15 +958,15 @@ fun SendScreen2(
 
 
                             Surface(
-                                color = if (isAmountError || toAddress.isEmpty()) dgenGray else dgenTurqoise,
+                                color = if (isAmountError || !isValidAddress) dgenGray else dgenTurqoise,
                                 shape = CircleShape,
                                 modifier = modifier.padding(start = 24.dp)
                                     .animateContentSize()
-                                    .border(1.dp, if (isAmountError || toAddress.isEmpty()) dgenGray else dgenTurqoise, CircleShape)
-                                    .pointerInput(isAmountError, toAddress){
+                                    .border(1.dp, if (isAmountError || !isValidAddress) dgenGray else dgenTurqoise, CircleShape)
+                                    .pointerInput(isAmountError, isValidAddress){
                                         detectTapGestures {
                                             // Prüfe ob Button deaktiviert ist
-                                            if (isAmountError || toAddress.isEmpty()) {
+                                            if (isAmountError || !isValidAddress) {
                                                 // Zeige spezifische Fehlermeldung
                                                 if (isAmountError) {
                                                     context.showCustomToast(
@@ -898,6 +980,33 @@ fun SendScreen2(
                                                 } else if (toAddress.isEmpty()) {
                                                     context.showCustomToast(
                                                         "Enter target address",
+                                                        Toast.LENGTH_SHORT,
+                                                        fontFamily = PitagonsSans,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        backgroundColor = dgenRed,
+                                                        textColor = dgenWhite
+                                                    )
+                                                } else if (isResolvingENS) {
+                                                    context.showCustomToast(
+                                                        "Resolving ENS name...",
+                                                        Toast.LENGTH_SHORT,
+                                                        fontFamily = PitagonsSans,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        backgroundColor = dgenOrche,
+                                                        textColor = dgenWhite
+                                                    )
+                                                } else if (ensError != null) {
+                                                    context.showCustomToast(
+                                                        ensError ?: "ENS error",
+                                                        Toast.LENGTH_SHORT,
+                                                        fontFamily = PitagonsSans,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        backgroundColor = dgenRed,
+                                                        textColor = dgenWhite
+                                                    )
+                                                } else if (!isValidAddress) {
+                                                    context.showCustomToast(
+                                                        "Invalid address format",
                                                         Toast.LENGTH_SHORT,
                                                         fontFamily = PitagonsSans,
                                                         fontWeight = FontWeight.SemiBold,
@@ -979,12 +1088,12 @@ fun SendScreen2(
                                                 )
                                             }
                                             
-                                            // Führe die Send-Transaktion aus, wenn alles gültig ist
-                                            if (!isAmountError && toAddress.isNotEmpty() && 
+                                            // Execute if everything if everything is not empty
+                                            if (!isAmountError && isValidAddress && 
                                                 ((!useDollarAmount && currentTokenAmount.isNotEmpty()) || 
                                                  (useDollarAmount && currentDollarAmount.isNotEmpty()))) {
                                                 
-                                                // Aktualisiere den Amount im ViewModel
+
                                                 val finalAmount = if (useDollarAmount) {
                                                     convertedTokenAmount
                                                 } else {
@@ -1001,11 +1110,11 @@ fun SendScreen2(
                                         }
                                     },
                                 ){
-                                Text(text= "SEND", color = if (isAmountError || toAddress.isEmpty()) dgenGunMetal else dgenOcean ,
+                                Text(text= "SEND", color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean ,
                                     modifier = modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                     style = TextStyle(
                                     fontFamily = SpaceMono,
-                                    color = if (isAmountError || toAddress.isEmpty()) dgenGunMetal else dgenOcean,
+                                    color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean,
                                     fontWeight = FontWeight. SemiBold,
                                     fontSize = 18.sp
                                 ))

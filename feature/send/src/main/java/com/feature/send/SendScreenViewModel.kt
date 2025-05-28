@@ -6,6 +6,7 @@ import android.content.Context
 import android.provider.ContactsContract
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
@@ -37,6 +38,12 @@ import com.core.model.Price
 import com.core.model.TokenData
 import com.core.model.UserData
 import com.core.result.Result
+import com.core.ui.showCustomToast
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenOcean
+import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.example.dgenlibrary.ui.theme.dgenWhite
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -459,34 +466,36 @@ class SendViewModel @Inject constructor(
                         val decimalFormat = DecimalFormat("#.######")
                         val formattedAmount = decimalFormat.format(tokenAmount)
                         
-                        // Zeige Toast
+                        // show Toast
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
+                            context.showCustomToast(
                                 "$${dollarAmount} = $formattedAmount $tokenSymbol",
-                                Toast.LENGTH_LONG
-                            ).show()
+                                Toast.LENGTH_SHORT,
+                                fontFamily = PitagonsSans,
+                                fontWeight = FontWeight.SemiBold,
+                                backgroundColor = dgenOcean,
+                                textColor = dgenTurqoise
+                            )
                         }
                         
                         // Update den amount Wert
                         updateAmount(formattedAmount)
                     } ?: run {
-                        // Falls kein Wechselkurs gefunden wurde
+                        // If no exchange has been found
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                "Kein Wechselkurs für $tokenSymbol gefunden",
-                                Toast.LENGTH_SHORT
-                            ).show()
+
                         }
                     }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        "Fehler bei der Umrechnung: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    context.showCustomToast(
+                        "Error at calculation: ${e.message}",
+                        Toast.LENGTH_SHORT,
+                        fontFamily = PitagonsSans,
+                        fontWeight = FontWeight.SemiBold,
+                        backgroundColor = dgenOcean,
+                        textColor = dgenTurqoise
+                    )
                 }
             }
         }
