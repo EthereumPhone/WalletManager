@@ -91,6 +91,11 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <!-- If `ToolbarCaptureActivity` requires specific intent filters, add them here -->
         </activity>
+        
+        <activity android:name="com.feature.send.ui.CustomCaptureActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
+        </activity>
     </application>
 
 </manifest>

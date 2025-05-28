@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -181,7 +182,7 @@ fun ReceiveScreen(
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
                     modifier = Modifier.size(125.dp)
-                        .aspectRatio(1f)
+                        .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
                 )
 
                 Spacer(modifier.height(48.dp))
