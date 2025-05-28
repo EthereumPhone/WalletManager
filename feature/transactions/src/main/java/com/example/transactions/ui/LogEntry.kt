@@ -16,8 +16,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -35,50 +37,11 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 
-enum class TxType{
-    SENT,
-    RECEIVED,
-    SWAPED,
-    NFT
-}
 
-data class TxEntry (
-    val fromAmount: Double = 0.0,
-    val toAmount: Double = 0.0,
-    val fromTokenName: String = "",
-    val toTokenName: String = "",
-    val fromAddress: String = "",
-    val toAddress: String = "",
-    val txType : TxType = TxType.SENT
-)
 
-/**
- * Gets the appropriate network logo resource for native tokens (ETH/MATIC)
- * based on the chain ID
- */
-@Composable
-private fun getNetworkLogoResource(chainId: Int, asset: String): Int? {
-    val assetUppercase = asset.uppercase()
-    
-    // Check if it's a native token
-    val isNativeToken = when (chainId) {
-        137 -> assetUppercase == "MATIC" // Polygon
-        else -> assetUppercase == "ETH"
-    }
-    
-    if (!isNativeToken) return null
-    
-    // Return the appropriate network logo from feature.home drawable resources
-    return when (chainId) {
-        1, 5 -> R.drawable.ethereum_logo // Ethereum mainnet
-        11155111 -> R.drawable.mainnet // Sepolia (using mainnet logo)
-        137 -> R.drawable.polygon_logo // Polygon
-        10 -> R.drawable.optimism_logo // Optimism
-        42161 -> R.drawable.arbitrum_logo // Arbitrum
-        8453 -> R.drawable.base_logo // Base
-        else -> null
-    }
-}
+
+
+
 
 @Composable
 fun LogEntry(
@@ -122,7 +85,7 @@ fun LogEntry(
             // Second priority: Use provided logo URL
             logoUrl.isNotEmpty() -> {
                 AsyncImage(
-                    modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(24.dp),
+                    modifier = Modifier.size(24.dp).clip(CircleShape),
                     model = logoUrl,
                     contentDescription = "Token logo"
                 )
@@ -130,7 +93,7 @@ fun LogEntry(
             // Fallback: Use placeholder
             else -> {
                 Image(
-                    modifier = Modifier.size(24.dp).padding(top=4.dp),
+                    modifier = Modifier.size(24.dp),
                     painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
                     contentDescription = "Placeholder"
                 )
@@ -151,7 +114,6 @@ fun LogEntry(
                             color = dgenTurqoise,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
-                            letterSpacing = 0.sp,
                             textDecoration = TextDecoration.None
                         )
                     ) {
@@ -160,13 +122,14 @@ fun LogEntry(
 
                     append(toValue)
                 },
-                fontFamily = PitagonsSans,
-                color = dgenWhite,
-                fontWeight = FontWeight.Medium,
-                fontSize = 22.sp,
-                lineHeight = 22.sp,
-                letterSpacing = 0.sp,
-                textDecoration = TextDecoration.None
+                style = TextStyle(
+                    fontFamily = PitagonsSans,
+                    color = dgenWhite,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 22.sp,
+                    lineHeight = 22.sp,
+                    textDecoration = TextDecoration.None
+                )
             )
         }
         else{
@@ -180,7 +143,6 @@ fun LogEntry(
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp,
-                        letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None
                     )
                     ) {
@@ -189,13 +151,14 @@ fun LogEntry(
 
                     append(fromValue)
                 },
-                fontFamily = PitagonsSans,
-                color = dgenWhite,
-                fontWeight = FontWeight.Medium,
-                fontSize = 22.sp,
-                lineHeight = 22.sp,
-                letterSpacing = 0.sp,
-                textDecoration = TextDecoration.None
+                style = TextStyle(
+                    fontFamily = PitagonsSans,
+                    color = dgenWhite,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 22.sp,
+                    lineHeight = 22.sp,
+                    textDecoration = TextDecoration.None
+                )
             )
 
         }
@@ -203,3 +166,69 @@ fun LogEntry(
 
 
 }
+
+enum class TxType{
+    SENT,
+    RECEIVED,
+    SWAPED,
+    NFT
+}
+
+/**
+ * Gets the appropriate network logo resource for native tokens (ETH/MATIC)
+ * based on the chain ID
+ */
+@Composable
+private fun getNetworkLogoResource(chainId: Int, asset: String): Int? {
+    val assetUppercase = asset.uppercase()
+
+    // Check if it's a native token
+    val isNativeToken = when (chainId) {
+        137 -> assetUppercase == "MATIC" // Polygon
+        else -> assetUppercase == "ETH"
+    }
+
+    if (!isNativeToken) return null
+
+    // Return the appropriate network logo from feature.home drawable resources
+    return when (chainId) {
+        1, 5 -> R.drawable.ethereum_logo // Ethereum mainnet
+        11155111 -> R.drawable.mainnet // Sepolia (using mainnet logo)
+        137 -> R.drawable.polygon_logo // Polygon
+        10 -> R.drawable.optimism_logo // Optimism
+        42161 -> R.drawable.arbitrum_logo // Arbitrum
+        8453 -> R.drawable.base_logo // Base
+        else -> null
+    }
+}
+
+@Preview
+@Composable
+fun PreviewLogEntity() {
+
+    val transferItem = TransferItem(
+        chainId = 1,
+        from = "nceornea.et",
+        to = "nceornea.eth",
+        asset = "ETH",
+        value = "123",
+        timeStamp = "now",
+        userSent = true,
+        txHash = ""
+    )
+
+    LogEntry(logEntry = transferItem)
+
+
+
+}
+
+data class TxEntry (
+    val fromAmount: Double = 0.0,
+    val toAmount: Double = 0.0,
+    val fromTokenName: String = "",
+    val toTokenName: String = "",
+    val fromAddress: String = "",
+    val toAddress: String = "",
+    val txType : TxType = TxType.SENT
+)
