@@ -27,26 +27,17 @@ import javax.inject.Inject
 class TransactionViewModel @Inject constructor(
     getTransfersUseCase: GetTransfersUseCase,
     private val userDataRepository: UserDataRepository,
-    private val networkBalanceRepository: NetworkBalanceRepository,
     private val transferRepository: TransferRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
-
     ): ViewModel() {
 
-    val transferState: StateFlow<TransfersUiState> =
-        getTransfersUseCase()
-            .map { items ->
-                Log.d("TransactionViewModel", "Transfers received from UseCase: ${items.size} items")
-                items.forEachIndexed { index, item ->
-                    Log.d("TransactionViewModel", "Item[$index]: chainId=${item.chainId}, asset=${item.asset}, value=${item.value}, hash=${item.txHash}, to=${item.to}, from=${item.from}")
-                }
-                TransfersUiState.Success(items)
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = TransfersUiState.Loading
-            )
+    val transferState: StateFlow<TransfersUiState> = getTransfersUseCase()
+        .map(TransfersUiState::Success)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = TransfersUiState.Loading
+        )
 
 
     val tokenMetadata = tokenMetadataRepository.getTokensMetadata()

@@ -116,18 +116,6 @@ fun LogRoute(
         tokenId = tokenId,
         onRefresh = viewModel::refreshData
     )
-
-
-//    val txs = generateRandomTransfers()
-//
-//    LogScreen(
-//        transfersUIState = TransfersUiState.Success(txs),
-//        onNavigateBack = navigateBack,
-//        refreshState = false,
-//        tokenId = tokenId,
-//        tokenAssetUiState = tokenAssetUiState,
-//        onRefresh = {}
-//    )
 }
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -223,21 +211,12 @@ fun LogScreen(
                         }
                     }
                     is TransfersUiState.Success -> {
-//                        Log.d("LogScreen", "Original transfers from ViewModel: ${txState.transfers.size}")
-//                        txState.transfers.forEachIndexed { index, t ->
-//                            Log.d("LogScreen", "Original item[$index]: asset=${t.asset}, chainId=${t.chainId}, hash=${t.txHash}")
-//                        }
-
                         val transfers = txState.transfers
 
-
-
                         if (transfers.isNotEmpty()){
-
                             val metaBySymbol = remember(tokenMetadata) {
                                 tokenMetadata.associateBy { it.symbol }
                             }
-
 
                             Box(
                                 Modifier

@@ -19,27 +19,30 @@ class GetTransfersUseCase @Inject constructor(
     operator fun invoke(): Flow<List<TransferItem>> =
         transferRepository.getTransfers(listOf("external", "erc20", "erc721"))
             .map { items ->
-                val sortedItems = items.sortedBy { it.blockTimestamp }
-                sortedItems.map {
-                    val asset = truncate(it.asset).trim()
+                items
+                    .asSequence()
+                    .filter { transfer ->
+                        val name = transfer.asset.lowercase()
+                        name.isNotBlank() && urlPatterns.none { name.contains(it) }
+                    }
+                    .sortedBy { it.blockTimestamp }
+                    .map { transfer ->
+                        val truncatedAsset = truncate(transfer.asset).trim()
+                        val dateTime = transfer.blockTimestamp
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
 
-                    val networkCurrency = if (it.chainId == 137) "MATIC" else "ETH"
-                    //val assetType = it.asset.ifEmpty { networkCurrency }
-                    val address = if (it.userIsSender) it.to else it.from
-                    val timeStamp = it.blockTimestamp
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-
-                    TransferItem(
-                        chainId = it.chainId,
-                        from = it.from,
-                        to = it.to,
-                        asset = asset,
-                        value = formatDouble(it.value),
-                        timeStamp = timeStamp.date.toString() + " " + timeStamp.time,
-                        userSent = it.userIsSender,
-                        txHash = it.txHash
-                    )
-                }
+                        TransferItem(
+                            chainId = transfer.chainId,
+                            from = transfer.from,
+                            to = transfer.to,
+                            asset = truncatedAsset,
+                            value = formatDouble(transfer.value),
+                            timeStamp = "${dateTime.date} ${dateTime.time}",
+                            userSent = transfer.userIsSender,
+                            txHash = transfer.txHash
+                        )
+                    }
+                    .toList()
             }
 
     fun formatDouble(input: Double): String {
@@ -55,3 +58,9 @@ fun truncate(input: String): String {
         input
     }
 }
+
+private val urlPatterns = listOf(
+    "http://", "https://", "www.",
+    ".com", ".io", ".org", ".net", ".xyz",
+    "/", "t.me", "telegram", "twitter", "discord", "t.ly"
+)
