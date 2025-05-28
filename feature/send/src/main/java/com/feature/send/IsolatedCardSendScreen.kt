@@ -332,7 +332,7 @@ fun SendScreen2(
     ) {
 
         AsyncImage(
-            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.1f).aspectRatio(1f),
+            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
             model = R.drawable.wireframe_globe,
             contentDescription = null
@@ -493,7 +493,7 @@ fun SendScreen2(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(start = 24.dp, end = 24.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
                                 Column(
@@ -750,8 +750,8 @@ fun SendScreen2(
 
                                 SelectableCarousel(
                                     items = availableChains,
-                                    itemWidth = 70.dp,
-                                    itemHeight = 70.dp,
+                                    itemWidth = 65.dp,
+                                    itemHeight = 65.dp,
                                     initialSelectedIndex = selectedChainIndex,
                                     onItemSelected = { index -> 
                                         selectedChainIndex = index ?: 0
