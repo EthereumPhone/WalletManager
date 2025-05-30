@@ -106,20 +106,7 @@ internal fun HomeRoute2(
 
     var updater by remember { mutableStateOf(true) }
 
-    // Log recomposition
-    SideEffect {
-        Log.d("RECOMPOSE", "HomeRoute2 recomposed")
-        Log.d("RECOMPOSE", "walletDataUiState: $walletDataUiState")
-        Log.d("RECOMPOSE", "assetsUiState type: ${assetsUiState::class.simpleName}")
-        if (assetsUiState is AssetsUiState.Success) {
-            Log.d(
-                "RECOMPOSE",
-                "assets count: ${(assetsUiState as AssetsUiState.Success).assets.size}"
-            )
-        }
-        Log.d("RECOMPOSE", "selectedTokenUiState: $selectedTokenUiState")
-        Log.d("RECOMPOSE", "selectedTokenId: ${selectedTokenId.value}")
-    }
+
 
     if(updater) {
         Log.d("automatic updater", "TEST")
@@ -129,14 +116,11 @@ internal fun HomeRoute2(
 
     val tokenData by viewModel.tokenData.collectAsState()
 
-    val tokenMetadata by viewModel.tokenMetadata.collectAsState()
-
     val hasTransfer by viewModel.hasTransfers.collectAsState()
 
     // Log token data changes
     SideEffect {
         Log.d("RECOMPOSE", "tokenData size: ${tokenData.size}")
-        Log.d("RECOMPOSE", "tokenMetadata size: ${tokenMetadata.size}")
         Log.d("RECOMPOSE", "hasTransfer: $hasTransfer")
     }
 
@@ -156,7 +140,6 @@ internal fun HomeRoute2(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
         tokenData = tokenData,
-        tokenMetadata = tokenMetadata,
         loadSymbol = viewModel::loadSymbol,
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
@@ -177,7 +160,6 @@ fun HomeScreen2(
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
-    tokenMetadata:  List<TokenMetadata>,
     selectedTokenUiState: SelectedTokenUiState,
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
@@ -196,7 +178,6 @@ fun HomeScreen2(
         Log.d("RECOMPOSE", "HomeScreen2 - userData: $userData")
         Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${assetsUiState::class.simpleName}")
         Log.d("RECOMPOSE", "HomeScreen2 - tokenData size: ${tokenData.size}")
-        Log.d("RECOMPOSE", "HomeScreen2 - tokenMetadata size: ${tokenMetadata.size}")
         Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
         Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
     }
@@ -301,7 +282,6 @@ fun HomeScreen2(
                                     modifier = Modifier.padding(bottom = 24.dp),
                                     assets = assetState.assets,
                                     tokenData = tokenData,
-                                    tokenMetadata = tokenMetadata,
                                     loadSymbol = loadSymbol,
                                     navigateToSend = navigateToSend,
                                     selectedTokenUiState = selectedTokenUiState,

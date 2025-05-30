@@ -59,7 +59,6 @@ import kotlinx.coroutines.launch
 fun TokenCardCarousel(
     assets: List<TokenAsset>,
     tokenData: List<TokenData>,
-    tokenMetadata: List<TokenMetadata>,
     loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     sharedTransitionScope: SharedTransitionScope,
@@ -233,11 +232,6 @@ fun TokenCardCarousel(
                 }
             }
 
-            val logoUrl = when(item.symbol.lowercase()) {
-                "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> "ETH"
-                else -> tokenMetadata.firstOrNull() { it.symbol == item.symbol }?.logo ?: ""
-            }
-
             with(sharedTransitionScope) {
                 Card(
                     isFirst = isFirstCard,
@@ -265,7 +259,7 @@ fun TokenCardCarousel(
                             amount = item.balance,
                             tokenName = tokenName,
                             fiatAmount = item.balance * fiatamount,
-                            icon = logoUrl,
+                            icon = item.logoUrl,
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)
                             },

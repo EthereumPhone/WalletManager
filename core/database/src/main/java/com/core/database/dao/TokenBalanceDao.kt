@@ -7,6 +7,7 @@ import androidx.room.Upsert
 import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
 import kotlinx.coroutines.flow.Flow
+import androidx.room.MapInfo
 
 @Dao
 interface TokenBalanceDao {
@@ -28,6 +29,7 @@ interface TokenBalanceDao {
         SELECT * FROM token_metadata
         GROUP BY symbol
     """)
+    @MapInfo(keyColumn = "symbol")
     fun getCompositeTokensGroupedBySymbol(): Flow<Map<String, List<CompositeToken>>>
 
     @Upsert

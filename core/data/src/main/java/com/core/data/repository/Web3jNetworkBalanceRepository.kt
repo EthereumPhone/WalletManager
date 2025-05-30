@@ -69,6 +69,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                         symbol = name.lowercase(),
                         name = name.lowercase(),
                         balance = formatSmallBalance(sum.toDouble()),
+                        logoUrl = if (isPolygon) "MATIC" else "ETH",
                         decimals = 18
                     )
                 }
