@@ -223,14 +223,18 @@ fun TokenCardCarousel(
                 animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
             )
 
-            val fiatamount = when(item.symbol.lowercase()) {
-                "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> {
-                    tokenData.find { it.symbol == "ETH" }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
-                }
-                else -> {
-                    tokenData.find { it.symbol == item.symbol }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
+
+            val exchange = if(item.address.contains("0x")) {
+                tokenData.find { it.symbol == item.symbol }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
+            } else {
+                if (item.chainId == 137) {
+                    tokenData.find { it.symbol!!.contains("matic",true) }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
+                } else {
+                    tokenData.find { it.symbol!!.contains("eth",true) }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
+
                 }
             }
+
 
             with(sharedTransitionScope) {
                 Card(
@@ -258,7 +262,7 @@ fun TokenCardCarousel(
                         IdleView(
                             amount = item.balance,
                             tokenName = tokenName,
-                            fiatAmount = item.balance * fiatamount,
+                            fiatAmount = item.balance * exchange,
                             icon = item.logoUrl,
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)

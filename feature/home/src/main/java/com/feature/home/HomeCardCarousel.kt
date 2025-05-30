@@ -53,7 +53,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.core.model.TokenData
-import com.core.model.TokenMetadata
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.feature.send.SelectedTokenUiState
@@ -62,7 +61,6 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.core.model.TokenAsset
 import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
@@ -114,13 +112,13 @@ internal fun HomeRoute2(
         updater = false
     }
 
-    val tokenData by viewModel.tokenData.collectAsState()
+    val tokenPrices by viewModel.tokenData.collectAsState()
 
     val hasTransfer by viewModel.hasTransfers.collectAsState()
 
     // Log token data changes
     SideEffect {
-        Log.d("RECOMPOSE", "tokenData size: ${tokenData.size}")
+        Log.d("RECOMPOSE", "tokenData size: ${tokenPrices.size}")
         Log.d("RECOMPOSE", "hasTransfer: $hasTransfer")
     }
 
@@ -139,7 +137,7 @@ internal fun HomeRoute2(
         isOffline = isOffline,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
-        tokenData = tokenData,
+        tokenData = tokenPrices,
         loadSymbol = viewModel::loadSymbol,
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
