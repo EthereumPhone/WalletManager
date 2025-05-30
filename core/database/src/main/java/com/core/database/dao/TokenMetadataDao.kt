@@ -1,6 +1,8 @@
 package com.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.core.database.model.erc20.TokenMetadataEntity
@@ -21,6 +23,6 @@ interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata WHERE chainId == :chainId")
     fun getTokenMetadata(chainId: Int): Flow<List<TokenMetadataEntity>>
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun upsertTokensMetadata(tokenMetadata: List<TokenMetadataEntity>)
 }
