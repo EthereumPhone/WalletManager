@@ -18,9 +18,12 @@ import com.core.model.TokenBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletsdk.WalletSDK
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 class AlchemyTokenBalanceRepository @Inject constructor(
@@ -32,6 +35,29 @@ class AlchemyTokenBalanceRepository @Inject constructor(
             it.map(CompositeToken::toExternalModel)
         }
 
+    override fun getCombinedTokens(): Flow<List<TokenAsset>> =
+        tokenBalanceDao.getCompositeTokensGroupedBySymbol().map { map ->
+            map.mapNotNull { (symbol, assets) ->
+                val tokenData = assets.firstOrNull { it.tokenBalanceEntity != null } ?: return@mapNotNull null
+
+                val sum = assets.sumOf { it.tokenBalanceEntity?.tokenBalance ?: BigDecimal.ZERO }
+
+                TokenAsset(
+                    address = tokenData.tokenMetadataEntity.contractAddress,
+                    chainId = tokenData.tokenMetadataEntity.chainId,
+                    symbol = symbol,
+                    name = symbol,
+                    balance = sum
+                        .movePointLeft(tokenData.tokenMetadataEntity.decimals)
+                        .setScale(tokenData.tokenMetadataEntity.decimals, RoundingMode.HALF_DOWN)
+                        .stripTrailingZeros()
+                        .toDouble(),
+                    decimals = tokenData.tokenMetadataEntity.decimals,
+                    logoUrl = tokenData.tokenMetadataEntity.logo,
+                    swappable = tokenData.tokenMetadataEntity.swappable,
+                )
+            }
+        }
 
     override fun getTokensBalances(): Flow<List<TokenBalance>> =
         tokenBalanceDao.getTokenBalances()

@@ -23,6 +23,12 @@ interface TokenBalanceDao {
     @Query("""SELECT * FROM token_metadata""")
     fun getCompositeTokens(): Flow<List<CompositeToken>>
 
+    @Transaction
+    @Query("""
+        SELECT * FROM token_metadata
+        GROUP BY symbol
+    """)
+    fun getCompositeTokensGroupedBySymbol(): Flow<Map<String, List<CompositeToken>>>
 
     @Upsert
     fun upsertTokenBalances(tokenBalance: List<TokenBalanceEntity>)
