@@ -1,6 +1,7 @@
 package com.feature.send
 
 import android.Manifest
+import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -295,6 +296,7 @@ fun SendScreen2(
     // Neue Variablen für Fehlervalidierung
     var isAmountError by remember { mutableStateOf(false) }
     var convertedTokenAmount by remember { mutableStateOf("") }
+    var isChainSelected by remember { mutableStateOf(false) }
     
     // ENS Resolution State
     var isResolvingENS by remember { mutableStateOf(false) }
@@ -995,54 +997,18 @@ fun SendScreen2(
                                     .pointerInput(isAmountError, isValidAddress){
                                         detectTapGestures {
                                             // Prüfe ob Button deaktiviert ist
-                                            if (isAmountError || !isValidAddress) {
+                                            if (isAmountError || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
                                                 // Zeige spezifische Fehlermeldung
-                                                if (isAmountError) {
-                                                    context.showCustomToast(
-                                                        "Insufficient balance",
-                                                        Toast.LENGTH_SHORT,
-                                                        fontFamily = PitagonsSans,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        backgroundColor = dgenRed,
-                                                        textColor = dgenWhite
-                                                    )
-                                                } else if (toAddress.isEmpty()) {
-                                                    context.showCustomToast(
-                                                        "Enter target address",
-                                                        Toast.LENGTH_SHORT,
-                                                        fontFamily = PitagonsSans,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        backgroundColor = dgenRed,
-                                                        textColor = dgenWhite
-                                                    )
-                                                } else if (isResolvingENS) {
-                                                    context.showCustomToast(
-                                                        "Resolving ENS name...",
-                                                        Toast.LENGTH_SHORT,
-                                                        fontFamily = PitagonsSans,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        backgroundColor = dgenOrche,
-                                                        textColor = dgenWhite
-                                                    )
-                                                } else if (ensError != null) {
-                                                    context.showCustomToast(
-                                                        ensError ?: "ENS error",
-                                                        Toast.LENGTH_SHORT,
-                                                        fontFamily = PitagonsSans,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        backgroundColor = dgenRed,
-                                                        textColor = dgenWhite
-                                                    )
-                                                } else if (!isValidAddress) {
-                                                    context.showCustomToast(
-                                                        "Invalid address format",
-                                                        Toast.LENGTH_SHORT,
-                                                        fontFamily = PitagonsSans,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        backgroundColor = dgenRed,
-                                                        textColor = dgenWhite
-                                                    )
+
+                                                when {
+                                                    isAmountError -> showToast(context,"Insufficient balance")
+                                                    toAddress.isEmpty() -> showToast(context,"Enter target address")
+                                                    isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
+                                                    ensError != null -> showToast(context,ensError ?: "ENS error")
+                                                    !isValidAddress -> showToast(context,"Invalid address format")
+                                                    selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
                                                 }
+
                                                 return@detectTapGestures
                                             }
                                             
@@ -1138,11 +1104,12 @@ fun SendScreen2(
                                         }
                                     },
                                 ){
-                                Text(text= "SEND", color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean ,
+                                Text(text= "SEND",
+                                    color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean ,
                                     modifier = modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                     style = TextStyle(
                                     fontFamily = SpaceMono,
-                                    color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean,
+                                    //color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean,
                                     fontWeight = FontWeight. SemiBold,
                                     fontSize = 18.sp
                                 ))
@@ -1172,6 +1139,22 @@ fun SendScreen2(
         }
     }
 
+}
+
+fun showToast(
+    context: Context,
+    message: String,
+    backgroundColor: Color = dgenRed,
+    textColor: Color = dgenWhite
+) {
+    context.showCustomToast(
+        message,
+        Toast.LENGTH_SHORT,
+        fontFamily = PitagonsSans,
+        fontWeight = FontWeight.SemiBold,
+        backgroundColor = backgroundColor,
+        textColor = textColor,
+    )
 }
 
 
