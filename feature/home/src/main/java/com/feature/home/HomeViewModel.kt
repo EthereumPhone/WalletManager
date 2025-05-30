@@ -11,6 +11,7 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
+import com.core.domain.GetAllGroupedTokensUsecase
 import com.core.domain.UpdateTokensByNetworkUseCase
 import com.core.domain.GetAllTokensUsecase
 import com.core.model.NetworkChain
@@ -54,6 +55,7 @@ class HomeViewModel @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val transferRepository: TransferRepository,
     private val getAllTokensUsecase: GetAllTokensUsecase,
+    private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val walletSDK: WalletSDK?,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -67,8 +69,7 @@ class HomeViewModel @Inject constructor(
     )
 
 
-    val tokenAssetState: StateFlow<AssetsUiState> = getAllTokensUsecase()
-        .map { tokens ->
+    val tokenAssetState: StateFlow<AssetsUiState> = getAllGroupedTokensUsecase().map { tokens ->
             val filteredTokens = tokens
                 .filter { it.balance > 0 }
                 .filter { token -> // Filter out tokens with URLs in their names or symbols

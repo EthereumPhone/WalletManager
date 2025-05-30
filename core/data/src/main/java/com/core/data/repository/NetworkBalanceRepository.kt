@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface NetworkBalanceRepository {
     fun getNetworkTokens(): Flow<List<TokenAsset>>
+    fun getGroupedNetworkTokens(): Flow<List<TokenAsset>>
     fun getNetworkBalance(chainId: Int): Flow<TokenBalance>
     suspend fun refreshNetworkBalance(
         toAddress: String,

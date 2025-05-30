@@ -54,6 +54,26 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                 }
             }
 
+    override fun getGroupedNetworkTokens(): Flow<List<TokenAsset>> =
+        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
+            .map { items ->
+                val grouped = items.groupBy { it.chainId == 137 }
+
+                grouped.map { (isPolygon, assets) ->
+                    val name = if(isPolygon) "MATIC" else "ETH"
+                    val sum = assets.sumOf { it.tokenBalance}
+
+                    TokenAsset(
+                        address = if (isPolygon) "137" else "1",
+                        chainId = if (isPolygon) 137 else 1,
+                        symbol = name.lowercase(),
+                        name = name.lowercase(),
+                        balance = formatSmallBalance(sum.toDouble()),
+                        decimals = 18
+                    )
+                }
+            }
+
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
         tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))
             .map { it.first().asExternalModule() }

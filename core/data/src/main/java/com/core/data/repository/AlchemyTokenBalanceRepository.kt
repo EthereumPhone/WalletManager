@@ -39,14 +39,13 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         tokenBalanceDao.getCompositeTokensGroupedBySymbol().map { map ->
             map.mapNotNull { (symbol, assets) ->
                 val tokenData = assets.firstOrNull { it.tokenBalanceEntity != null } ?: return@mapNotNull null
-
                 val sum = assets.sumOf { it.tokenBalanceEntity?.tokenBalance ?: BigDecimal.ZERO }
 
                 TokenAsset(
                     address = tokenData.tokenMetadataEntity.contractAddress,
                     chainId = tokenData.tokenMetadataEntity.chainId,
                     symbol = symbol,
-                    name = symbol,
+                    name = tokenData.tokenMetadataEntity.name,
                     balance = sum
                         .movePointLeft(tokenData.tokenMetadataEntity.decimals)
                         .setScale(tokenData.tokenMetadataEntity.decimals, RoundingMode.HALF_DOWN)
