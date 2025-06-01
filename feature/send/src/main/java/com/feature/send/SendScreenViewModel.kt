@@ -37,6 +37,7 @@ import com.core.model.Price
 import com.core.model.TokenData
 import com.core.model.UserData
 import com.core.result.Result
+import com.core.terminalsdk.TerminalSDK
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenOcean
@@ -65,6 +66,7 @@ class SendViewModel @Inject constructor(
     private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi,
+    private val terminalSDK: TerminalSDK?,
     @ApplicationContext private val context: Context
 ): ViewModel()
 {
@@ -160,6 +162,13 @@ class SendViewModel @Inject constructor(
     private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
     val contacts: Flow<List<Contact>> = _contacts
 
+    // Add QR scanner trigger state
+    private val _qrScannerTriggered = MutableStateFlow(false)
+    val qrScannerTriggered: StateFlow<Boolean> = _qrScannerTriggered.asStateFlow()
+
+    // Add send transaction trigger state
+    private val _sendTransactionTriggered = MutableStateFlow(false)
+    val sendTransactionTriggered: StateFlow<Boolean> = _sendTransactionTriggered.asStateFlow()
 
     companion object {
         private const val SELECTED_TOKEN_ID = "selected_token"
@@ -305,6 +314,79 @@ class SendViewModel @Inject constructor(
              */
 
 
+        }
+    }
+
+    /**
+     * Function to trigger QR scanner from secondary screen
+     */
+    fun triggerQrScanner() {
+        _qrScannerTriggered.value = true
+    }
+    
+    /**
+     * Reset QR scanner trigger state after handling
+     */
+    fun resetQrScannerTrigger() {
+        _qrScannerTriggered.value = false
+    }
+
+    /**
+     * Function to trigger send transaction from secondary screen
+     */
+    fun triggerSendTransaction() {
+        _sendTransactionTriggered.value = true
+    }
+    
+    /**
+     * Reset send transaction trigger state after handling
+     */
+    fun resetSendTransactionTrigger() {
+        _sendTransactionTriggered.value = false
+    }
+
+    /**
+     * Call this function when the send screen is opened to display QR code on secondary screen
+     */
+    fun onScreenOpened() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                if (terminalSDK?.isAvailable() == true) {
+                    terminalSDK.displayQRCode(
+                        onQrCode = {
+                            Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
+                            triggerQrScanner()
+                        },
+                        sendTx = {
+                            Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
+                            triggerSendTransaction()
+                        }
+                    )
+                    Log.d("SendViewModel", "QR code displayed on secondary screen")
+                } else {
+                    Log.w("SendViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("SendViewModel", "Error displaying QR code", e)
+            }
+        }
+    }
+
+    /**
+     * Call this function when the send screen is closed/navigated away to remove QR code from secondary screen
+     */
+    fun onScreenClosed() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                if (terminalSDK?.isAvailable() == true) {
+                    terminalSDK.removeQRCode()
+                    Log.d("SendViewModel", "QR code removed from secondary screen")
+                } else {
+                    Log.w("SendViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("SendViewModel", "Error removing QR code", e)
+            }
         }
     }
 

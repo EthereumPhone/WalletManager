@@ -49,6 +49,7 @@ dependencies {
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
     implementation project(path: ':core:database')
+    implementation project(path: ':core:terminalsdk')
 
     implementation libs.androidx.core
     implementation libs.androidx.appcompat

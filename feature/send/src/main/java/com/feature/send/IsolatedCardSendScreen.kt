@@ -48,7 +48,6 @@ import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -145,6 +144,8 @@ import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import java.text.DecimalFormat
 import java.util.concurrent.CompletableFuture
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -166,12 +167,27 @@ fun SendRoute2(
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
+    val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
+    val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
 
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
     val tokenData by viewModel.tokenData.collectAsState()
 
+    // Display QR code on secondary screen only when the actual send screen content appears
+    LaunchedEffect(assetsUiState) {
+        if (assetsUiState is AssetsUiState.Success) {
+            viewModel.onScreenOpened()
+        }
+    }
+
+    // Remove QR code from secondary screen when this screen is disposed/closed
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onScreenClosed()
+        }
+    }
 
     SendScreen2(
         initialAddress = initialAddress,
@@ -190,7 +206,11 @@ fun SendRoute2(
         tokenId = tokenId,
         tokenData = tokenData,
         loadSymbol = viewModel::loadSymbol,
-        convertDollarToToken = viewModel::convertDollarToToken
+        convertDollarToToken = viewModel::convertDollarToToken,
+        qrScannerTriggered = qrScannerTriggered,
+        resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
+        sendTransactionTriggered = sendTransactionTriggered,
+        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger
     )
 }
 
@@ -214,6 +234,10 @@ fun SendScreen2(
     tokenData:  List<TokenData>,
     loadSymbol: (List<String>) -> Unit,
     convertDollarToToken: (String, String) -> Unit,
+    qrScannerTriggered: Boolean,
+    resetQrScannerTrigger: () -> Unit,
+    sendTransactionTriggered: Boolean,
+    resetSendTransactionTrigger: () -> Unit,
 ){
 
 
@@ -373,23 +397,18 @@ fun SendScreen2(
         contract = ScanContract(),
         onResult = { result ->
             Log.d("QRScanner", "Scan result received: ${result.contents}")
-            //Toast.makeText(context, "Scan result: ${result.contents}", Toast.LENGTH_LONG).show()
             if(result.contents == null) {
                 // Optional: Handle cancelled scan
                 Log.d("QRScanner", "Scan was cancelled or no content found")
-                //Toast.makeText(context, "Scan cancelled", Toast.LENGTH_SHORT).show()
             } else {
-                val address = result.contents.removePrefix("ethereum:")
-                Log.d("QRScanner", "Extracted address: $address")
-                //Toast.makeText(context, "Address found: $address", Toast.LENGTH_LONG).show()
-                onToAddressChanged(address)
+                // Parse Ethereum URI according to EIP-681 spec
+                // Format: ethereum:<address>[@<chain_id>][?<parameters>]
+                val cleanAddress = parseEthereumUri(result.contents)
+                Log.d("QRScanner", "Extracted address: $cleanAddress")
+                onToAddressChanged(cleanAddress)
             }
         }
     )
-
-    var showCameraWithPerm by remember {
-        mutableStateOf(false)
-    }
 
     val scanningPermissionsToRequest = listOf(
         Manifest.permission.CAMERA
@@ -399,27 +418,25 @@ fun SendScreen2(
         permissions = scanningPermissionsToRequest
     )
 
-    LaunchedEffect(showCameraWithPerm) {
-        if (showCameraWithPerm) {
+    // Handle QR scanner trigger from ViewModel
+    LaunchedEffect(qrScannerTriggered) {
+        if (qrScannerTriggered) {
             if (multiplePermissionsState.allPermissionsGranted) {
                 showCamera(barCodeLauncher)
-                showCameraWithPerm = false // Reset the state after launching
             } else {
                 multiplePermissionsState.launchMultiplePermissionRequest()
             }
+            resetQrScannerTrigger()
         }
     }
 
-    // Handle permission result
+    // Handle permission result for ViewModel-triggered QR scanner
     LaunchedEffect(multiplePermissionsState.allPermissionsGranted) {
-        if (showCameraWithPerm && multiplePermissionsState.allPermissionsGranted) {
+        if (qrScannerTriggered && multiplePermissionsState.allPermissionsGranted) {
             showCamera(barCodeLauncher)
-            showCameraWithPerm = false // Reset the state after launching
+            resetQrScannerTrigger()
         }
     }
-
-
-
 
     Box(
         modifier = Modifier
@@ -538,7 +555,51 @@ fun SendScreen2(
                             isAmountError = tokenAmount > availableBalance
                         }
                     }
-                    
+
+                    // Handle send transaction trigger from ViewModel
+                    LaunchedEffect(sendTransactionTriggered) {
+                        if (sendTransactionTriggered) {
+                            // Use the same validation logic as the removed button
+                            if (isAmountError || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                                // Show specific error messages
+                                when {
+                                    isAmountError -> showToast(context,"Insufficient balance")
+                                    toAddress.isEmpty() -> showToast(context,"Enter target address")
+                                    isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
+                                    ensError != null -> showToast(context,ensError ?: "ENS error")
+                                    !isValidAddress -> showToast(context,"Invalid address format")
+                                    selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
+                                }
+                            } else {
+                                // Get current amounts and token symbol
+                                val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
+                                val currentTokenAmount = if (!useDollarAmount) amount else ""
+                                
+                                if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
+                                    showToast(context, "Type in an amount")
+                                } else {
+                                    // Execute transaction
+                                    val finalAmount = if (useDollarAmount) {
+                                        convertedTokenAmount
+                                    } else {
+                                        currentTokenAmount
+                                    }
+                                    
+                                    if (finalAmount.isNotEmpty()) {
+                                        onAmountChange(finalAmount)
+                                        sendTransaction {
+                                            // Callback after successful send
+                                            Log.d("SendScreen", "Transaction sent successfully from secondary screen")
+                                            // Navigate back after successful transaction
+                                            onBackClick()
+                                        }
+                                    }
+                                }
+                            }
+                            resetSendTransactionTrigger()
+                        }
+                    }
+
                     Box(
                         Modifier.fillMaxSize()
                     ) {
@@ -900,9 +961,6 @@ fun SendScreen2(
                                     }
                                 )
 
-                            }
-
-
                                 DgenTextfield(
                                     value = toAddressFieldValue,
                                     maxLines = 4,
@@ -976,163 +1034,12 @@ fun SendScreen2(
                                                 else -> dgenTurqoise
                                             }
                                         )
-                                        IconButton(onClick = {
-                                            showCameraWithPerm = true
-                                        }) {
-                                            Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan", tint= dgenTurqoise, modifier = modifier.size(24.dp))
-                                        }
                                     }
 
                                 }
 
-
-
-
-                            Surface(
-                                color = if (isAmountError || !isValidAddress) dgenGray else dgenTurqoise,
-                                shape = CircleShape,
-                                modifier = modifier.padding(start = 24.dp)
-                                    .animateContentSize()
-                                    .border(1.dp, if (isAmountError || !isValidAddress) dgenGray else dgenTurqoise, CircleShape)
-                                    .pointerInput(isAmountError, isValidAddress){
-                                        detectTapGestures {
-                                            // Prüfe ob Button deaktiviert ist
-                                            if (isAmountError || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
-                                                // Zeige spezifische Fehlermeldung
-
-                                                when {
-                                                    isAmountError -> showToast(context,"Insufficient balance")
-                                                    toAddress.isEmpty() -> showToast(context,"Enter target address")
-                                                    isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
-                                                    ensError != null -> showToast(context,ensError ?: "ENS error")
-                                                    !isValidAddress -> showToast(context,"Invalid address format")
-                                                    selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
-                                                }
-
-                                                return@detectTapGestures
-                                            }
-                                            
-                                            // Hole den aktuellen Dollar-Betrag und Token-Symbol
-                                            val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
-                                            val currentTokenAmount = if (!useDollarAmount) amount else ""
-                                            val tokenSymbol = when (selectedToken) {
-                                                is SelectedTokenUiState.Selected -> {
-                                                    selectedToken.tokenAsset.symbol.uppercase()
-                                                }
-                                                else -> {
-                                                    "ETH"
-                                                }
-                                            }
-                                            
-                                            // Zeige Toast mit beiden Beträgen
-                                            if (useDollarAmount && currentDollarAmount.isNotEmpty()) {
-                                                // Wenn Dollar-Modus aktiv ist, konvertiere zu Token
-                                                convertDollarToToken(currentDollarAmount, tokenSymbol)
-                                            } else if (!useDollarAmount && currentTokenAmount.isNotEmpty()) {
-                                                // Wenn Token-Modus aktiv ist, berechne Dollar-Wert
-                                                scope.launch {
-                                                    try {
-                                                        val tokenAmount = currentTokenAmount.toDoubleOrNull() ?: return@launch
-                                                        
-                                                        // Finde den aktuellen Wechselkurs
-                                                        val currentPrice = tokenData.find { 
-                                                            it.symbol.equals(tokenSymbol, ignoreCase = true) 
-                                                        }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                        
-                                                        if (currentPrice != null) {
-                                                            val dollarValue = tokenAmount * currentPrice
-                                                            val decimalFormat = DecimalFormat("#.##")
-                                                            withContext(Dispatchers.Main) {
-                                                                context.showCustomToast(
-                                                                    "$currentTokenAmount $tokenSymbol = $${decimalFormat.format(dollarValue)}",
-                                                                    Toast.LENGTH_SHORT,
-                                                                    fontFamily = PitagonsSans,
-                                                                    fontWeight = FontWeight.SemiBold,
-                                                                    backgroundColor = dgenOcean,
-                                                                    textColor = dgenTurqoise
-                                                                )
-                                                            }
-                                                        } else {
-                                                            withContext(Dispatchers.Main) {
-
-                                                            }
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        withContext(Dispatchers.Main) {
-                                                            context.showCustomToast(
-                                                                "$currentTokenAmount $tokenSymbol",
-                                                                Toast.LENGTH_SHORT,
-                                                                fontFamily = PitagonsSans,
-                                                                fontWeight = FontWeight.SemiBold,
-                                                                backgroundColor = dgenOcean,
-                                                                textColor = dgenTurqoise
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                // Wenn kein Betrag eingegeben wurde
-                                                context.showCustomToast(
-                                                    "Type in an amount",
-                                                    Toast.LENGTH_SHORT,
-                                                    fontFamily = PitagonsSans,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    backgroundColor = dgenOcean,
-                                                    textColor = dgenTurqoise
-                                                )
-                                            }
-                                            
-                                            // Execute if everything if everything is not empty
-                                            if (!isAmountError && isValidAddress && 
-                                                ((!useDollarAmount && currentTokenAmount.isNotEmpty()) || 
-                                                 (useDollarAmount && currentDollarAmount.isNotEmpty()))) {
-                                                
-
-                                                val finalAmount = if (useDollarAmount) {
-                                                    convertedTokenAmount
-                                                } else {
-                                                    currentTokenAmount
-                                                }
-                                                
-                                                if (finalAmount.isNotEmpty()) {
-                                                    onAmountChange(finalAmount)
-                                                    sendTransaction {
-                                                        // Callback nach erfolgreichem Senden
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                ){
-                                Text(text= "SEND",
-                                    color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean ,
-                                    modifier = modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-                                    style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    //color = if (isAmountError || !isValidAddress) dgenGunMetal else dgenOcean,
-                                    fontWeight = FontWeight. SemiBold,
-                                    fontSize = 18.sp
-                                ))
                             }
                         }
-//                        Row(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .background(dgenBlack).align(Alignment.BottomCenter)
-//                                .padding(start=8.dp, end=8.dp, top=8.dp),
-//                            horizontalArrangement = Arrangement.Center
-//                        ) {
-//                            BottomBarButton(
-//                                onClick = {
-//                                    Log.d("QRScanner", "QR Scanner button clicked")
-//                                    showCameraWithPerm = true
-//                                },
-//                                icon = {
-//                                    Icon(imageVector = Icons.Rounded.QrCodeScanner, contentDescription = "QR Scan",tint= dgenTurqoise, modifier = modifier.size(28.dp))
-//                                },
-//                                text = "Log"
-//                            )
-//                        }
                     }
                 }
             }
@@ -1157,6 +1064,29 @@ fun showToast(
     )
 }
 
+fun parseEthereumUri(uri: String): String {
+    // Parse Ethereum URI according to EIP-681 spec
+    // Format: ethereum:<address>[@<chain_id>][?<parameters>]
+    // Examples:
+    // ethereum:0x1234567890123456789012345678901234567890
+    // ethereum:0x1234567890123456789012345678901234567890@0x1
+    // ethereum:0x1234567890123456789012345678901234567890@0x1?value=1000000000000000000
+    
+    var cleanUri = uri.trim()
+    
+    // Remove ethereum: prefix if present
+    if (cleanUri.startsWith("ethereum:", ignoreCase = true)) {
+        cleanUri = cleanUri.removePrefix("ethereum:")
+    }
+    
+    // Split by @ to remove chain ID (e.g., @0x1)
+    val addressPart = cleanUri.split("@").firstOrNull() ?: cleanUri
+    
+    // Split by ? to remove query parameters
+    val finalAddress = addressPart.split("?").firstOrNull() ?: addressPart
+    
+    return finalAddress.trim()
+}
 
 fun showCamera(
     cameraLauncher: ManagedActivityResultLauncher<ScanOptions?, ScanIntentResult?>

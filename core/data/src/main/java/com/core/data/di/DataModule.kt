@@ -13,6 +13,7 @@ import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.datastore.ExclusionListProtoSerializer
 import com.core.model.NetworkChain
+import com.core.terminalsdk.TerminalSDK
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -65,6 +66,22 @@ object DataModule {
             WalletSDK(appContext, bundlerRPCUrl = chainIdToBundler(1))
         }
     }
+
+    @Singleton
+    @Provides
+    fun provideTerminalSDK(
+        @ApplicationContext context: Context,
+    ): TerminalSDK? {
+        return try {
+            TerminalSDK(
+                context = context
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
 
     @Singleton
     @Provides
