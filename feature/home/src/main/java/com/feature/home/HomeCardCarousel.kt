@@ -102,15 +102,10 @@ internal fun HomeRoute2(
 
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
-    val tokenPrices by viewModel.tokenData.collectAsState()
 
     val hasTransfer by viewModel.hasTransfers.collectAsState()
 
-    // Log token data changes
-    SideEffect {
-        Log.d("RECOMPOSE", "tokenData size: ${tokenPrices.size}")
-        Log.d("RECOMPOSE", "hasTransfer: $hasTransfer")
-    }
+
 
     initializeFontMap(SpaceMono, PitagonsSans)
 
@@ -127,12 +122,10 @@ internal fun HomeRoute2(
         isOffline = isOffline,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
-        tokenData = tokenPrices,
         loadSymbol = {}, // not needed anymore
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
         navigateToPayMaster = navigateToPayMaster
-
 
     )
 }
@@ -152,7 +145,6 @@ fun HomeScreen2(
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
     isOffline: Boolean,
-    tokenData:  List<TokenData>,
     loadSymbol: (List<String>) -> Unit,
     hasTransfer: Boolean,
     sharedTransitionScope: SharedTransitionScope,
@@ -165,7 +157,6 @@ fun HomeScreen2(
         Log.d("RECOMPOSE", "HomeScreen2 recomposed")
         Log.d("RECOMPOSE", "HomeScreen2 - userData: $userData")
         Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${assetsUiState::class.simpleName}")
-        Log.d("RECOMPOSE", "HomeScreen2 - tokenData size: ${tokenData.size}")
         Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
         Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
     }
@@ -269,7 +260,6 @@ fun HomeScreen2(
                                 TokenCardCarousel(
                                     modifier = Modifier.padding(bottom = 24.dp),
                                     assets = assetState.assets,
-                                    tokenData = tokenData,
                                     loadSymbol = loadSymbol,
                                     navigateToSend = navigateToSend,
                                     selectedTokenUiState = selectedTokenUiState,

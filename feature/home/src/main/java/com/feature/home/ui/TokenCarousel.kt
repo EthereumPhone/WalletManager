@@ -44,6 +44,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Velocity
+import com.core.model.TokenAssetWithPrice
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import dev.chrisbanes.snapper.SnapOffsets
 import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
@@ -57,8 +58,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("RestrictedApi")
 @Composable
 fun TokenCardCarousel(
-    assets: List<TokenAsset>,
-    tokenData: List<TokenData>,
+    assets: List<TokenAssetWithPrice>,
     loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
     sharedTransitionScope: SharedTransitionScope,
@@ -224,18 +224,6 @@ fun TokenCardCarousel(
             )
 
 
-            val exchange = if(item.address.contains("0x")) {
-                tokenData.find { it.symbol == item.symbol }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
-            } else {
-                if (item.chainId == 137) {
-                    tokenData.find { it.symbol!!.contains("matic",true) }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
-                } else {
-                    tokenData.find { it.symbol!!.contains("eth",true) }?.prices?.firstOrNull()?.value?.toDoubleOrNull() ?: 0.0
-
-                }
-            }
-
-
             with(sharedTransitionScope) {
                 Card(
                     isFirst = isFirstCard,
@@ -262,7 +250,7 @@ fun TokenCardCarousel(
                         IdleView(
                             amount = item.balance,
                             tokenName = tokenName,
-                            fiatAmount = item.balance * exchange,
+                            fiatAmount = item.fiatAmount,
                             icon = item.logoUrl,
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)

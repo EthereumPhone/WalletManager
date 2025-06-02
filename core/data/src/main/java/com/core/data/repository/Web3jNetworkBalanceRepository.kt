@@ -46,8 +46,8 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     TokenAsset(
                         address = it.contractAddress,
                         chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
+                        symbol = name,
+                        name = name,
                         balance = formatSmallBalance(it.tokenBalance.toDouble()),
                         decimals = 18
                     )
@@ -66,8 +66,8 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     TokenAsset(
                         address = if (isPolygon) "137" else "1",
                         chainId = if (isPolygon) 137 else 1,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
+                        symbol = name,
+                        name = name,
                         balance = formatSmallBalance(sum.toDouble()),
                         logoUrl = if (isPolygon) "MATIC" else "ETH",
                         decimals = 18

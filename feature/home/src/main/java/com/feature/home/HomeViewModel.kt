@@ -17,6 +17,7 @@ import com.core.domain.GetAllTokensUsecase
 import com.core.model.NetworkChain
 import com.core.model.Price
 import com.core.model.TokenAsset
+import com.core.model.TokenAssetWithPrice
 import com.core.model.TokenData
 import com.core.model.UserData
 import com.squareup.moshi.Moshi
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -68,9 +68,51 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
+    val tokenData = tokenExchangeRepository.getExchanges()
+        .map { exchanges ->
+            exchanges.groupBy { it.symbol }
+                .map { (symbol, exchangeList) ->
+                    // Get the most recent exchange rate for each symbol
+                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
+                    TokenData(
+                        symbol = symbol,
+                        prices = listOf(
+                            Price(
+                                currency = latestExchange?.currency ?: "",
+                                value = latestExchange?.value?.toString() ?: "0.0",
+                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
+                            )
+                        )
+                    )
+                }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
-    val tokenAssetState: StateFlow<AssetsUiState> = getAllGroupedTokensUsecase().map { tokens ->
-            val filteredTokens = tokens
+
+    val tokenAssetState: StateFlow<AssetsUiState> =
+        combine(getAllGroupedTokensUsecase(), tokenData) { tokens, exchangeRates ->
+            val exchangeRateMap = exchangeRates.associateBy { it.symbol }
+
+            val tokensWithPrices = tokens.map { tokenAsset ->
+                val priceInfo = exchangeRateMap[tokenAsset.symbol]?.prices?.firstOrNull()
+                TokenAssetWithPrice(
+                    address = tokenAsset.address,
+                    name = tokenAsset.name,
+                    symbol = tokenAsset.symbol,
+                    decimals = tokenAsset.decimals,
+                    balance = tokenAsset.balance,
+                    fiatAmount = priceInfo?.value?.toDoubleOrNull()?.times(tokenAsset.balance) ?: 0.0,
+                    chainId = tokenAsset.chainId,
+                    logoUrl = tokenAsset.logoUrl,
+                    swappable = tokenAsset.swappable,
+                )
+            }
+
+            val filteredTokens = tokensWithPrices
                 .filter { it.balance > 0 }
                 .filter { token -> // Filter out tokens with URLs in their names or symbols
                     val name = token.name.lowercase()
@@ -87,20 +129,19 @@ class HomeViewModel @Inject constructor(
                     }
                     containsNoUrlPatterns
                 }
+                .sortedBy { it.fiatAmount }
 
             if (filteredTokens.isEmpty()) {
                 AssetsUiState.Empty
             } else {
                 AssetsUiState.Success(filteredTokens)
             }
-
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AssetsUiState.Loading
         )
-
 
     val hasTransfers: StateFlow<Boolean> = flow {
         while (true) {
@@ -187,29 +228,7 @@ class HomeViewModel @Inject constructor(
     // We'll store our user input in the SavedStateHandle under a certain key
 
 
-    val tokenData = tokenExchangeRepository.getExchanges()
-        .map { exchanges ->
-            exchanges.groupBy { it.symbol }
-                .map { (symbol, exchangeList) ->
-                    // Get the most recent exchange rate for each symbol
-                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
-                    TokenData(
-                        symbol = symbol,
-                        prices = listOf(
-                            Price(
-                                currency = latestExchange?.currency ?: "",
-                                value = latestExchange?.value?.toString() ?: "0.0",
-                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
-                            )
-                        )
-                    )
-                }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+
 
     fun refreshAllBalances() {
         viewModelScope.launch {
@@ -265,7 +284,7 @@ sealed interface AssetsUiState {
     object Error : AssetsUiState
     object Empty : AssetsUiState
     data class Success(
-        val assets: List<TokenAsset>
+        val assets: List<TokenAssetWithPrice>
     ) : AssetsUiState
 }
 
