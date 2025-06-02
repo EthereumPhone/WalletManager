@@ -872,6 +872,12 @@ fun SendScreen2(
                                                 is SelectedTokenUiState.Selected -> {
                                                     when (selectedToken.tokenAsset.symbol.uppercase()) {
                                                         "MAINNET" -> "ETH"
+                                                        "OPTIMISM" -> "ETH"
+                                                        "ARBITRUM" -> "ETH"
+                                                        "POLYGON" -> "MATIC"
+                                                        "SEPOLIA" -> "ETH"
+                                                        "BASE" -> "ETH"
+                                                        "ZORA" -> "ETH"
                                                         else -> selectedToken.tokenAsset.symbol.uppercase()
                                                     }
                                                 }
