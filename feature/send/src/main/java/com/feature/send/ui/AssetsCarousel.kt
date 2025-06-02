@@ -45,10 +45,29 @@ fun SelectableCarousel(
     onItemSelected: (index: Int?) -> Unit
 ) {
     // State to track currently selected index; null means none selected
-    var selectedIndex by remember { mutableStateOf(initialSelectedIndex) }
+    // For single item or multiple items, ensure one is always selected
+    var selectedIndex by remember { 
+        mutableStateOf(
+            when {
+                items.size == 1 -> 0  // Single item is always selected
+                initialSelectedIndex != null -> initialSelectedIndex
+                items.isNotEmpty() -> 0  // Default to first item if multiple items
+                else -> null
+            }
+        )
+    }
 
     // Notify initial selection if provided
-    LaunchedEffect(initialSelectedIndex) {
+    LaunchedEffect(initialSelectedIndex, items.size) {
+        val finalSelectedIndex = when {
+            items.size == 1 -> 0  // Single item is always selected
+            initialSelectedIndex != null -> initialSelectedIndex
+            items.isNotEmpty() -> selectedIndex ?: 0  // Ensure something is selected for multiple items
+            else -> null
+        }
+        if (selectedIndex != finalSelectedIndex) {
+            selectedIndex = finalSelectedIndex
+        }
         onItemSelected(selectedIndex)
     }
 
@@ -86,7 +105,15 @@ fun SelectableCarousel(
                         .width(itemWidth)
                         .height(itemHeight)
                         .clickable {
-                            selectedIndex = if (isSelected) null else index
+                            // If only one item, keep it selected (can't unselect)
+                            // If multiple items, always keep one selected
+                            if (items.size == 1) {
+                                // Single item stays selected
+                                selectedIndex = 0
+                            } else if (items.size > 1) {
+                                // Multiple items: can switch between them but always keep one selected
+                                selectedIndex = index
+                            }
                             onItemSelected(selectedIndex)
                         }
                 ) {
