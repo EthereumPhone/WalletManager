@@ -439,8 +439,9 @@ fun SendScreen2(
 
     //Variabel for animating the max button
     var setMax by remember { mutableStateOf(false) }
+    var isMaxAmount by remember { mutableStateOf(false) }  // Track if MAX was used
     val maxAlpha by animateFloatAsState(
-        targetValue = if (setMax) {
+        targetValue = if (isMaxAmount) {
             1f
         } else {
             0.5f
@@ -666,8 +667,11 @@ fun SendScreen2(
                     }
                     
                     // Validate Amount
-                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance) {
-                        if (useDollarAmount) {
+                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance, isMaxAmount) {
+                        if (isMaxAmount) {
+                            // If MAX was used, don't show error
+                            isAmountError = false
+                        } else if (useDollarAmount) {
                             // If dollar input is active, check token amount
                             val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
                             isAmountError = tokenAmount > availableBalance
@@ -682,10 +686,10 @@ fun SendScreen2(
                     LaunchedEffect(sendTransactionTriggered) {
                         if (sendTransactionTriggered) {
                             // Use the same validation logic as the removed button
-                            if (isAmountError || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
                                 // Show specific error messages
                                 when {
-                                    isAmountError -> showToast(context,"Insufficient balance")
+                                    isAmountError && !isMaxAmount -> showToast(context,"Insufficient balance")
                                     toAddress.isEmpty() -> showToast(context,"Enter target address")
                                     isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
                                     ensError != null -> showToast(context,ensError ?: "ENS error")
@@ -701,7 +705,10 @@ fun SendScreen2(
                                     showToast(context, "Type in an amount")
                                 } else {
                                     // Execute transaction
-                                    val finalAmount = if (useDollarAmount) {
+                                    val finalAmount = if (isMaxAmount) {
+                                        // Use exact balance for MAX amount
+                                        availableBalance.toString()
+                                    } else if (useDollarAmount) {
                                         convertedTokenAmount
                                     } else {
                                         currentTokenAmount
@@ -859,6 +866,7 @@ fun SendScreen2(
                                             "$",
                                             onToggle = {
                                                 useDollarAmount = !useDollarAmount
+                                                isMaxAmount = false  // Reset MAX when toggling
                                                 scope.launch{
                                                     delay(200)
                                                     dollarAmount = TextFieldValue("")
@@ -900,6 +908,7 @@ fun SendScreen2(
                                                 DgenBasicTextfield(
                                                     value = dollarAmount,
                                                     onValueChange = { new ->
+                                                        isMaxAmount = false  // Reset when user manually changes amount
                                                         // Check if the new value contains more than one dot
                                                         if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
                                                             // If it's a valid format or empty, call onAmountChange with the text
@@ -987,6 +996,7 @@ fun SendScreen2(
                                                 DgenBasicTextfield(
                                                     value = amountFieldValue,
                                                     onValueChange={ new ->
+                                                        isMaxAmount = false  // Reset when user manually changes amount
 
                                                         if (amountFieldValue.text.isEmpty() || amountFieldValue.text == "." || amountFieldValue.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
                                                             // If it's a valid format or empty, call onAmountChange with the text
@@ -1087,6 +1097,7 @@ fun SendScreen2(
                                     // Add LaunchedEffect for MAX functionality
                                     LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
                                         if (setMax && availableBalance > 0) {
+                                            isMaxAmount = true  // Set flag when MAX is used
                                             val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
                                             
                                             if (useDollarAmount) {
