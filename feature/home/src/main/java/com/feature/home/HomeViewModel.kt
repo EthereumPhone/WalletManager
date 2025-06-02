@@ -167,10 +167,6 @@ class HomeViewModel @Inject constructor(
     )
 
 
-    fun refreshData() {
-        refreshAllBalances()
-    }
-
     fun setOnboardingComplete(onboardingComplete: Boolean) {
         viewModelScope.launch {
             userDataRepository.setOnboardingCompleted(onboardingComplete)
@@ -209,18 +205,6 @@ class HomeViewModel @Inject constructor(
                     )
                 }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-    fun loadSymbol(symbol: List<String>) {
-
-
-    }
-
-    val tokenMetadata = tokenMetadataRepository.getTokensMetadata()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

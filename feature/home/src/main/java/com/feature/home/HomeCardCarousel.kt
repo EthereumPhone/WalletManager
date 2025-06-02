@@ -102,16 +102,6 @@ internal fun HomeRoute2(
 
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
-    var updater by remember { mutableStateOf(true) }
-
-
-
-    if(updater) {
-        Log.d("automatic updater", "TEST")
-        viewModel.refreshData()
-        updater = false
-    }
-
     val tokenPrices by viewModel.tokenData.collectAsState()
 
     val hasTransfer by viewModel.hasTransfers.collectAsState()
@@ -138,7 +128,7 @@ internal fun HomeRoute2(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
         tokenData = tokenPrices,
-        loadSymbol = viewModel::loadSymbol,
+        loadSymbol = {}, // not needed anymore
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
         navigateToPayMaster = navigateToPayMaster

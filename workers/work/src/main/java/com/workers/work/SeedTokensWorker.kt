@@ -54,9 +54,12 @@ class SeedTokensWorker @AssistedInject constructor(
                 launch { updateTokenUseCase(address.walletAddress) }
             }
             
-            // After transfers are refreshed, resolve ENS names for addresses
-            resolveEnsForTransfers()
-            
+            // fetch ens and exchange rate
+            coroutineScope {
+                launch { resolveEnsForTransfers() }
+                launch { exchangeRepository.fetchAllExchanges() }
+            }
+
         } catch (e: Exception) {
             e.printStackTrace()
             return@withContext Result.failure()
