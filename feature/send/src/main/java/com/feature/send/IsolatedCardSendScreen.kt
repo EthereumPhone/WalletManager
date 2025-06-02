@@ -785,6 +785,13 @@ fun SendScreen2(
 
                                             val tokenName = when(token.symbol.uppercase()){
                                                 "MAINNET" -> "ETH"
+                                                "OPTIMISM" -> "ETH"
+                                                "ARBITRUM" -> "ETH"
+                                                "POLYGON" -> "MATIC"
+                                                "SEPOLIA" -> "ETH"
+                                                "BASE" -> "ETH"
+                                                "ZORA" -> "ETH"
+
                                                 else -> {
                                                     token.symbol.uppercase()
                                                 }
