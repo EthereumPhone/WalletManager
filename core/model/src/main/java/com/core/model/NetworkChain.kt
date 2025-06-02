@@ -8,10 +8,7 @@ enum class NetworkChain(
         chainId = 1,
         chainName = "eth-mainnet",
     ),
-    SEPOLIA(
-        chainId = 11155111,
-        chainName = "eth-sepolia",
-    ),
+    //SEPOLIA(chainId = 11155111, chainName = "eth-sepolia",),
     OPTIMISM(
         chainId = 10,
         chainName = "opt-mainnet",
