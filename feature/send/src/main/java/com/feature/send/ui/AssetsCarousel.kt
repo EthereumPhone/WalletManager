@@ -125,7 +125,7 @@ fun SelectableCarousel(
                                         contentDescription = "Zorb"
                                     )
                                 }
-                                "optimism" -> {
+                                "op" -> {
                                     Image(
                                         modifier = Modifier
                                             .size(34.dp),

@@ -652,6 +652,7 @@ fun SendScreen2(
                                                 )
                                             }
 
+
                                             // Token Symbol
                                             Text(
                                                 text = token.symbol.uppercase(),
@@ -897,7 +898,7 @@ fun SendScreen2(
                                             val chainName = when (tokenChainId) {
                                                 1 -> "mainnet"
                                                 11155111 -> "sepolia"
-                                                10 -> "optimism"
+                                                10 -> "op"
                                                 137 -> "polygon"
                                                 42161 -> "arbitrum"
                                                 8453 -> "base"
@@ -905,7 +906,7 @@ fun SendScreen2(
                                                 else -> null
                                             }
                                             
-                                            // Gib nur die eine Chain zurück, auf der dieser spezifische Token ist
+                                            // Gib nur die eine Chain zurück, auf der dieser spezifische  istToken
                                             listOfNotNull(chainName)
                                         }
                                         else -> {
@@ -929,7 +930,7 @@ fun SendScreen2(
                                                 when (chainId) {
                                                     1 -> "mainnet"
                                                     11155111 -> "sepolia"
-                                                    10 -> "optimism"
+                                                    10 -> "op"
                                                     137 -> "polygon"
                                                     42161 -> "arbitrum"
                                                     8453 -> "base"
