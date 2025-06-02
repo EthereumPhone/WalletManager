@@ -109,7 +109,7 @@ fun SelectableCarousel(
                                         contentDescription = "Base"
                                     )
                                 }
-                                "mainnet" -> {
+                                "main" -> {
                                     Image(
                                         modifier = Modifier
                                             .size(34.dp),
@@ -133,14 +133,14 @@ fun SelectableCarousel(
                                         contentDescription = "Optimism"
                                     )
                                 }
-                                "arbitrum" -> {
+                                "arb" -> {
                                     Image(
                                         modifier = Modifier.size(34.dp),
                                         painter = painterResource(id = R.drawable.arbitrum),
                                         contentDescription = "Optimism"
                                     )
                                 }
-                                "polygon" -> {
+                                "pol" -> {
                                     Image(
                                         modifier = Modifier.size(34.dp),
                                         painter = painterResource(id = R.drawable.polygon),

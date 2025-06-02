@@ -896,11 +896,11 @@ fun SendScreen2(
                                             // Zeige nur die Chain des ausgewählten Tokens
                                             val tokenChainId = selectedToken.tokenAsset.chainId
                                             val chainName = when (tokenChainId) {
-                                                1 -> "mainnet"
+                                                1 -> "main"
                                                 11155111 -> "sepolia"
                                                 10 -> "op"
-                                                137 -> "polygon"
-                                                42161 -> "arbitrum"
+                                                137 -> "pol"
+                                                42161 -> "arb"
                                                 8453 -> "base"
                                                 7777777 -> "zora"
                                                 else -> null
@@ -928,11 +928,11 @@ fun SendScreen2(
                                             
                                             nativeTokenChains.mapNotNull { chainId ->
                                                 when (chainId) {
-                                                    1 -> "mainnet"
+                                                    1 -> "main"
                                                     11155111 -> "sepolia"
                                                     10 -> "op"
-                                                    137 -> "polygon"
-                                                    42161 -> "arbitrum"
+                                                    137 -> "pol"
+                                                    42161 -> "arb"
                                                     8453 -> "base"
                                                     7777777 -> "zora"
                                                     else -> null
