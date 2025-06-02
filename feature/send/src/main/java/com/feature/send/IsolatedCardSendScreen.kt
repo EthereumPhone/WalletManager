@@ -248,7 +248,6 @@ fun SendScreen2(
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
-
     var rotated by remember { mutableStateOf(false) }
 
     val rotation by animateFloatAsState(
@@ -417,6 +416,16 @@ fun SendScreen2(
     val multiplePermissionsState = rememberMultiplePermissionsState(
         permissions = scanningPermissionsToRequest
     )
+
+    // Debug method to open scanner directly
+    fun debugOpenScanner() {
+        Log.d("QRScanner", "Debug: Opening scanner directly")
+        if (multiplePermissionsState.allPermissionsGranted) {
+            showCamera(barCodeLauncher)
+        } else {
+            multiplePermissionsState.launchMultiplePermissionRequest()
+        }
+    }
 
     // Handle QR scanner trigger from ViewModel
     LaunchedEffect(qrScannerTriggered) {
@@ -837,7 +846,7 @@ fun SendScreen2(
                                                 strokeWidth = 8.dp.toPx()
                                             )
                                         }
-                                        .padding(start = 8.dp),
+                                        .padding(start = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
 
                                 ) {
@@ -872,7 +881,7 @@ fun SendScreen2(
                                         )
 
                                         Text(
-                                            "USE MAX",
+                                            "MAX",
                                             fontFamily = SpaceMono,
                                             color = dgenTurqoise.copy(maxAlpha),
                                             fontWeight = FontWeight.SemiBold,
@@ -1262,6 +1271,23 @@ fun SendScreen2(
                                             else -> dgenTurqoise
                                         }
                                     )
+                                    
+                                    // Debug QR Scanner Button
+                                    IconButton(
+                                        onClick = { debugOpenScanner() },
+                                        modifier = Modifier.size(32.dp),
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            containerColor = dgenTurqoise.copy(alpha = 0.1f),
+                                            contentColor = dgenTurqoise
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.QrCodeScanner,
+                                            contentDescription = "Debug QR Scanner",
+                                            tint = dgenTurqoise,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
 
                             }
