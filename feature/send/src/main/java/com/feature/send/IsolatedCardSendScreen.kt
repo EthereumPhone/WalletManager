@@ -417,16 +417,6 @@ fun SendScreen2(
         permissions = scanningPermissionsToRequest
     )
 
-    // Debug method to open scanner directly
-    fun debugOpenScanner() {
-        Log.d("QRScanner", "Debug: Opening scanner directly")
-        if (multiplePermissionsState.allPermissionsGranted) {
-            showCamera(barCodeLauncher)
-        } else {
-            multiplePermissionsState.launchMultiplePermissionRequest()
-        }
-    }
-
     // Handle QR scanner trigger from ViewModel
     LaunchedEffect(qrScannerTriggered) {
         if (qrScannerTriggered) {
@@ -1271,23 +1261,6 @@ fun SendScreen2(
                                             else -> dgenTurqoise
                                         }
                                     )
-                                    
-                                    // Debug QR Scanner Button
-                                    IconButton(
-                                        onClick = { debugOpenScanner() },
-                                        modifier = Modifier.size(32.dp),
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = dgenTurqoise.copy(alpha = 0.1f),
-                                            contentColor = dgenTurqoise
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.QrCodeScanner,
-                                            contentDescription = "Debug QR Scanner",
-                                            tint = dgenTurqoise,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
                                 }
 
                             }
