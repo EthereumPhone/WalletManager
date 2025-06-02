@@ -1,6 +1,9 @@
 package com.example.transactions.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -11,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -37,17 +41,19 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 
-
-
-
-
-
+/**
+ * Maps chain ID to the appropriate block explorer URL
+ */
+private fun getBlockExplorerUrl(chainId: Int, txHash: String): String {
+    return "https://blockscan.com/tx/$txHash"
+}
 
 @Composable
 fun LogEntry(
     logoUrl: String = "",
     logEntry : TransferItem
 ) {
+    val context = LocalContext.current
     val decimalFormat = DecimalFormat("0.00").apply {
         decimalFormatSymbols = DecimalFormatSymbols(Locale.US) // Forces the decimal point
     }
@@ -70,7 +76,13 @@ fun LogEntry(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.clickable {
+            // Open block explorer URL when clicked
+            val explorerUrl = getBlockExplorerUrl(logEntry.chainId, logEntry.txHash)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(explorerUrl))
+            context.startActivity(intent)
+        }
     ) {
 
         when {
@@ -192,12 +204,13 @@ private fun getNetworkLogoResource(chainId: Int, asset: String): Int? {
 
     // Return the appropriate network logo from feature.home drawable resources
     return when (chainId) {
-        1, 5 -> R.drawable.ethereum_logo // Ethereum mainnet
+        1, 5 -> R.drawable.mainnet // Ethereum mainnet
         11155111 -> R.drawable.mainnet // Sepolia (using mainnet logo)
-        137 -> R.drawable.polygon_logo // Polygon
+        137 -> R.drawable.polygon // Polygon
         10 -> R.drawable.optimism_logo // Optimism
         42161 -> R.drawable.arbitrum_logo // Arbitrum
-        8453 -> R.drawable.base_logo // Base
+        8453 -> R.drawable.base // Base
+        7777777 -> R.drawable.zorb
         else -> null
     }
 }
