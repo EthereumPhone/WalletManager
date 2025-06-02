@@ -241,7 +241,10 @@ fun SendScreen2(
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
 ){
-
+    val tokenPreselected = tokenId != null && tokenId.isNotEmpty() &&
+                           (assets as? AssetsUiState.Success)?.assets?.firstOrNull {
+                               it.address.equals(tokenId, ignoreCase = true)
+                           }?.let { it.address != it.chainId.toString() } == true
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -538,39 +541,53 @@ fun SendScreen2(
                     val availableChains = remember(selectedToken, assetsUiState.assets) {
                         when (selectedToken) {
                             is SelectedTokenUiState.Selected -> {
-                                // Find all chains where this token (by symbol) exists
-                                val tokenSymbol = selectedToken.tokenAsset.symbol
-                                
-                                // Normalize token symbol for comparison
-                                val normalizedSymbol = when (tokenSymbol.uppercase()) {
-                                    "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                    else -> tokenSymbol
-                                }
-                                
-                                val chainsWithThisToken = assetsUiState.assets
-                                    .filter { asset ->
-                                        // Normalize asset symbol for comparison
-                                        val assetSymbolNormalized = when (asset.symbol.uppercase()) {
-                                            "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                            else -> asset.symbol
+                                // Check if the selected token is a native token
+                                if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
+                                    // For native tokens, show all chains where user has native tokens
+                                    val chainsWithNativeTokens = assetsUiState.assets
+                                        .filter { asset ->
+                                            // Find all native tokens (where address equals chainId)
+                                            asset.address == asset.chainId.toString()
                                         }
-                                        
-                                        // Match by normalized symbol (case insensitive)
-                                        assetSymbolNormalized.equals(normalizedSymbol, ignoreCase = true)
+                                        .map { it.chainId }
+                                        .distinct()
+                                    
+                                    chainsWithNativeTokens.mapNotNull { chainId ->
+                                        when (chainId) {
+                                            1 -> "main"
+                                            11155111 -> "sepolia"
+                                            10 -> "op"
+                                            137 -> "pol"
+                                            42161 -> "arb"
+                                            8453 -> "base"
+                                            7777777 -> "zora"
+                                            else -> null
+                                        }
                                     }
-                                    .map { it.chainId }
-                                    .distinct()
-                                
-                                chainsWithThisToken.mapNotNull { chainId ->
-                                    when (chainId) {
-                                        1 -> "main"
-                                        11155111 -> "sepolia"
-                                        10 -> "op"
-                                        137 -> "pol"
-                                        42161 -> "arb"
-                                        8453 -> "base"
-                                        7777777 -> "zora"
-                                        else -> null
+                                } else {
+                                    // For ERC20 tokens, find all chains where this token exists by symbol
+                                    val tokenSymbol = selectedToken.tokenAsset.symbol
+                                    
+                                    val chainsWithThisToken = assetsUiState.assets
+                                        .filter { asset ->
+                                            // Only match ERC20 tokens (not native tokens) with the same symbol
+                                            asset.address != asset.chainId.toString() &&
+                                            asset.symbol.equals(tokenSymbol, ignoreCase = true)
+                                        }
+                                        .map { it.chainId }
+                                        .distinct()
+                                    
+                                    chainsWithThisToken.mapNotNull { chainId ->
+                                        when (chainId) {
+                                            1 -> "main"
+                                            11155111 -> "sepolia"
+                                            10 -> "op"
+                                            137 -> "pol"
+                                            42161 -> "arb"
+                                            8453 -> "base"
+                                            7777777 -> "zora"
+                                            else -> null
+                                        }
                                     }
                                 }
                             }
@@ -616,41 +633,31 @@ fun SendScreen2(
                         selectedChainId?.let { chainId ->
                             when (selectedToken) {
                                 is SelectedTokenUiState.Selected -> {
-                                    // Get the token symbol
-                                    val tokenSymbol = selectedToken.tokenAsset.symbol
-                                    
-                                    // Normalize token symbol for comparison
-                                    val normalizedSymbol = when (tokenSymbol.uppercase()) {
-                                        "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                        else -> tokenSymbol
+                                    // Check if it's a native token
+                                    if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
+                                        // For native tokens, find the matching native token on the selected chain
+                                        assetsUiState.assets
+                                            .firstOrNull { asset -> 
+                                                asset.chainId == chainId && 
+                                                asset.address == chainId.toString()
+                                            }?.balance ?: 0.0
+                                    } else {
+                                        // For ERC20 tokens, find by symbol match
+                                        val tokenSymbol = selectedToken.tokenAsset.symbol
+                                        assetsUiState.assets
+                                            .firstOrNull { asset -> 
+                                                asset.chainId == chainId &&
+                                                asset.symbol.equals(tokenSymbol, ignoreCase = true)
+                                            }?.balance ?: 0.0
                                     }
-                                    
-                                    // Find the token on the selected chain
-                                    assetsUiState.assets
-                                        .filter { asset -> 
-                                            asset.chainId == chainId &&
-                                            when (asset.symbol.uppercase()) {
-                                                "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                                else -> asset.symbol
-                                            }.equals(normalizedSymbol, ignoreCase = true)
-                                        }
-                                        .firstOrNull()?.balance ?: 0.0
                                 }
                                 else -> {
-                                    // For ETH get the balance from assets on the selected chain
+                                    // When no token is selected, get the native token balance for the selected chain
                                     assetsUiState.assets
-                                        .filter { asset ->
+                                        .firstOrNull { asset ->
                                             asset.chainId == chainId && 
-                                            (asset.symbol.equals("ETH", ignoreCase = true) || 
-                                             asset.symbol.equals("mainnet", ignoreCase = true) ||
-                                             asset.symbol.equals("sepolia", ignoreCase = true) ||
-                                             asset.symbol.equals("optimism", ignoreCase = true) ||
-                                             asset.symbol.equals("polygon", ignoreCase = true) ||
-                                             asset.symbol.equals("arbitrum", ignoreCase = true) ||
-                                             asset.symbol.equals("base", ignoreCase = true) ||
-                                             asset.symbol.equals("zora", ignoreCase = true))
-                                        }
-                                        .firstOrNull()?.balance ?: 0.0
+                                            asset.address == chainId.toString()
+                                        }?.balance ?: 0.0
                                 }
                             }
                         } ?: 0.0
@@ -1176,14 +1183,88 @@ fun SendScreen2(
                                     }
                                 }
 
+                                // Ensure a token is selected when a chain is already chosen (initial load)
+                                LaunchedEffect(selectedChainIndex, selectedToken) {
+                                    if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
+                                        val selectedChainName = availableChains.getOrNull(selectedChainIndex)
+                                        val selectedChainId = when (selectedChainName) {
+                                            "main" -> 1
+                                            "sepolia" -> 11155111
+                                            "op" -> 10
+                                            "pol" -> 137
+                                            "arb" -> 42161
+                                            "base" -> 8453
+                                            "zora" -> 7777777
+                                            else -> null
+                                        }
+                                        selectedChainId?.let { chainId ->
+                                            val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                asset.chainId == chainId && asset.address == chainId.toString()
+                                            }
+                                            nativeToken?.let { updateSelectedAsset(it) }
+                                        }
+                                    }
+                                }
+
                                 SelectableCarousel(
                                     items = availableChains,
                                     itemWidth = 65.dp,
                                     itemHeight = 65.dp,
                                     initialSelectedIndex = selectedChainIndex,
                                     onItemSelected = { index -> 
-                                        selectedChainIndex = index ?: 0
-                                        // Only update the chain selection, don't change the selected token
+                                        val newIndex = index ?: 0
+                                        
+                                        // Only process if actually changing to a different chain
+                                        if (selectedChainIndex != newIndex) {
+                                            selectedChainIndex = newIndex
+                                            
+                                            // Handle token selection based on current state
+                                            if (assetsUiState is AssetsUiState.Success) {
+                                                val selectedChainName = availableChains.getOrNull(newIndex)
+                                                val selectedChainId = when (selectedChainName) {
+                                                    "main" -> 1
+                                                    "sepolia" -> 11155111
+                                                    "op" -> 10
+                                                    "pol" -> 137
+                                                    "arb" -> 42161
+                                                    "base" -> 8453
+                                                    "zora" -> 7777777
+                                                    else -> null
+                                                }
+                                                
+                                                selectedChainId?.let { chainId ->
+                                                    when (selectedToken) {
+                                                        // If no token is selected, select the native token
+                                                        is SelectedTokenUiState.Unselected -> {
+                                                            if (!tokenPreselected) {
+                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                    asset.chainId == chainId && 
+                                                                    asset.address == chainId.toString()
+                                                                }
+                                                                nativeToken?.let {
+                                                                    updateSelectedAsset(it)
+                                                                }
+                                                            }
+                                                        }
+                                                        // If a token is selected, check if it's native or ERC20
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            val currentToken = selectedToken.tokenAsset
+                                                            // If current token is native, switch to the native token of the new chain
+                                                            if (currentToken.address == currentToken.chainId.toString()) {
+                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                    asset.chainId == chainId && 
+                                                                    asset.address == chainId.toString()
+                                                                }
+                                                                nativeToken?.let {
+                                                                    updateSelectedAsset(it)
+                                                                }
+                                                            }
+                                                            // If current token is ERC20, keep it selected
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 )
                             }
