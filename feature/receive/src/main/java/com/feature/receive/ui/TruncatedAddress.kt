@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,7 +92,11 @@ fun TruncatedAddress(
                 Icons.Outlined.ChevronRight,
                 contentDescription = "Address",
                 tint = dgenTurqoise,
-                modifier= Modifier.size(32.dp)
+                modifier= Modifier.size(32.dp).pointerInput(Unit) {
+                    detectTapGestures{
+                        expanded = !expanded
+                    }
+                }
             )
         }
     }
