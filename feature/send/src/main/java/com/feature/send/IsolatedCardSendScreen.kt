@@ -741,7 +741,7 @@ fun SendScreen2(
                                             if(usedollar){
                                                 DgenBasicTextfield(
                                                     value = dollarAmount,
-                                                    onValueChange={ new ->
+                                                    onValueChange = { new ->
                                                         // Check if the new value contains more than one dot
                                                         if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
                                                             // If it's a valid format or empty, call onAmountChange with the text

@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -104,15 +109,21 @@ fun IdleView(
             ){
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
                     when(icon){
                         "ETH" -> {
                             Image(
                                 modifier = Modifier
+                                    .graphicsLayer {
+                                        rotationX = 5f
+                                    }
                                     .padding(bottom = 2.dp)
-                                    .size(32.dp),
+                                    .height(48.dp)
+                                    .width(46.dp)
+                                    .clip(RoundedCornerShape(95)),
+                                contentScale = ContentScale.Crop,
                                 painter = painterResource(R.drawable.ethereum_placeholder),
                                 contentDescription = "Ethereum"
                             )
@@ -120,15 +131,26 @@ fun IdleView(
                         "" -> {
                             Image(
                                 modifier = Modifier
+                                    .graphicsLayer {
+                                        rotationX = 5f
+                                    }
                                     .padding(bottom = 2.dp)
-                                    .size(48.dp),
+                                    .height(48.dp)
+                                    .width(46.dp)
+                                    .clip(RoundedCornerShape(95)),
+                                contentScale = ContentScale.Crop,
                                 painter = painterResource(R.drawable.placeholer_icon_5),
                                 contentDescription = "Ethereum"
                             )
                         }
                         else -> {
                             AsyncImage(
-                                modifier = Modifier.padding(bottom = 2.dp).clip(CircleShape).size(32.dp),
+                                modifier = Modifier
+                                    .padding(bottom = 2.dp)
+                                    .height(48.dp)
+                                    .width(46.dp)
+                                    .clip(RoundedCornerShape(95)),
+                                contentScale = ContentScale.Crop,
                                 model = icon,
                                 contentDescription = "Translated description of what the image contains"
                             )
