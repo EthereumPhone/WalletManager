@@ -900,7 +900,17 @@ fun SendScreen2(
                                             textDecoration = TextDecoration.None,
                                             modifier = Modifier.offset( y=3.dp).pointerInput(Unit){
                                                 detectTapGestures {
-                                                    setMax = !setMax
+                                                    val wasSetMax = setMax // Store current state before toggle
+                                                    setMax = !setMax      // Toggle state
+
+                                                    if (wasSetMax && !setMax) { // If MAX was active and is now turned off
+                                                        dollarAmount = TextFieldValue("")
+                                                        amountFieldValue = TextFieldValue("")
+                                                        onAmountChange("") // Clear ViewModel's amount
+                                                        convertedTokenAmount = "" // Clear any converted amount
+                                                    }
+                                                    // If MAX is turned on (was false, now true),
+                                                    // the LaunchedEffect will handle setting the text fields.
                                                 }
                                             }
                                         )
@@ -918,16 +928,45 @@ fun SendScreen2(
                                             if(usedollar){
                                                 DgenBasicTextfield(
                                                     value = dollarAmount,
-                                                    onValueChange = { new ->
-                                                        // Check if the new value contains more than one dot
-                                                        if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
-                                                            // If it's a valid format or empty, call onAmountChange with the text
-                                                            dollarAmount = new
+                                                    onValueChange = { newTextFieldValue ->
+                                                        val newText = newTextFieldValue.text
+
+                                                        if (!newText.contains(' ') &&
+                                                            newText.count { it == '.' } <= 1 &&
+                                                            (newText.isEmpty() || newText == "." || newText.matches("-?\\d*(\\.\\d*)?".toRegex()))
+                                                        ) {
+                                                            dollarAmount = newTextFieldValue
+
+                                                            // If user types and MAX is on, check if input differs from max dollar amount
+                                                            if (setMax) {
+                                                                val tokenSymbol = when (selectedToken) {
+                                                                    is SelectedTokenUiState.Selected -> {
+                                                                        when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                                            "MAINNET" -> "ETH"
+                                                                            else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                                        }
+                                                                    }
+                                                                    else -> "ETH"
+                                                                }
+                                                                val currentPrice = tokenData.find {
+                                                                    it.symbol.equals(tokenSymbol, ignoreCase = true)
+                                                                }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+
+                                                                if (currentPrice != null && currentPrice > 0) {
+                                                                    val maxDollarValue = availableBalance * currentPrice
+                                                                    val formattedMaxDollar = String.format("%.2f", maxDollarValue)
+                                                                    if (newText != formattedMaxDollar) {
+                                                                        setMax = false
+                                                                    }
+                                                                } else {
+                                                                    // If price isn't available for comparison and user types something, turn off MAX
+                                                                    if (newText.isNotEmpty()) {
+                                                                        setMax = false
+                                                                    }
+                                                                }
+                                                            }
                                                         }
-//                                                        val dotCount = new.text.count { it == '.' }
-//                                                        if (dotCount <= 1) {
-//                                                            dollarAmount = new
-//                                                        }
+                                                        // If conditions are not met, dollarAmount is not updated, effectively rejecting the invalid input.
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -936,34 +975,6 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
-                                                            // Calculate max dollar amount for placeholder
-                                                            val maxDollarPlaceholder = remember(availableBalance, selectedToken, tokenData) {
-                                                                if (availableBalance > 0) {
-                                                                    val tokenSymbol = when (selectedToken) {
-                                                                        is SelectedTokenUiState.Selected -> {
-                                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                                                "MAINNET" -> "ETH"
-                                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                                            }
-                                                                        }
-                                                                        else -> "ETH"
-                                                                    }
-                                                                    
-                                                                    val currentPrice = tokenData.find { 
-                                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
-                                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                                    
-                                                                    if (currentPrice != null && currentPrice > 0) {
-                                                                        val dollarValue = availableBalance * currentPrice
-                                                                        String.format("%.2f", dollarValue)
-                                                                    } else {
-                                                                        "0.0"
-                                                                    }
-                                                                } else {
-                                                                    "0.0"
-                                                                }
-                                                            }
-                                                            
                                                             Text(
                                                                 modifier = Modifier,
                                                                 text =  buildAnnotatedString {
@@ -975,9 +986,9 @@ fun SendScreen2(
                                                                             fontSize = 39.sp,
                                                                         )
                                                                     ){
-                                                                        append("\$")
+                                                                        append("$")
                                                                     }
-                                                                    append(maxDollarPlaceholder)
+                                                                    append("0.0")
                                                                 },
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
@@ -1005,19 +1016,25 @@ fun SendScreen2(
                                             }else{
                                                 DgenBasicTextfield(
                                                     value = amountFieldValue,
-                                                    onValueChange={ new ->
+                                                    onValueChange={ newTextFieldValue ->
+                                                        val newText = newTextFieldValue.text
 
-                                                        if (amountFieldValue.text.isEmpty() || amountFieldValue.text == "." || amountFieldValue.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
-                                                            // If it's a valid format or empty, call onAmountChange with the text
-                                                            amountFieldValue = new
-                                                            onAmountChange(new.text)
+                                                        if (!newText.contains(' ') &&
+                                                            newText.count { it == '.' } <= 1 &&
+                                                            (newText.isEmpty() || newText == "." || newText.matches("-?\\d*(\\.\\d*)?".toRegex()))
+                                                        ) {
+                                                            amountFieldValue = newTextFieldValue
+                                                            onAmountChange(newText)
+
+                                                            // If user types and MAX is on, check if input differs from max token amount
+                                                            if (setMax) {
+                                                                val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                                if (newText != formattedBalance) {
+                                                                    setMax = false
+                                                                }
+                                                            }
                                                         }
-//                                                        // Check if the new value contains more than one dot
-//                                                        val dotCount = new.text.count { it == '.' }
-//                                                        if (dotCount <= 1) {
-//                                                            amountFieldValue = new
-//                                                            onAmountChange(new.text)
-//                                                        }
+                                                        // If conditions are not met, amountFieldValue is not updated.
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -1026,18 +1043,9 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
-                                                            // Calculate max token amount for placeholder
-                                                            val maxTokenPlaceholder = remember(availableBalance) {
-                                                                if (availableBalance > 0) {
-                                                                    String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                                } else {
-                                                                    "0.0"
-                                                                }
-                                                            }
-                                                            
                                                             Text(
                                                                 modifier = Modifier,
-                                                                text = maxTokenPlaceholder,
+                                                                text = "0.0",
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
                                                                     color = dgenGray,
@@ -1104,7 +1112,7 @@ fun SendScreen2(
                                     }
 
                                     // Add LaunchedEffect for MAX functionality
-                                    LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
+                                    LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount, tokenData) {
                                         if (setMax && availableBalance > 0) {
                                             val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
                                             
@@ -1134,9 +1142,6 @@ fun SendScreen2(
                                                 amountFieldValue = TextFieldValue(formattedBalance)
                                                 onAmountChange(formattedBalance)
                                             }
-                                            
-                                            // Reset setMax after setting the value
-                                            setMax = false
                                         }
                                     }
 
