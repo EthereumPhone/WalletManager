@@ -148,6 +148,7 @@ import java.text.DecimalFormat
 import java.util.concurrent.CompletableFuture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.animation.AnimatedVisibility
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -171,6 +172,7 @@ fun SendRoute2(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
+    val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
@@ -212,7 +214,9 @@ fun SendRoute2(
         qrScannerTriggered = qrScannerTriggered,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         sendTransactionTriggered = sendTransactionTriggered,
-        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger
+        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger,
+        transactionStatus = transactionStatus,
+        clearTransactionStatus = viewModel::clearTransactionStatus
     )
 }
 
@@ -226,7 +230,7 @@ fun SendScreen2(
     assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: (() -> Unit) -> Unit,
+    sendTransaction: ((Boolean) -> Unit) -> Unit,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
@@ -240,6 +244,8 @@ fun SendScreen2(
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
+    transactionStatus: TransactionStatus?,
+    clearTransactionStatus: () -> Unit
 ){
 
 
@@ -709,11 +715,24 @@ fun SendScreen2(
                                     
                                     if (finalAmount.isNotEmpty()) {
                                         onAmountChange(finalAmount)
-                                        sendTransaction {
-                                            // Callback after successful send
-                                            Log.d("SendScreen", "Transaction sent successfully from secondary screen")
-                                            // Navigate back after successful transaction
-                                            onBackClick()
+                                        sendTransaction { success ->
+                                            // Callback after transaction attempt
+                                            Log.d("SendScreen", "Transaction finalized from secondary screen. Success: $success")
+                                            if (success) {
+                                                // Optional: Delay before navigating back to allow user to see success message
+                                                scope.launch {
+                                                    delay(2000) // 2 second delay
+                                                    onBackClick()
+                                                    clearTransactionStatus() // Clear status after navigating away
+                                                }
+                                            } else {
+                                                // On failure, user might want to stay on screen to retry or correct.
+                                                // Overlay will show failure. Clear status if user manually dismisses overlay.
+                                                 scope.launch {
+                                                    delay(2000) // 2 second delay to see message
+                                                    clearTransactionStatus() // Clear status
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -1269,8 +1288,78 @@ fun SendScreen2(
                 }
             }
         }
+
+        // Transaction Status Overlay
+        TransactionStatusOverlay(
+            status = transactionStatus,
+            gifLoader = gifEnabledLoader,
+            onDismiss = { clearTransactionStatus() } // Allow dismissing the overlay
+        )
     }
 
+}
+
+@Composable
+fun TransactionStatusOverlay(
+    status: TransactionStatus?,
+    gifLoader: ImageLoader,
+    onDismiss: () -> Unit // Callback for when the overlay should be dismissed (e.g., by tapping outside or a close button)
+) {
+    // Use AnimatedVisibility for fade in/out of the overlay
+    AnimatedVisibility(
+        visible = status != null,
+        enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 300))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(dgenBlack.copy(alpha = 0.85f)) // Semi-transparent background
+                .pointerInput(Unit) { // Consume touch events to prevent interaction with underlying screen
+                    detectTapGestures(onTap = { onDismiss() }) // Example: dismiss on tap
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(120.dp) // Adjust size as needed
+                        .aspectRatio(1f),
+                    imageLoader = gifLoader,
+                    model = R.drawable.globe_wireframe, // Same GIF for all states for now
+                    contentDescription = "Status Animation"
+                )
+
+                val text = when (status) {
+                    TransactionStatus.PENDING -> "Transaction Pending..."
+                    TransactionStatus.SUCCESS -> "Transaction Confirmed!"
+                    TransactionStatus.FAILURE -> "Transaction Failed"
+                    null -> "" // Should not happen if visible = status != null
+                }
+                val textColor = when (status) {
+                    TransactionStatus.PENDING -> dgenOrche
+                    TransactionStatus.SUCCESS -> dgenGreen
+                    TransactionStatus.FAILURE -> dgenRed
+                    null -> dgenWhite
+                }
+
+                Text(
+                    text = text.uppercase(),
+                    style = TextStyle(
+                        fontFamily = SpaceMono,
+                        color = textColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+            }
+        }
+    }
 }
 
 fun showToast(

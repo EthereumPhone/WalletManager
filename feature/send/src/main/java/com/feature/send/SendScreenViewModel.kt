@@ -56,6 +56,12 @@ import kotlin.collections.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+enum class TransactionStatus {
+    PENDING,
+    SUCCESS,
+    FAILURE
+}
+
 @HiltViewModel
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
@@ -170,6 +176,9 @@ class SendViewModel @Inject constructor(
     private val _sendTransactionTriggered = MutableStateFlow(false)
     val sendTransactionTriggered: StateFlow<Boolean> = _sendTransactionTriggered.asStateFlow()
 
+    private val _transactionStatus = MutableStateFlow<TransactionStatus?>(null)
+    val transactionStatus: StateFlow<TransactionStatus?> = _transactionStatus.asStateFlow()
+
     companion object {
         private const val SELECTED_TOKEN_ID = "selected_token"
     }
@@ -190,9 +199,10 @@ class SendViewModel @Inject constructor(
     }
 
 
-    fun send(callback: () -> Unit) {
+    fun send(onTransactionFinalized: (Boolean) -> Unit) {
         viewModelScope.launch {
             val selectedAsset = _selectedAssetUiState.value
+            _transactionStatus.value = TransactionStatus.PENDING
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
@@ -213,11 +223,18 @@ class SendViewModel @Inject constructor(
                             value = amount.value
                         )
                     }
+                    _transactionStatus.value = TransactionStatus.SUCCESS
+                    onTransactionFinalized(true)
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    _transactionStatus.value = TransactionStatus.FAILURE
+                    onTransactionFinalized(false)
                 }
+            } else {
+                // Handle case where no asset is selected, though UI should prevent this
+                _transactionStatus.value = TransactionStatus.FAILURE
+                onTransactionFinalized(false)
             }
-            callback()
         }
     }
 
@@ -557,6 +574,13 @@ class SendViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Call this function to clear the transaction status, e.g., when the overlay is dismissed.
+     */
+    fun clearTransactionStatus() {
+        _transactionStatus.value = null
     }
 
 }
