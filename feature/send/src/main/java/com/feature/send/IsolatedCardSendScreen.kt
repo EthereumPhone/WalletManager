@@ -2,6 +2,8 @@ package com.feature.send
 
 import android.Manifest
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -336,8 +338,22 @@ fun SendScreen2(
     LaunchedEffect(toAddressFieldValue.text) {
         val address = toAddressFieldValue.text
         if (address.endsWith(".eth") && ENSName(address.lowercase()).isPotentialENSDomain()) {
+            // Check for internet connection
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork
+            val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+            val isConnected = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                              networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+
+            if (!isConnected) {
+                ensError = "No internet connection"
+                showToast(context, "Turn on internet", backgroundColor = dgenRed, textColor = dgenWhite)
+                isResolvingENS = false // Ensure resolving state is reset
+                return@LaunchedEffect // Stop further processing
+            }
+            
             isResolvingENS = true
-            ensError = null
+            ensError = null // Reset previous errors
             
             try {
                 withContext(Dispatchers.IO) {
@@ -695,7 +711,6 @@ fun SendScreen2(
                                     toAddress.isEmpty() -> showToast(context,"Enter target address")
                                     isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
                                     ensError != null -> showToast(context,ensError ?: "ENS error")
-                                    !isValidAddress -> showToast(context,"Invalid address format")
                                     selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
                                 }
                             } else {
@@ -1259,7 +1274,10 @@ fun SendScreen2(
                                     Text(
                                         text = when {
                                             isResolvingENS -> "Resolving ENS...".uppercase()
-                                            ensError != null -> "ENS Error".uppercase()
+                                            ensError != null -> {
+                                                if (ensError == "No internet connection") "NO INTERNET CONNECTION".uppercase()
+                                                else "ENS Error".uppercase()
+                                            }
                                             toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> "ENS Resolved".uppercase()
                                             else -> "Target Address".uppercase()
                                         },
