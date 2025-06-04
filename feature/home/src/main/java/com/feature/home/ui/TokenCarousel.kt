@@ -251,7 +251,7 @@ fun TokenCardCarousel(
                             amount = item.balance,
                             tokenName = tokenName,
                             fiatAmount = item.fiatAmount,
-                            icon = item.logoUrl,
+                            icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)
                             },

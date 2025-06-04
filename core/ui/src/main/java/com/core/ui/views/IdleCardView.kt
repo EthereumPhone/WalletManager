@@ -139,7 +139,7 @@ fun IdleView(
                                     .width(46.dp)
                                     .clip(RoundedCornerShape(95)),
                                 contentScale = ContentScale.Crop,
-                                painter = painterResource(R.drawable.ethereum_placeholder),
+                                painter = painterResource(R.drawable.placeholer_icon_5),
                                 contentDescription = "Ethereum"
                             )
                         }
