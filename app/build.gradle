@@ -145,5 +145,7 @@ dependencies {
 
     //implementation libs.core.splashscreen
 
+    implementation project(path: ':core:terminalsdk')
+
 
 }
