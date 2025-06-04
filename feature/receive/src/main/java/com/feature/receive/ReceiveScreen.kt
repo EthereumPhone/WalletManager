@@ -216,6 +216,7 @@ fun ReceiveScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
 
+
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
                         onCopyClick()
@@ -230,10 +231,11 @@ fun ReceiveScreen(
                     }
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(16.dp),
                             painter = painterResource(R.drawable.cpyadd),
                             contentDescription = "Back",
                             tint = dgenTurqoise
