@@ -238,7 +238,7 @@ fun LogScreen(
 
                                     items(transfers.reversed()) { transfer ->
                                         //TODO: Add Logos
-                                        Log.d("LogScreen", "transfer.asset ${transfer.asset} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
+                                        Log.d("LogScreen", "transfer.asset ${transfer.txHash} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
 
                                         LogEntry(logEntry = transfer, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
                                     }
