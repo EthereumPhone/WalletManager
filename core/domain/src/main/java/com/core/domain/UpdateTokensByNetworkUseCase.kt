@@ -40,6 +40,8 @@ class UpdateTokensByNetworkUseCase @Inject constructor(
         }.first()
 
         withContext(Dispatchers.IO) {
+            Log.d("refresh metadata", metadataAddresses.toString())
+
             tokenMetadataRepository.refreshTokensMetadata(
                 metadataToFetch.map { it.contractAddress },
                 chainId

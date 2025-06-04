@@ -2,8 +2,6 @@ package com.feature.send
 
 import android.Manifest
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -59,8 +57,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
@@ -143,8 +139,6 @@ import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
-import com.feature.send.ui.TransactionStatus
-import com.feature.send.ui.TransactionStatusOverlay
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -154,9 +148,6 @@ import java.text.DecimalFormat
 import java.util.concurrent.CompletableFuture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.material3.Button
-import androidx.compose.animation.animateColorAsState
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -180,7 +171,6 @@ fun SendRoute2(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
-    val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
@@ -222,11 +212,7 @@ fun SendRoute2(
         qrScannerTriggered = qrScannerTriggered,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         sendTransactionTriggered = sendTransactionTriggered,
-        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger,
-        transactionStatus = transactionStatus,
-        clearTransactionStatus = viewModel::clearTransactionStatus,
-        triggerQrScanner = viewModel::triggerQrScanner,
-        triggerSendTransaction = viewModel::triggerSendTransaction
+        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger
     )
 }
 
@@ -240,7 +226,7 @@ fun SendScreen2(
     assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: ((Boolean) -> Unit) -> Unit,
+    sendTransaction: (() -> Unit) -> Unit,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
@@ -254,12 +240,11 @@ fun SendScreen2(
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
-    transactionStatus: TransactionStatus?,
-    clearTransactionStatus: () -> Unit,
-    triggerQrScanner: () -> Unit,
-    triggerSendTransaction: () -> Unit
 ){
-
+    val tokenPreselected = tokenId != null && tokenId.isNotEmpty() &&
+                           (assets as? AssetsUiState.Success)?.assets?.firstOrNull {
+                               it.address.equals(tokenId, ignoreCase = true)
+                           }?.let { it.address != it.chainId.toString() } == true
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -348,22 +333,8 @@ fun SendScreen2(
     LaunchedEffect(toAddressFieldValue.text) {
         val address = toAddressFieldValue.text
         if (address.endsWith(".eth") && ENSName(address.lowercase()).isPotentialENSDomain()) {
-            // Check for internet connection
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val network = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
-            val isConnected = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
-                              networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
-
-            if (!isConnected) {
-                ensError = "No internet connection"
-                showToast(context, "Turn on internet", backgroundColor = dgenRed, textColor = dgenWhite)
-                isResolvingENS = false // Ensure resolving state is reset
-                return@LaunchedEffect // Stop further processing
-            }
-            
             isResolvingENS = true
-            ensError = null // Reset previous errors
+            ensError = null
             
             try {
                 withContext(Dispatchers.IO) {
@@ -471,8 +442,9 @@ fun SendScreen2(
 
     //Variabel for animating the max button
     var setMax by remember { mutableStateOf(false) }
+    var isMaxAmount by remember { mutableStateOf(false) }  // Track if MAX was used
     val maxAlpha by animateFloatAsState(
-        targetValue = if (setMax) {
+        targetValue = if (isMaxAmount) {
             1f
         } else {
             0.5f
@@ -487,30 +459,11 @@ fun SendScreen2(
         contentAlignment = Alignment.Center
     ) {
 
-        // Debug-Status für TransactionStatusOverlay
-        var debugTransactionStatus by remember { mutableStateOf<TransactionStatus?>(null) }
-
-        val animatedGifColor by animateColorAsState(
-            targetValue = when (debugTransactionStatus) {
-                TransactionStatus.SUCCESS -> dgenGreen
-                TransactionStatus.FAILURE -> dgenRed
-                TransactionStatus.PENDING -> dgenTurqoise
-                null -> dgenTurqoise // Default color when status is null
-            },
-            animationSpec = tween(durationMillis = mediumEnterDuration),
-            label = "GifColorAnimation"
-        )
-
         AsyncImage(
-            model = R.drawable.globe_wireframe,
-            contentDescription = null,
+            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
-            colorFilter = ColorFilter.tint(animatedGifColor, BlendMode.SrcIn),
-            modifier = Modifier
-                .alpha(0.2f)
-                .offset(x = 250.dp, y = 20.dp)
-                .scale(1.3f)
-                .aspectRatio(1f)
+            model = R.drawable.globe_wireframe,
+            contentDescription = null
         )
 
         AnimatedContent(
@@ -589,39 +542,53 @@ fun SendScreen2(
                     val availableChains = remember(selectedToken, assetsUiState.assets) {
                         when (selectedToken) {
                             is SelectedTokenUiState.Selected -> {
-                                // Find all chains where this token (by symbol) exists
-                                val tokenSymbol = selectedToken.tokenAsset.symbol
-                                
-                                // Normalize token symbol for comparison
-                                val normalizedSymbol = when (tokenSymbol.uppercase()) {
-                                    "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                    else -> tokenSymbol
-                                }
-                                
-                                val chainsWithThisToken = assetsUiState.assets
-                                    .filter { asset ->
-                                        // Normalize asset symbol for comparison
-                                        val assetSymbolNormalized = when (asset.symbol.uppercase()) {
-                                            "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                            else -> asset.symbol
+                                // Check if the selected token is a native token
+                                if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
+                                    // For native tokens, show all chains where user has native tokens
+                                    val chainsWithNativeTokens = assetsUiState.assets
+                                        .filter { asset ->
+                                            // Find all native tokens (where address equals chainId)
+                                            asset.address == asset.chainId.toString()
                                         }
-                                        
-                                        // Match by normalized symbol (case insensitive)
-                                        assetSymbolNormalized.equals(normalizedSymbol, ignoreCase = true)
+                                        .map { it.chainId }
+                                        .distinct()
+                                    
+                                    chainsWithNativeTokens.mapNotNull { chainId ->
+                                        when (chainId) {
+                                            1 -> "main"
+                                            11155111 -> "sepolia"
+                                            10 -> "op"
+                                            137 -> "pol"
+                                            42161 -> "arb"
+                                            8453 -> "base"
+                                            7777777 -> "zora"
+                                            else -> null
+                                        }
                                     }
-                                    .map { it.chainId }
-                                    .distinct()
-                                
-                                chainsWithThisToken.mapNotNull { chainId ->
-                                    when (chainId) {
-                                        1 -> "main"
-                                        11155111 -> "sepolia"
-                                        10 -> "op"
-                                        137 -> "pol"
-                                        42161 -> "arb"
-                                        8453 -> "base"
-                                        7777777 -> "zora"
-                                        else -> null
+                                } else {
+                                    // For ERC20 tokens, find all chains where this token exists by symbol
+                                    val tokenSymbol = selectedToken.tokenAsset.symbol
+                                    
+                                    val chainsWithThisToken = assetsUiState.assets
+                                        .filter { asset ->
+                                            // Only match ERC20 tokens (not native tokens) with the same symbol
+                                            asset.address != asset.chainId.toString() &&
+                                            asset.symbol.equals(tokenSymbol, ignoreCase = true)
+                                        }
+                                        .map { it.chainId }
+                                        .distinct()
+                                    
+                                    chainsWithThisToken.mapNotNull { chainId ->
+                                        when (chainId) {
+                                            1 -> "main"
+                                            11155111 -> "sepolia"
+                                            10 -> "op"
+                                            137 -> "pol"
+                                            42161 -> "arb"
+                                            8453 -> "base"
+                                            7777777 -> "zora"
+                                            else -> null
+                                        }
                                     }
                                 }
                             }
@@ -667,41 +634,31 @@ fun SendScreen2(
                         selectedChainId?.let { chainId ->
                             when (selectedToken) {
                                 is SelectedTokenUiState.Selected -> {
-                                    // Get the token symbol
-                                    val tokenSymbol = selectedToken.tokenAsset.symbol
-                                    
-                                    // Normalize token symbol for comparison
-                                    val normalizedSymbol = when (tokenSymbol.uppercase()) {
-                                        "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                        else -> tokenSymbol
+                                    // Check if it's a native token
+                                    if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
+                                        // For native tokens, find the matching native token on the selected chain
+                                        assetsUiState.assets
+                                            .firstOrNull { asset -> 
+                                                asset.chainId == chainId && 
+                                                asset.address == chainId.toString()
+                                            }?.balance ?: 0.0
+                                    } else {
+                                        // For ERC20 tokens, find by symbol match
+                                        val tokenSymbol = selectedToken.tokenAsset.symbol
+                                        assetsUiState.assets
+                                            .firstOrNull { asset -> 
+                                                asset.chainId == chainId &&
+                                                asset.symbol.equals(tokenSymbol, ignoreCase = true)
+                                            }?.balance ?: 0.0
                                     }
-                                    
-                                    // Find the token on the selected chain
-                                    assetsUiState.assets
-                                        .filter { asset -> 
-                                            asset.chainId == chainId &&
-                                            when (asset.symbol.uppercase()) {
-                                                "MAINNET", "SEPOLIA", "OPTIMISM", "POLYGON", "ARBITRUM", "BASE", "ZORA" -> "ETH"
-                                                else -> asset.symbol
-                                            }.equals(normalizedSymbol, ignoreCase = true)
-                                        }
-                                        .firstOrNull()?.balance ?: 0.0
                                 }
                                 else -> {
-                                    // For ETH get the balance from assets on the selected chain
+                                    // When no token is selected, get the native token balance for the selected chain
                                     assetsUiState.assets
-                                        .filter { asset ->
+                                        .firstOrNull { asset ->
                                             asset.chainId == chainId && 
-                                            (asset.symbol.equals("ETH", ignoreCase = true) || 
-                                             asset.symbol.equals("mainnet", ignoreCase = true) ||
-                                             asset.symbol.equals("sepolia", ignoreCase = true) ||
-                                             asset.symbol.equals("optimism", ignoreCase = true) ||
-                                             asset.symbol.equals("polygon", ignoreCase = true) ||
-                                             asset.symbol.equals("arbitrum", ignoreCase = true) ||
-                                             asset.symbol.equals("base", ignoreCase = true) ||
-                                             asset.symbol.equals("zora", ignoreCase = true))
-                                        }
-                                        .firstOrNull()?.balance ?: 0.0
+                                            asset.address == chainId.toString()
+                                        }?.balance ?: 0.0
                                 }
                             }
                         } ?: 0.0
@@ -717,8 +674,11 @@ fun SendScreen2(
                     }
                     
                     // Validate Amount
-                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance) {
-                        if (useDollarAmount) {
+                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance, isMaxAmount) {
+                        if (isMaxAmount) {
+                            // If MAX was used, don't show error
+                            isAmountError = false
+                        } else if (useDollarAmount) {
                             // If dollar input is active, check token amount
                             val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
                             isAmountError = tokenAmount > availableBalance
@@ -733,13 +693,14 @@ fun SendScreen2(
                     LaunchedEffect(sendTransactionTriggered) {
                         if (sendTransactionTriggered) {
                             // Use the same validation logic as the removed button
-                            if (isAmountError || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
                                 // Show specific error messages
                                 when {
-                                    isAmountError -> showToast(context,"Insufficient balance")
+                                    isAmountError && !isMaxAmount -> showToast(context,"Insufficient balance")
                                     toAddress.isEmpty() -> showToast(context,"Enter target address")
                                     isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
                                     ensError != null -> showToast(context,ensError ?: "ENS error")
+                                    !isValidAddress -> showToast(context,"Invalid address format")
                                     selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
                                 }
                             } else {
@@ -751,7 +712,10 @@ fun SendScreen2(
                                     showToast(context, "Type in an amount")
                                 } else {
                                     // Execute transaction
-                                    val finalAmount = if (useDollarAmount) {
+                                    val finalAmount = if (isMaxAmount) {
+                                        // Use exact balance for MAX amount
+                                        availableBalance.toString()
+                                    } else if (useDollarAmount) {
                                         convertedTokenAmount
                                     } else {
                                         currentTokenAmount
@@ -759,24 +723,11 @@ fun SendScreen2(
                                     
                                     if (finalAmount.isNotEmpty()) {
                                         onAmountChange(finalAmount)
-                                        sendTransaction { success ->
-                                            // Callback after transaction attempt
-                                            Log.d("SendScreen", "Transaction finalized from secondary screen. Success: $success")
-                                            if (success) {
-                                                // Optional: Delay before navigating back to allow user to see success message
-                                                scope.launch {
-                                                    delay(2000) // 2 second delay
-                                                    onBackClick()
-                                                    clearTransactionStatus() // Clear status after navigating away
-                                                }
-                                            } else {
-                                                // On failure, user might want to stay on screen to retry or correct.
-                                                // Overlay will show failure. Clear status if user manually dismisses overlay.
-                                                 scope.launch {
-                                                    delay(2000) // 2 second delay to see message
-                                                    clearTransactionStatus() // Clear status
-                                                }
-                                            }
+                                        sendTransaction {
+                                            // Callback after successful send
+                                            Log.d("SendScreen", "Transaction sent successfully from secondary screen")
+                                            // Navigate back after successful transaction
+                                            onBackClick()
                                         }
                                     }
                                 }
@@ -841,6 +792,13 @@ fun SendScreen2(
 
                                             val tokenName = when(token.symbol.uppercase()){
                                                 "MAINNET" -> "ETH"
+                                                "OPTIMISM" -> "ETH"
+                                                "ARBITRUM" -> "ETH"
+                                                "POLYGON" -> "MATIC"
+                                                "SEPOLIA" -> "ETH"
+                                                "BASE" -> "ETH"
+                                                "ZORA" -> "ETH"
+
                                                 else -> {
                                                     token.symbol.uppercase()
                                                 }
@@ -914,6 +872,12 @@ fun SendScreen2(
                                                 is SelectedTokenUiState.Selected -> {
                                                     when (selectedToken.tokenAsset.symbol.uppercase()) {
                                                         "MAINNET" -> "ETH"
+                                                        "OPTIMISM" -> "ETH"
+                                                        "ARBITRUM" -> "ETH"
+                                                        "POLYGON" -> "MATIC"
+                                                        "SEPOLIA" -> "ETH"
+                                                        "BASE" -> "ETH"
+                                                        "ZORA" -> "ETH"
                                                         else -> selectedToken.tokenAsset.symbol.uppercase()
                                                     }
                                                 }
@@ -921,83 +885,31 @@ fun SendScreen2(
                                             },
                                             "$",
                                             onToggle = {
-                                                if (setMax) {
-                                                    setMax = false
-                                                }
                                                 useDollarAmount = !useDollarAmount
+                                                isMaxAmount = false  // Reset MAX when toggling
                                                 scope.launch{
-                                                    delay(200) // Small delay to allow UI to update if needed before clearing
+                                                    delay(200)
                                                     dollarAmount = TextFieldValue("")
                                                     amountFieldValue = TextFieldValue("")
                                                     onAmountChange("")
                                                 }
+
                                             },
                                             value = useDollarAmount
                                         )
 
-                                        val maxDisplayParts = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
-                                            val prefix = "MAX"
-                                            var value = ""
-                                            if (availableBalance > 0) {
-                                                if (useDollarAmount) {
-                                                    val tokenSymbol = when (selectedToken) {
-                                                        is SelectedTokenUiState.Selected -> {
-                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                                "MAINNET" -> "ETH"
-                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                            }
-                                                        }
-                                                        else -> "ETH"
-                                                    }
-                                                    val currentPrice = tokenData.find {
-                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
-                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-
-                                                    if (currentPrice != null && currentPrice > 0) {
-                                                        val maxDollarValue = availableBalance * currentPrice
-                                                        val formattedMaxDollar = String.format("%.2f", maxDollarValue)
-                                                        value = " $$formattedMaxDollar" // e.g., " $123.45"
-                                                    } else {
-                                                        value = " $" // Fallback if price is not available
-                                                    }
-                                                } else { // Token amount
-                                                    val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                    value = " $formattedBalance" // e.g., " 0.123456"
-                                                }
-                                            } else {
-                                                value = " $" // Default if no balance
-                                            }
-                                            Pair(prefix, value)
-                                        }
-
                                         Text(
-                                            text = buildAnnotatedString {
-                                                withStyle(style = SpanStyle(fontFamily = SpaceMono)) {
-                                                    append(maxDisplayParts.first) // "MAX"
-                                                }
-                                                withStyle(style = SpanStyle(fontFamily = PitagonsSans)) {
-                                                    append(maxDisplayParts.second) // e.g., " $123.45", " 0.12345", " $"
-                                                }
-                                            },
+                                            "MAX",
+                                            fontFamily = SpaceMono,
                                             color = dgenTurqoise.copy(maxAlpha),
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 18.sp,
                                             lineHeight = 18.sp,
                                             letterSpacing = 0.sp,
                                             textDecoration = TextDecoration.None,
-                                            modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
+                                            modifier = Modifier.offset( y=3.dp).pointerInput(Unit){
                                                 detectTapGestures {
-                                                    val wasSetMax = setMax // Store current state before toggle
-                                                    setMax = !setMax      // Toggle state
-
-                                                    if (wasSetMax && !setMax) { // If MAX was active and is now turned off
-                                                        dollarAmount = TextFieldValue("")
-                                                        amountFieldValue = TextFieldValue("")
-                                                        onAmountChange("") // Clear ViewModel's amount
-                                                        convertedTokenAmount = "" // Clear any converted amount
-                                                    }
-                                                    // If MAX is turned on (was false, now true),
-                                                    // the LaunchedEffect will handle setting the text fields.
+                                                    setMax = !setMax
                                                 }
                                             }
                                         )
@@ -1015,45 +927,17 @@ fun SendScreen2(
                                             if(usedollar){
                                                 DgenBasicTextfield(
                                                     value = dollarAmount,
-                                                    onValueChange = { newTextFieldValue ->
-                                                        val newText = newTextFieldValue.text
-
-                                                        if (!newText.contains(' ') &&
-                                                            newText.count { it == '.' } <= 1 &&
-                                                            (newText.isEmpty() || newText == "." || newText.matches("-?\\d*(\\.\\d*)?".toRegex()))
-                                                        ) {
-                                                            dollarAmount = newTextFieldValue
-
-                                                            // If user types and MAX is on, check if input differs from max dollar amount
-                                                            if (setMax) {
-                                                                val tokenSymbol = when (selectedToken) {
-                                                                    is SelectedTokenUiState.Selected -> {
-                                                                        when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                                            "MAINNET" -> "ETH"
-                                                                            else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                                        }
-                                                                    }
-                                                                    else -> "ETH"
-                                                                }
-                                                                val currentPrice = tokenData.find {
-                                                                    it.symbol.equals(tokenSymbol, ignoreCase = true)
-                                                                }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-
-                                                                if (currentPrice != null && currentPrice > 0) {
-                                                                    val maxDollarValue = availableBalance * currentPrice
-                                                                    val formattedMaxDollar = String.format("%.2f", maxDollarValue)
-                                                                    if (newText != formattedMaxDollar) {
-                                                                        setMax = false
-                                                                    }
-                                                                } else {
-                                                                    // If price isn't available for comparison and user types something, turn off MAX
-                                                                    if (newText.isNotEmpty()) {
-                                                                        setMax = false
-                                                                    }
-                                                                }
-                                                            }
+                                                    onValueChange = { new ->
+                                                        isMaxAmount = false  // Reset when user manually changes amount
+                                                        // Check if the new value contains more than one dot
+                                                        if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
+                                                            // If it's a valid format or empty, call onAmountChange with the text
+                                                            dollarAmount = new
                                                         }
-                                                        // If conditions are not met, dollarAmount is not updated, effectively rejecting the invalid input.
+//                                                        val dotCount = new.text.count { it == '.' }
+//                                                        if (dotCount <= 1) {
+//                                                            dollarAmount = new
+//                                                        }
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -1062,24 +946,52 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
+                                                            // Calculate max dollar amount for placeholder
+                                                            val maxDollarPlaceholder = remember(availableBalance, selectedToken, tokenData) {
+                                                                if (availableBalance > 0) {
+                                                                    val tokenSymbol = when (selectedToken) {
+                                                                        is SelectedTokenUiState.Selected -> {
+                                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                                                "MAINNET" -> "ETH"
+                                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                                            }
+                                                                        }
+                                                                        else -> "ETH"
+                                                                    }
+                                                                    
+                                                                    val currentPrice = tokenData.find { 
+                                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                                    
+                                                                    if (currentPrice != null && currentPrice > 0) {
+                                                                        val dollarValue = availableBalance * currentPrice
+                                                                        String.format("%.2f", dollarValue)
+                                                                    } else {
+                                                                        "0.0"
+                                                                    }
+                                                                } else {
+                                                                    "0.0"
+                                                                }
+                                                            }
+                                                            
                                                             Text(
                                                                 modifier = Modifier,
                                                                 text =  buildAnnotatedString {
                                                                     withStyle(
                                                                         style = SpanStyle(
                                                                             fontFamily = PitagonsSans,
-                                                                            color = dgenGray.copy(0.5f),
+                                                                            color = dgenGray,
                                                                             fontWeight = FontWeight.SemiBold,
                                                                             fontSize = 39.sp,
                                                                         )
                                                                     ){
-                                                                        append("$")
+                                                                        append("\$")
                                                                     }
-                                                                    append("0.0")
+                                                                    append(maxDollarPlaceholder)
                                                                 },
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(0.5f),
+                                                                    color = dgenGray,
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1103,25 +1015,20 @@ fun SendScreen2(
                                             }else{
                                                 DgenBasicTextfield(
                                                     value = amountFieldValue,
-                                                    onValueChange={ newTextFieldValue ->
-                                                        val newText = newTextFieldValue.text
+                                                    onValueChange={ new ->
+                                                        isMaxAmount = false  // Reset when user manually changes amount
 
-                                                        if (!newText.contains(' ') &&
-                                                            newText.count { it == '.' } <= 1 &&
-                                                            (newText.isEmpty() || newText == "." || newText.matches("-?\\d*(\\.\\d*)?".toRegex()))
-                                                        ) {
-                                                            amountFieldValue = newTextFieldValue
-                                                            onAmountChange(newText)
-
-                                                            // If user types and MAX is on, check if input differs from max token amount
-                                                            if (setMax) {
-                                                                val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                                if (newText != formattedBalance) {
-                                                                    setMax = false
-                                                                }
-                                                            }
+                                                        if (amountFieldValue.text.isEmpty() || amountFieldValue.text == "." || amountFieldValue.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
+                                                            // If it's a valid format or empty, call onAmountChange with the text
+                                                            amountFieldValue = new
+                                                            onAmountChange(new.text)
                                                         }
-                                                        // If conditions are not met, amountFieldValue is not updated.
+//                                                        // Check if the new value contains more than one dot
+//                                                        val dotCount = new.text.count { it == '.' }
+//                                                        if (dotCount <= 1) {
+//                                                            amountFieldValue = new
+//                                                            onAmountChange(new.text)
+//                                                        }
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -1130,12 +1037,21 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
+                                                            // Calculate max token amount for placeholder
+                                                            val maxTokenPlaceholder = remember(availableBalance) {
+                                                                if (availableBalance > 0) {
+                                                                    String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                                } else {
+                                                                    "0.0"
+                                                                }
+                                                            }
+                                                            
                                                             Text(
                                                                 modifier = Modifier,
-                                                                text = "0.0",
+                                                                text = maxTokenPlaceholder,
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(0.5f),
+                                                                    color = dgenGray,
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1199,8 +1115,9 @@ fun SendScreen2(
                                     }
 
                                     // Add LaunchedEffect for MAX functionality
-                                    LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount, tokenData) {
+                                    LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
                                         if (setMax && availableBalance > 0) {
+                                            isMaxAmount = true  // Set flag when MAX is used
                                             val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
                                             
                                             if (useDollarAmount) {
@@ -1229,6 +1146,9 @@ fun SendScreen2(
                                                 amountFieldValue = TextFieldValue(formattedBalance)
                                                 onAmountChange(formattedBalance)
                                             }
+                                            
+                                            // Reset setMax after setting the value
+                                            setMax = false
                                         }
                                     }
 
@@ -1287,14 +1207,88 @@ fun SendScreen2(
                                     }
                                 }
 
+                                // Ensure a token is selected when a chain is already chosen (initial load)
+                                LaunchedEffect(selectedChainIndex, selectedToken) {
+                                    if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
+                                        val selectedChainName = availableChains.getOrNull(selectedChainIndex)
+                                        val selectedChainId = when (selectedChainName) {
+                                            "main" -> 1
+                                            "sepolia" -> 11155111
+                                            "op" -> 10
+                                            "pol" -> 137
+                                            "arb" -> 42161
+                                            "base" -> 8453
+                                            "zora" -> 7777777
+                                            else -> null
+                                        }
+                                        selectedChainId?.let { chainId ->
+                                            val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                asset.chainId == chainId && asset.address == chainId.toString()
+                                            }
+                                            nativeToken?.let { updateSelectedAsset(it) }
+                                        }
+                                    }
+                                }
+
                                 SelectableCarousel(
                                     items = availableChains,
                                     itemWidth = 65.dp,
                                     itemHeight = 65.dp,
                                     initialSelectedIndex = selectedChainIndex,
                                     onItemSelected = { index -> 
-                                        selectedChainIndex = index ?: 0
-                                        // Only update the chain selection, don't change the selected token
+                                        val newIndex = index ?: 0
+                                        
+                                        // Only process if actually changing to a different chain
+                                        if (selectedChainIndex != newIndex) {
+                                            selectedChainIndex = newIndex
+                                            
+                                            // Handle token selection based on current state
+                                            if (assetsUiState is AssetsUiState.Success) {
+                                                val selectedChainName = availableChains.getOrNull(newIndex)
+                                                val selectedChainId = when (selectedChainName) {
+                                                    "main" -> 1
+                                                    "sepolia" -> 11155111
+                                                    "op" -> 10
+                                                    "pol" -> 137
+                                                    "arb" -> 42161
+                                                    "base" -> 8453
+                                                    "zora" -> 7777777
+                                                    else -> null
+                                                }
+                                                
+                                                selectedChainId?.let { chainId ->
+                                                    when (selectedToken) {
+                                                        // If no token is selected, select the native token
+                                                        is SelectedTokenUiState.Unselected -> {
+                                                            if (!tokenPreselected) {
+                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                    asset.chainId == chainId && 
+                                                                    asset.address == chainId.toString()
+                                                                }
+                                                                nativeToken?.let {
+                                                                    updateSelectedAsset(it)
+                                                                }
+                                                            }
+                                                        }
+                                                        // If a token is selected, check if it's native or ERC20
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            val currentToken = selectedToken.tokenAsset
+                                                            // If current token is native, switch to the native token of the new chain
+                                                            if (currentToken.address == currentToken.chainId.toString()) {
+                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                    asset.chainId == chainId && 
+                                                                    asset.address == chainId.toString()
+                                                                }
+                                                                nativeToken?.let {
+                                                                    updateSelectedAsset(it)
+                                                                }
+                                                            }
+                                                            // If current token is ERC20, keep it selected
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 )
                             }
@@ -1324,7 +1318,7 @@ fun SendScreen2(
                                             text = "Address",
                                             style = TextStyle(
                                                 fontFamily = PitagonsSans,
-                                                color = dgenGray.copy(0.5f),
+                                                color = dgenGray,
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 24.sp
                                             ),
@@ -1346,10 +1340,7 @@ fun SendScreen2(
                                     Text(
                                         text = when {
                                             isResolvingENS -> "Resolving ENS...".uppercase()
-                                            ensError != null -> {
-                                                if (ensError == "No internet connection") "NO INTERNET CONNECTION".uppercase()
-                                                else "ENS Error".uppercase()
-                                            }
+                                            ensError != null -> "ENS Error".uppercase()
                                             toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> "ENS Resolved".uppercase()
                                             else -> "Target Address".uppercase()
                                         },
@@ -1378,46 +1369,11 @@ fun SendScreen2(
                                 }
 
                             }
-                            /* Debug-Button zum Testen des TransactionStatusOverlay
-                            Button(onClick = {
-                                debugTransactionStatus = when (debugTransactionStatus) {
-                                    null -> TransactionStatus.PENDING
-                                    TransactionStatus.PENDING -> TransactionStatus.SUCCESS
-                                    TransactionStatus.SUCCESS -> TransactionStatus.FAILURE
-                                    TransactionStatus.FAILURE -> null
-                                }
-                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                                Text("Toggle Transaction Status Overlay")
-                            }*/
-
-                            // Debug-Button für QR Scan
-//                            Button(onClick = {
-//                                triggerQrScanner()
-//                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-//                                Text("Debug QR Scan")
-//                            }
-//
-//                            // Debug-Button für Send Transaction
-//                            Button(onClick = {
-//                                triggerSendTransaction()
-//                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-//                                Text("Debug Send Transaction")
-//                            }
                         }
                     }
                 }
             }
         }
-
-        // Transaction Status Overlay is now imported from com.feature.send.ui
-        TransactionStatusOverlay(
-            status = debugTransactionStatus, // Verwende den Debug-Status
-            gifLoader = gifEnabledLoader,
-            onDismiss = {
-                debugTransactionStatus = null // Im Debug-Modus ausblenden
-                // clearTransactionStatus() // Original-Logik beibehalten, falls benötigt
-            }
-        )
     }
 
 }

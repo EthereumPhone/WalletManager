@@ -36,24 +36,33 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         }
 
     override fun getCombinedTokens(): Flow<List<TokenAsset>> =
-        tokenBalanceDao.getCompositeTokensGroupedBySymbol().map { map ->
-            map.mapNotNull { (symbol, assets) ->
-                val tokenData = assets.firstOrNull { it.tokenBalanceEntity != null } ?: return@mapNotNull null
-                val sum = assets.sumOf { it.tokenBalanceEntity?.tokenBalance ?: BigDecimal.ZERO }
+        tokenBalanceDao.getCompositeTokens().map { allCompositeTokens ->
+            val groupedBySymbol = allCompositeTokens.groupBy { it.tokenMetadataEntity.symbol }
+
+            groupedBySymbol.mapNotNull { (symbol, assetsWithSameSymbol) ->
+                val representativeToken = assetsWithSameSymbol
+                    .firstOrNull { it.tokenBalanceEntity != null }
+                    ?: return@mapNotNull null
+
+                val totalBalanceForSymbol = assetsWithSameSymbol.sumOf { compositeToken ->
+                    val balanceEntity = compositeToken.tokenBalanceEntity
+                    val metadataEntity = compositeToken.tokenMetadataEntity
+                    if (balanceEntity != null) {
+                        balanceEntity.tokenBalance.movePointLeft(metadataEntity.decimals)
+                    } else {
+                        BigDecimal.ZERO
+                    }
+                }
 
                 TokenAsset(
-                    address = tokenData.tokenMetadataEntity.contractAddress,
-                    chainId = tokenData.tokenMetadataEntity.chainId,
-                    symbol = symbol,
-                    name = tokenData.tokenMetadataEntity.name,
-                    balance = sum
-                        .movePointLeft(tokenData.tokenMetadataEntity.decimals)
-                        .setScale(tokenData.tokenMetadataEntity.decimals, RoundingMode.HALF_DOWN)
-                        .stripTrailingZeros()
-                        .toDouble(),
-                    decimals = tokenData.tokenMetadataEntity.decimals,
-                    logoUrl = tokenData.tokenMetadataEntity.logo,
-                    swappable = tokenData.tokenMetadataEntity.swappable,
+                    address = representativeToken.tokenMetadataEntity.contractAddress,
+                    chainId = representativeToken.tokenMetadataEntity.chainId,
+                    symbol = representativeToken.tokenMetadataEntity.symbol,
+                    name = representativeToken.tokenMetadataEntity.name,
+                    balance = totalBalanceForSymbol.stripTrailingZeros().toDouble(),
+                    decimals = representativeToken.tokenMetadataEntity.decimals,
+                    logoUrl = representativeToken.tokenMetadataEntity.logo,
+                    swappable = representativeToken.tokenMetadataEntity.swappable
                 )
             }
         }

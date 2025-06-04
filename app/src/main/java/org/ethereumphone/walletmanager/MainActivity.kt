@@ -28,6 +28,7 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
+import com.core.terminalsdk.TerminalSDK
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
 import com.workers.work.SeedUniswapTokensWorker
@@ -38,7 +39,7 @@ import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity() : ComponentActivity() {
 
     @Inject
     lateinit var walletAddressUpdater: SystemWalletAddressUpdater
@@ -48,6 +49,10 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var sendRepository: SendRepository
+
+    @Inject
+    @JvmField
+    var terminalSDK: TerminalSDK? = null
 
     val viewModel: MainActivityViewModel by viewModels()
 
@@ -132,6 +137,10 @@ class MainActivity : ComponentActivity() {
 
         // Stop the periodic update
         walletAddressUpdater.stopPeriodicUpdate()
+        terminalSDK?.let {
+            it.resume(it.ID_STATUSBAR)
+            it.destroyTouchHandler()
+        }
     }
 
 }
