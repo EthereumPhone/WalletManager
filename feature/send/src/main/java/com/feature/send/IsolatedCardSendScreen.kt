@@ -59,6 +59,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
@@ -141,6 +143,8 @@ import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
+import com.feature.send.ui.TransactionStatus
+import com.feature.send.ui.TransactionStatusOverlay
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
@@ -151,6 +155,8 @@ import java.util.concurrent.CompletableFuture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.Button
+import androidx.compose.animation.animateColorAsState
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -218,7 +224,9 @@ fun SendRoute2(
         sendTransactionTriggered = sendTransactionTriggered,
         resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger,
         transactionStatus = transactionStatus,
-        clearTransactionStatus = viewModel::clearTransactionStatus
+        clearTransactionStatus = viewModel::clearTransactionStatus,
+        triggerQrScanner = viewModel::triggerQrScanner,
+        triggerSendTransaction = viewModel::triggerSendTransaction
     )
 }
 
@@ -247,7 +255,9 @@ fun SendScreen2(
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
     transactionStatus: TransactionStatus?,
-    clearTransactionStatus: () -> Unit
+    clearTransactionStatus: () -> Unit,
+    triggerQrScanner: () -> Unit,
+    triggerSendTransaction: () -> Unit
 ){
 
 
@@ -477,11 +487,30 @@ fun SendScreen2(
         contentAlignment = Alignment.Center
     ) {
 
+        // Debug-Status für TransactionStatusOverlay
+        var debugTransactionStatus by remember { mutableStateOf<TransactionStatus?>(null) }
+
+        val animatedGifColor by animateColorAsState(
+            targetValue = when (debugTransactionStatus) {
+                TransactionStatus.SUCCESS -> dgenGreen
+                TransactionStatus.FAILURE -> dgenRed
+                TransactionStatus.PENDING -> dgenTurqoise
+                null -> dgenTurqoise // Default color when status is null
+            },
+            animationSpec = tween(durationMillis = mediumEnterDuration),
+            label = "GifColorAnimation"
+        )
+
         AsyncImage(
-            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
-            imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
-            contentDescription = null
+            contentDescription = null,
+            imageLoader = gifEnabledLoader,
+            colorFilter = ColorFilter.tint(animatedGifColor, BlendMode.SrcIn),
+            modifier = Modifier
+                .alpha(0.2f)
+                .offset(x = 250.dp, y = 20.dp)
+                .scale(1.3f)
+                .aspectRatio(1f)
         )
 
         AnimatedContent(
@@ -904,16 +933,57 @@ fun SendScreen2(
                                             value = useDollarAmount
                                         )
 
+                                        val maxDisplayParts = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
+                                            val prefix = "MAX"
+                                            var value = ""
+                                            if (availableBalance > 0) {
+                                                if (useDollarAmount) {
+                                                    val tokenSymbol = when (selectedToken) {
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                                "MAINNET" -> "ETH"
+                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                            }
+                                                        }
+                                                        else -> "ETH"
+                                                    }
+                                                    val currentPrice = tokenData.find {
+                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
+                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+
+                                                    if (currentPrice != null && currentPrice > 0) {
+                                                        val maxDollarValue = availableBalance * currentPrice
+                                                        val formattedMaxDollar = String.format("%.2f", maxDollarValue)
+                                                        value = " $$formattedMaxDollar" // e.g., " $123.45"
+                                                    } else {
+                                                        value = " $" // Fallback if price is not available
+                                                    }
+                                                } else { // Token amount
+                                                    val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                    value = " $formattedBalance" // e.g., " 0.123456"
+                                                }
+                                            } else {
+                                                value = " $" // Default if no balance
+                                            }
+                                            Pair(prefix, value)
+                                        }
+
                                         Text(
-                                            "MAX",
-                                            fontFamily = SpaceMono,
+                                            text = buildAnnotatedString {
+                                                withStyle(style = SpanStyle(fontFamily = SpaceMono)) {
+                                                    append(maxDisplayParts.first) // "MAX"
+                                                }
+                                                withStyle(style = SpanStyle(fontFamily = PitagonsSans)) {
+                                                    append(maxDisplayParts.second) // e.g., " $123.45", " 0.12345", " $"
+                                                }
+                                            },
                                             color = dgenTurqoise.copy(maxAlpha),
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 18.sp,
                                             lineHeight = 18.sp,
                                             letterSpacing = 0.sp,
                                             textDecoration = TextDecoration.None,
-                                            modifier = Modifier.offset( y=3.dp).pointerInput(Unit){
+                                            modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
                                                 detectTapGestures {
                                                     val wasSetMax = setMax // Store current state before toggle
                                                     setMax = !setMax      // Toggle state
@@ -996,7 +1066,7 @@ fun SendScreen2(
                                                                     withStyle(
                                                                         style = SpanStyle(
                                                                             fontFamily = PitagonsSans,
-                                                                            color = dgenGray,
+                                                                            color = dgenGray.copy(0.5f),
                                                                             fontWeight = FontWeight.SemiBold,
                                                                             fontSize = 39.sp,
                                                                         )
@@ -1007,7 +1077,7 @@ fun SendScreen2(
                                                                 },
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray,
+                                                                    color = dgenGray.copy(0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1063,7 +1133,7 @@ fun SendScreen2(
                                                                 text = "0.0",
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray,
+                                                                    color = dgenGray.copy(0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1252,7 +1322,7 @@ fun SendScreen2(
                                             text = "Address",
                                             style = TextStyle(
                                                 fontFamily = PitagonsSans,
-                                                color = dgenGray,
+                                                color = dgenGray.copy(0.5f),
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 24.sp
                                             ),
@@ -1306,83 +1376,48 @@ fun SendScreen2(
                                 }
 
                             }
+                            /* Debug-Button zum Testen des TransactionStatusOverlay
+                            Button(onClick = {
+                                debugTransactionStatus = when (debugTransactionStatus) {
+                                    null -> TransactionStatus.PENDING
+                                    TransactionStatus.PENDING -> TransactionStatus.SUCCESS
+                                    TransactionStatus.SUCCESS -> TransactionStatus.FAILURE
+                                    TransactionStatus.FAILURE -> null
+                                }
+                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                Text("Toggle Transaction Status Overlay")
+                            }*/
+
+                            // Debug-Button für QR Scan
+//                            Button(onClick = {
+//                                triggerQrScanner()
+//                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+//                                Text("Debug QR Scan")
+//                            }
+//
+//                            // Debug-Button für Send Transaction
+//                            Button(onClick = {
+//                                triggerSendTransaction()
+//                            }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+//                                Text("Debug Send Transaction")
+//                            }
                         }
                     }
                 }
             }
         }
 
-        // Transaction Status Overlay
+        // Transaction Status Overlay is now imported from com.feature.send.ui
         TransactionStatusOverlay(
-            status = transactionStatus,
+            status = debugTransactionStatus, // Verwende den Debug-Status
             gifLoader = gifEnabledLoader,
-            onDismiss = { clearTransactionStatus() } // Allow dismissing the overlay
+            onDismiss = {
+                debugTransactionStatus = null // Im Debug-Modus ausblenden
+                // clearTransactionStatus() // Original-Logik beibehalten, falls benötigt
+            }
         )
     }
 
-}
-
-@Composable
-fun TransactionStatusOverlay(
-    status: TransactionStatus?,
-    gifLoader: ImageLoader,
-    onDismiss: () -> Unit // Callback for when the overlay should be dismissed (e.g., by tapping outside or a close button)
-) {
-    // Use AnimatedVisibility for fade in/out of the overlay
-    AnimatedVisibility(
-        visible = status != null,
-        enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-        exit = fadeOut(animationSpec = tween(durationMillis = 300))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(dgenBlack.copy(alpha = 0.85f)) // Semi-transparent background
-                .pointerInput(Unit) { // Consume touch events to prevent interaction with underlying screen
-                    detectTapGestures(onTap = { onDismiss() }) // Example: dismiss on tap
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(120.dp) // Adjust size as needed
-                        .aspectRatio(1f),
-                    imageLoader = gifLoader,
-                    model = R.drawable.globe_wireframe, // Same GIF for all states for now
-                    contentDescription = "Status Animation"
-                )
-
-                val text = when (status) {
-                    TransactionStatus.PENDING -> "Transaction Pending..."
-                    TransactionStatus.SUCCESS -> "Transaction Confirmed!"
-                    TransactionStatus.FAILURE -> "Transaction Failed"
-                    null -> "" // Should not happen if visible = status != null
-                }
-                val textColor = when (status) {
-                    TransactionStatus.PENDING -> dgenOrche
-                    TransactionStatus.SUCCESS -> dgenGreen
-                    TransactionStatus.FAILURE -> dgenRed
-                    null -> dgenWhite
-                }
-
-                Text(
-                    text = text.uppercase(),
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = textColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-            }
-        }
-    }
 }
 
 fun showToast(
