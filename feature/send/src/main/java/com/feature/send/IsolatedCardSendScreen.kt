@@ -22,31 +22,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.QrCodeScanner
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -74,9 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextAlign
 import com.core.model.TokenAsset
 import com.core.model.TokenData
-import com.core.ui.Card
 import com.core.ui.DgenLoadingMatrix
-import com.feature.send.ui.SendCardView
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
@@ -90,8 +71,6 @@ import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
 import com.example.dgenlibrary.ui.theme.largeEnterDuration
 import com.example.dgenlibrary.ui.theme.mediumEnterDuration
 import com.example.dgenlibrary.ui.theme.label_fontSize
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
 import com.feature.send.ui.SelectableCarousel
 import com.feature.send.ui.TextToggle
 import kotlinx.coroutines.launch
@@ -103,30 +82,21 @@ import com.core.ui.DgenBasicTextfield
 import com.core.ui.DgenTextfield
 import com.core.ui.HeaderBar
 import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.body1_fontSize
 import androidx.compose.ui.draw.scale
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.core.ui.BottomBarButton
 import com.example.dgenlibrary.ui.theme.smallDuration
-import com.feature.send.ui.ToolbarCaptureActivity
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
-import org.ethosmobile.components.library.theme.Colors
 import android.widget.Toast
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
@@ -135,7 +105,6 @@ import androidx.compose.ui.text.withStyle
 import com.core.data.util.chainToApiKey
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenOcean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
@@ -144,10 +113,26 @@ import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
-import java.text.DecimalFormat
-import java.util.concurrent.CompletableFuture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import kotlin.reflect.KFunction1
+import com.core.ui.util.formatWithSuffix
+import java.util.concurrent.CompletableFuture
+import androidx.compose.ui.unit.TextUnit
+import kotlin.math.abs
+import java.util.Locale
+
+// Copied and adapted from IdleCardView.kt
+private fun calculateSendScreenMaxAmountFontSize(text: String): TextUnit {
+    // Adjusted for potentially smaller display area compared to IdleCardView
+    return when {
+        text.length <= 4 -> 20.sp // Slightly larger for small numbers
+        text.length <= 5 -> 18.sp // Base size
+        text.length <= 6 -> 16.sp
+        text.length <= 7 -> 14.sp
+        else -> 12.sp // Min size
+    }
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -201,7 +186,7 @@ fun SendRoute2(
         assets = assetsUiState,
         selectedToken = selectedToken,
         onAmountChange = viewModel::updateAmount,
-        onToAddressChanged= viewModel::updateToAddress,
+        onToAddressChanged = viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         updateSelectedAsset = viewModel::updateSelectedAsset,
         txComplete = txComplete,
@@ -226,7 +211,7 @@ fun SendScreen2(
     assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: (() -> Unit) -> Unit,
+    sendTransaction: KFunction1<(Boolean) -> Unit, Unit>,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
@@ -847,6 +832,17 @@ fun SendScreen2(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
+                                // Debug QR Scanner Button
+                                androidx.compose.material3.Button(onClick = {
+                                    if (multiplePermissionsState.allPermissionsGranted) {
+                                        showCamera(barCodeLauncher)
+                                    } else {
+                                        multiplePermissionsState.launchMultiplePermissionRequest()
+                                    }
+                                }) {
+                                    Text("Debug QR")
+                                }
+
                                 Column(
                                     modifier = Modifier
                                         .drawBehind {
@@ -898,16 +894,72 @@ fun SendScreen2(
                                             value = useDollarAmount
                                         )
 
+                                        val valueString = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
+                                            if (useDollarAmount) {
+                                                if (availableBalance > 0) {
+                                                    val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedToken) {
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            val assetSymbolUpper = currentSelectedToken.tokenAsset.symbol.uppercase()
+                                                            when (assetSymbolUpper) {
+                                                                "MAINNET" -> "ETH"
+                                                                // Assuming other native tokens (OPTIMISM, ARBITRUM, POLYGON, etc.)
+                                                                // are keyed by their own symbol in tokenData for price,
+                                                                // or "ETH" if that's how their price is listed.
+                                                                // This matches convertDollarToToken's logic.
+                                                                else -> assetSymbolUpper
+                                                            }
+                                                        }
+                                                        else -> "ETH"
+                                                    }
+                                                    val currentPrice = tokenData.find { it.symbol.equals(tokenSymbolForPriceLookup, ignoreCase = true) }
+                                                        ?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+
+                                                    if (currentPrice != null && currentPrice > 0) {
+                                                        (availableBalance * currentPrice).formatWithSuffix(maxDecimals = 2)
+                                                    } else {
+                                                        0.0.formatWithSuffix(maxDecimals = 2) // Fallback if price not available, now uses 2 decimals for $ value
+                                                    }
+                                                } else {
+                                                    0.0.formatWithSuffix(maxDecimals = 2) // No balance, now uses 2 decimals for $ value
+                                                }
+                                            } else { // Token amount
+                                                if (availableBalance > 0.0) {
+                                                    if (abs(availableBalance) >= 1000.0) {
+                                                        // If amount is 1000 or more, use formatWithSuffix (which applies K, M, B, T)
+                                                        // formatWithSuffix uses 2 decimals when a suffix is present by default.
+                                                        availableBalance.formatWithSuffix()
+                                                    } else {
+                                                        // For amounts less than 1000, use precise formatting up to 6 decimals
+                                                        String.format(Locale.US, "%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                    }
+                                                } else { // availableBalance is 0.0 or less
+                                                    "0" // For zero or negative balance, display "0"
+                                                }
+                                            }
+                                        }
+
+
                                         Text(
-                                            "MAX",
-                                            fontFamily = SpaceMono,
+                                            text = buildAnnotatedString {
+                                                withStyle(style = SpanStyle(fontFamily = SpaceMono, fontSize = 18.sp)) {
+                                                    append("MAX ") // "MAX "
+                                                }
+                                                // Append currency symbol and value in PitagonsSans with dynamic font size
+                                                if (useDollarAmount) {
+                                                    withStyle(style = SpanStyle(fontFamily = PitagonsSans, fontSize = 18.sp)) {
+                                                        append("$")
+                                                    }
+                                                }
+                                                withStyle(style = SpanStyle(fontFamily = PitagonsSans, fontSize = 18.sp)) {
+                                                    append(valueString)
+                                                }
+                                            },
                                             color = dgenTurqoise.copy(maxAlpha),
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 18.sp,
                                             lineHeight = 18.sp,
                                             letterSpacing = 0.sp,
                                             textDecoration = TextDecoration.None,
-                                            modifier = Modifier.offset( y=3.dp).pointerInput(Unit){
+                                            modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
                                                 detectTapGestures {
                                                     setMax = !setMax
                                                 }
@@ -946,52 +998,24 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
-                                                            // Calculate max dollar amount for placeholder
-                                                            val maxDollarPlaceholder = remember(availableBalance, selectedToken, tokenData) {
-                                                                if (availableBalance > 0) {
-                                                                    val tokenSymbol = when (selectedToken) {
-                                                                        is SelectedTokenUiState.Selected -> {
-                                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                                                "MAINNET" -> "ETH"
-                                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                                            }
-                                                                        }
-                                                                        else -> "ETH"
-                                                                    }
-                                                                    
-                                                                    val currentPrice = tokenData.find { 
-                                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
-                                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                                    
-                                                                    if (currentPrice != null && currentPrice > 0) {
-                                                                        val dollarValue = availableBalance * currentPrice
-                                                                        String.format("%.2f", dollarValue)
-                                                                    } else {
-                                                                        "0.0"
-                                                                    }
-                                                                } else {
-                                                                    "0.0"
-                                                                }
-                                                            }
-                                                            
                                                             Text(
                                                                 modifier = Modifier,
                                                                 text =  buildAnnotatedString {
                                                                     withStyle(
                                                                         style = SpanStyle(
                                                                             fontFamily = PitagonsSans,
-                                                                            color = dgenGray,
+                                                                            color = dgenGray.copy(alpha = 0.5f),
                                                                             fontWeight = FontWeight.SemiBold,
                                                                             fontSize = 39.sp,
                                                                         )
                                                                     ){
-                                                                        append("\$")
+                                                                        append("$")
                                                                     }
-                                                                    append(maxDollarPlaceholder)
+                                                                    append("0.0") // Static placeholder
                                                                 },
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray,
+                                                                    color = dgenGray.copy(alpha = 0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1037,21 +1061,12 @@ fun SendScreen2(
                                                             Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.Start
                                                         ){
-                                                            // Calculate max token amount for placeholder
-                                                            val maxTokenPlaceholder = remember(availableBalance) {
-                                                                if (availableBalance > 0) {
-                                                                    String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                                } else {
-                                                                    "0.0"
-                                                                }
-                                                            }
-                                                            
                                                             Text(
                                                                 modifier = Modifier,
-                                                                text = maxTokenPlaceholder,
+                                                                text = "0.0", // Static placeholder
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray,
+                                                                    color = dgenGray.copy(alpha = 0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1318,7 +1333,7 @@ fun SendScreen2(
                                             text = "Address",
                                             style = TextStyle(
                                                 fontFamily = PitagonsSans,
-                                                color = dgenGray,
+                                                color = dgenGray.copy(0.5f),
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 24.sp
                                             ),
