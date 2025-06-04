@@ -832,17 +832,6 @@ fun SendScreen2(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
-                                // Debug QR Scanner Button
-                                androidx.compose.material3.Button(onClick = {
-                                    if (multiplePermissionsState.allPermissionsGranted) {
-                                        showCamera(barCodeLauncher)
-                                    } else {
-                                        multiplePermissionsState.launchMultiplePermissionRequest()
-                                    }
-                                }) {
-                                    Text("Debug QR")
-                                }
-
                                 Column(
                                     modifier = Modifier
                                         .drawBehind {
