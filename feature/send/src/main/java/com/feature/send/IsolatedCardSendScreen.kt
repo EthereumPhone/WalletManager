@@ -921,14 +921,16 @@ fun SendScreen2(
                                             },
                                             "$",
                                             onToggle = {
+                                                if (setMax) {
+                                                    setMax = false
+                                                }
                                                 useDollarAmount = !useDollarAmount
                                                 scope.launch{
-                                                    delay(200)
+                                                    delay(200) // Small delay to allow UI to update if needed before clearing
                                                     dollarAmount = TextFieldValue("")
                                                     amountFieldValue = TextFieldValue("")
                                                     onAmountChange("")
                                                 }
-
                                             },
                                             value = useDollarAmount
                                         )
