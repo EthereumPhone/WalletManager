@@ -1,6 +1,8 @@
 package com.feature.send.ui
 
 import android.os.Build.VERSION.SDK_INT
+import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
@@ -10,6 +12,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -23,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +56,8 @@ import com.example.dgenlibrary.ui.theme.dgenOrche
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
+import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
 import com.example.dgenlibrary.ui.theme.label_fontSize
 import com.example.dgenlibrary.ui.theme.mediumEnterDuration
 import com.feature.send.R // Assuming R.drawable.globe_wireframe is in the feature.send module
@@ -68,17 +74,18 @@ fun TransactionStatusOverlay(
     gifLoader: ImageLoader, // Actual Composable uses this
     onDismiss: () -> Unit
 ) {
+    // Add logging when status changes
+    LaunchedEffect(status) {
+        Log.d("TransactionOverlay", "=== OVERLAY STATUS CHANGED ===")
+        Log.d("TransactionOverlay", "New status: $status")
+        when (status) {
+            TransactionStatus.PENDING -> Log.d("TransactionOverlay", "🟡 Showing PENDING overlay")
+            TransactionStatus.SUCCESS -> Log.d("TransactionOverlay", "🟢 Showing SUCCESS overlay")
+            TransactionStatus.FAILURE -> Log.d("TransactionOverlay", "🔴 Showing FAILURE overlay") 
+            null -> Log.d("TransactionOverlay", "⚪ Hiding overlay (status = null)")
+        }
+    }
 
-    val infiniteTransition = rememberInfiniteTransition()
-    val changeColor = infiniteTransition.animateColor(
-        dgenTurqoise, dgenTurqoise.copy(0.5f),
-        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
-    ).value
-
-    val changeTextColor = infiniteTransition.animateColor(
-        dgenGunMetal, dgenGunMetal.copy(0.5f),
-        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
-    ).value
     AnimatedVisibility(
         visible = status != null,
         enter = fadeIn(animationSpec = tween(durationMillis = mediumEnterDuration)),
@@ -90,6 +97,7 @@ fun TransactionStatusOverlay(
                 .background(dgenBlack)
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
+                        Log.d("TransactionOverlay", "Overlay tapped - dismissing")
                         //onDismiss()
                     })
                 },
@@ -99,36 +107,143 @@ fun TransactionStatusOverlay(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(350.dp)
-                        .aspectRatio(1f),
-                    imageLoader = gifLoader,
-                    colorFilter = ColorFilter.tint(changeColor),
-                    model = R.drawable.globe_wireframe,
-                    contentDescription = "Status Animation"
-                )
+                AnimatedContent(
+                    targetState = status,
+                    transitionSpec = {
+                        fadeIn(
+                            animationSpec = tween(extraLargeEnterDuration)
+                        ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
+                    }
+                ) { state ->
+                    when(state) {
+                        TransactionStatus.PENDING -> {
+                            Log.d("TransactionOverlay", "🟡 Rendering PENDING state")
+                            val infiniteTransition = rememberInfiniteTransition()
+                            val changeColor = infiniteTransition.animateColor(
+                                dgenTurqoise, dgenTurqoise.copy(0.5f),
+                                animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                            ).value
 
-                val text = when (status) {
-                    TransactionStatus.PENDING -> "Transaction Pending..."
-                    TransactionStatus.SUCCESS -> "Transaction Confirmed!"
-                    TransactionStatus.FAILURE -> "Transaction Failed"
-                    null -> "" 
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .size(350.dp)
+                                        .aspectRatio(1f),
+                                    imageLoader = gifLoader,
+                                    colorFilter = ColorFilter.tint(changeColor),
+                                    model = R.drawable.globe_wireframe,
+                                    contentDescription = "Status Animation"
+                                )
+                                Text(
+                                    text = "Transaction Pending...",
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenGunMetal,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 18.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier
+                                        .offset(y = -48.dp)
+                                        .padding(horizontal = 24.dp)
+                                )
+                            }
+                        }
+                        TransactionStatus.SUCCESS -> {
+                            Log.d("TransactionOverlay", "🟢 Rendering SUCCESS state")
+                            val infiniteTransition = rememberInfiniteTransition()
+                            val changeColor = infiniteTransition.animateColor(
+                                dgenGreen, dgenGreen.copy(0.5f),
+                                animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                            ).value
+                            val changeTextColor = infiniteTransition.animateColor(
+                                dgenGreen, dgenGreen.copy(0.5f),
+                                animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                            ).value
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .size(350.dp)
+                                        .aspectRatio(1f),
+                                    imageLoader = gifLoader,
+                                    colorFilter = ColorFilter.tint(changeColor),
+                                    model = R.drawable.globe_wireframe,
+                                    contentDescription = "Status Animation"
+                                )
+                                Text(
+                                    text = "Transaction Confirmed!",
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenGunMetal,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 18.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier
+                                        .offset(y = -48.dp)
+                                        .padding(horizontal = 24.dp)
+                                )
+                            }
+                        }
+                        TransactionStatus.FAILURE -> {
+                            Log.d("TransactionOverlay", "🔴 Rendering FAILURE state")
+                            val infiniteTransition = rememberInfiniteTransition()
+                            val changeColor = infiniteTransition.animateColor(
+                                dgenRed, dgenRed.copy(0.5f),
+                                animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                            ).value
+                            val changeTextColor = infiniteTransition.animateColor(
+                                dgenRed, dgenRed.copy(0.5f),
+                                animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                            ).value
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .size(350.dp)
+                                        .aspectRatio(1f),
+                                    imageLoader = gifLoader,
+                                    colorFilter = ColorFilter.tint(changeColor),
+                                    model = R.drawable.globe_wireframe,
+                                    contentDescription = "Status Animation"
+                                )
+                                Text(
+                                    text = "Transaction Failed",
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenGunMetal,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 18.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier
+                                        .offset(y = -48.dp)
+                                        .padding(horizontal = 24.dp)
+                                )
+                            }
+                        }
+                        null -> {
+                            Log.d("TransactionOverlay", "⚪ Rendering null state (should not be visible)")
+                        }
+                    }
                 }
-
-                Text(
-                    text = text,
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        color = changeTextColor,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.offset(y=-48.dp).padding(horizontal = 24.dp)
-                )
             }
         }
     }
@@ -190,7 +305,9 @@ fun TransactionStatusOverlayPreviewSuccess() {
                     textDecoration = TextDecoration.None,
                     textAlign = TextAlign.Center
                 ),
-                modifier = Modifier.offset(y=-48.dp).padding(horizontal = 24.dp)
+                modifier = Modifier
+                    .offset(y = -48.dp)
+                    .padding(horizontal = 24.dp)
             )
         }
     }

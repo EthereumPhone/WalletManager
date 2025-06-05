@@ -124,6 +124,19 @@ import androidx.compose.ui.unit.TextUnit
 import kotlin.math.abs
 import java.util.Locale
 
+// ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
+// These constants control the timing of transaction status overlays and navigation
+private object TransactionTiming {
+    // How long to show the SUCCESS overlay before starting navigation (in milliseconds)
+    const val SUCCESS_DISPLAY_DURATION = 4000L // 4 seconds to enjoy the success
+    
+    // How long to show the FAILURE overlay before starting navigation (in milliseconds)
+    const val FAILURE_DISPLAY_DURATION = 2500L // 2.5 seconds for failure state
+    
+    // Delay between starting navigation and clearing the overlay for smooth fade transition (in milliseconds)
+    const val FADE_TRANSITION_DURATION = 1000L // 1 second fade overlap
+}
+
 // Copied and adapted from IdleCardView.kt
 private fun calculateSendScreenMaxAmountFontSize(text: String): TextUnit {
     // Adjusted for potentially smaller display area compared to IdleCardView
@@ -158,6 +171,7 @@ fun SendRoute2(
     val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
+    val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
@@ -199,7 +213,9 @@ fun SendRoute2(
         qrScannerTriggered = qrScannerTriggered,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         sendTransactionTriggered = sendTransactionTriggered,
-        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger
+        resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger,
+        transactionStatus = transactionStatus,
+        clearTransactionStatus = viewModel::clearTransactionStatus
     )
 }
 
@@ -227,6 +243,8 @@ fun SendScreen2(
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
+    transactionStatus: TransactionStatus?,
+    clearTransactionStatus: () -> Unit,
 ){
     val tokenPreselected = tokenId != null && tokenId.isNotEmpty() &&
                            (assets as? AssetsUiState.Success)?.assets?.firstOrNull {
@@ -237,9 +255,6 @@ fun SendScreen2(
     val focusManager = LocalFocusManager.current
     val view = LocalView.current
     val scope = rememberCoroutineScope()
-
-    // Add transaction status state
-    var transactionStatus by remember { mutableStateOf<TransactionStatus?>(null) }
 
     var rotated by remember { mutableStateOf(false) }
 
@@ -285,21 +300,60 @@ fun SendScreen2(
         }
     }
 
-    // Monitor transaction completion state
+    // Monitor transaction completion state for SUCCESS only
     LaunchedEffect(txComplete) {
+        Log.d("SendScreen", "=== TX COMPLETE STATE CHANGED ===")
+        Log.d("SendScreen", "New txComplete state: $txComplete")
+        Log.d("SendScreen", "Current transactionStatus: $transactionStatus")
+        
         when (txComplete) {
             is TxCompleteUiState.Complete -> {
-                transactionStatus = TransactionStatus.SUCCESS
-                // Auto dismiss after 3 seconds
-                delay(3000)
-                transactionStatus = null
-                // Navigate back after successful transaction
-                onBackClick()
+                Log.d("SendScreen", "🟢 TxCompleteUiState.Complete detected - transaction successful")
+                // Display success overlay for longer duration to celebrate the success
+                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
+                
+                // Start navigation while overlay is still visible for smooth fade effect
+                onBackClick() 
+                
+                // Keep overlay visible during fade transition for seamless experience
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                clearTransactionStatus()
             }
             is TxCompleteUiState.UnComplete -> {
-                // Do nothing for UnComplete state - we handle PENDING separately
+                Log.d("SendScreen", "🔴 TxCompleteUiState.UnComplete detected - no action needed")
+                // The transactionStatus from ViewModel will handle PENDING and FAILURE states
             }
         }
+        Log.d("SendScreen", "=== TX COMPLETE HANDLING ENDED ===")
+    }
+
+    // Monitor transaction status for auto-dismiss of FAILURE state
+    LaunchedEffect(transactionStatus) {
+        Log.d("SendScreen", "=== TRANSACTION STATUS CHANGED ===")
+        Log.d("SendScreen", "New transactionStatus: $transactionStatus")
+        
+        when (transactionStatus) {
+            TransactionStatus.FAILURE -> {
+                Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
+                // Display failure overlay for a reasonable duration to acknowledge the error
+                delay(TransactionTiming.FAILURE_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, starting fade navigation")
+                
+                // Start navigation while overlay is still visible for smooth fade effect
+                onBackClick()
+                
+                // Keep overlay visible during fade transition for seamless experience
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                clearTransactionStatus()
+            }
+            else -> {
+                Log.d("SendScreen", "Other status: $transactionStatus - no auto-navigation")
+            }
+        }
+        Log.d("SendScreen", "=== TRANSACTION STATUS HANDLING ENDED ===")
     }
 
     var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
@@ -688,29 +742,57 @@ fun SendScreen2(
                     // Handle send transaction trigger from ViewModel
                     LaunchedEffect(sendTransactionTriggered) {
                         if (sendTransactionTriggered) {
+                            Log.d("SendScreen", "=== SEND TRANSACTION TRIGGERED ===")
+                            Log.d("SendScreen", "Validating transaction parameters...")
+                            Log.d("SendScreen", "Amount error: $isAmountError, Max amount: $isMaxAmount")
+                            Log.d("SendScreen", "Valid address: $isValidAddress")
+                            Log.d("SendScreen", "Selected token: $selectedToken")
+                            Log.d("SendScreen", "To address: ${toAddress}")
+                            Log.d("SendScreen", "Amount: ${amount}")
+                            
                             // Use the same validation logic as the removed button
                             if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                                Log.w("SendScreen", "🔴 Validation failed, showing error message")
                                 // Show specific error messages
                                 when {
-                                    isAmountError && !isMaxAmount -> showToast(context,"Insufficient balance")
-                                    toAddress.isEmpty() -> showToast(context,"Enter target address")
-                                    isResolvingENS -> showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
-                                    ensError != null -> showToast(context,ensError ?: "ENS error")
-                                    !isValidAddress -> showToast(context,"Invalid address format")
-                                    selectedToken == SelectedTokenUiState.Unselected -> showToast(context,"Select a chain")
+                                    isAmountError && !isMaxAmount -> {
+                                        Log.w("SendScreen", "Error: Insufficient balance")
+                                        showToast(context,"Insufficient balance")
+                                    }
+                                    toAddress.isEmpty() -> {
+                                        Log.w("SendScreen", "Error: Enter target address")
+                                        showToast(context,"Enter target address")
+                                    }
+                                    isResolvingENS -> {
+                                        Log.w("SendScreen", "Error: Resolving ENS name...")
+                                        showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
+                                    }
+                                    ensError != null -> {
+                                        Log.w("SendScreen", "Error: ENS error - $ensError")
+                                        showToast(context,ensError ?: "ENS error")
+                                    }
+                                    !isValidAddress -> {
+                                        Log.w("SendScreen", "Error: Invalid address format")
+                                        showToast(context,"Invalid address format")
+                                    }
+                                    selectedToken == SelectedTokenUiState.Unselected -> {
+                                        Log.w("SendScreen", "Error: Select a chain")
+                                        showToast(context,"Select a chain")
+                                    }
                                 }
                             } else {
+                                Log.d("SendScreen", "✅ Validation passed, proceeding with transaction")
                                 // Get current amounts and token symbol
                                 val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
                                 val currentTokenAmount = if (!useDollarAmount) amount else ""
                                 
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
+                                    Log.w("SendScreen", "Error: No amount specified")
                                     showToast(context, "Type in an amount")
                                 } else {
-                                    // Set transaction status to pending before sending
-                                    transactionStatus = TransactionStatus.PENDING
+                                    Log.d("SendScreen", "🟡 Executing transaction (ViewModel will set PENDING status)")
                                     
-                                    // Execute transaction
+                                    // Execute transaction - the ViewModel will handle setting PENDING status
                                     val finalAmount = if (isMaxAmount) {
                                         // Use exact balance for MAX amount
                                         availableBalance.toString()
@@ -720,16 +802,23 @@ fun SendScreen2(
                                         currentTokenAmount
                                     }
                                     
+                                    Log.d("SendScreen", "Final amount to send: $finalAmount")
+                                    
                                     if (finalAmount.isNotEmpty()) {
                                         onAmountChange(finalAmount)
+                                        Log.d("SendScreen", "Calling sendTransaction with callback...")
                                         sendTransaction {
-                                            // Callback after successful send - the status will be handled by txComplete LaunchedEffect
-                                            Log.d("SendScreen", "Transaction sent successfully from secondary screen")
+                                            // Callback after send operation - the status will be handled by ViewModel
+                                            Log.d("SendScreen", "✅ Transaction callback executed")
                                         }
+                                    } else {
+                                        Log.w("SendScreen", "Error: Final amount is empty")
                                     }
                                 }
                             }
+                            Log.d("SendScreen", "Resetting send transaction trigger")
                             resetSendTransactionTrigger()
+                            Log.d("SendScreen", "=== SEND TRANSACTION TRIGGER HANDLED ===")
                         }
                     }
 
@@ -1406,7 +1495,7 @@ fun SendScreen2(
         TransactionStatusOverlay(
             status = transactionStatus,
             gifLoader = gifEnabledLoader,
-            onDismiss = { transactionStatus = null }
+            onDismiss = { clearTransactionStatus() }
         )
     }
 

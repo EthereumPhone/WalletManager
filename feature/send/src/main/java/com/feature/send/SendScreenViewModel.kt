@@ -203,39 +203,81 @@ class SendViewModel @Inject constructor(
     fun send(callback: () -> Unit) {
         viewModelScope.launch {
             val selectedAsset = _selectedAssetUiState.value
+            Log.d("SendViewModel", "=== SEND TRANSACTION STARTED ===")
+            Log.d("SendViewModel", "Selected asset: $selectedAsset")
+            Log.d("SendViewModel", "Amount: ${amount.value}")
+            Log.d("SendViewModel", "To address: ${toAddress.value}")
+            
             _transactionStatus.value = TransactionStatus.PENDING
+            _txComplete.value = TxCompleteUiState.UnComplete // Reset to UnComplete when starting
+            Log.d("SendViewModel", "Set status to PENDING and txComplete to UnComplete")
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
                     val asset = selectedAsset.tokenAsset
                     val amountDouble = amount.value.toDouble()
+                    Log.d("SendViewModel", "Processing transaction for ${asset.symbol} on chain ${asset.chainId}")
+                    
+                    // Clear previous transaction hash
+                    sendRepository.restoreState()
+                    
                     if(asset.address.contains("0x")) {
+                        Log.d("SendViewModel", "Sending ERC20 token: ${asset.address}")
                         sendRepository.transferErc20(
                             selectedAsset.tokenAsset.chainId,
                             asset,
                             amountDouble,
                             toAddress.value
                         )
+                        Log.d("SendViewModel", "ERC20 transfer method completed")
                     } else {
+                        Log.d("SendViewModel", "Sending native ETH")
                         sendRepository.transferEth(
                             chainId = selectedAsset.tokenAsset.chainId,
                             toAddress = toAddress.value,
                             data = "",
                             value = amount.value
                         )
+                        Log.d("SendViewModel", "ETH transfer method completed")
                     }
-                    _transactionStatus.value = TransactionStatus.SUCCESS
+                    
+                    // Now check the transaction result from the repository's flow
+                    val transactionResult = sendRepository.currentTransactionHash.first()
+                    Log.d("SendViewModel", "Transaction result from repository: '$transactionResult'")
+                    
+                    // Check if the transaction was successful by examining the result
+                    if (transactionResult.isEmpty() || transactionResult == "error" || transactionResult == "decline" || transactionResult.contains("error", ignoreCase = true)) {
+                        Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
+                        _transactionStatus.value = TransactionStatus.FAILURE
+                        _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                        Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
+                    } else {
+                        Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
+                        _transactionStatus.value = TransactionStatus.SUCCESS
+                        _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
+                        Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
+                    }
                     //onTransactionFinalized(true)
                 } catch (e: Exception) {
+                    Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Exception caught: ${e.message}", e)
+                    Log.e("SendViewModel", "Exception type: ${e.javaClass.simpleName}")
                     e.printStackTrace()
                     _transactionStatus.value = TransactionStatus.FAILURE
+                    _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                    Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
                     //onTransactionFinalized(false)
                 }
             } else {
+                Log.e("SendViewModel", "🔴 NO ASSET SELECTED - Transaction failed")
                 // Handle case where no asset is selected, though UI should prevent this
                 _transactionStatus.value = TransactionStatus.FAILURE
+                _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete (no asset)")
                 //onTransactionFinalized(false)
             }
+            
+            Log.d("SendViewModel", "=== SEND TRANSACTION ENDED ===")
+            Log.d("SendViewModel", "Final status - transactionStatus: ${_transactionStatus.value}, txComplete: ${_txComplete.value}")
             callback()
         }
     }
@@ -583,6 +625,13 @@ class SendViewModel @Inject constructor(
      */
     fun clearTransactionStatus() {
         _transactionStatus.value = null
+    }
+
+    /**
+     * Reset txComplete state back to UnComplete, useful for starting fresh transactions
+     */
+    fun resetTxComplete() {
+        _txComplete.value = TxCompleteUiState.UnComplete
     }
 
 }
