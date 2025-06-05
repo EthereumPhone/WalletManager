@@ -21,6 +21,7 @@ import javax.inject.Inject
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.flow.first
 
 class SendRepositoryImp @Inject constructor(
@@ -28,7 +29,8 @@ class SendRepositoryImp @Inject constructor(
     private val erc20TransferApi: Erc20TransferApi,
     private val mContext: Context,
     private val tokenBalanceDao: TokenBalanceDao,
-    private val transferRepository: TransferRepository
+    private val transferRepository: TransferRepository,
+    private val terminalSDK: TerminalSDK?
 ): SendRepository {
 
     override val currentTransactionHash = MutableStateFlow("")
@@ -73,6 +75,7 @@ class SendRepositoryImp @Inject constructor(
             ethGasPrice = ethGasPrice.add(ethGasPrice.multiply(BigInteger.valueOf(4)).divide(BigInteger.valueOf(100)))
 
 
+            terminalSDK?.finishScreen()
 
             val res = try {
                 walletSDK.sendTransaction(
@@ -119,6 +122,8 @@ class SendRepositoryImp @Inject constructor(
                     )
                 }
             }
+
+            terminalSDK?.finishScreen()
 
             val res = try {
                 val txHash = erc20TransferApi.sendErc20Token(

@@ -79,10 +79,6 @@ class TerminalSDK(private val context: Context) {
                         // QR Code area
                         onQrCode()
                     } else {
-                        // Send transaction area
-                        resume(ID_STATUSBAR)
-                        // Destroy the touch handler after send is touched
-                        destroyTouchHandler()
                         sendTx()
                     }
                 } catch (e: Exception) {
@@ -103,6 +99,11 @@ class TerminalSDK(private val context: Context) {
     fun destroyTouchHandler() {
         miniDisplayTouchHandler?.destroy()
         miniDisplayTouchHandler = null
+    }
+
+    fun finishScreen() {
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
     }
 }
 
