@@ -1302,6 +1302,7 @@ fun SendScreen2(
                                 maxLines = 4,
                                 maxLength = 43,
                                 scrollHorizontally = false,
+                                autoCorrectEnabled = false,
                                 onValueChange = { new ->
                                     toAddressFieldValue = new
                                     onToAddressChanged(new.text)

@@ -78,6 +78,7 @@ fun DgenTextfield(
     value: TextFieldValue = TextFieldValue(""),
     onValueChange: (TextFieldValue) -> Unit,
     keyboardtype: KeyboardType =  KeyboardType.Text,
+    autoCorrectEnabled: Boolean = true,
     isAnyFieldFocused: MutableState<Boolean>,
     textfieldFocusManager: FocusManager? = null,
     onEditDone: () -> Unit,
@@ -192,6 +193,7 @@ fun DgenTextfield(
             maxLines = maxLines,
             maxLength = maxLength,
             scrollHorizontally = scrollHorizontally,
+            autoCorrectEnabled = autoCorrectEnabled,
             keyboardtype = keyboardtype,
             interactionSource = interactionSource,
             cursorColor =  cursorColor,
@@ -220,6 +222,7 @@ fun DgenBasicTextfield(
     value: TextFieldValue = TextFieldValue(""),
     onValueChange: (TextFieldValue) -> Unit,
     keyboardtype: KeyboardType =  KeyboardType.Text,
+    autoCorrectEnabled: Boolean = true,
     isAnyFieldFocused: MutableState<Boolean>,
     textfieldFocusManager: FocusManager? = null,
     modifier: Modifier = Modifier,
@@ -410,6 +413,7 @@ fun DgenBasicTextfield(
                 textLayoutResult = layoutResult
             },
             keyboardOptions = KeyboardOptions.Default.copy(
+                autoCorrectEnabled = autoCorrectEnabled,
                 imeAction = ImeAction.Done,
                 keyboardType = keyboardtype
             ),
