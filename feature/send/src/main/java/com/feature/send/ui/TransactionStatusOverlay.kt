@@ -50,6 +50,7 @@ import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenOrche
 import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.example.dgenlibrary.ui.theme.label_fontSize
 import com.example.dgenlibrary.ui.theme.mediumEnterDuration
@@ -70,7 +71,12 @@ fun TransactionStatusOverlay(
 
     val infiniteTransition = rememberInfiniteTransition()
     val changeColor = infiniteTransition.animateColor(
-        dgenRed, dgenGreen,
+        dgenTurqoise, dgenTurqoise.copy(0.5f),
+        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+    ).value
+
+    val changeTextColor = infiniteTransition.animateColor(
+        dgenGunMetal, dgenGunMetal.copy(0.5f),
         animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
     ).value
     AnimatedVisibility(
@@ -83,7 +89,9 @@ fun TransactionStatusOverlay(
                 .fillMaxSize()
                 .background(dgenBlack)
                 .pointerInput(Unit) {
-                    detectTapGestures(onTap = { onDismiss() })
+                    detectTapGestures(onTap = {
+                        //onDismiss()
+                    })
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -93,7 +101,7 @@ fun TransactionStatusOverlay(
             ) {
                 AsyncImage(
                     modifier = Modifier
-                        .size(280.dp)
+                        .size(350.dp)
                         .aspectRatio(1f),
                     imageLoader = gifLoader,
                     colorFilter = ColorFilter.tint(changeColor),
@@ -112,7 +120,7 @@ fun TransactionStatusOverlay(
                     text = text,
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenGunMetal,
+                        color = changeTextColor,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,

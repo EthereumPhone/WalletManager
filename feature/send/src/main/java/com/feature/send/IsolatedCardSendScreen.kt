@@ -73,6 +73,8 @@ import com.example.dgenlibrary.ui.theme.mediumEnterDuration
 import com.example.dgenlibrary.ui.theme.label_fontSize
 import com.feature.send.ui.SelectableCarousel
 import com.feature.send.ui.TextToggle
+import com.feature.send.ui.TransactionStatusOverlay
+import com.feature.send.ui.TransactionStatus
 import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
@@ -236,6 +238,9 @@ fun SendScreen2(
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
+    // Add transaction status state
+    var transactionStatus by remember { mutableStateOf<TransactionStatus?>(null) }
+
     var rotated by remember { mutableStateOf(false) }
 
     val rotation by animateFloatAsState(
@@ -280,6 +285,22 @@ fun SendScreen2(
         }
     }
 
+    // Monitor transaction completion state
+    LaunchedEffect(txComplete) {
+        when (txComplete) {
+            is TxCompleteUiState.Complete -> {
+                transactionStatus = TransactionStatus.SUCCESS
+                // Auto dismiss after 3 seconds
+                delay(3000)
+                transactionStatus = null
+                // Navigate back after successful transaction
+                onBackClick()
+            }
+            is TxCompleteUiState.UnComplete -> {
+                // Do nothing for UnComplete state - we handle PENDING separately
+            }
+        }
+    }
 
     var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
     var useDollarAmount by remember { mutableStateOf(false) }
@@ -686,6 +707,9 @@ fun SendScreen2(
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
                                     showToast(context, "Type in an amount")
                                 } else {
+                                    // Set transaction status to pending before sending
+                                    transactionStatus = TransactionStatus.PENDING
+                                    
                                     // Execute transaction
                                     val finalAmount = if (isMaxAmount) {
                                         // Use exact balance for MAX amount
@@ -699,10 +723,8 @@ fun SendScreen2(
                                     if (finalAmount.isNotEmpty()) {
                                         onAmountChange(finalAmount)
                                         sendTransaction {
-                                            // Callback after successful send
+                                            // Callback after successful send - the status will be handled by txComplete LaunchedEffect
                                             Log.d("SendScreen", "Transaction sent successfully from secondary screen")
-                                            // Navigate back after successful transaction
-                                            onBackClick()
                                         }
                                     }
                                 }
@@ -1379,6 +1401,13 @@ fun SendScreen2(
                 }
             }
         }
+
+        // Add TransactionStatusOverlay at the end of the Box
+        TransactionStatusOverlay(
+            status = transactionStatus,
+            gifLoader = gifEnabledLoader,
+            onDismiss = { transactionStatus = null }
+        )
     }
 
 }
