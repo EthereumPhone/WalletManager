@@ -513,12 +513,7 @@ fun SendScreen2(
                     }
                 }
                 is AssetsUiState.Success -> {
-                   val test =  when (selectedToken) {
-                        is SelectedTokenUiState.Selected -> selectedToken.tokenAsset
-                        else -> {
-                            0.0
-                        }
-                    }
+
                     
                     // Selected chain state
                     var selectedChainIndex by remember { mutableStateOf(0) }
@@ -765,10 +760,20 @@ fun SendScreen2(
                                                     error = painterResource(R.drawable.placeholer_icon_5)
                                                 )
                                             } else {
+                                                val tokenLogo = when(token.symbol.uppercase()) {
+                                                    "MAINNET" -> R.drawable.mainnet
+                                                    "OPTIMISM" -> R.drawable.mainnet
+                                                    "ARBITRUM" -> R.drawable.mainnet
+                                                    "POLYGON" -> R.drawable.polygon
+                                                    "SEPOLIA" -> R.drawable.mainnet
+                                                    "BASE" -> R.drawable.mainnet
+                                                    "ZORA" -> R.drawable.mainnet
+                                                    else -> R.drawable.placeholer_icon_5
+                                                }
                                                 Image(
                                                     modifier = Modifier
                                                         .size(28.dp),
-                                                    painter = painterResource(R.drawable.ethereum_placeholder),
+                                                    painter = painterResource(tokenLogo),
                                                     contentDescription = token.name
                                                 )
                                             }
