@@ -213,11 +213,29 @@ class SendViewModel @Inject constructor(
                             value = amount.value
                         )
                     }
+
+                    // Observe the transaction result
+                    val txResult = sendRepository.currentTransactionHash.first()
+                    if (txResult.lowercase() != "decline" && txResult.lowercase() != "error") {
+                        callback()
+                    } else {
+                        // Optionally, handle the "decline" or "error" case, e.g., show a message
+                        Log.d("SendViewModel", "Transaction declined or failed: $txResult")
+                        onScreenOpened()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    // Handle other exceptions if needed, e.g., if amount.value.toDouble() fails
+                    // or if there's an issue before even attempting the transaction.
+                    // Depending on the desired UX, you might want to show a general error message here too.
                 }
+            } else {
+                // Case: No asset selected.
+                // Decide if callback() should be invoked or if an error/message should be shown.
+                // For now, let's assume if no asset is selected, we don't proceed to callback.
+                Log.d("SendViewModel", "Send attempt with no asset selected.")
+                // Optionally show a message to the user.
             }
-            callback()
         }
     }
 

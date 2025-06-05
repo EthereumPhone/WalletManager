@@ -148,6 +148,9 @@ import java.text.DecimalFormat
 import java.util.concurrent.CompletableFuture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -176,6 +179,28 @@ fun SendRoute2(
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
     val tokenData by viewModel.tokenData.collectAsState()
+
+    // Observe lifecycle events to handle app resume
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Only call onScreenOpened if assets are loaded (screen is ready)
+                    if (assetsUiState is AssetsUiState.Success) {
+                        viewModel.onScreenOpened()
+                    }
+                }
+                else -> {}
+            }
+        }
+        
+        lifecycleOwner.lifecycle.addObserver(observer)
+        
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Display QR code on secondary screen only when the actual send screen content appears
     LaunchedEffect(assetsUiState) {
