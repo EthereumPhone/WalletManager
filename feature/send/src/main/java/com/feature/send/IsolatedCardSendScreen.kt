@@ -211,7 +211,7 @@ fun SendScreen2(
     assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
-    sendTransaction: KFunction1<(Boolean) -> Unit, Unit>,
+    sendTransaction: (() -> Unit) -> Unit,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
     txComplete: TxCompleteUiState,
@@ -761,8 +761,8 @@ fun SendScreen2(
                                                     modifier = Modifier
                                                         .size(28.dp)
                                                         .clip(CircleShape),
-                                                    placeholder = painterResource(R.drawable.ethereum_placeholder),
-                                                    error = painterResource(R.drawable.ethereum_placeholder)
+                                                    placeholder = painterResource(R.drawable.placeholer_icon_5),
+                                                    error = painterResource(R.drawable.placeholer_icon_5)
                                                 )
                                             } else {
                                                 Image(

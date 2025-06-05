@@ -200,7 +200,7 @@ class SendViewModel @Inject constructor(
     }
 
 
-    fun send(onTransactionFinalized: (Boolean) -> Unit) {
+    fun send(callback: () -> Unit) {
         viewModelScope.launch {
             val selectedAsset = _selectedAssetUiState.value
             _transactionStatus.value = TransactionStatus.PENDING
@@ -225,17 +225,18 @@ class SendViewModel @Inject constructor(
                         )
                     }
                     _transactionStatus.value = TransactionStatus.SUCCESS
-                    onTransactionFinalized(true)
+                    //onTransactionFinalized(true)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     _transactionStatus.value = TransactionStatus.FAILURE
-                    onTransactionFinalized(false)
+                    //onTransactionFinalized(false)
                 }
             } else {
                 // Handle case where no asset is selected, though UI should prevent this
                 _transactionStatus.value = TransactionStatus.FAILURE
-                onTransactionFinalized(false)
+                //onTransactionFinalized(false)
             }
+            callback()
         }
     }
 
