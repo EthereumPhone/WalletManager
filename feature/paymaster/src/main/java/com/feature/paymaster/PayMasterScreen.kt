@@ -366,7 +366,7 @@ fun PayMasterScreen(
             }
 
             Text(
-                "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens.",
+                "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = dgenGunMetal,
