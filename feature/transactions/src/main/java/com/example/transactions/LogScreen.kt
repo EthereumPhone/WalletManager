@@ -131,12 +131,6 @@ fun LogScreen(
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 
     val context = LocalContext.current
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = refreshState,
-        onRefresh = {
-            //onRefresh()
-        }
-    )
 
     val scrollState = rememberLazyListState()
 
@@ -219,15 +213,13 @@ fun LogScreen(
                             }
 
                             Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .pullRefresh(pullRefreshState),
+                                Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 LazyColumn(
                                     state= scrollState,
                                     modifier = Modifier
-                                        .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                                            .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
                                         .fillMaxSize()
                                         .padding(horizontal = 24.dp),
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -248,11 +240,6 @@ fun LogScreen(
                                     }
                                 }
 
-                                PullRefreshIndicator(
-                                    refreshing = refreshState,
-                                    state = pullRefreshState,
-                                    modifier = Modifier.align(Alignment.TopCenter)
-                                )
                             }
 
 
