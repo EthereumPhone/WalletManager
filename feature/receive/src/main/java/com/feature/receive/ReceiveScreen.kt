@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -216,6 +217,7 @@ fun ReceiveScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
 
+
                 IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
                     onClick = {
                         onCopyClick()
@@ -230,10 +232,12 @@ fun ReceiveScreen(
                     }
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.offset(y = 2.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(18.dp),
                             painter = painterResource(R.drawable.cpyadd),
                             contentDescription = "Back",
                             tint = dgenTurqoise

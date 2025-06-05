@@ -55,6 +55,13 @@ import kotlin.collections.filter
 import kotlin.collections.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.feature.send.ui.TransactionStatus
+
+enum class TransactionStatus {
+    PENDING,
+    SUCCESS,
+    FAILURE
+}
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
@@ -170,6 +177,9 @@ class SendViewModel @Inject constructor(
     private val _sendTransactionTriggered = MutableStateFlow(false)
     val sendTransactionTriggered: StateFlow<Boolean> = _sendTransactionTriggered.asStateFlow()
 
+    private val _transactionStatus = MutableStateFlow<TransactionStatus?>(null)
+    val transactionStatus: StateFlow<TransactionStatus?> = _transactionStatus.asStateFlow()
+
     companion object {
         private const val SELECTED_TOKEN_ID = "selected_token"
     }
@@ -193,25 +203,42 @@ class SendViewModel @Inject constructor(
     fun send(callback: () -> Unit) {
         viewModelScope.launch {
             val selectedAsset = _selectedAssetUiState.value
+            Log.d("SendViewModel", "=== SEND TRANSACTION STARTED ===")
+            Log.d("SendViewModel", "Selected asset: $selectedAsset")
+            Log.d("SendViewModel", "Amount: ${amount.value}")
+            Log.d("SendViewModel", "To address: ${toAddress.value}")
+            
+            _transactionStatus.value = TransactionStatus.PENDING
+            _txComplete.value = TxCompleteUiState.UnComplete // Reset to UnComplete when starting
+            Log.d("SendViewModel", "Set status to PENDING and txComplete to UnComplete")
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
                     val asset = selectedAsset.tokenAsset
                     val amountDouble = amount.value.toDouble()
+                    Log.d("SendViewModel", "Processing transaction for ${asset.symbol} on chain ${asset.chainId}")
+                    
+                    // Clear previous transaction hash
+                    sendRepository.restoreState()
+                    
                     if(asset.address.contains("0x")) {
+                        Log.d("SendViewModel", "Sending ERC20 token: ${asset.address}")
                         sendRepository.transferErc20(
                             selectedAsset.tokenAsset.chainId,
                             asset,
                             amountDouble,
                             toAddress.value
                         )
+                        Log.d("SendViewModel", "ERC20 transfer method completed")
                     } else {
+                        Log.d("SendViewModel", "Sending native ETH")
                         sendRepository.transferEth(
                             chainId = selectedAsset.tokenAsset.chainId,
                             toAddress = toAddress.value,
                             data = "",
                             value = amount.value
                         )
+                        Log.d("SendViewModel", "ETH transfer method completed")
                     }
 
                     // Observe the transaction result
@@ -223,19 +250,45 @@ class SendViewModel @Inject constructor(
                         Log.d("SendViewModel", "Transaction declined or failed: $txResult")
                         onScreenOpened()
                     }
+                    
+                    // Now check the transaction result from the repository's flow
+                    val transactionResult = sendRepository.currentTransactionHash.first()
+                    Log.d("SendViewModel", "Transaction result from repository: '$transactionResult'")
+                    
+                    // Check if the transaction was successful by examining the result
+                    if (transactionResult.isEmpty() || transactionResult == "error" || transactionResult == "decline" || transactionResult.contains("error", ignoreCase = true)) {
+                        Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
+                        _transactionStatus.value = TransactionStatus.FAILURE
+                        _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                        Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
+                    } else {
+                        Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
+                        _transactionStatus.value = TransactionStatus.SUCCESS
+                        _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
+                        Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
+                    }
+                    //onTransactionFinalized(true)
                 } catch (e: Exception) {
+                    Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Exception caught: ${e.message}", e)
+                    Log.e("SendViewModel", "Exception type: ${e.javaClass.simpleName}")
                     e.printStackTrace()
-                    // Handle other exceptions if needed, e.g., if amount.value.toDouble() fails
-                    // or if there's an issue before even attempting the transaction.
-                    // Depending on the desired UX, you might want to show a general error message here too.
+                    _transactionStatus.value = TransactionStatus.FAILURE
+                    _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                    Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
+                    //onTransactionFinalized(false)
                 }
             } else {
-                // Case: No asset selected.
-                // Decide if callback() should be invoked or if an error/message should be shown.
-                // For now, let's assume if no asset is selected, we don't proceed to callback.
-                Log.d("SendViewModel", "Send attempt with no asset selected.")
-                // Optionally show a message to the user.
+                Log.e("SendViewModel", "🔴 NO ASSET SELECTED - Transaction failed")
+                // Handle case where no asset is selected, though UI should prevent this
+                _transactionStatus.value = TransactionStatus.FAILURE
+                _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete (no asset)")
+                //onTransactionFinalized(false)
             }
+            
+            Log.d("SendViewModel", "=== SEND TRANSACTION ENDED ===")
+            Log.d("SendViewModel", "Final status - transactionStatus: ${_transactionStatus.value}, txComplete: ${_txComplete.value}")
+            callback()
         }
     }
 
@@ -575,6 +628,20 @@ class SendViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Call this function to clear the transaction status, e.g., when the overlay is dismissed.
+     */
+    fun clearTransactionStatus() {
+        _transactionStatus.value = null
+    }
+
+    /**
+     * Reset txComplete state back to UnComplete, useful for starting fresh transactions
+     */
+    fun resetTxComplete() {
+        _txComplete.value = TxCompleteUiState.UnComplete
     }
 
 }

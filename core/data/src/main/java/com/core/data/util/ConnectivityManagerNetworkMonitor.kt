@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class ConnectivityManagerNetworkMonitor @Inject constructor(
     @ApplicationContext private val context: Context
 ) : NetworkMonitor {
@@ -25,9 +27,11 @@ class ConnectivityManagerNetworkMonitor @Inject constructor(
             return@callbackFlow
         }
 
-
+        /**
+         * The callback's methods are invoked on changes to *any* network matching the [NetworkRequest],
+         * not just the active network. So we can simply track the presence (or absence) of such [Network].
+         */
         val callback = object : ConnectivityManager.NetworkCallback() {
-
             private val networks = mutableSetOf<Network>()
 
             override fun onAvailable(network: Network) {
@@ -37,7 +41,8 @@ class ConnectivityManagerNetworkMonitor @Inject constructor(
 
             override fun onLost(network: Network) {
                 networks -= network
-                channel.trySend(networks.isNotEmpty())
+                val stillOnline = networks.isNotEmpty()
+                channel.trySend(stillOnline)
             }
         }
 
@@ -46,24 +51,16 @@ class ConnectivityManagerNetworkMonitor @Inject constructor(
             .build()
         connectivityManager.registerNetworkCallback(request, callback)
 
-        /**
-         * Sends the latest connectivity status to the underlying channel.
-         */
-        channel.trySend(connectivityManager.isCurrentlyConnected())
+        // Send current connectivity state
+        val isCurrentlyConnected = connectivityManager.allNetworks.any { network ->
+            connectivityManager.getNetworkCapabilities(network)
+                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        }
+        channel.trySend(isCurrentlyConnected)
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
         }
     }
         .conflate()
-
-    @Suppress("DEPRECATION")
-    private fun ConnectivityManager.isCurrentlyConnected() = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-            activeNetwork
-                ?.let(::getNetworkCapabilities)
-                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-
-        else -> activeNetworkInfo?.isConnected
-    } ?: false
 }
