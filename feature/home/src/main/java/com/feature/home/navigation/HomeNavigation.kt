@@ -22,7 +22,6 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.homeGraph(
-    isOffline: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
@@ -39,7 +38,6 @@ fun NavGraphBuilder.homeGraph(
             HomeRoute2(
                 sharedTransitionScope = sharedTransitionScope,
                 animatedContentScope = this@composable,
-                isOffline = isOffline,
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,
                 navigateToLog = navigateToLog,

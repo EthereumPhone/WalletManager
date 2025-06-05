@@ -81,7 +81,6 @@ fun WmNavHost(
         ) {
 
             homeGraph(
-                isOffline = appState.isOffline.value,
                 sharedTransitionScope = this@SharedTransitionLayout,
                 navigateToSwap = {
                     navController.navigateToSwap()

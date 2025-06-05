@@ -9,6 +9,7 @@ import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.util.NetworkMonitor
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToRPC
 import com.core.domain.GetAllGroupedTokensUsecase
@@ -30,9 +31,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,6 +53,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    private val networkMonitor: NetworkMonitor,
     private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
@@ -158,11 +164,48 @@ class HomeViewModel @Inject constructor(
             initialValue = false
         )
 
+    val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
+        .map { isOnlineValue ->
+            val offlineValue = !isOnlineValue
+            Log.d("HomeViewModel.isOffline", "Received isOnline=$isOnlineValue, emitting isOffline=$offlineValue")
+            offlineValue
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = true, // Start with offline assumption
+        )
+
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
     private val _selectedTokenAsset = MutableStateFlow<TokenAsset?>(null)
     val selectedTokenAsset: StateFlow<TokenAsset?> = _selectedTokenAsset.asStateFlow()
+
+    init {
+        observeNetworkStatus()
+        // Optional: Initialen Refresh auslösen, wenn beim Start online
+        viewModelScope.launch {
+            // Warten, bis der erste Wert vom NetworkMonitor eintrifft, um Race Conditions zu vermeiden.
+            // Ohne dies könnte isOnline.first() zu schnell sein, bevor der Monitor initialisiert ist.
+            delay(100) // Kurze Verzögerung, um sicherzustellen, dass der callbackFlow im NetworkMonitor gestartet ist.
+            if (networkMonitor.isOnline.first()) { // Prüft den ersten emittierten Wert nach kurzer Verzögerung
+                Log.d("HomeViewModel", "Initially online, refreshing balances.")
+                refreshAllBalances()
+            }
+        }
+    }
+
+    private fun observeNetworkStatus() {
+        networkMonitor.isOnline
+            .distinctUntilChanged() // Nur auf tatsächliche Änderungen reagieren
+            .filter { isOnline -> isOnline } // Nur reagieren, wenn isOnline true wird (von false zu true)
+            .onEach {
+                Log.d("HomeViewModel", "Network came online, refreshing balances.")
+                refreshAllBalances()
+            }
+            .launchIn(viewModelScope) // Flow in viewModelScope starten
+    }
 
     fun setSelectedTokenAsset(tokenAsset: TokenAsset) {
         _selectedTokenAsset.value = tokenAsset

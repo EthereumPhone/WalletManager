@@ -75,6 +75,7 @@ import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
 import com.feature.home.screens.EmptyHomeScreen
+import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
 import kotlin.reflect.KSuspendFunction1
 
@@ -89,7 +90,6 @@ internal fun HomeRoute2(
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
-    isOffline: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -99,6 +99,7 @@ internal fun HomeRoute2(
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedTokenUiState: SelectedTokenUiState by sendViewModel.selectedAssetUiState.collectAsStateWithLifecycle()
+    val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
 
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
@@ -219,89 +220,83 @@ fun HomeScreen2(
                     )
                 }
 
-                when(assetState){
-                    is AssetsUiState.Empty -> {
-                        EmptyHomeScreen(
-                            gifEnabledLoader = gifEnabledLoader
-                        )
-                        Log.d("DEBUG","AssetsUiState.EMPTY")
-//                        TokenCardCarousel(
-//                            modifier = Modifier.padding(bottom = 24.dp),
-//                            assets = testTokenAssets,
-//                            tokenData = tokenData,
-//                            tokenMetadata = tokenMetadata,
-//                            loadSymbol = loadSymbol,
-//                            navigateToSend = navigateToSend,
-//                            selectedTokenUiState = selectedTokenUiState,
-//                            setSelectedToken = setSelectedTokenId,
-//                            sharedTransitionScope = sharedTransitionScope,
-//                            animatedContentScope = animatedContentScope,
-//                        )
-                    }
-                    is AssetsUiState.Error -> {
-                        Log.d("DEBUG","AssetsUiState.ERROR")
-                        ErrorHomeScreen(
-                            gifEnabledLoader = gifEnabledLoader
-                        )
-                    }
-                    is AssetsUiState.Loading -> {
-                        Log.d("DEBUG","AssetsUiState.LOADING")
-                        LoadingHomeScreen()
-                    }
-                    is AssetsUiState.Success -> {
-                        Log.d("DEBUG","AssetsUiState.SUCCESS")
-                        Log.d(
-                            "RECOMPOSE",
-                            "Success state - assets count: ${assetState.assets.size}"
-                        )
-                        HomeScreenContent(
-                            areAssetsVisible = assetState.assets.isNotEmpty() ,
-                            primaryContent = {
-                                TokenCardCarousel(
-                                    modifier = Modifier.padding(bottom = 24.dp),
-                                    assets = assetState.assets,
-                                    loadSymbol = loadSymbol,
-                                    navigateToSend = navigateToSend,
-                                    selectedTokenUiState = selectedTokenUiState,
-                                    setSelectedToken = setSelectedTokenId,
-                                    sharedTransitionScope = sharedTransitionScope,
-                                    animatedContentScope = animatedContentScope,
-                                )
-                            },
-                            secondaryContent = {
-                                Box(
-                                    modifier = modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ){
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(0.dp),
-                                        modifier = Modifier.offset(y= -48.dp)
-                                    ) {
-                                        AsyncImage(
-                                            imageLoader = gifEnabledLoader,
-                                            model = R.drawable.wireframe_torus,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(275.dp),
-                                            colorFilter = ColorFilter.tint(dgenGunMetal)
-                                        )
-                                        Text(
-                                            text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
-                                            style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenGunMetal,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 16.sp,
-                                                letterSpacing = 0.sp,
-                                                textDecoration = TextDecoration.None,
-                                                textAlign = TextAlign.Center
-                                            ),
-                                            modifier = Modifier.width(300.dp)
-                                        )
+                if (isOffline) {
+                    NoInternetHomeScreen(
+                        gifEnabledLoader = gifEnabledLoader
+                    )
+                } else {
+                    when(assetState){
+                        is AssetsUiState.Empty -> {
+                            EmptyHomeScreen(
+                                gifEnabledLoader = gifEnabledLoader
+                            )
+                            Log.d("DEBUG","AssetsUiState.EMPTY")
+                        }
+                        is AssetsUiState.Error -> {
+                            Log.d("DEBUG","AssetsUiState.ERROR")
+                            ErrorHomeScreen(
+                                gifEnabledLoader = gifEnabledLoader
+                            )
+                        }
+                        is AssetsUiState.Loading -> {
+                            Log.d("DEBUG","AssetsUiState.LOADING")
+                            LoadingHomeScreen()
+                        }
+                        is AssetsUiState.Success -> {
+                            Log.d("DEBUG","AssetsUiState.SUCCESS")
+                            Log.d(
+                                "RECOMPOSE",
+                                "Success state - assets count: ${assetState.assets.size}"
+                            )
+                            HomeScreenContent(
+                                areAssetsVisible = assetState.assets.isNotEmpty() ,
+                                primaryContent = {
+                                    TokenCardCarousel(
+                                        modifier = Modifier.padding(bottom = 24.dp),
+                                        assets = assetState.assets,
+                                        loadSymbol = loadSymbol,
+                                        navigateToSend = navigateToSend,
+                                        selectedTokenUiState = selectedTokenUiState,
+                                        setSelectedToken = setSelectedTokenId,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedContentScope = animatedContentScope,
+                                    )
+                                },
+                                secondaryContent = {
+                                    Box(
+                                        modifier = modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ){
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(0.dp),
+                                            modifier = Modifier.offset(y= -48.dp)
+                                        ) {
+                                            AsyncImage(
+                                                imageLoader = gifEnabledLoader,
+                                                model = R.drawable.wireframe_torus,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(275.dp),
+                                                colorFilter = ColorFilter.tint(dgenGunMetal)
+                                            )
+                                            Text(
+                                                text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = dgenGunMetal,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 16.sp,
+                                                    letterSpacing = 0.sp,
+                                                    textDecoration = TextDecoration.None,
+                                                    textAlign = TextAlign.Center
+                                                ),
+                                                modifier = Modifier.width(300.dp)
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
