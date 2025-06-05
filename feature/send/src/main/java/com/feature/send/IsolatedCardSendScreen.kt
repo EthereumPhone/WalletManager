@@ -522,63 +522,58 @@ fun SendScreen2(
                     val availableChains = remember(selectedToken, assetsUiState.assets) {
                         when (selectedToken) {
                             is SelectedTokenUiState.Selected -> {
-                                // Check if the selected token is a native token
-                                if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
-                                    // For native tokens, show all chains where user has native tokens
-                                    val chainsWithNativeTokens = assetsUiState.assets
+                                // For selected tokens, find all chains where user has balance of this specific token
+                                val selectedTokenAddress = selectedToken.tokenAsset.address
+                                val selectedTokenSymbol = selectedToken.tokenAsset.symbol
+                                
+                                val chainsWithThisTokenBalance = if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
+                                    // For native tokens, find chains where user has native token balance
+                                    assetsUiState.assets
                                         .filter { asset ->
-                                            // Find all native tokens (where address equals chainId)
-                                            asset.address == asset.chainId.toString()
+                                            // Find native tokens with balance > 0
+                                            asset.address == asset.chainId.toString() &&
+                                            asset.balance > 0.0
                                         }
                                         .map { it.chainId }
                                         .distinct()
-                                    
-                                    chainsWithNativeTokens.mapNotNull { chainId ->
-                                        when (chainId) {
-                                            1 -> "main"
-                                            11155111 -> "sepolia"
-                                            10 -> "op"
-                                            137 -> "pol"
-                                            42161 -> "arb"
-                                            8453 -> "base"
-                                            7777777 -> "zora"
-                                            else -> null
-                                        }
-                                    }
                                 } else {
-                                    // For ERC20 tokens, find all chains where this token exists by symbol
-                                    val tokenSymbol = selectedToken.tokenAsset.symbol
-                                    
-                                    val chainsWithThisToken = assetsUiState.assets
+                                    // For ERC20 tokens, find chains where user has this specific token with balance > 0
+                                    assetsUiState.assets
                                         .filter { asset ->
-                                            // Only match ERC20 tokens (not native tokens) with the same symbol
+                                            // Match by symbol and ensure it's an ERC20 token with balance > 0
                                             asset.address != asset.chainId.toString() &&
-                                            asset.symbol.equals(tokenSymbol, ignoreCase = true)
+                                            asset.symbol.equals(selectedTokenSymbol, ignoreCase = true) &&
+                                            asset.balance > 0.0
                                         }
                                         .map { it.chainId }
                                         .distinct()
-                                    
-                                    chainsWithThisToken.mapNotNull { chainId ->
-                                        when (chainId) {
-                                            1 -> "main"
-                                            11155111 -> "sepolia"
-                                            10 -> "op"
-                                            137 -> "pol"
-                                            42161 -> "arb"
-                                            8453 -> "base"
-                                            7777777 -> "zora"
-                                            else -> null
-                                        }
+                                }
+                                
+                                chainsWithThisTokenBalance.mapNotNull { chainId ->
+                                    when (chainId) {
+                                        1 -> "main"
+                                        11155111 -> "sepolia"
+                                        10 -> "op"
+                                        137 -> "pol"
+                                        42161 -> "arb"
+                                        8453 -> "base"
+                                        7777777 -> "zora"
+                                        else -> null
                                     }
                                 }
                             }
                             else -> {
-                                // If no token is selected, show all chains that have any tokens
-                                val chainsWithTokens = assetsUiState.assets
+                                // If no token is selected, show only chains that have native tokens with balance > 0
+                                val chainsWithNativeTokenBalance = assetsUiState.assets
+                                    .filter { asset ->
+                                        // Find native tokens with balance > 0
+                                        asset.address == asset.chainId.toString() &&
+                                        asset.balance > 0.0
+                                    }
                                     .map { it.chainId }
                                     .distinct()
                                 
-                                chainsWithTokens.mapNotNull { chainId ->
+                                chainsWithNativeTokenBalance.mapNotNull { chainId ->
                                     when (chainId) {
                                         1 -> "main"
                                         11155111 -> "sepolia"
