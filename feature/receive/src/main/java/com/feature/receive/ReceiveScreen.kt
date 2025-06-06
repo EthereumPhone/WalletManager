@@ -7,9 +7,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,6 +71,7 @@ import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.feature.receive.ui.TruncatedAddress
 import com.feature.receive.ui.rememberQrBitmapPainter
 
@@ -153,8 +157,22 @@ fun ReceiveScreen(
                         .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
                 )
 
-                Spacer(modifier.height(48.dp))
-                TruncatedAddress(userData.walletAddress)
+                Spacer(modifier.height(32.dp))
+
+                Text(
+                    modifier = modifier.width(350.dp),
+                    text = userData.walletAddress,
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenWhite,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        lineHeight = 24.sp,
+                        letterSpacing = 1.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
                 Spacer(modifier.height(8.dp))
 
                 Text(
