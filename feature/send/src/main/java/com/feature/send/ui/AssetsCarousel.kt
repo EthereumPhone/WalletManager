@@ -38,6 +38,7 @@ import com.feature.send.R
 
 @Composable
 fun SelectableCarousel(
+    modifier: Modifier = Modifier,
     items: List<String>,
     itemWidth: Dp = 200.dp,
     itemHeight: Dp = 150.dp,
@@ -73,7 +74,7 @@ fun SelectableCarousel(
 
     val listState = rememberLazyListState()
 
-    Box(Modifier.fillMaxWidth()){
+    Box(modifier.fillMaxWidth()){
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()

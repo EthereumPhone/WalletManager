@@ -584,11 +584,22 @@ class SendViewModel @Inject constructor(
                         // Formatiere das Ergebnis
                         val decimalFormat = DecimalFormat("#.######")
                         val formattedAmount = decimalFormat.format(tokenAmount)
-                        
+
+                        val realTokenLogo = when(tokenSymbol.uppercase()) {
+                            "MAINNET" -> "ETH"
+                            "OPTIMISM" -> "ETH"
+                            "ARBITRUM" -> "ETH"
+                            "POLYGON" -> "ETH"
+                            "SEPOLIA" -> "ETH"
+                            "BASE" -> "ETH"
+                            "POLYGON" -> "MATIC"
+                            "ZORA" -> "ETH"
+                            else -> tokenSymbol
+                        }
                         // show Toast
                         withContext(Dispatchers.Main) {
                             context.showCustomToast(
-                                "$${dollarAmount} = $formattedAmount $tokenSymbol",
+                                "$${dollarAmount} = $formattedAmount $realTokenLogo",
                                 Toast.LENGTH_SHORT,
                                 fontFamily = PitagonsSans,
                                 fontWeight = FontWeight.SemiBold,

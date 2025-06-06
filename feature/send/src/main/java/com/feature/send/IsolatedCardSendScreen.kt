@@ -121,8 +121,10 @@ import kotlin.reflect.KFunction1
 import com.core.ui.util.formatWithSuffix
 import java.util.concurrent.CompletableFuture
 import androidx.compose.ui.unit.TextUnit
+import com.core.ui.SimpleDgenTextfield
 import kotlin.math.abs
 import java.util.Locale
+import androidx.compose.ui.text.TextRange
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -941,12 +943,12 @@ fun SendScreen2(
                                         }
                                     }
                                 }
-                            }, onClick = onBackClick, modifier = modifier.padding(start = 24.dp, end = 24.dp))
+                            }, onClick = onBackClick, modifier = modifier.padding(horizontal = 24.dp))
 
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 24.dp, end = 24.dp),
+                                    .padding(horizontal = 24.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
 
@@ -1088,15 +1090,17 @@ fun SendScreen2(
                                                     value = dollarAmount,
                                                     onValueChange = { new ->
                                                         isMaxAmount = false  // Reset when user manually changes amount
-                                                        // Check if the new value contains more than one dot
-                                                        if (dollarAmount.text.isEmpty() || dollarAmount.text == "." || dollarAmount.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
-                                                            // If it's a valid format or empty, call onAmountChange with the text
-                                                            dollarAmount = new
+                                                        val cleanInput = new.text.removePrefix("$")
+
+                                                        if (cleanInput.isEmpty()) {
+                                                            dollarAmount = TextFieldValue("")
+                                                        } else if (cleanInput.all { it.isDigit() || it == '.' } && cleanInput.count { it == '.' } <= 1) {
+                                                            val newText = "$$cleanInput"
+                                                            dollarAmount = TextFieldValue(
+                                                                text = newText,
+                                                                selection = TextRange(newText.length)
+                                                            )
                                                         }
-//                                                        val dotCount = new.text.count { it == '.' }
-//                                                        if (dotCount <= 1) {
-//                                                            dollarAmount = new
-//                                                        }
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
@@ -1216,11 +1220,11 @@ fun SendScreen2(
                                                 }
                                             }
 
-                                            convertDollarToToken(dollarAmount.text, tokenSymbol)
+                                            convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
                                             
                                             // Calculate the converted token amount for validation
                                             try {
-                                                val dollarValue = dollarAmount.text.toDoubleOrNull() ?: 0.0
+                                                val dollarValue = dollarAmount.text.removePrefix("$").toDoubleOrNull() ?: 0.0
                                                 val currentPrice = tokenData.find { 
                                                     it.symbol.equals(tokenSymbol, ignoreCase = true) 
                                                 }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
@@ -1261,7 +1265,11 @@ fun SendScreen2(
                                                 if (currentPrice != null && currentPrice > 0) {
                                                     val dollarValue = availableBalance * currentPrice
                                                     val formattedDollar = String.format("%.2f", dollarValue)
-                                                    dollarAmount = TextFieldValue(formattedDollar)
+                                                    val newText = "$$formattedDollar"
+                                                    dollarAmount = TextFieldValue(
+                                                        text = newText,
+                                                        selection = TextRange(newText.length)
+                                                    )
                                                 }
                                             } else {
                                                 // Set token amount directly
@@ -1353,6 +1361,7 @@ fun SendScreen2(
                                 }
 
                                 SelectableCarousel(
+                                    modifier = modifier.offset(x = (-3).dp),
                                     items = availableChains,
                                     itemWidth = 65.dp,
                                     itemHeight = 65.dp,
@@ -1415,7 +1424,8 @@ fun SendScreen2(
                                 )
                             }
 
-                            DgenTextfield(
+                            SimpleDgenTextfield(
+                                modifier = modifier.padding(horizontal = 8.dp),
                                 value = toAddressFieldValue,
                                 maxLines = 4,
                                 maxLength = 43,
