@@ -1,5 +1,8 @@
 package com.feature.home
 
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -50,6 +53,12 @@ import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.compose.ui.text.font.FontWeight
+import com.core.ui.showCustomToast
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenWhite
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -63,6 +72,7 @@ class HomeViewModel @Inject constructor(
     private val getAllTokensUsecase: GetAllTokensUsecase,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val walletSDK: WalletSDK?,
+    @ApplicationContext private val context: Context,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -215,7 +225,14 @@ class HomeViewModel @Inject constructor(
         return _selectedTokenAsset.value
     }
 
-    suspend fun getLink(uri: String): String {
+    suspend fun getLink(uri: String): String? {
+        // Check for internet connectivity first
+        // If offline, show a toast and return the original uri so that callers don't crash
+        if (!networkMonitor.isOnline.first()) {
+            showToast("No internet connection!")
+            return null
+        }
+
         val client = OkHttpClient()
         val request = Request.Builder()
             .url("https://getmoonpaynew-4bl33rjqpa-uc.a.run.app?text=$uri")
@@ -250,6 +267,18 @@ class HomeViewModel @Inject constructor(
         val link: String
     )
 
+    // Helper to display styled toast consistent with UI components
+    private fun showToast(message: String) {
+        Handler(Looper.getMainLooper()).post {
+            context.showCustomToast(
+                message = message,
+                fontFamily = PitagonsSans,
+                fontWeight = FontWeight.SemiBold,
+                backgroundColor = dgenRed,
+                textColor = dgenWhite
+            )
+        }
+    }
 
     fun setOnboardingComplete(onboardingComplete: Boolean) {
         viewModelScope.launch {

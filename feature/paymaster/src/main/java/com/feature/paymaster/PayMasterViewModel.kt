@@ -27,6 +27,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 import java.net.UnknownHostException
+import androidx.compose.ui.text.font.FontWeight
+import com.core.ui.showCustomToast
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenWhite
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)
@@ -82,7 +87,7 @@ class PayMasterViewModel @Inject constructor(
     suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         // Early exit if there is no internet connection
         if (!isInternetAvailable()) {
-            showToast("No internet connection. Please check your connectivity and try again.")
+            showToast("No internet connection!")
             return@withContext null
         }
 
@@ -134,7 +139,7 @@ class PayMasterViewModel @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             if (e is UnknownHostException) {
-                showToast("No internet connection. Please check your connectivity and try again.")
+                showToast("No internet connection!")
             } else {
                 showToast("Error: ${e.message}")
                 _balance.value = "Error: ${e.message}"
@@ -154,10 +159,16 @@ class PayMasterViewModel @Inject constructor(
         paymasterSDK.cleanup()
     }
 
-    // Helper to display toast messages safely from any thread
+    // Helper to display styled toast messages safely from any thread
     private fun showToast(message: String) {
         Handler(Looper.getMainLooper()).post {
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            context.showCustomToast(
+                message = message,
+                fontFamily = PitagonsSans,
+                fontWeight = FontWeight.SemiBold,
+                backgroundColor = dgenRed,
+                textColor = dgenWhite
+            )
         }
     }
 
