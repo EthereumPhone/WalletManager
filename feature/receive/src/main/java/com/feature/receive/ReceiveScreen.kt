@@ -59,6 +59,7 @@ import java.util.Hashtable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.UserData
+import com.core.ui.HeaderBar
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
@@ -132,44 +133,10 @@ fun ReceiveScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(dgenBlack)
+                .padding(horizontal = 24.dp)
             //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
-            Row (
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        end = 24.dp,
-                        start = 24.dp, top = 16.dp
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ){
-                androidx.compose.material3.Text(
-                    text = "RECEIVE ASSETS",
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 24.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                )
-
-                androidx.compose.material3.Icon(
-                    modifier = Modifier.size(32.dp).pointerInput(Unit) {
-                        detectTapGestures {
-                            onBackClick()
-                        }
-                    },
-                    painter = painterResource(R.drawable.baseline_close_24),
-                    contentDescription = "Back",
-                    tint = dgenTurqoise
-                )
-
-            }
-
-
+            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick)
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
