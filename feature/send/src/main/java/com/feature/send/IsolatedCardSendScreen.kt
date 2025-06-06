@@ -515,8 +515,15 @@ fun SendScreen2(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(dgenBlack),
-        contentAlignment = Alignment.Center
+            .background(dgenBlack)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        // Clear focus when tapping outside of text fields
+                        focusManager.clearFocus()
+                    }
+                )
+            }
     ) {
 
         AsyncImage(
