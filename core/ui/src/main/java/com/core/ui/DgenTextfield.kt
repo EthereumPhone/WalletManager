@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.text.Layout
 import android.util.Log
 import android.view.View
+import android.view.ViewTreeObserver
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
@@ -71,6 +72,7 @@ import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.body2_fontSize
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import androidx.compose.runtime.DisposableEffect
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -122,6 +124,22 @@ fun DgenTextfield(
 
     val haptics = LocalHapticFeedback.current
 
+    // Click-Outside-Unfocus Handler
+    DisposableEffect(view, isFocused) {
+        val listener = ViewTreeObserver.OnGlobalFocusChangeListener { _, _ ->
+            if (isFocused && !view.hasFocus()) {
+                focusManager.clearFocus()
+            }
+        }
+        
+        if (isFocused) {
+            view.viewTreeObserver.addOnGlobalFocusChangeListener(listener)
+        }
+        
+        onDispose {
+            view.viewTreeObserver.removeOnGlobalFocusChangeListener(listener)
+        }
+    }
 
     Column (
         modifier = modifier

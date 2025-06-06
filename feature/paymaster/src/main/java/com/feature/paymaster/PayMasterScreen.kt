@@ -51,11 +51,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
@@ -64,10 +67,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.core.ui.DgenButtonTextfield
 import com.core.ui.HeaderBar
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.body2_fontSize
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
 import com.example.dgenlibrary.ui.theme.dgenGunMetal
@@ -75,6 +80,7 @@ import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.example.dgenlibrary.ui.theme.label_fontSize
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -106,10 +112,13 @@ fun PayMasterScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     var showAmountDialog by remember { mutableStateOf(false) }
     var selectedAmount by remember { mutableStateOf("") }
     var customAmount by remember { mutableStateOf("") }
     var isCustomSelected by remember { mutableStateOf(false) }
+    var toUpAmount by remember { mutableStateOf(TextFieldValue("")) }
+    val view = LocalView.current
 
     val formattedBalance = try {
         val bd = BigDecimal(balance)
@@ -321,6 +330,13 @@ fun PayMasterScreen(
             .fillMaxSize()
             .background(dgenBlack)
             .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        focusManager.clearFocus()
+                    }
+                )
+            }
     ){
         HeaderBar(text = "Gas", onClick = onBackClick)
 
@@ -380,41 +396,46 @@ fun PayMasterScreen(
             )
         }
 
-        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
-            Surface(
-                shape = CircleShape,
-                color = Color.Transparent,
-                contentColor = dgenTurqoise,
-                modifier = Modifier.pointerInput(Unit) {
-                    detectTapGestures {
-                        showAmountDialog = true
-                    }
-                }
-            ) {
-                Row(
-                    modifier = Modifier.padding(end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        modifier = Modifier.size(20.dp),
-                        painter = painterResource(R.drawable.topup_icon),
-                        contentDescription = "Top up",
-                        tint = dgenTurqoise
-                    )
-                    Text(
-                        "Top up".uppercase(),
+        DgenButtonTextfield(
+            value = toUpAmount,
+            onValueChange = { toUpAmount = it },
+            isAnyFieldFocused = remember { mutableStateOf(false) },
+            onEditDone = { },
+            view = view,
+            labelContent = {
+                Text(
+                    text = "ADD AMOUNT",
+                    style = TextStyle(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 24.sp,
-                        lineHeight = 24.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
+                        fontSize = label_fontSize
                     )
-                }
+                )
+            },
+            placeholder = {
+                Text(
+                    text = "0.00",
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenWhite.copy(0.5f),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = body2_fontSize
+                    )
+                )
+            },
+            button1Text = "10",
+            button2Text = "50",
+            button1Value = "\$10",
+            button2Value = "\$50",
+            onButton1Click = {
+                toUpAmount = TextFieldValue("\$10")
+            },
+            onButton2Click = {
+                toUpAmount = TextFieldValue("\$50")
             }
-        }
+        )
+
     }
 }
 

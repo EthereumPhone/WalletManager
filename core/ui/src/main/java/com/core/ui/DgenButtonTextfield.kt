@@ -33,7 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +90,12 @@ import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import android.view.ViewTreeObserver
+import com.example.dgenlibrary.ui.theme.label_fontSize
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -148,6 +154,23 @@ fun DgenButtonTextfield(
 
     val isButton1Active = value.text == button1Value && button1Value.isNotEmpty()
     val isButton2Active = value.text == button2Value && button2Value.isNotEmpty()
+
+    // Click-Outside-Unfocus Handler
+    DisposableEffect(view, isFocused) {
+        val listener = ViewTreeObserver.OnGlobalFocusChangeListener { _, _ ->
+            if (isFocused && !view.hasFocus()) {
+                focusManager.clearFocus()
+            }
+        }
+        
+        if (isFocused) {
+            view.viewTreeObserver.addOnGlobalFocusChangeListener(listener)
+        }
+        
+        onDispose {
+            view.viewTreeObserver.removeOnGlobalFocusChangeListener(listener)
+        }
+    }
 
     Column (
         modifier = modifier
@@ -270,7 +293,10 @@ fun DgenButtonTextfield(
                                 BorderStroke(1.dp, dgenTurqoise),
                                 RoundedCornerShape(16.dp)
                             )
-                            .clickable {
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onButton1Click()
                             }
@@ -278,12 +304,26 @@ fun DgenButtonTextfield(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = button1Text,
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = if (isButton1Active) dgenOcean else dgenTurqoise,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                ) {
+                                    append("\$")
+                                }
+                                append(button1Text)
+                            },
                             style = TextStyle(
                                 fontFamily = SpaceMono,
                                 color = if (isButton1Active) dgenOcean else dgenTurqoise,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 14.sp
                             )
                         )
                     }
@@ -298,7 +338,10 @@ fun DgenButtonTextfield(
                                 BorderStroke(1.dp, dgenTurqoise),
                                 RoundedCornerShape(16.dp)
                             )
-                            .clickable {
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onButton2Click()
                             }
@@ -306,12 +349,26 @@ fun DgenButtonTextfield(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = button2Text,
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = if (isButton2Active) dgenOcean else dgenTurqoise,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None
+                                    )
+                                ) {
+                                    append("\$")
+                                }
+                                append(button2Text)
+                            },
                             style = TextStyle(
                                 fontFamily = SpaceMono,
                                 color = if (isButton2Active) dgenOcean else dgenTurqoise,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 14.sp
                             )
                         )
                     }
