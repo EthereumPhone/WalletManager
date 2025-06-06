@@ -93,6 +93,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
+import com.core.ui.HeaderBar
 import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
 import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
@@ -150,42 +151,11 @@ fun LogScreen(
             .background(dgenBlack),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Row (
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    end = 24.dp,
-                    start = 24.dp, top = 16.dp
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-                Text(
-                    text = "ACTIVITY LOG",
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 24.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                )
-
-                Icon(
-                    modifier = Modifier.size(32.dp).pointerInput(Unit){
-                        detectTapGestures {
-                            onNavigateBack()
-                        }
-                    },
-                    painter = painterResource(R.drawable.baseline_close_24),
-                    contentDescription = "Back",
-                    tint = dgenTurqoise
-                )
-
-        }
-
-
+        HeaderBar(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            text = "ACTIVITY LOG",
+            onClick = onNavigateBack
+        )
 
         Box(modifier = Modifier.fillMaxSize()){
             AnimatedContent(
