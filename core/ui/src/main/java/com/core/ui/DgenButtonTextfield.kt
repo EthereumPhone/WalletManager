@@ -95,6 +95,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import android.view.ViewTreeObserver
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.shape.CircleShape
 import com.example.dgenlibrary.ui.theme.label_fontSize
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
@@ -117,7 +119,7 @@ fun DgenButtonTextfield(
     scrollHorizontally: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(8.dp),
-    backgroundColor: Color = dgenTurqoise,
+    backgroundColor: Color = dgenOcean,
     cursorColor: Color = dgenWhite,
     cursorWidth: Dp = 18.dp,
     cursorHeight: Dp = 32.dp,
@@ -150,6 +152,12 @@ fun DgenButtonTextfield(
         label = "backgroundColor"
     )
 
+    val animatedBackgroundOpacity by animateFloatAsState(
+        targetValue = if (isFocused) 0.33f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "backgroundColor"
+    )
+
     val haptics = LocalHapticFeedback.current
 
     val isButton1Active = value.text == button1Value && button1Value.isNotEmpty()
@@ -172,16 +180,16 @@ fun DgenButtonTextfield(
         }
     }
 
-    Column (
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
             .drawBehind {
                 drawRect(
-                    color = animatedBackgroundColor,
+                    color = Color(0xFF536F79),
                     size = size,
                     topLeft = Offset(0f, 0f),
-                    alpha = 0.2f
+                    alpha = animatedBackgroundOpacity
                 )
             }
             .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
@@ -204,174 +212,165 @@ fun DgenButtonTextfield(
                 } else {
                     false
                 }
-            }
-        ,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = Alignment.Start
-    ){
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column (
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalAlignment = Alignment.Start
+        ){
 
-        if (labelContent != null) {
-            labelContent()
+            if (labelContent != null) {
+                labelContent()
+            }
+
+            DgenBasicTextfield(
+                value = value,
+                onValueChange = { newValue ->
+                    // Entferne Leerzeichen und Bindestriche
+                    var filteredText = newValue.text.replace(" ", "").replace("-", "")
+                    
+                    // Begrenze auf maximal zwei Punkte
+                    val dotCount = filteredText.count { it == '.' }
+                    if (dotCount > 2) {
+                        // Entferne überschüssige Punkte (behalte nur die ersten zwei)
+                        var dotsFound = 0
+                        filteredText = filteredText.filter { char ->
+                            if (char == '.') {
+                                dotsFound++
+                                dotsFound <= 2
+                            } else {
+                                true
+                            }
+                        }
+                    }
+                    
+                    if (filteredText.length <= maxLength) {
+                        onValueChange(newValue.copy(text = filteredText))
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = textStyle,
+                enabled = enabled,
+                readOnly = readOnly,
+                minLines = minLines,
+                maxLines = maxLines,
+                maxLength = maxLength,
+                scrollHorizontally = scrollHorizontally,
+                autoCorrectEnabled = autoCorrectEnabled,
+                keyboardtype = keyboardtype,
+                interactionSource = interactionSource,
+                cursorColor = cursorColor,
+                cursorWidth = cursorWidth,
+                cursorHeight = cursorHeight,
+                placeholder = placeholder,
+                isAnyFieldFocused = isAnyFieldFocused,
+                onFocusChanged = { focusState ->
+                    if (isFocused && !focusState) {
+                        onEditDone()
+                    }
+                    Log.d("DEBUG","isFocused: $isFocused - focusState: $focusState")
+                    isFocused = focusState
+                    Log.d("DEBUG","After- isFocused: $isFocused - focusState: $focusState")
+                }
+            )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(IntrinsicSize.Min)
+        if (showButtons) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                DgenBasicTextfield(
-                    value = value,
-                    onValueChange = { newValue ->
-                        // Entferne Leerzeichen und Bindestriche
-                        var filteredText = newValue.text.replace(" ", "").replace("-", "")
-                        
-                        // Begrenze auf maximal zwei Punkte
-                        val dotCount = filteredText.count { it == '.' }
-                        if (dotCount > 2) {
-                            // Entferne überschüssige Punkte (behalte nur die ersten zwei)
-                            var dotsFound = 0
-                            filteredText = filteredText.filter { char ->
-                                if (char == '.') {
-                                    dotsFound++
-                                    dotsFound <= 2
-                                } else {
-                                    true
-                                }
-                            }
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (isButton1Active) dgenTurqoise else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .border(
+                            BorderStroke(1.dp, dgenTurqoise),
+                            CircleShape
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onButton1Click()
                         }
-                        
-                        if (filteredText.length <= maxLength) {
-                            onValueChange(newValue.copy(text = filteredText))
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = textStyle,
-                    enabled = enabled,
-                    readOnly = readOnly,
-                    minLines = minLines,
-                    maxLines = maxLines,
-                    maxLength = maxLength,
-                    scrollHorizontally = scrollHorizontally,
-                    autoCorrectEnabled = autoCorrectEnabled,
-                    keyboardtype = keyboardtype,
-                    interactionSource = interactionSource,
-                    cursorColor = cursorColor,
-                    cursorWidth = cursorWidth,
-                    cursorHeight = cursorHeight,
-                    placeholder = placeholder,
-                    isAnyFieldFocused = isAnyFieldFocused,
-                    onFocusChanged = { focusState ->
-                        if (isFocused && !focusState) {
-                            onEditDone()
-                        }
-                        Log.d("DEBUG","isFocused: $isFocused - focusState: $focusState")
-                        isFocused = focusState
-                        Log.d("DEBUG","After- isFocused: $isFocused - focusState: $focusState")
-                    }
-                )
-            }
-
-            if (showButtons) {
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = if (isButton1Active) dgenTurqoise else Color.Transparent,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .border(
-                                BorderStroke(1.dp, dgenTurqoise),
-                                RoundedCornerShape(16.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = if (isButton1Active) dgenOcean else dgenTurqoise,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 18.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                )
                             ) {
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onButton1Click()
+                                append("\$")
                             }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(
-                                    style = SpanStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = if (isButton1Active) dgenOcean else dgenTurqoise,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                ) {
-                                    append("\$")
-                                }
-                                append(button1Text)
-                            },
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = if (isButton1Active) dgenOcean else dgenTurqoise,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
+                            append(button1Text)
+                        },
+                        style = TextStyle(
+                            fontFamily = SpaceMono,
+                            color = if (isButton1Active) dgenOcean else dgenTurqoise,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
                         )
-                    }
+                    )
+                }
 
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = if (isButton2Active) dgenTurqoise else Color.Transparent,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .border(
-                                BorderStroke(1.dp, dgenTurqoise),
-                                RoundedCornerShape(16.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onButton2Click()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(
-                                    style = SpanStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = if (isButton2Active) dgenOcean else dgenTurqoise,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp,
-                                        letterSpacing = 0.sp,
-                                        textDecoration = TextDecoration.None
-                                    )
-                                ) {
-                                    append("\$")
-                                }
-                                append(button2Text)
-                            },
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = if (isButton2Active) dgenOcean else dgenTurqoise,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (isButton2Active) dgenTurqoise else Color.Transparent,
+                            shape = CircleShape
                         )
-                    }
+                        .border(
+                            BorderStroke(1.dp, dgenTurqoise),
+                            CircleShape
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onButton2Click()
+                        }
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = if (isButton2Active) dgenOcean else dgenTurqoise,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 18.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                )
+                            ) {
+                                append("\$")
+                            }
+                            append(button2Text)
+                        },
+                        style = TextStyle(
+                            fontFamily = SpaceMono,
+                            color = if (isButton2Active) dgenOcean else dgenTurqoise,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    )
                 }
             }
         }

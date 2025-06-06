@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -75,6 +76,7 @@ import com.example.dgenlibrary.ui.theme.SpaceMono
 import com.example.dgenlibrary.ui.theme.body2_fontSize
 import com.example.dgenlibrary.ui.theme.dgenBlack
 import com.example.dgenlibrary.ui.theme.dgenGray
+import com.example.dgenlibrary.ui.theme.dgenGreen
 import com.example.dgenlibrary.ui.theme.dgenGunMetal
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
@@ -324,81 +326,109 @@ fun PayMasterScreen(
     }
 
     Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.SpaceBetween,
         modifier = modifier
             .fillMaxSize()
             .background(dgenBlack)
-            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+            .padding(start = 12.dp, end = 12.dp, bottom = 24.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
                         focusManager.clearFocus()
                     }
                 )
-            }
-    ){
-        HeaderBar(text = "Gas", onClick = onBackClick)
-
+            },
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        HeaderBar(text = "Gas", onClick = onBackClick, modifier = modifier.padding(horizontal = 12.dp))
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(32.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = modifier.padding(horizontal = 12.dp)
+        ){
+
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                Spacer(Modifier.offset(y = 5.dp)
-                    .height(77.dp)
-                    .width(8.dp)
-                    .background(dgenGray.copy(0.5f))
-                    .padding(end = 16.dp)
-                )
-                Column {
-                    Text(
-                        buildAnnotatedString {
-                            append("TOTAL")
-                        },
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Spacer(Modifier.offset(y = 5.dp)
+                        .height(77.dp)
+                        .width(8.dp)
+                        .background(dgenGray.copy(0.5f))
+                        .padding(end = 16.dp)
+                    )
+                    Column {
+                        Text(
+                            buildAnnotatedString {
+                                append("TOTAL")
+                            },
+                            fontFamily = SpaceMono,
+                            color = dgenTurqoise,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp,
+                            lineHeight = 18.sp,
+                            letterSpacing = 0.sp,
+                            textDecoration = TextDecoration.None,
+                            modifier = Modifier.offset(y = 8.dp)
+                        )
+                        Text(
+                            "$${formattedBalance}",
+                            fontFamily = PitagonsSans,
+                            color = dgenWhite,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 48.sp,
+                            lineHeight = 48.sp,
+                            letterSpacing = 0.sp,
+                            textDecoration = TextDecoration.None
+                        )
+                    }
+                }
+
+                Text(
+                    "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
+                    style = TextStyle(
+                        fontFamily = PitagonsSans,
+                        color = dgenGunMetal,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
-                        lineHeight = 18.sp,
+                        fontSize = 16.sp,
                         letterSpacing = 0.sp,
                         textDecoration = TextDecoration.None,
-                        modifier = Modifier.offset(y = 8.dp)
-                    )
-                    Text(
-                        "$${formattedBalance}",
-                        fontFamily = PitagonsSans,
-                        color = dgenWhite,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 48.sp,
-                        lineHeight = 48.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                }
+                        textAlign = TextAlign.Start
+                    ),
+                    modifier = Modifier.width(370.dp)
+                )
             }
-
-            Text(
-                "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenGunMetal,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    letterSpacing = 0.sp,
-                    textDecoration = TextDecoration.None,
-                    textAlign = TextAlign.Start
-                ),
-                modifier = Modifier.width(370.dp)
-            )
         }
 
         DgenButtonTextfield(
             value = toUpAmount,
-            onValueChange = { toUpAmount = it },
+            onValueChange = { newValue ->
+                val input = newValue.text
+                
+                // Remove any existing "$" to get the raw input
+                val cleanInput = input.removePrefix("$")
+                
+                // Only allow digits and decimal point
+                if (cleanInput.isEmpty()) {
+                    toUpAmount = TextFieldValue("")
+                } else if (cleanInput.matches(Regex("^\\d*\\.?\\d*$"))) {
+                    // Add "$" prefix if there's any numeric input
+                    val newText = "$$cleanInput"
+                    // Set cursor position at the end (behind the number)
+                    toUpAmount = TextFieldValue(
+                        text = newText,
+                        selection = androidx.compose.ui.text.TextRange(newText.length)
+                    )
+                } else {
+                    // Keep the previous value if input is invalid
+                    toUpAmount = toUpAmount
+                }
+            },
             isAnyFieldFocused = remember { mutableStateOf(false) },
             onEditDone = { },
             view = view,
@@ -409,7 +439,7 @@ fun PayMasterScreen(
                         fontFamily = SpaceMono,
                         color = dgenTurqoise,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = label_fontSize
+                        fontSize = 18.sp
                     )
                 )
             },
@@ -425,18 +455,19 @@ fun PayMasterScreen(
                 )
             },
             button1Text = "10",
-            button2Text = "50",
+            button2Text = "20",
             button1Value = "\$10",
-            button2Value = "\$50",
+            button2Value = "\$20",
             onButton1Click = {
                 toUpAmount = TextFieldValue("\$10")
             },
             onButton2Click = {
-                toUpAmount = TextFieldValue("\$50")
-            }
+                toUpAmount = TextFieldValue("\$20")
+            },
+            modifier = Modifier.fillMaxWidth()
         )
-
     }
+
 }
 
 @Preview(device = "spec:width=720px,height=720px,dpi=240", name = "DDevice")

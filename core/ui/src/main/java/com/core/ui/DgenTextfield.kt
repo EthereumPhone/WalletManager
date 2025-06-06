@@ -73,6 +73,7 @@ import com.example.dgenlibrary.ui.theme.body2_fontSize
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import androidx.compose.runtime.DisposableEffect
+import com.example.dgenlibrary.ui.theme.dgenOcean
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -94,7 +95,7 @@ fun DgenTextfield(
     scrollHorizontally: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(0.dp),
-    backgroundColor: Color = dgenTurqoise,
+    backgroundColor: Color = dgenOcean,
     cursorColor: Color = dgenWhite,
     cursorWidth: Dp = 18.dp,
     cursorHeight: Dp = 32.dp,
@@ -150,7 +151,7 @@ fun DgenTextfield(
                     color = animatedBackgroundColor,
                     size = size,
                     topLeft = Offset(0f, 0f),
-                    alpha = 0.2f
+                    alpha = 0.33f
                 )
 //                drawLine(
 //                    color = animatedBackgroundColor,
