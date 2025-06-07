@@ -183,12 +183,13 @@ fun SendRoute2(
 
     // Observe lifecycle events to handle app resume
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, transactionStatus) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
                     // Only call onScreenOpened if assets are loaded (screen is ready)
-                    if (assetsUiState is AssetsUiState.Success) {
+                    // and no transaction is currently in progress/result state
+                    if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
                         viewModel.onScreenOpened()
                     }
                 }
@@ -204,8 +205,9 @@ fun SendRoute2(
     }
 
     // Display QR code on secondary screen only when the actual send screen content appears
-    LaunchedEffect(assetsUiState) {
-        if (assetsUiState is AssetsUiState.Success) {
+    LaunchedEffect(assetsUiState, transactionStatus) {
+        // Display QR code only when assets are loaded and there is no active transaction status
+        if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
             viewModel.onScreenOpened()
         }
     }

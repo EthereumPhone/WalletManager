@@ -105,6 +105,25 @@ class TerminalSDK(private val context: Context) {
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
+
+    /**
+     * Displays a simple black screen with the supplied [text] rendered in red and centred.
+     * Uses the same dimensions as the existing `black_layout.xml` (428 × 142 px).
+     *
+     * Calling this will first clean up any active touch-handler and then push the
+     * rendered bitmap to the mini-display using the persistent layer (ID_PERSISTENT).
+     * No touch processing is installed for this view.
+     */
+    fun displayBlackText(text: String) {
+        // Remove any existing touch handling to avoid leaking receivers
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val bitmap = layoutRenderer.renderBlackText(text)
+
+        // Push the bitmap to the display – keep it until explicitly cleared
+        refresh(bitmap, ID_PERSISTENT)
+    }
 }
 
 /* name of the real proxy class */

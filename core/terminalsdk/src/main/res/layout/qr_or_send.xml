@@ -4,8 +4,55 @@
     android:layout_height="142px"
     android:background="#000000">
 
-    <ImageView
-        android:layout_width="428px"
-        android:layout_height="142px"
-        android:src="@drawable/terminal_qr_send_drawable" />
+    <!-- Row with scan + send options -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_gravity="center">
+
+        <!-- Scan QR icon -->
+        <ImageView
+            android:id="@+id/scan_icon"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="15px"
+            android:src="@drawable/terminal_qr_scan_icon" />
+
+        <!-- Scan QR label -->
+        <TextView
+            android:id="@+id/scan_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="30px"
+            android:text="SCAN QR"
+            android:textColor="#CFE2F9"
+            android:textSize="25px"
+            android:fontFamily="@font/monomaniac" />
+
+        <!-- Send TXN icon -->
+        <ImageView
+            android:id="@+id/send_icon"
+            android:layout_width="22px"
+            android:layout_height="22px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="15px"
+            android:src="@drawable/terminal_sending_icon" />
+
+        <!-- Send TXN label -->
+        <TextView
+            android:id="@+id/send_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="SEND TXN"
+            android:textColor="#CFE2F9"
+            android:textSize="25px"
+            android:fontFamily="@font/monomaniac" />
+
+    </LinearLayout>s
+
 </FrameLayout>
