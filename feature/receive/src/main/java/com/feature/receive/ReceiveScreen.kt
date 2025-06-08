@@ -34,6 +34,8 @@ import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -87,6 +89,18 @@ internal fun ReceiveRoute(
 
     //initializes fonts for toast
     initializeFontMap(SpaceMono, PitagonsSans)
+
+    //opens terminal screen for receive button
+    LaunchedEffect(Unit) {
+        viewModel.onCopyOpened()
+    }
+
+    //closes terminal screen for receive button
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onCopyClosed()
+        }
+    }
     
     ReceiveScreen(
         userData = userData,
@@ -112,11 +126,6 @@ fun silentlyCopyToClipboard(context: Context, text: String) {
 
     // Optional: Show a toast or some other feedback that doesn't use system UI
     // Toast.makeText(context, "Text copied", Toast.LENGTH_SHORT).show()
-}
-@SuppressLint("ServiceCast")
-private fun copyTextToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    clipboardManager.setText(AnnotatedString(text))
 }
 
 @Composable
@@ -153,7 +162,7 @@ fun ReceiveScreen(
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
-                    modifier = Modifier.size(125.dp)
+                    modifier = Modifier.size(150.dp)
                         .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
                 )
 
@@ -174,7 +183,6 @@ fun ReceiveScreen(
                     )
                 )
                 Spacer(modifier.height(8.dp))
-
                 Text(
                     modifier = modifier.width(300.dp),
                     style = TextStyle(
@@ -188,60 +196,6 @@ fun ReceiveScreen(
                     ),
                     text = "This is your unique wallet address. You can use it to receive any token."
                 )
-
-
-
-            }
-
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(dgenBlack)
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-
-
-                IconButton(modifier = Modifier.clip(RoundedCornerShape(0.dp)).width(110.dp).height(50.dp).padding(bottom = 8.dp),
-                    onClick = {
-                        onCopyClick()
-
-                        context.showCustomToast(
-                            message = "Address copied!",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenOcean,
-                            textColor = dgenTurqoise
-                        )
-                    }
-                ) {
-                    Column(
-                        modifier = Modifier.offset(y = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(18.dp),
-                            painter = painterResource(R.drawable.cpyadd),
-                            contentDescription = "Back",
-                            tint = dgenTurqoise
-                        )
-                        Text(
-                            text= "COPY",
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = dgenTurqoise,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp,
-                                lineHeight = 16.sp,
-                                letterSpacing = 1.sp,
-                                textDecoration = TextDecoration.None
-                            )
-                        )
-                    }
-                }
-
             }
         }
 }

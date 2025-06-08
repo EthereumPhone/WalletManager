@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="428px"
+    android:layout_height="142px"
+    android:background="#000000">
+
+    <ImageView
+        android:layout_width="428px"
+        android:layout_height="142px"
+        android:src="@drawable/terminal_topup_drawable" />
+</FrameLayout>

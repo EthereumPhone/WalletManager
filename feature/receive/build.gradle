@@ -53,6 +53,8 @@ dependencies {
     implementation project(path: ':core:common')
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
+    implementation project(path: ':core:terminalsdk')
+    
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit
     androidTestImplementation libs.androidx.espresso
@@ -80,5 +82,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.2.1")
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
+
+
 
 }

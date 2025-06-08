@@ -62,7 +62,7 @@ class TerminalSDK(private val context: Context) {
     fun displayQRCode(onQrCode: () -> Unit, sendTx: () -> Unit) {
         // Clean up any existing touch handler first
         destroyTouchHandler()
-        
+
         val layoutRenderer = LayoutRenderer(context)
         val qrCodeBitmap = layoutRenderer.renderQrOrSend()
 
@@ -93,6 +93,75 @@ class TerminalSDK(private val context: Context) {
     }
 
     fun removeQRCode() {
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
+    }
+
+    /**
+     * Displays the copy bitmap in ReceiveScreen
+     */
+    fun displayCopyAddress(onCopy: () -> Unit) {
+        // Clean up any existing touch handler first
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val qrCodeBitmap = layoutRenderer.renderCopy()
+
+        refresh(qrCodeBitmap, ID_PERSISTENT)
+
+        miniDisplayTouchHandler = MiniDisplayTouchHandler(
+            context,
+            MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                if (action != MotionEvent.ACTION_DOWN) {
+                    return@OnTouchListener
+                }
+                try {
+                    onCopy()
+                    resume(ID_STATUSBAR)
+                    destroyTouchHandler()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        )
+    }
+
+    fun removeCopyAddress() {
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
+    }
+
+
+    /**
+     * Displays the copy bitmap in ReceiveScreen
+     */
+    fun displayTopUp(onTopUp: () -> Unit) {
+        // Clean up any existing touch handler first
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val qrCodeBitmap = layoutRenderer.renderCopy()
+
+        refresh(qrCodeBitmap, ID_PERSISTENT)
+
+        miniDisplayTouchHandler = MiniDisplayTouchHandler(
+            context,
+            MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                if (action != MotionEvent.ACTION_DOWN) {
+                    return@OnTouchListener
+                }
+                try {
+                    onTopUp()
+                    resume(ID_STATUSBAR)
+                    destroyTouchHandler()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        )
+    }
+
+    fun removeTopUp() {
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
