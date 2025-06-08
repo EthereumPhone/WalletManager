@@ -56,6 +56,14 @@ import kotlin.collections.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.TransactionStatus
+import com.core.data.util.chainIdToRPC
+import com.core.data.util.chainIdToBundler
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import kotlinx.coroutines.delay
 
 enum class TransactionStatus {
     PENDING,
@@ -240,6 +248,16 @@ class SendViewModel @Inject constructor(
                         )
                         Log.d("SendViewModel", "ETH transfer method completed")
                     }
+
+                    // Observe the transaction result
+                    val txResult = sendRepository.currentTransactionHash.first()
+                    if (txResult.lowercase() != "decline" && txResult.lowercase() != "error") {
+                        callback()
+                    } else {
+                        // Optionally, handle the "decline" or "error" case, e.g., show a message
+                        Log.d("SendViewModel", "Transaction declined or failed: $txResult")
+                        onScreenOpened()
+                    }
                     
                     // Now check the transaction result from the repository's flow
                     val transactionResult = sendRepository.currentTransactionHash.first()
@@ -252,10 +270,24 @@ class SendViewModel @Inject constructor(
                         _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
                         Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
                     } else {
-                        Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
-                        _transactionStatus.value = TransactionStatus.SUCCESS
-                        _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
-                        Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
+                        terminalSDK?.displayBlackText("TXN IN ORBIT...")
+                        checkTransactionInclusion(
+                            txResult
+                        ) { hasBeenIncluded ->
+                            if (hasBeenIncluded) {
+                                Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
+                                _transactionStatus.value = TransactionStatus.SUCCESS
+                                _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
+                                Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
+                                terminalSDK?.displayBlackText("TXN SUCCESS!")
+                            } else {
+                                Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
+                                _transactionStatus.value = TransactionStatus.FAILURE
+                                _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
+                                Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete (not included)")
+                            }
+                        }
+
                     }
                     //onTransactionFinalized(true)
                 } catch (e: Exception) {
@@ -643,6 +675,73 @@ class SendViewModel @Inject constructor(
      */
     fun resetTxComplete() {
         _txComplete.value = TxCompleteUiState.UnComplete
+    }
+
+    fun checkTransactionInclusion(txHash: String, callback: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Resolve correct chain id (same logic as before)
+            val chainId = try {
+                val repoChainId = sendRepository.currentTransactionChainId.first()
+                if (repoChainId != 0) repoChainId else {
+                    val chainIdStr = userDataRepository.userData.first().walletNetwork
+                    if (chainIdStr.startsWith("0x", ignoreCase = true)) {
+                        chainIdStr.removePrefix("0x").toInt(16)
+                    } else {
+                        chainIdStr.toIntOrNull() ?: 1
+                    }
+                }
+            } catch (e: Exception) {
+                1
+            }
+
+            val client = OkHttpClient()
+            val contentType = "application/json; charset=utf-8".toMediaType()
+
+            while (true) {
+                val bodyJson = """
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "pimlico_getUserOperationStatus",
+                        "params": ["$txHash"],
+                        "id": 1
+                    }
+                """.trimIndent()
+
+                val request = Request.Builder()
+                    .url(chainIdToBundler(chainId))
+                    .post(bodyJson.toRequestBody(contentType))
+                    .build()
+
+                val status = try {
+                    client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) {
+                            null
+                        } else {
+                            val jsonString = response.body?.string() ?: return@use null
+                            val json = JSONObject(jsonString)
+                            val resultObj = json.optJSONObject("result")
+                            resultObj?.optString("status")
+                        }
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+
+                when (status) {
+                    "included" -> {
+                        withContext(Dispatchers.Main) { callback(true) }
+                        return@launch
+                    }
+                    "failed", "rejected" -> {
+                        withContext(Dispatchers.Main) { callback(false) }
+                        return@launch
+                    }
+                }
+
+                // Wait 4 seconds before next poll
+                delay(4000)
+            }
+        }
     }
 
 }

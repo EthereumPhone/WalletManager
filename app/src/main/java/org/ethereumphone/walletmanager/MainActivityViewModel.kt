@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.core.data.repository.UserDataRepository
 import com.core.model.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -24,6 +28,15 @@ class MainActivityViewModel @Inject constructor(
         initialValue = MainActivityUiState.Loading,
         started = SharingStarted.WhileSubscribed(5_000)
     )
+
+    private val _appResumedEvent = MutableSharedFlow<Unit>()
+    val appResumedEvent: SharedFlow<Unit> = _appResumedEvent.asSharedFlow()
+
+    fun onAppResumed() {
+        viewModelScope.launch {
+            _appResumedEvent.emit(Unit)
+        }
+    }
 
 }
 

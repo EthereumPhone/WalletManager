@@ -150,7 +150,7 @@ fun HomeScreen2(
     hasTransfer: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
-    getLink: KSuspendFunction1<String, String>,
+    getLink: KSuspendFunction1<String, String?>,
     modifier: Modifier = Modifier,
 ) {
     // Log HomeScreen2 recomposition
@@ -358,7 +358,7 @@ fun HomeScreen2(
                         val address = userData.userData.walletAddress
                         scope.launch {
                             val json = Uri.encode("{\"eth\":\"$address\"}")
-                            getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json").let { uri ->
+                            getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
                                 println("Opening URI: $uri")
                                 uriHandler.openUri(uri)
                             }

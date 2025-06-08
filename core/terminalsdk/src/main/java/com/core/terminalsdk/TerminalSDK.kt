@@ -79,10 +79,6 @@ class TerminalSDK(private val context: Context) {
                         // QR Code area
                         onQrCode()
                     } else {
-                        // Send transaction area
-                        resume(ID_STATUSBAR)
-                        // Destroy the touch handler after send is touched
-                        destroyTouchHandler()
                         sendTx()
                     }
                 } catch (e: Exception) {
@@ -172,6 +168,30 @@ class TerminalSDK(private val context: Context) {
     fun destroyTouchHandler() {
         miniDisplayTouchHandler?.destroy()
         miniDisplayTouchHandler = null
+    }
+
+    fun finishScreen() {
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
+    }
+
+    /**
+     * Displays a simple black screen with the supplied [text] rendered in red and centred.
+     * Uses the same dimensions as the existing `black_layout.xml` (428 × 142 px).
+     *
+     * Calling this will first clean up any active touch-handler and then push the
+     * rendered bitmap to the mini-display using the persistent layer (ID_PERSISTENT).
+     * No touch processing is installed for this view.
+     */
+    fun displayBlackText(text: String) {
+        // Remove any existing touch handling to avoid leaking receivers
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val bitmap = layoutRenderer.renderBlackText(text)
+
+        // Push the bitmap to the display – keep it until explicitly cleared
+        refresh(bitmap, ID_PERSISTENT)
     }
 }
 

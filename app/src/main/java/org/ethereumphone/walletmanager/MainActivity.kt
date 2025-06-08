@@ -132,6 +132,20 @@ class MainActivity() : ComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        terminalSDK?.let {
+            it.resume(it.ID_STATUSBAR)
+            it.destroyTouchHandler()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.onAppResumed()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 

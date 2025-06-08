@@ -117,6 +117,9 @@ import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.reflect.KFunction1
 import com.core.ui.util.formatWithSuffix
 import java.util.concurrent.CompletableFuture
@@ -180,9 +183,33 @@ fun SendRoute2(
 
     val tokenData by viewModel.tokenData.collectAsState()
 
+    // Observe lifecycle events to handle app resume
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, transactionStatus) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Only call onScreenOpened if assets are loaded (screen is ready)
+                    // and no transaction is currently in progress/result state
+                    if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
+                        viewModel.onScreenOpened()
+                    }
+                }
+                else -> {}
+            }
+        }
+        
+        lifecycleOwner.lifecycle.addObserver(observer)
+        
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     // Display QR code on secondary screen only when the actual send screen content appears
-    LaunchedEffect(assetsUiState) {
-        if (assetsUiState is AssetsUiState.Success) {
+    LaunchedEffect(assetsUiState, transactionStatus) {
+        // Display QR code only when assets are loaded and there is no active transaction status
+        if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
             viewModel.onScreenOpened()
         }
     }
