@@ -136,7 +136,7 @@ class TerminalSDK(private val context: Context) {
         destroyTouchHandler()
 
         val layoutRenderer = LayoutRenderer(context)
-        val qrCodeBitmap = layoutRenderer.renderCopy()
+        val qrCodeBitmap = layoutRenderer.renderTopUp()
 
         refresh(qrCodeBitmap, ID_PERSISTENT)
 

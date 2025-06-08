@@ -2,8 +2,10 @@ package com.feature.paymaster
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -203,15 +205,19 @@ class PayMasterViewModel @Inject constructor(
      *
      * When opened it displays the copy button
      */
-    fun onCopyOpened(){
+    fun onTopUpOpened(){
         try{
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {
-                terminalSDK.displayCopyAddress {
+                terminalSDK.displayTopUp {
                     viewModelScope.launch(Dispatchers.Main) {
-                        topUp(topUpAmount.value.text)
+                        val daimoUrl = topUp(topUpAmount.value.text)
+                        if (daimoUrl != null) {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                            appContext.startActivity(intent)
+                        }
                         appContext.showCustomToast(
-                            message = "Address copied!",
+                            message = "You added ${topUpAmount.value.text} to your Paymaster.",
                             fontFamily = PitagonsSans,
                             fontWeight = FontWeight.SemiBold,
                             backgroundColor = dgenOcean,
@@ -226,11 +232,11 @@ class PayMasterViewModel @Inject constructor(
         }
     }
 
-    fun onCopyClosed() {
+    fun onTopUpClosed() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.removeCopyAddress()
+                    terminalSDK.removeTopUp()
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
                 }

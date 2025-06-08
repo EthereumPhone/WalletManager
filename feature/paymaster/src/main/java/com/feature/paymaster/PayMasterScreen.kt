@@ -39,6 +39,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,6 +100,19 @@ internal fun PayMasterScreenRoute(
     val balance by viewModel.balance.collectAsState()
     val topUpAmount by viewModel.topUpAmount.collectAsState()
 
+
+    //opens terminal screen for paymaster button
+    LaunchedEffect(Unit) {
+        viewModel.onTopUpOpened()
+    }
+
+    //closes terminal screen for paymaster button
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onTopUpClosed()
+        }
+    }
+
     PayMasterScreen(
         balance = balance,
         onBackClick = onBackClick,
@@ -122,7 +137,6 @@ fun PayMasterScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    var showAmountDialog by remember { mutableStateOf(false) }
     var selectedAmount by remember { mutableStateOf("") }
     var customAmount by remember { mutableStateOf("") }
     var isCustomSelected by remember { mutableStateOf(false) }
@@ -134,202 +148,6 @@ fun PayMasterScreen(
         bd.setScale(2, RoundingMode.HALF_UP).toPlainString()
     } catch (e: NumberFormatException) {
         balance
-    }
-
-    if (showAmountDialog) {
-        Dialog(onDismissRequest = { showAmountDialog = false }) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = dgenGray.copy(0.95f))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        "SELECT AMOUNT",
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-
-                    Text(
-                        "Choose how much to add to your gas balance",
-                        fontFamily = PitagonsSans,
-                        color = dgenWhite,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    // Preset amounts
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        listOf("10", "25", "50").forEach { amount ->
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        selectedAmount = amount
-                                        isCustomSelected = false
-                                        customAmount = ""
-                                    },
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (selectedAmount == amount && !isCustomSelected) dgenTurqoise else Color.Transparent,
-                                border = BorderStroke(
-                                    width = 2.dp,
-                                    color = if (selectedAmount == amount && !isCustomSelected) dgenTurqoise else dgenGunMetal
-                                )
-                            ) {
-                                Text(
-                                    text = "$$amount",
-                                    fontFamily = SpaceMono,
-                                    color = if (selectedAmount == amount && !isCustomSelected) dgenBlack else dgenWhite,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-
-                    // Custom amount input
-                    OutlinedTextField(
-                        value = customAmount,
-                        onValueChange = { value ->
-                            // Only allow digits and decimal point
-                            if (value.isEmpty() || value.matches(Regex("^\\d*\\.?\\d*$"))) {
-                                customAmount = value
-                                isCustomSelected = value.isNotEmpty()
-                                if (value.isNotEmpty()) {
-                                    selectedAmount = value
-                                }
-                            }
-                        },
-                        label = { 
-                            Text(
-                                "Custom amount (USD)",
-                                fontFamily = PitagonsSans,
-                                color = dgenGunMetal
-                            )
-                        },
-                        leadingIcon = {
-                            Text(
-                                "$",
-                                fontFamily = SpaceMono,
-                                color = dgenWhite,
-                                fontSize = 18.sp,
-                                modifier = Modifier.padding(start = 12.dp)
-                            )
-                        },
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = dgenTurqoise,
-                            unfocusedBorderColor = dgenGunMetal,
-                            focusedTextColor = dgenWhite,
-                            unfocusedTextColor = dgenWhite,
-                            cursorColor = dgenTurqoise
-                        ),
-                        textStyle = TextStyle(
-                            fontFamily = SpaceMono,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-
-                    if (isCustomSelected && customAmount.isNotEmpty()) {
-                        val customAmountValue = customAmount.toDoubleOrNull() ?: 0.0
-                        if (customAmountValue < 10.0) {
-                            Text(
-                                "Minimum amount is $10",
-                                fontFamily = PitagonsSans,
-                                color = dgenRed,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
-
-                    // Action buttons
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = { showAmountDialog = false },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = dgenWhite
-                            ),
-                            border = BorderStroke(
-                                width = 2.dp,
-                                color = dgenGunMetal
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "CANCEL",
-                                fontFamily = SpaceMono,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                val amount = selectedAmount.toDoubleOrNull() ?: 0.0
-                                if (amount >= 10.0) {
-                                    scope.launch {
-                                        showAmountDialog = false
-                                        val daimoUrl = topUp(selectedAmount)
-                                        if (daimoUrl != null) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
-                                            context.startActivity(intent)
-                                        }
-                                    }
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = selectedAmount.isNotEmpty() && (selectedAmount.toDoubleOrNull() ?: 0.0) >= 10.0,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = dgenTurqoise,
-                                contentColor = dgenBlack,
-                                disabledContainerColor = dgenGunMetal,
-                                disabledContentColor = dgenGray
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "TOP UP",
-                                fontFamily = SpaceMono,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 
     Column(
