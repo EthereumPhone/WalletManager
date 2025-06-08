@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
@@ -28,10 +29,14 @@ import org.ethereumphone.walletsdk.WalletSDK
 import javax.inject.Inject
 import java.net.UnknownHostException
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.showCustomToast
 import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenRed
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.terminalsdk.TerminalSDK
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)
@@ -41,7 +46,17 @@ data class InitiateBalanceResponse(val daimoPaymentId: String?, val daimoPayment
 class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val walletSDK: WalletSDK?,
+    private val terminalSDK: TerminalSDK?,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
+
+    private val _topUpAmount = MutableStateFlow(TextFieldValue(""))
+    val topUpAmount: StateFlow<TextFieldValue> = _topUpAmount
+
+    // Function to update the state
+    fun onTopUpAmountChanged(newValue: TextFieldValue) {
+        _topUpAmount.value = newValue
+    }
 
     private val _balance = MutableStateFlow("0.0")
     val balance: StateFlow<String> = _balance.asStateFlow()
@@ -181,4 +196,48 @@ class PayMasterViewModel @Inject constructor(
         val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
+
+    /**
+     * Calls this function when the paymaster screen is opened
+     *
+     * When opened it displays the copy button
+     */
+    fun onCopyOpened(){
+        try{
+            //check if terminal sdk is available
+            if (terminalSDK?.isAvailable() == true) {
+                terminalSDK.displayCopyAddress {
+                    viewModelScope.launch(Dispatchers.Main) {
+                        topUp(topUpAmount.value.text)
+                        appContext.showCustomToast(
+                            message = "Address copied!",
+                            fontFamily = PitagonsSans,
+                            fontWeight = FontWeight.SemiBold,
+                            backgroundColor = dgenOcean,
+                            textColor = dgenTurqoise,
+                            duration = Toast.LENGTH_SHORT
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ReceiveViewModel", "Error copying address", e)
+        }
+    }
+
+    fun onCopyClosed() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                if (terminalSDK?.isAvailable() == true) {
+                    terminalSDK.removeCopyAddress()
+                } else {
+                    Log.w("ReceiveViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("ReceiveViewModel", "Error removing copy terminal screen", e)
+            }
+        }
+    }
+
 }

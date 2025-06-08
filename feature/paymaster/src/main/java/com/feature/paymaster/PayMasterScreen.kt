@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.text.Layout
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -94,12 +96,15 @@ internal fun PayMasterScreenRoute(
     onBackClick: () -> Unit
 ) {
     val balance by viewModel.balance.collectAsState()
+    val topUpAmount by viewModel.topUpAmount.collectAsState()
 
     PayMasterScreen(
         balance = balance,
         onBackClick = onBackClick,
         topUp = viewModel::topUp,
-        forceRefresh = viewModel::forceUpdateBalance
+        forceRefresh = viewModel::forceUpdateBalance,
+        topUpAmount = topUpAmount,
+        onTopUpAmountChanged = viewModel::onTopUpAmountChanged
     )
 }
 
@@ -110,6 +115,8 @@ fun PayMasterScreen(
     balance: String,
     onBackClick: () -> Unit,
     topUp: suspend (String) -> String?,
+    topUpAmount: TextFieldValue,
+    onTopUpAmountChanged: (TextFieldValue) -> Unit,
     forceRefresh: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -119,7 +126,7 @@ fun PayMasterScreen(
     var selectedAmount by remember { mutableStateOf("") }
     var customAmount by remember { mutableStateOf("") }
     var isCustomSelected by remember { mutableStateOf(false) }
-    var toUpAmount by remember { mutableStateOf(TextFieldValue("")) }
+//    var toUpAmount by remember { mutableStateOf(TextFieldValue("")) }
     val view = LocalView.current
 
     val formattedBalance = try {
@@ -181,7 +188,7 @@ fun PayMasterScreen(
                                     },
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (selectedAmount == amount && !isCustomSelected) dgenTurqoise else Color.Transparent,
-                                border = androidx.compose.foundation.BorderStroke(
+                                border = BorderStroke(
                                     width = 2.dp,
                                     color = if (selectedAmount == amount && !isCustomSelected) dgenTurqoise else dgenGunMetal
                                 )
@@ -272,7 +279,7 @@ fun PayMasterScreen(
                                 containerColor = Color.Transparent,
                                 contentColor = dgenWhite
                             ),
-                            border = androidx.compose.foundation.BorderStroke(
+                            border = BorderStroke(
                                 width = 2.dp,
                                 color = dgenGunMetal
                             ),
@@ -406,7 +413,7 @@ fun PayMasterScreen(
         }
 
         DgenButtonTextfield(
-            value = toUpAmount,
+            value = topUpAmount,
             onValueChange = { newValue ->
                 val input = newValue.text
                 
@@ -415,18 +422,20 @@ fun PayMasterScreen(
                 
                 // Only allow digits and decimal point
                 if (cleanInput.isEmpty()) {
-                    toUpAmount = TextFieldValue("")
+                    onTopUpAmountChanged(TextFieldValue(""))
                 } else if (cleanInput.matches(Regex("^\\d*\\.?\\d*$"))) {
                     // Add "$" prefix if there's any numeric input
                     val newText = "$$cleanInput"
                     // Set cursor position at the end (behind the number)
-                    toUpAmount = TextFieldValue(
-                        text = newText,
-                        selection = androidx.compose.ui.text.TextRange(newText.length)
+                    onTopUpAmountChanged(
+                        TextFieldValue(
+                            text = newText,
+                            selection = TextRange(newText.length)
+                        )
                     )
                 } else {
                     // Keep the previous value if input is invalid
-                    toUpAmount = toUpAmount
+                    onTopUpAmountChanged(topUpAmount)
                 }
             },
             isAnyFieldFocused = remember { mutableStateOf(false) },
@@ -459,10 +468,10 @@ fun PayMasterScreen(
             button1Value = "\$10",
             button2Value = "\$20",
             onButton1Click = {
-                toUpAmount = TextFieldValue("\$10")
+                onTopUpAmountChanged(TextFieldValue("\$10"))
             },
             onButton2Click = {
-                toUpAmount = TextFieldValue("\$20")
+                onTopUpAmountChanged(TextFieldValue("\$20"))
             },
             modifier = Modifier.fillMaxWidth()
         )
@@ -477,6 +486,8 @@ fun PayMasterScreenPreview() {
         balance = "123.456789",
         onBackClick = {},
         topUp = { null },
-        forceRefresh = {}
+        forceRefresh = {},
+        topUpAmount = TextFieldValue("\$10"),
+        onTopUpAmountChanged = {}
     )
 }
