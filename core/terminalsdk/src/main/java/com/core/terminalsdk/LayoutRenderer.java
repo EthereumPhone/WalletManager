@@ -81,7 +81,21 @@ public class LayoutRenderer {
     public Bitmap renderCopy() {
         // Inflate the layout
         LayoutInflater inflater = LayoutInflater.from(context);
-        View view = inflater.inflate(R.layout.copy, null);
+        View view = inflater.inflate(R.layout.copy_terminal_layout, null);
+
+        int accentColor = getColorForRender();
+
+        //Tint icons
+        ImageView copyIcon = view.findViewById(R.id.copy_icon);
+        if (copyIcon != null) {
+            copyIcon.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
+        }
+
+        // Re-color labels
+        TextView copyLabel = view.findViewById(R.id.copy_label);
+        if (copyLabel != null) {
+            copyLabel.setTextColor(accentColor);
+        }
 
         // Measure and layout the view with exact dimensions (428x142 pixels)
         int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(428, View.MeasureSpec.EXACTLY);
@@ -108,7 +122,21 @@ public class LayoutRenderer {
     public Bitmap renderTopUp() {
         // Inflate the layout
         LayoutInflater inflater = LayoutInflater.from(context);
-        View view = inflater.inflate(R.layout.topup, null);
+        View view = inflater.inflate(R.layout.topup_terminal_layout, null);
+
+        int accentColor = getColorForRender();
+
+        //Tint icons
+        ImageView copyIcon = view.findViewById(R.id.topup_icon);
+        if (copyIcon != null) {
+            copyIcon.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
+        }
+
+        // Re-color labels
+        TextView copyLabel = view.findViewById(R.id.topup_label);
+        if (copyLabel != null) {
+            copyLabel.setTextColor(accentColor);
+        }
 
         // Measure and layout the view with exact dimensions (428x142 pixels)
         int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(428, View.MeasureSpec.EXACTLY);
