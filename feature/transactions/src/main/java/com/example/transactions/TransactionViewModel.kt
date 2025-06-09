@@ -1,6 +1,11 @@
 package com.example.transactions
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.NetworkBalanceRepository
@@ -11,7 +16,15 @@ import com.core.domain.GetTransfersUseCase
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
+import com.core.model.UserData
+import com.core.terminalsdk.TerminalSDK
+import com.core.ui.showCustomToast
+import com.example.dgenlibrary.ui.theme.PitagonsSans
+import com.example.dgenlibrary.ui.theme.dgenOcean
+import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +42,16 @@ class TransactionViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
+    private val terminalSDK: TerminalSDK?,
+    @ApplicationContext private val appContext: Context,
     ): ViewModel() {
+
+    val userData = userDataRepository.userData
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = UserData("","",false, "USD")
+        )
 
     val transferState: StateFlow<TransfersUiState> = getTransfersUseCase()
         .map(TransfersUiState::Success)
@@ -64,6 +86,47 @@ class TransactionViewModel @Inject constructor(
                 e.printStackTrace()
             }
             _refreshState.value = false
+        }
+    }
+
+    fun onLogOpened(){
+        try{
+            //check if terminal sdk is available
+            if (terminalSDK?.isAvailable() == true) {
+                terminalSDK.displayLog {
+                    val walletAddress = userData.value.walletAddress
+                    if (walletAddress.isNotBlank()) {
+                        val url = "https://etherscan.io/address/$walletAddress"
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        try {
+                            appContext.startActivity(intent)
+                        } catch (e: Exception) {
+                            Log.e("TransactionViewModel", "Could not open Etherscan for address $walletAddress", e)
+                            Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Log.w("TransactionViewModel", "Wallet address is empty, can't open Etherscan.")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TransactionViewModel", "Error on displayLog", e)
+        }
+    }
+
+    fun onLogClosed() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                if (terminalSDK?.isAvailable() == true) {
+                    terminalSDK.removeLog()
+                } else {
+                    Log.w("TransactionViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("TransactionViewModel", "Error removing log terminal screen", e)
+            }
         }
     }
 

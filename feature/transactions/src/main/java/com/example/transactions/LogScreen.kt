@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -108,6 +109,19 @@ fun LogRoute(
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
+    val userData by viewModel.userData.collectAsStateWithLifecycle()
+
+    //opens terminal screen for receive button
+    LaunchedEffect(Unit) {
+        viewModel.onLogOpened()
+    }
+
+    //closes terminal screen for receive button
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onLogClosed()
+        }
+    }
 
     LogScreen(
         transfersUIState = transfersUIState,

@@ -163,6 +163,40 @@ class TerminalSDK(private val context: Context) {
     }
 
     /**
+    * Displays the log bitmap in LogScreen
+    */
+    fun displayLog(onLog: () -> Unit) {
+        // Clean up any existing touch handler first
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val qrCodeBitmap = layoutRenderer.renderLogTerminal()
+
+        refresh(qrCodeBitmap, ID_PERSISTENT)
+
+        miniDisplayTouchHandler = MiniDisplayTouchHandler(
+            context,
+            MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                if (action != MotionEvent.ACTION_DOWN) {
+                    return@OnTouchListener
+                }
+                try {
+                    onLog()
+                    resume(ID_STATUSBAR)
+                    destroyTouchHandler()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        )
+    }
+
+    fun removeLog() {
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
+    }
+
+    /**
      * Manually destroy the current touch handler
      */
     fun destroyTouchHandler() {

@@ -157,6 +157,47 @@ public class LayoutRenderer {
     }
 
     /**
+     * Renders the topUp with custom text into a bitmap
+     * @return A bitmap of size 428x142 pixels containing the rendered layout
+     */
+    public Bitmap renderLogTerminal() {
+        // Inflate the layout
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.log_terminal_layout, null);
+
+        int accentColor = getColorForRender();
+
+        //Tint icons
+        ImageView copyIcon = view.findViewById(R.id.log_icon);
+        if (copyIcon != null) {
+            copyIcon.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
+        }
+
+        // Re-color labels
+        TextView copyLabel = view.findViewById(R.id.log_label);
+        if (copyLabel != null) {
+            copyLabel.setTextColor(accentColor);
+        }
+
+        // Measure and layout the view with exact dimensions (428x142 pixels)
+        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(428, View.MeasureSpec.EXACTLY);
+        int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(142, View.MeasureSpec.EXACTLY);
+        view.measure(widthMeasureSpec, heightMeasureSpec);
+        view.layout(0, 0, 428, 142);
+
+        // Create a bitmap with the exact dimensions
+        Bitmap bitmap = Bitmap.createBitmap(428, 142, Bitmap.Config.RGB_565);
+
+        // Create a canvas to draw the view onto the bitmap
+        Canvas canvas = new Canvas(bitmap);
+
+        // Draw the view onto the canvas
+        view.draw(canvas);
+
+        return bitmap;
+    }
+
+    /**
      * Iterate over all pixels and set any pixel that is not close to black to the provided color.
      * @param bmp         The bitmap to manipulate.
      * @param toColor     The color to apply to non-black pixels.
