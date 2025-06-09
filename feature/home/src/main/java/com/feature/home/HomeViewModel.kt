@@ -210,7 +210,7 @@ class HomeViewModel @Inject constructor(
         "WELCOME BACK  ◕◡◕",
         "Hey Stranger  ⌐■◡■",
         "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
-        "Engaging warp drive  ◉‿◉",
+        "Engaging warp drive  ◉◡◉",
         "Big Brain: Activated  ಠ◡ಠ",
     )
 
