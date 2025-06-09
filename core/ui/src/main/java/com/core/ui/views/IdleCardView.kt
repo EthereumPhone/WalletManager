@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -90,8 +91,8 @@ fun IdleView(
             AsyncImage(
                 imageLoader = gifEnabledLoader,
                 model = R.drawable.wireframe_torus,
-                contentDescription = null
-
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(dgenTurqoise)
             )
         }
 
