@@ -213,7 +213,7 @@ class PayMasterViewModel @Inject constructor(
                     // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
                     val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
                     if (cleanAmount.isEmpty()) {
-                        showToast("Top up amount is empty")
+                        showToast("Top up amount is empty.")
                         return@displayTopUp
                     }
                     viewModelScope.launch(Dispatchers.Main) {

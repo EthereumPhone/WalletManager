@@ -116,6 +116,7 @@ import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -558,7 +559,8 @@ fun SendScreen2(
             modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
-            contentDescription = null
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(dgenTurqoise)
         )
 
         AnimatedContent(
