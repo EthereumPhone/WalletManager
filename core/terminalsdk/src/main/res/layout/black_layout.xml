@@ -4,15 +4,27 @@
     android:layout_height="142px"
     android:background="#000000">
 
-    <TextView
-        android:id="@+id/messageText"
-        android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="Test"
-        android:textColor="#FF0000"
-        android:textSize="22sp"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:layout_gravity="center">
+
+
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Test"
+            android:paddingBottom="3dp"
+            android:textColor="#FF0000"
+            android:textAppearance="@style/terminal_text"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
 
 </FrameLayout> 

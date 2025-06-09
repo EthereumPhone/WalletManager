@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="terminal_text">
+        <item name="android:fontFamily">@font/monomaniac</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:lineSpacingExtra">-5sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+</resources>

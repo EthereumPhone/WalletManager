@@ -81,7 +81,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.DgenBasicTextfield
-import com.core.ui.DgenTextfield
 import com.core.ui.HeaderBar
 import com.example.dgenlibrary.ui.theme.SpaceMono
 import androidx.compose.ui.draw.scale
