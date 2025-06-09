@@ -1,6 +1,7 @@
 package com.feature.home
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -24,6 +25,7 @@ import com.core.model.TokenAsset
 import com.core.model.TokenAssetWithPrice
 import com.core.model.TokenData
 import com.core.model.UserData
+import com.core.terminalsdk.TerminalSDK
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,6 +54,7 @@ import okio.IOException
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +78,20 @@ class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    companion object {
+        private val welcomeScreenShownThisSession = AtomicBoolean(false)
+        private const val PREFS_NAME = "welcome_prefs"
+        private const val KEY_FIRST_LAUNCH_COMPLETED = "isFirstLaunchCompleted"
+    }
+
+    private val terminalSDK: TerminalSDK by lazy {
+        TerminalSDK(context)
+    }
+
+    private val sharedPrefs: SharedPreferences by lazy {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
@@ -188,6 +205,24 @@ class HomeViewModel @Inject constructor(
 
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
+
+    private val welcomeMessages = listOf(
+        "WELCOME BACK  ◕◡◕",
+        "Hey Stranger  ⌐■‿■",
+        "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
+        "Engaging warp drive  ◉‿◉",
+        "Big Brain: Activated  ಠ◡ಠ",
+    )
+
+    private fun isFirstLaunchCompleted(): Boolean = sharedPrefs.getBoolean(KEY_FIRST_LAUNCH_COMPLETED, false)
+
+    private fun setFirstLaunchCompleted() {
+        sharedPrefs.edit().putBoolean(KEY_FIRST_LAUNCH_COMPLETED, true).apply()
+    }
+
+    private var lastMessageIndex: Int
+        get() = savedStateHandle.get<Int>("lastMessageIndex") ?: -1
+        set(value) = savedStateHandle.set("lastMessageIndex", value)
 
     private val _selectedTokenAsset = MutableStateFlow<TokenAsset?>(null)
     val selectedTokenAsset: StateFlow<TokenAsset?> = _selectedTokenAsset.asStateFlow()
@@ -347,6 +382,40 @@ class HomeViewModel @Inject constructor(
         val bd = BigDecimal(balance)
         val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
         return rounded.toDouble()
+    }
+
+    fun showWelcomeBack() {
+        if (welcomeScreenShownThisSession.getAndSet(true)) {
+            return
+        }
+
+        viewModelScope.launch {
+            if (terminalSDK.isAvailable()) {
+                val message: String
+                if (!isFirstLaunchCompleted()) {
+                    message = "WELCOME"
+                    setFirstLaunchCompleted()
+                } else {
+                    var nextIndex = welcomeMessages.indices.random()
+                    while (nextIndex == lastMessageIndex) {
+                        nextIndex = welcomeMessages.indices.random()
+                    }
+                    message = welcomeMessages[nextIndex]
+                    lastMessageIndex = nextIndex
+                }
+
+                terminalSDK.displayBlackText(message)
+
+                delay(5000)
+                terminalSDK.finishScreen()
+            } else {
+                welcomeScreenShownThisSession.set(false)
+            }
+        }
+    }
+
+    fun resetWelcomeScreenFlag() {
+        welcomeScreenShownThisSession.set(false)
     }
 
 }
