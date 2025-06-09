@@ -20,7 +20,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="12dp"
             android:paddingBottom="3dp"
-            android:text="TOPUP"
+            android:text="TOP UP"
             android:textAppearance="@style/terminal_text"
             android:textColor="#CFE2F9"
             app:layout_constraintBottom_toBottomOf="parent"

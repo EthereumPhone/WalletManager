@@ -210,6 +210,12 @@ class PayMasterViewModel @Inject constructor(
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {
                 terminalSDK.displayTopUp {
+                    // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
+                    val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
+                    if (cleanAmount.isEmpty()) {
+                        showToast("Top up amount is empty")
+                        return@displayTopUp
+                    }
                     viewModelScope.launch(Dispatchers.Main) {
                         val daimoUrl = topUp(topUpAmount.value.text)
                         if (daimoUrl != null) {
