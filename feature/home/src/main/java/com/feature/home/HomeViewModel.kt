@@ -208,7 +208,7 @@ class HomeViewModel @Inject constructor(
 
     private val welcomeMessages = listOf(
         "WELCOME BACK  ◕◡◕",
-        "Hey Stranger  ⌐■‿■",
+        "Hey Stranger  ⌐■◡■",
         "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
         "Engaging warp drive  ◉‿◉",
         "Big Brain: Activated  ಠ◡ಠ",
