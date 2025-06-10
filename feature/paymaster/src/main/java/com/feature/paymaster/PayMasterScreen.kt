@@ -11,10 +11,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -168,7 +170,7 @@ fun PayMasterScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = modifier.padding(horizontal = 12.dp)
+            modifier = modifier.padding(start = 12.dp, end = 12.dp)
         ){
 
 
@@ -228,9 +230,8 @@ fun PayMasterScreen(
                     modifier = Modifier.width(370.dp)
                 )
             }
-        }
 
-        DgenButtonTextfield(
+            /*DgenButtonTextfield(
             value = topUpAmount,
             onValueChange = { newValue ->
                 val input = newValue.text
@@ -292,7 +293,65 @@ fun PayMasterScreen(
                 onTopUpAmountChanged(TextFieldValue("\$20"))
             },
             modifier = Modifier.fillMaxWidth()
-        )
+        )*/
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val amounts = listOf(5, 10, 25, 100)
+            amounts.forEach { amount ->
+                val amountText = "$amount"
+                val isSelected = topUpAmount.text == amountText
+
+                Box(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .aspectRatio(16f/9f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (isSelected) dgenTurqoise else Color.Transparent)
+                        .border(BorderStroke(1.dp, dgenTurqoise), RoundedCornerShape(4.dp))
+                        .clickable {
+                            onTopUpAmountChanged(
+                                TextFieldValue(
+                                    text = amountText,
+                                    selection = TextRange(amountText.length)
+                                )
+                            )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = if (isSelected) dgenOcean else dgenTurqoise,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 18.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None
+                                )
+                            ) {
+                                append("\$")
+                            }
+                            append(amountText)
+                        },
+
+                        style = TextStyle(
+                            fontFamily = SpaceMono,
+                            color = if (isSelected) dgenOcean else dgenTurqoise,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                    )
+                }
+            }
+        }
     }
 
 }
