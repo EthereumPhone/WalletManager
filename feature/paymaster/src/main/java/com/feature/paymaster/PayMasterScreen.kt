@@ -303,7 +303,7 @@ fun PayMasterScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val amounts = listOf(5, 10, 25, 100)
+            val amounts = listOf(10, 25,50,100)
             amounts.forEach { amount ->
                 val amountText = "$amount"
                 val isSelected = topUpAmount.text == amountText

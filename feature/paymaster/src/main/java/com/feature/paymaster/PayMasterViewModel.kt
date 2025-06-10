@@ -217,9 +217,11 @@ class PayMasterViewModel @Inject constructor(
                         return@displayTopUp
                     }
                     viewModelScope.launch(Dispatchers.Main) {
+                        Log.e("PayMasterViewModel", "topUpAmount.value.text: ${topUpAmount.value.text}")
                         val daimoUrl = topUp(topUpAmount.value.text)
                         if (daimoUrl != null) {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             appContext.startActivity(intent)
                         }
                         appContext.showCustomToast(
@@ -234,7 +236,7 @@ class PayMasterViewModel @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e("ReceiveViewModel", "Error copying address", e)
+            Log.e("PayMasterViewModel", "Error toppin up", e)
         }
     }
 
@@ -244,10 +246,10 @@ class PayMasterViewModel @Inject constructor(
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeTopUp()
                 } else {
-                    Log.w("ReceiveViewModel", "TerminalSDK not available")
+                    Log.w("PayMasterViewModel", "TerminalSDK not available")
                 }
             } catch (e: Exception) {
-                Log.e("ReceiveViewModel", "Error removing copy terminal screen", e)
+                Log.e("PayMasterViewModel", "Error removing top up terminal screen", e)
             }
         }
     }

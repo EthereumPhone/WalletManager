@@ -33,6 +33,7 @@ import org.ethereumphone.walletmanager.navigation.WmNavHost
 import org.ethereumphone.walletmanager.utils.Screen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
+import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.utils.SnackbarState
@@ -48,6 +49,7 @@ fun WmApp(
         networkMonitor,
         sendRepository
     ),
+    terminalSDK: TerminalSDK?
 ) {
 
     val scope = rememberCoroutineScope()
@@ -99,6 +101,7 @@ fun WmApp(
         WmNavHost(
             appState = appState,
             modifier = Modifier.padding(paddingValues),
+            terminalSDK = terminalSDK
         )
     }
 }

@@ -127,7 +127,8 @@ class MainActivity() : ComponentActivity() {
 
             WmApp(
                 networkMonitor = networkMonitor,
-                sendRepository = sendRepository
+                sendRepository = sendRepository,
+                terminalSDK = terminalSDK
             )
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.core.terminalsdk.TerminalSDK
 
 import com.example.assets.navigation.navigateToAsset
 import com.example.assets.navigation.navigateToAssetDetail
@@ -45,6 +46,7 @@ fun WmNavHost(
     appState: WmAppState,
     modifier: Modifier = Modifier,
     startDestination: String = homeGraphRoutePattern,
+    terminalSDK: TerminalSDK?
 ) {
     val navController = appState.navController
     SharedTransitionLayout {
@@ -86,13 +88,21 @@ fun WmNavHost(
                     navController.navigateToSwap()
                 },
                 navigateToSend = { address, tokenId ->
+                    terminalSDK?.finishScreen()
                     navController.navigateToSend(address= address, tokenId =tokenId)
                 },
                 navigateToLog = { it ->
+                    terminalSDK?.finishScreen()
                     navController.navigateToTransaction(tokenId = it)
                 },
-                navigateToReceive = { navController.navigateToReceive() },
-                navigateToPayMaster = { navController.navigateToPayMaster() },
+                navigateToReceive = {
+                    terminalSDK?.finishScreen()
+                    navController.navigateToReceive()
+                                    },
+                navigateToPayMaster = {
+                    terminalSDK?.finishScreen()
+                    navController.navigateToPayMaster()
+                                      },
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
                     sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout)

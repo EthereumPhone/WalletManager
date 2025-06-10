@@ -85,6 +85,8 @@ class HomeViewModel @Inject constructor(
         private const val KEY_FIRST_LAUNCH_COMPLETED = "isFirstLaunchCompleted"
     }
 
+    private val isHomeScreenVisible = AtomicBoolean(false)
+
     private val terminalSDK: TerminalSDK by lazy {
         TerminalSDK(context)
     }
@@ -406,8 +408,10 @@ class HomeViewModel @Inject constructor(
 
                 terminalSDK.displayBlackText(message)
 
-                delay(5000)
-                terminalSDK.finishScreen()
+                delay(3000)
+                if (isHomeScreenVisible.get()) {
+                    terminalSDK.finishScreen()
+                }
             } else {
                 welcomeScreenShownThisSession.set(false)
             }
@@ -416,6 +420,14 @@ class HomeViewModel @Inject constructor(
 
     fun resetWelcomeScreenFlag() {
         welcomeScreenShownThisSession.set(false)
+    }
+
+    fun onHomeScreenVisible() {
+        isHomeScreenVisible.set(true)
+    }
+
+    fun onHomeScreenHidden() {
+        isHomeScreenVisible.set(false)
     }
 
 }
