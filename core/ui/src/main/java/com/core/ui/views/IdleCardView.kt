@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -45,12 +44,11 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.ui.Card
 import com.core.ui.R
-import com.core.ui.util.formatSmart
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
 import com.core.ui.util.formatWithSuffix
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.dgenWhite
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale

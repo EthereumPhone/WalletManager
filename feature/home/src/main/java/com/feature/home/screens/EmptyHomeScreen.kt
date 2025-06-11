@@ -20,9 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.dgenGunMetal
 
 @Composable
 fun EmptyHomeScreen(

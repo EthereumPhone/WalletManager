@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColor
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -29,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -45,21 +43,16 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenGreen
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenOrche
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
-import com.example.dgenlibrary.ui.theme.label_fontSize
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenGreen
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
+import com.core.ui.util.mediumEnterDuration
 import com.feature.send.R // Assuming R.drawable.globe_wireframe is in the feature.send module
 
 enum class TransactionStatus {

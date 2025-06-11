@@ -33,12 +33,12 @@ import java.net.UnknownHostException
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.dgenOcean
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.dgenWhite
 import com.core.terminalsdk.TerminalSDK
+import com.core.ui.util.PitagonsSans
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)

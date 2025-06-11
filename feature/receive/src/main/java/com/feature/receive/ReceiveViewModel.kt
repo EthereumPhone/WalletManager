@@ -3,7 +3,6 @@ package com.feature.receive
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.Build
 import android.widget.Toast
 import android.util.Log
@@ -17,18 +16,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import net.glxn.qrgen.android.QRCode
-import net.glxn.qrgen.core.image.ImageType
-import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.dgenOcean
+import com.core.ui.util.dgenTurqoise
 import androidx.compose.ui.text.font.FontWeight
+import com.core.ui.util.PitagonsSans
 
 @HiltViewModel
 class ReceiveViewModel @Inject constructor(

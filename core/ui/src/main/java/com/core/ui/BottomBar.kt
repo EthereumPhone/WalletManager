@@ -24,10 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
-import com.example.dgenlibrary.ui.theme.mediumExitDuration
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.mediumExitDuration
+
 
 @Composable
 fun BottomBar(

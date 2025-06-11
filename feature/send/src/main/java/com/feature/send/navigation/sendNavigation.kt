@@ -16,8 +16,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.largeExitDuration
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.largeExitDuration
 import com.feature.send.SendRoute2
 
 const val sendRoute = "send_route?address={address}&tokenId={tokenId}"

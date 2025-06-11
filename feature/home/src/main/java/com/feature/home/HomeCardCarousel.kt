@@ -33,17 +33,14 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -58,9 +55,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.core.model.TokenData
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.core.ui.util.SystemColorManager
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
 import kotlinx.coroutines.launch
@@ -70,16 +65,17 @@ import coil.decode.ImageDecoderDecoder
 import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
@@ -196,10 +192,18 @@ fun HomeScreen2(
             }.build()
     }
 
+    // System-weite Farben initialisieren/aktualisieren
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    // Lokale Referenzen auf die dynamischen Farben
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
     Box (
         modifier = Modifier
             .fillMaxSize()
-            .background(dgenBlack),
     ) {
 
 
@@ -207,7 +211,7 @@ fun HomeScreen2(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxSize()
-                .background(dgenBlack)
+                .background(primaryColor)
             //.weight(1f) // Allows it to take up remaining space
 
         ) {
@@ -327,7 +331,7 @@ fun HomeScreen2(
                     .align(Alignment.TopCenter)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dgenBlack, Color.Transparent)
+                            colors = listOf(primaryColor, Color.Transparent)
                         )
                     )
 
@@ -347,7 +351,7 @@ fun HomeScreen2(
                     .height(32.dp) // Adjust thickness of fading border
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, dgenBlack)
+                            colors = listOf(Color.Transparent, primaryColor)
                         )
                     )
 

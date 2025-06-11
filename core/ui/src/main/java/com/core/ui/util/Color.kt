@@ -1,4 +1,4 @@
-package com.example.dgenlibrary.ui.theme
+package com.core.ui.util
 
 import androidx.compose.ui.graphics.Color
 

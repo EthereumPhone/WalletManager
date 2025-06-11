@@ -58,19 +58,13 @@ import androidx.compose.ui.text.style.TextAlign
 import com.core.model.TokenAsset
 import com.core.model.TokenData
 import com.core.ui.DgenLoadingMatrix
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenGreen
-import com.example.dgenlibrary.ui.theme.dgenOrche
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
-import com.example.dgenlibrary.ui.theme.label_fontSize
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenGray
+import com.core.ui.util.dgenGreen
+import com.core.ui.util.dgenOrche
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.dgenWhite
 import com.feature.send.ui.SelectableCarousel
 import com.feature.send.ui.TextToggle
 import com.feature.send.ui.TransactionStatusOverlay
@@ -82,13 +76,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.DgenBasicTextfield
 import com.core.ui.HeaderBar
-import com.example.dgenlibrary.ui.theme.SpaceMono
 import androidx.compose.ui.draw.scale
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.example.dgenlibrary.ui.theme.smallDuration
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
@@ -105,7 +97,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.core.data.util.chainToApiKey
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
+import com.core.ui.util.dgenGunMetal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
@@ -120,14 +112,20 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlin.reflect.KFunction1
 import com.core.ui.util.formatWithSuffix
-import java.util.concurrent.CompletableFuture
 import androidx.compose.ui.unit.TextUnit
 import com.core.ui.SimpleDgenTextfield
 import kotlin.math.abs
 import java.util.Locale
 import androidx.compose.ui.text.TextRange
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
+import com.core.ui.util.label_fontSize
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.smallDuration
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation

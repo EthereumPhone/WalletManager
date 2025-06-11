@@ -59,9 +59,9 @@ import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -395,7 +395,7 @@ class HomeViewModel @Inject constructor(
             if (terminalSDK.isAvailable()) {
                 val message: String
                 if (!isFirstLaunchCompleted()) {
-                    message = "WELCOME"
+                    message = "WELCOME ONBOARD ヽ(•◡•)ノ"
                     setFirstLaunchCompleted()
                 } else {
                     var nextIndex = welcomeMessages.indices.random()

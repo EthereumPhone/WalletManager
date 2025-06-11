@@ -14,31 +14,24 @@ import androidx.compose.ui.unit.dp
 import android.view.Gravity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.graphics.Typeface
-import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.remember
-import androidx.core.app.NotificationCompat
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.graphics.drawable.GradientDrawable
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.res.ResourcesCompat
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import android.graphics.Color as AndroidColor
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenOcean
+import com.core.ui.util.dgenTurqoise
 
 
 object FontResourceMap {

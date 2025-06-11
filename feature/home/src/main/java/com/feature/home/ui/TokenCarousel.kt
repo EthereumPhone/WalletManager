@@ -28,8 +28,8 @@ import com.core.model.TokenData
 import com.core.model.TokenMetadata
 import com.core.ui.Card
 import com.core.ui.views.IdleView
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.smallDuration
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.smallDuration
 import com.feature.send.SelectedTokenUiState
 import kotlin.collections.find
 import kotlin.math.abs
@@ -42,14 +42,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Velocity
 import com.core.model.TokenAssetWithPrice
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
-import dev.chrisbanes.snapper.SnapOffsets
-import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
