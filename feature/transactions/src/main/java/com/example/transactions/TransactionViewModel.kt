@@ -89,18 +89,18 @@ class TransactionViewModel @Inject constructor(
                 terminalSDK.displayLog {
                     val walletAddress = userData.value.walletAddress
                     if (walletAddress.isNotBlank()) {
-                        val url = "https://etherscan.io/address/$walletAddress"
+                        val url = "https://blockscan.com/address/$walletAddress"
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         try {
                             appContext.startActivity(intent)
                         } catch (e: Exception) {
-                            Log.e("TransactionViewModel", "Could not open Etherscan for address $walletAddress", e)
+                            Log.e("TransactionViewModel", "Could not open Blockscan for address $walletAddress", e)
                             Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Log.w("TransactionViewModel", "Wallet address is empty, can't open Etherscan.")
+                        Log.w("TransactionViewModel", "Wallet address is empty, can't open Blockscan.")
                     }
                 }
             }
