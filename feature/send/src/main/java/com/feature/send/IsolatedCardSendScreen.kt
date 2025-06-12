@@ -1151,6 +1151,7 @@ fun SendScreen2(
                                                     keyboardtype =  KeyboardType.Number,
                                                     cursorWidth = 24.dp,
                                                     cursorHeight= 32.dp,
+                                                    cursorColor = primaryColor,
                                                     isAnyFieldFocused= remember { mutableStateOf(false) },
                                                 )
                                             }else{
@@ -1173,6 +1174,7 @@ fun SendScreen2(
                                                     },
                                                     maxLines = 1,
                                                     maxLength = 15,
+                                                    cursorColor = primaryColor,
                                                     placeholder = {
                                                         Row (
                                                             Modifier.fillMaxWidth(),
@@ -1466,8 +1468,8 @@ fun SendScreen2(
                                             ),
                                         )
                                     }
-
                                 },
+                                cursorColor = primaryColor,
                                 keyboardtype =  KeyboardType.Text,
                                 cursorWidth = 16.dp,
                                 cursorHeight= 32.dp,
