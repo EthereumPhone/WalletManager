@@ -503,7 +503,7 @@ fun SendScreen2(
         targetValue = if (isMaxAmount) {
             1f
         } else {
-            0.5f
+            0.25f
         },
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
@@ -558,7 +558,7 @@ fun SendScreen2(
                                 text = "EMPTY",
                                 style = TextStyle(
                                     fontFamily = PitagonsSans,
-                                    color = dgenGunMetal,
+                                    color = primaryColor.copy(0.5f),
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 24.sp,
                                     letterSpacing = 0.sp,
@@ -579,7 +579,7 @@ fun SendScreen2(
                             text = "ERROR",
                             style = TextStyle(
                                 fontFamily = PitagonsSans,
-                                color = dgenGunMetal,
+                                color = primaryColor.copy(0.5f),
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 24.sp,
                                 letterSpacing = 0.sp,
@@ -961,7 +961,7 @@ fun SendScreen2(
                                     modifier = Modifier
                                         .drawBehind {
                                             drawLine(
-                                                color = dgenGray.copy(0.5f),
+                                                color = primaryColor.copy(0.5f),
                                                 start = Offset(0f, 15f),
                                                 end = Offset(0f, size.height-0f),
                                                 strokeWidth = 8.dp.toPx()
@@ -1183,7 +1183,7 @@ fun SendScreen2(
                                                                 text = "0.0", // Static placeholder
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(alpha = 0.5f),
+                                                                    color = primaryColor.copy(alpha = 0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1426,7 +1426,9 @@ fun SendScreen2(
                                                 }
                                             }
                                         }
-                                    }
+                                    },
+                                    primaryColor = primaryColor,
+                                    secondaryColor = secondaryColor
                                 )
                             }
 
@@ -1447,6 +1449,7 @@ fun SendScreen2(
                                     fontWeight = FontWeight. SemiBold,
                                     fontSize = 25.sp
                                 ),
+                                activeColor = primaryColor,
                                 placeholder = {
                                     Row (
                                         Modifier.fillMaxWidth(),
@@ -1457,7 +1460,7 @@ fun SendScreen2(
                                             text = "Address",
                                             style = TextStyle(
                                                 fontFamily = PitagonsSans,
-                                                color = dgenGray.copy(0.5f),
+                                                color = primaryColor.copy(0.5f),
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 24.sp
                                             ),

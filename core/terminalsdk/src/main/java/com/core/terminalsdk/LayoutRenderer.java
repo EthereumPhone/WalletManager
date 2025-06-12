@@ -263,10 +263,38 @@ public class LayoutRenderer {
     }
 
     private int getColorForRender() {
-        return Settings.Secure.getInt(
+        int accentColor = Settings.Secure.getInt(
                 context.getContentResolver(),
                 "systemui_accent_color",
                 0xFFFE0000  // Default red
         );
+
+        switch (accentColor){
+            //TERMINAL
+//            case -13510400:
+//                primaryColor = terminalCore
+//                secondaryColor = terminalHack
+//            break;
+            //LAZER
+            case -131072:
+                return 0xFFFF0000;
+            //OCEAN
+//            case -16718593:
+//                primaryColor = oceanCore
+//                secondaryColor = oceanAbyss
+//            break;
+            //ORCHE
+//            case -1012183:
+//                primaryColor = orcheCore
+//                secondaryColor = orcheAsh
+//            break;
+            //GUNMETAL
+//            case -3618616:
+//                primaryColor = gunMetalCore
+//                secondaryColor = gunMetalForge
+//            break;
+        }
+
+        return accentColor;
     }
 }

@@ -33,7 +33,7 @@ val orcheCore = dgenOrche
 
 // Color - OCEAN
 val oceanAbyss = Color(0xFF051C1F)
-val oceanCore = Color(0xFFA7F6FF)
+val oceanCore = Color(0xFF00E4FF)//Color(0xFFA7F6FF)
 
 // Color - GUNMETAL
 val gunMetalForge = Color(0xFF1C1C1C)

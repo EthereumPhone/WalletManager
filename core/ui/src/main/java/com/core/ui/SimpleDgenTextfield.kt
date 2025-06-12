@@ -82,6 +82,7 @@ fun SimpleDgenTextfield(
     cursorColor: Color = dgenWhite,
     cursorWidth: Dp = 18.dp,
     cursorHeight: Dp = 32.dp,
+    activeColor: Color = dgenOcean,
     textStyle: TextStyle = TextStyle(
         fontFamily = PitagonsSans,
         color = dgenWhite,
@@ -138,7 +139,7 @@ fun SimpleDgenTextfield(
             .clip(shape)
             .drawBehind {
                 drawRect(
-                    color = Color(0xFF536F79),
+                    color = activeColor.copy(0.25f),
                     size = size,
                     topLeft = Offset(0f, 0f),
                     alpha = animatedBackgroundOpacity

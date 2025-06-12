@@ -163,7 +163,7 @@ fun PayMasterScreen(
                     Spacer(Modifier.offset(y = 5.dp)
                         .height(77.dp)
                         .width(8.dp)
-                        .background(dgenGray.copy(0.5f))
+                        .background(primaryColor.copy(0.5f))
                         .padding(end = 16.dp)
                     )
                     Column {
@@ -197,7 +197,7 @@ fun PayMasterScreen(
                     "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenGunMetal,
+                        color = primaryColor.copy(0.5f),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,

@@ -66,7 +66,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = primaryColor.copy(0.5f),
+                color = primaryColor.copy(0.25f),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
@@ -100,7 +100,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = primaryColor.copy(0.5f),
+                            color = primaryColor.copy(0.25f),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,

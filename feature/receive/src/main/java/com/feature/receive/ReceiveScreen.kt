@@ -173,7 +173,7 @@ fun ReceiveScreen(
                     modifier = modifier.width(300.dp),
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenGunMetal,
+                        color = primaryColor.copy(0.5f),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,
