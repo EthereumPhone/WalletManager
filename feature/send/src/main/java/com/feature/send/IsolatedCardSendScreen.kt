@@ -120,6 +120,7 @@ import java.util.Locale
 import androidx.compose.ui.text.TextRange
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import com.core.ui.util.label_fontSize
@@ -282,37 +283,6 @@ fun SendScreen2(
     val focusManager = LocalFocusManager.current
     val view = LocalView.current
     val scope = rememberCoroutineScope()
-
-    var rotated by remember { mutableStateOf(false) }
-
-    val rotation by animateFloatAsState(
-        targetValue = if (rotated) 180f else 0f,
-        animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing)
-    )
-
-    var isAnimating by remember { mutableStateOf(false) }
-
-    // Adjusted scaling values for a smoother transition
-    val initialScale = 0.8f  // Corresponds to the scaling factor from CardCarousel
-    val targetScale = 0.85f  // Target scaling for the send screen
-
-    val scale by animateFloatAsState(
-        targetValue = if (isAnimating) initialScale else targetScale,
-        animationSpec = tween(
-            durationMillis = mediumEnterDuration,
-            easing = FastOutSlowInEasing
-        ),
-        label = "ScaleAnimation"
-    )
-    var translateY by remember { mutableStateOf(0f) }
-
-    Log.d("CardAnimation","tokenId: ${tokenId} - initialAddress: ${initialAddress} ")
-
-
-    var testamount by remember { mutableStateOf("TEST") }
-    var testaddress by remember { mutableStateOf("TEST") }
-
-    Log.d("DEBUG","initialAddress: $initialAddress, tokenId: $tokenId")
 
     // Set the selected asset when the screen loads with a tokenId
     LaunchedEffect(tokenId, assets) {
@@ -480,7 +450,6 @@ fun SendScreen2(
             }
         }.build()
 
-
     //Variables for QR Scanner
     val barCodeLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
@@ -539,6 +508,13 @@ fun SendScreen2(
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
 
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -558,7 +534,7 @@ fun SendScreen2(
             imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(dgenTurqoise)
+            colorFilter = ColorFilter.tint(primaryColor)
         )
 
         AnimatedContent(
@@ -619,7 +595,10 @@ fun SendScreen2(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        DgenLoadingMatrix()
+                        DgenLoadingMatrix(
+                            unactiveLEDColor = secondaryColor,
+                            activeLEDColor = primaryColor
+                        )
                     }
                 }
                 is AssetsUiState.Success -> {
@@ -876,7 +855,7 @@ fun SendScreen2(
                                         text = "SEND",
                                         style = TextStyle(
                                             fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
+                                            color = primaryColor,
                                             fontWeight = FontWeight.Medium,
                                             fontSize = 24.sp,
                                             letterSpacing = 0.sp,
@@ -939,7 +918,7 @@ fun SendScreen2(
                                                 text = tokenName,
                                                 style = TextStyle(
                                                     fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
+                                                    color = primaryColor,
                                                     fontWeight = FontWeight.Medium,
                                                     fontSize = 24.sp,
                                                     letterSpacing = 0.sp,
@@ -959,7 +938,7 @@ fun SendScreen2(
                                                 text = "ETH",
                                                 style = TextStyle(
                                                     fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
+                                                    color = primaryColor,
                                                     fontWeight = FontWeight.Medium,
                                                     fontSize = 24.sp,
                                                     letterSpacing = 0.sp,
@@ -969,7 +948,7 @@ fun SendScreen2(
                                         }
                                     }
                                 }
-                            }, onClick = onBackClick, modifier = modifier.padding(horizontal = 24.dp))
+                            }, primaryColor = primaryColor, onClick = onBackClick, modifier = modifier.padding(horizontal = 24.dp))
 
                             Column(
                                 modifier = Modifier
@@ -1026,7 +1005,8 @@ fun SendScreen2(
                                                 }
 
                                             },
-                                            value = useDollarAmount
+                                            value = useDollarAmount,
+                                            primaryColor = primaryColor
                                         )
 
                                         val valueString = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
@@ -1089,7 +1069,7 @@ fun SendScreen2(
                                                     append(valueString)
                                                 }
                                             },
-                                            color = dgenTurqoise.copy(maxAlpha),
+                                            color = primaryColor.copy(maxAlpha),
                                             fontWeight = FontWeight.SemiBold,
                                             lineHeight = 18.sp,
                                             letterSpacing = 0.sp,
@@ -1141,7 +1121,7 @@ fun SendScreen2(
                                                                     withStyle(
                                                                         style = SpanStyle(
                                                                             fontFamily = PitagonsSans,
-                                                                            color = dgenGray.copy(alpha = 0.5f),
+                                                                            color = primaryColor.copy(alpha = 0.5f),
                                                                             fontWeight = FontWeight.SemiBold,
                                                                             fontSize = 39.sp,
                                                                         )
@@ -1152,7 +1132,7 @@ fun SendScreen2(
                                                                 },
                                                                 style = TextStyle(
                                                                     fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(alpha = 0.5f),
+                                                                    color = primaryColor.copy(alpha = 0.5f),
                                                                     fontWeight = FontWeight.SemiBold,
                                                                     fontSize = 42.sp,
                                                                     textAlign = TextAlign.Start
@@ -1509,7 +1489,7 @@ fun SendScreen2(
                                                 isResolvingENS -> dgenOrche
                                                 ensError != null -> dgenRed
                                                 toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
-                                                else -> dgenTurqoise
+                                                else -> primaryColor
                                             },
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = label_fontSize,
@@ -1522,7 +1502,7 @@ fun SendScreen2(
                                             isResolvingENS -> dgenOrche
                                             ensError != null -> dgenRed
                                             toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
-                                            else -> dgenTurqoise
+                                            else -> primaryColor
                                         }
                                     )
                                 }

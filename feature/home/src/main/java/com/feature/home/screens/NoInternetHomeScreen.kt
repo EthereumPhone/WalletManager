@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -27,7 +28,8 @@ import com.core.ui.util.dgenGunMetal
 @Composable
 fun NoInternetHomeScreen(
     modifier: Modifier = Modifier,
-    gifEnabledLoader: ImageLoader
+    gifEnabledLoader: ImageLoader,
+    primaryColor: Color
 ){
     Box(
         modifier = modifier.fillMaxSize(),
@@ -43,15 +45,14 @@ fun NoInternetHomeScreen(
                 model = R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(dgenGunMetal)
-
+                colorFilter = ColorFilter.tint(primaryColor.copy(0.5f))
             )
 
             Text(
                 text = "Connect to the internet see your tokens.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = dgenGunMetal,
+                    color = primaryColor.copy(0.5f),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     letterSpacing = 0.sp,

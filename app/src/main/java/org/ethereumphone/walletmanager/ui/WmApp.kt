@@ -34,6 +34,7 @@ import org.ethereumphone.walletmanager.utils.Screen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
 import com.core.terminalsdk.TerminalSDK
+import com.core.ui.util.dgenBlack
 import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.utils.SnackbarState
@@ -93,10 +94,9 @@ fun WmApp(
     }
 
 
-    val listScreens = listOf(Screen.Home,Screen.Assets,Screen.Transaction)
 
     Scaffold(
-       containerColor = background,
+       containerColor = dgenBlack,
     ) { paddingValues ->
         WmNavHost(
             appState = appState,

@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,7 @@ fun HeaderBar(
     modifier: Modifier = Modifier,
     text: String = "",
     content: @Composable () -> Unit = {},
+    primaryColor: Color,
     onClick: () -> Unit
 ){
     // Debouncing-State für das Verhindern von mehrfachen schnellen Klicks
@@ -49,7 +51,7 @@ fun HeaderBar(
                 text = text.uppercase(),
                 style = TextStyle(
                     fontFamily = SpaceMono,
-                    color = dgenTurqoise,
+                    color = primaryColor,
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.sp,
                     letterSpacing = 0.sp,
@@ -72,7 +74,7 @@ fun HeaderBar(
             ,
             painter = painterResource(R.drawable.baseline_close_24),
             contentDescription = "Back",
-            tint = dgenTurqoise
+            tint = primaryColor
         )
 
     }

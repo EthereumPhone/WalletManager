@@ -243,25 +243,32 @@ fun HomeScreen2(
 
                 if (isOffline) {
                     NoInternetHomeScreen(
-                        gifEnabledLoader = gifEnabledLoader
+                        gifEnabledLoader = gifEnabledLoader,
+                        primaryColor = primaryColor
                     )
                 } else {
+                    val test = AssetsUiState.Loading
                     when(assetState){
                         is AssetsUiState.Empty -> {
                             EmptyHomeScreen(
-                                gifEnabledLoader = gifEnabledLoader
+                                gifEnabledLoader = gifEnabledLoader,
+                                primaryColor = primaryColor
                             )
                             Log.d("DEBUG","AssetsUiState.EMPTY")
                         }
                         is AssetsUiState.Error -> {
                             Log.d("DEBUG","AssetsUiState.ERROR")
                             ErrorHomeScreen(
-                                gifEnabledLoader = gifEnabledLoader
+                                gifEnabledLoader = gifEnabledLoader,
+                                primaryColor = primaryColor
                             )
                         }
                         is AssetsUiState.Loading -> {
                             Log.d("DEBUG","AssetsUiState.LOADING")
-                            LoadingHomeScreen()
+                            LoadingHomeScreen(
+                                primaryColor = primaryColor,
+                                secondaryColor = secondaryColor,
+                            )
                         }
                         is AssetsUiState.Success -> {
                             Log.d("DEBUG","AssetsUiState.SUCCESS")
@@ -298,13 +305,13 @@ fun HomeScreen2(
                                                 model = R.drawable.wireframe_torus,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(275.dp),
-                                                colorFilter = ColorFilter.tint(dgenGunMetal)
+                                                colorFilter = ColorFilter.tint(primaryColor.copy(0.5f))
                                             )
                                             Text(
                                                 text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                                 style = TextStyle(
                                                     fontFamily = PitagonsSans,
-                                                    color = dgenGunMetal,
+                                                    color = primaryColor.copy(0.5f),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 16.sp,
                                                     letterSpacing = 0.sp,

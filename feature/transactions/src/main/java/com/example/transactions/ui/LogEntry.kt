@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -48,7 +49,8 @@ private fun getBlockExplorerUrl(chainId: Int, txHash: String): String {
 @Composable
 fun LogEntry(
     logoUrl: String = "",
-    logEntry : TransferItem
+    logEntry : TransferItem,
+    primaryColor: Color
 ) {
     val context = LocalContext.current
     val decimalFormat = DecimalFormat("0.00").apply {
@@ -120,7 +122,7 @@ fun LogEntry(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = SpaceMono,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
                             textDecoration = TextDecoration.None
@@ -149,7 +151,7 @@ fun LogEntry(
 
                     withStyle(style = SpanStyle(
                         fontFamily = SpaceMono,
-                        color = dgenTurqoise,
+                        color = primaryColor,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp,
                         textDecoration = TextDecoration.None
@@ -227,7 +229,7 @@ fun PreviewLogEntity() {
         txHash = ""
     )
 
-    LogEntry(logEntry = transferItem)
+    LogEntry(logEntry = transferItem, primaryColor = Color.Red)
 
 
 

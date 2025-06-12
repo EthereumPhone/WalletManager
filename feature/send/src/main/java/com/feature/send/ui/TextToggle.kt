@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -23,6 +24,7 @@ fun TextToggle(
     modifier: Modifier = Modifier,
     primaryStateName: String,
     secondaryStateName: String,
+    primaryColor: Color,
     onToggle: () -> Unit,
     value: Boolean
 ){
@@ -40,7 +42,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -53,7 +55,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp,
                             letterSpacing = 0.sp,
@@ -64,7 +66,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = dgenTurqoise.copy(0.5f),
+                color = primaryColor.copy(0.5f),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
@@ -85,7 +87,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -98,7 +100,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise.copy(0.5f),
+                            color = primaryColor.copy(0.5f),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -109,7 +111,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = dgenTurqoise,
+                color = primaryColor,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,

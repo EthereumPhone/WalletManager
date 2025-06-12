@@ -51,6 +51,7 @@ import com.core.ui.HeaderBar
 import com.core.ui.initializeFontMap
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.dgenWhite
@@ -115,8 +116,14 @@ fun ReceiveScreen(
     onCopyClick: () -> Unit,
 
 ) {
-
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
     val scope = rememberCoroutineScope()
 
 
@@ -128,7 +135,7 @@ fun ReceiveScreen(
                 .padding(horizontal = 24.dp)
             //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
-            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick)
+            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick, primaryColor = primaryColor)
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -137,7 +144,7 @@ fun ReceiveScreen(
             ){
                 Image(
                     //TODO: Change Address
-                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
+                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
@@ -190,7 +197,7 @@ fun TestQr() {
 
     ) {
         Image(
-            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55", primaryColor = Color.Red),
             contentDescription = "wallet address QR",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.size(135.dp),

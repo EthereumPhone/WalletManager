@@ -53,6 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.core.ui.HeaderBar
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenGray
 import com.core.ui.util.dgenGunMetal
@@ -105,8 +106,15 @@ fun PayMasterScreen(
     onTopUpAmountChanged: (TextFieldValue) -> Unit,
     forceRefresh: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
+    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     var selectedAmount by remember { mutableStateOf("") }
     var customAmount by remember { mutableStateOf("") }
@@ -135,7 +143,7 @@ fun PayMasterScreen(
             },
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        HeaderBar(text = "Gas", onClick = onBackClick, modifier = modifier.padding(horizontal = 12.dp))
+        HeaderBar(text = "Gas", onClick = onBackClick, modifier = modifier.padding(horizontal = 12.dp), primaryColor = primaryColor)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
@@ -164,7 +172,7 @@ fun PayMasterScreen(
                                 append("TOTAL")
                             },
                             fontFamily = SpaceMono,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp,
                             lineHeight = 18.sp,
@@ -282,8 +290,8 @@ fun PayMasterScreen(
                         .width(64.dp)
                         .aspectRatio(16f/9f)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(if (isSelected) dgenTurqoise else Color.Transparent)
-                        .border(BorderStroke(1.dp, dgenTurqoise), RoundedCornerShape(4.dp))
+                        .background(if (isSelected) primaryColor else Color.Transparent)
+                        .border(BorderStroke(1.dp, primaryColor), RoundedCornerShape(4.dp))
                         .clickable {
                             onTopUpAmountChanged(
                                 TextFieldValue(
@@ -299,7 +307,7 @@ fun PayMasterScreen(
                             withStyle(
                                 style = SpanStyle(
                                     fontFamily = PitagonsSans,
-                                    color = if (isSelected) dgenOcean else dgenTurqoise,
+                                    color = if (isSelected) secondaryColor else primaryColor,
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 18.sp,
                                     letterSpacing = 0.sp,
@@ -313,7 +321,7 @@ fun PayMasterScreen(
 
                         style = TextStyle(
                             fontFamily = SpaceMono,
-                            color = if (isSelected) dgenOcean else dgenTurqoise,
+                            color = if (isSelected) secondaryColor else primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp
                         )

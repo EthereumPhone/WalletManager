@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.ui.util.dgenBlack
+import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenTurqoise
 import com.example.transactions.ui.LogEntry
@@ -119,6 +120,12 @@ fun LogScreen(
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
 
     val scrollState = rememberLazyListState()
 
@@ -141,7 +148,8 @@ fun LogScreen(
         HeaderBar(
             modifier = Modifier.padding(horizontal = 24.dp),
             text = "ACTIVITY LOG",
-            onClick = onNavigateBack
+            onClick = onNavigateBack,
+            primaryColor = primaryColor
         )
 
         Box(modifier = Modifier.fillMaxSize()){
@@ -158,7 +166,7 @@ fun LogScreen(
                 when(txState){
                     is TransfersUiState.Loading -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            DgenLoadingMatrix()
+                            DgenLoadingMatrix(activeLEDColor = primaryColor, unactiveLEDColor = secondaryColor)
                         }
                     }
                     is TransfersUiState.Success -> {
@@ -176,7 +184,11 @@ fun LogScreen(
                                 LazyColumn(
                                     state= scrollState,
                                     modifier = Modifier
-                                            .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                                            .verticalLazyListScrollbar(
+                                                scrollState,
+                                                scrollBarTrackColor = secondaryColor,
+                                                scrollBarColor = primaryColor
+                                            ) // Apply the scrollbar first
                                         .fillMaxSize()
                                         .padding(horizontal = 24.dp),
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -189,7 +201,7 @@ fun LogScreen(
                                         //TODO: Add Logos
                                         Log.d("LogScreen", "transfer.asset ${transfer.txHash} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
 
-                                        LogEntry(logEntry = transfer, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
+                                        LogEntry(logEntry = transfer, primaryColor = primaryColor, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
                                     }
 
                                     item {
@@ -430,8 +442,8 @@ fun Modifier.verticalLazyListScrollbar(
     lazyListState: LazyListState,
     width: Dp = 6.dp,
     showScrollBarTrack: Boolean = true,
-    scrollBarTrackColor: Color = dgenOcean,
-    scrollBarColor: Color = dgenTurqoise,
+    scrollBarTrackColor: Color,
+    scrollBarColor: Color,
     scrollBarCornerRadius: Float = 4f,
     endPadding: Float = 12f
 ): Modifier {
