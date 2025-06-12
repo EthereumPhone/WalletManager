@@ -465,6 +465,35 @@ class SendViewModel @Inject constructor(
         }
     }
 
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                delay(2000)
+                if (terminalSDK?.isAvailable() == true) {
+                    while(terminalSDK.isScreenOn() != true) {
+                        Log.d("SendViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
+                        delay(500)
+                    }
+                    terminalSDK.displayQRCode(
+                        onQrCode = {
+                            Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
+                            triggerQrScanner()
+                        },
+                        sendTx = {
+                            Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
+                            triggerSendTransaction()
+                        }
+                    )
+                    Log.d("SendViewModel", "QR code displayed on secondary screen")
+                } else {
+                    Log.w("SendViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("SendViewModel", "Error displaying QR code", e)
+            }
+        }
+    }
+
     /**
      * Call this function when the send screen is closed/navigated away to remove QR code from secondary screen
      */

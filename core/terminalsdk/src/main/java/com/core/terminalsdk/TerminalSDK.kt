@@ -45,7 +45,7 @@ class TerminalSDK(private val context: Context) {
     fun isAvailable(): Boolean = proxy != null
 
     fun isScreenOn(): Boolean =
-        call { mIsOn.invoke(it) as Boolean } ?: false
+        call { mIsOn.invoke(it) as Boolean } == true
 
     fun refresh(bitmap: Bitmap, id: Int): Boolean =
         call { mRefresh.invoke(it, bitmap, id) as Boolean } ?: false

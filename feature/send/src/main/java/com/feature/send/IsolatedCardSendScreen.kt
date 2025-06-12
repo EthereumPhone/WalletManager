@@ -183,16 +183,22 @@ fun SendRoute2(
 
     val tokenData by viewModel.tokenData.collectAsState()
 
+    // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+
     // Observe lifecycle events to handle app resume
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, transactionStatus) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    // Only call onScreenOpened if assets are loaded (screen is ready)
-                    // and no transaction is currently in progress/result state
-                    if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
-                        viewModel.onScreenOpened()
+                    // Skip the very first ON_RESUME that occurs when the screen is opened for the first time
+                    if (!hasHandledInitialResume) {
+                        hasHandledInitialResume = true
+                    } else if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
+                        // Only call onScreenOpenedAfterResume on subsequent resumes when no transaction is running
+                        println("SendScreen2: ON_RESUME - calling onScreenOpenedAfterResume() ETHOSDEBUG")
+                        viewModel.onScreenOpenedAfterResume()
                     }
                 }
                 else -> {}
