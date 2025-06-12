@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -47,7 +48,6 @@ import com.core.ui.R
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.formatWithSuffix
-import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -61,7 +61,8 @@ fun IdleView(
     fiatAmount: Double,
     icon: String?,
     navigateToSend: () -> Unit,
-    enableSend: Boolean
+    enableSend: Boolean,
+    primaryColor: Color,
 ) {
 
     val context = LocalContext.current
@@ -90,7 +91,7 @@ fun IdleView(
                 imageLoader = gifEnabledLoader,
                 model = R.drawable.wireframe_torus,
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(dgenTurqoise)
+                colorFilter = ColorFilter.tint(primaryColor)
             )
         }
 
@@ -160,7 +161,7 @@ fun IdleView(
                         text = tokenName.uppercase(),
                         style = TextStyle(
                             fontFamily = SpaceMono,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.Normal,
                             fontSize = 30.sp,
 
@@ -196,7 +197,7 @@ fun IdleView(
                     text = formattedAmount,
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenTurqoise,
+                        color = primaryColor,
                         fontWeight = FontWeight.Bold,
                         fontSize = fontSize,
                         lineHeight = fontSize / 3,  // Adjust lineHeight proportionally
@@ -223,13 +224,13 @@ fun IdleView(
                             modifier = Modifier.size(32.dp),
                             painter = painterResource(R.drawable.baseline_arrow_outward_24),
                             contentDescription = "Back",
-                            tint = dgenTurqoise
+                            tint = primaryColor
                         )
                         Text(
                             text= "SEND",
                             style = TextStyle(
                                 fontFamily = SpaceMono,
-                                color = dgenTurqoise,
+                                color = primaryColor,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 20.sp,
                                 lineHeight = 20.sp,
@@ -267,19 +268,20 @@ private fun calculateFontSize(text: String): TextUnit {
 fun IdlePreview(){
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-        ,
+            .fillMaxWidth(),
         frontSide = {
             IdleView(
                 amount = 0.13,
                 tokenName = "USDC",
                 fiatAmount = 209.47,
                 icon = "",//R.drawable.placeholer_icon_5.toString()
-                navigateToSend = {  },
-                enableSend = false
-
+                navigateToSend = { },
+                enableSend = false,
+                primaryColor = Color.Red,
             )
         },
+        primaryColor = Color.Red,
+        secondaryColor = Color.Blue
     )
 
 

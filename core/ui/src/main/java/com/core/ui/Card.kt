@@ -32,9 +32,11 @@ fun Card(
     rotation: Float = 0f,
     frontSide: @Composable () -> Unit = {},
     backSide: @Composable () -> Unit = {},
+    primaryColor: Color,
+    secondaryColor: Color
 ) {
 
-    val baseColor by animateColorAsState(if (isFirst) dgenOcean else dgenBlack, tween(300))
+    val baseColor by animateColorAsState(if (isFirst) secondaryColor else dgenBlack, tween(300))
 
     Surface(
         color = baseColor,
@@ -43,7 +45,7 @@ fun Card(
             .aspectRatio(16f / 9f)
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
-            .border(2.dp, dgenTurqoise, RoundedCornerShape(0.dp))
+            .border(2.dp, primaryColor, RoundedCornerShape(0.dp))
     ) {
 
         Box(
@@ -117,5 +119,5 @@ private fun DrawScope.drawGrid(spacing: Dp, color: Color) {
 @Preview
 @Composable
 fun _Preview() {
-    Card { /* content */ }
+    //Card { /* content */ }
 }

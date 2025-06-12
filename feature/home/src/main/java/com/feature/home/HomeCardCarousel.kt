@@ -74,6 +74,7 @@ import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenBlack
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import com.feature.home.screens.EmptyHomeScreen
@@ -192,12 +193,10 @@ fun HomeScreen2(
             }.build()
     }
 
-    // System-weite Farben initialisieren/aktualisieren
     LaunchedEffect(Unit) {
         SystemColorManager.refresh(context)
     }
 
-    // Lokale Referenzen auf die dynamischen Farben
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
 
@@ -211,7 +210,6 @@ fun HomeScreen2(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxSize()
-                .background(primaryColor)
             //.weight(1f) // Allows it to take up remaining space
 
         ) {
@@ -281,8 +279,8 @@ fun HomeScreen2(
                                         navigateToSend = navigateToSend,
                                         selectedTokenUiState = selectedTokenUiState,
                                         setSelectedToken = setSelectedTokenId,
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedContentScope = animatedContentScope,
+                                        primaryColor = primaryColor,
+                                        secondaryColor = secondaryColor
                                     )
                                 },
                                 secondaryContent = {
@@ -331,7 +329,7 @@ fun HomeScreen2(
                     .align(Alignment.TopCenter)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(primaryColor, Color.Transparent)
+                            colors = listOf(dgenBlack, Color.Transparent)
                         )
                     )
 
@@ -351,7 +349,7 @@ fun HomeScreen2(
                     .height(32.dp) // Adjust thickness of fading border
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, primaryColor)
+                            colors = listOf(Color.Transparent, dgenBlack)
                         )
                     )
 
@@ -390,8 +388,8 @@ fun HomeScreen2(
                 },
                 navigateToPayMaster = {
                     navigateToPayMaster()
-
-                }
+                },
+                primaryColor = primaryColor
             )
         }
     }

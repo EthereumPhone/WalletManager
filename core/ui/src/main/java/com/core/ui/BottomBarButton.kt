@@ -28,6 +28,7 @@ fun BottomBarButton(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     text: String,
+    primaryColor: Color
 ) {
     Button(
         modifier = Modifier
@@ -37,7 +38,7 @@ fun BottomBarButton(
         onClick = onClick,
         shape = RoundedCornerShape(0.dp),
         colors = ButtonDefaults.buttonColors(
-            contentColor = dgenTurqoise,
+            contentColor = primaryColor,
             containerColor = Color.Transparent
         ),
         contentPadding = PaddingValues(8.dp)
@@ -53,7 +54,7 @@ fun BottomBarButton(
                 modifier = Modifier,
                 style = TextStyle(
                     fontFamily = SpaceMono,
-                    color = dgenTurqoise,
+                    color = primaryColor,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     lineHeight = 16.sp,
