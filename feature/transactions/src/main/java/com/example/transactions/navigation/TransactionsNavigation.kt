@@ -13,11 +13,12 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.largeExitDuration
+import com.example.transactions.DetailLogRoute
 import com.example.transactions.LogRoute
-import com.example.transactions.TransactionRoute
 
 const val transactionGraphRoutePattern = "transaction_graph?tokenId={tokenId}"
 const val transactionRoute = "transaction_route"
+const val transactionDetailRoute = "transaction_detail_route"
 
 fun NavController.navigateToTransaction(tokenId: String = "") {
 
@@ -31,8 +32,13 @@ fun NavController.navigateToTransaction(tokenId: String = "") {
     }
 }
 
+fun NavController.navigateToTransactionDetail(txHash: String) {
+    this.navigate("$transactionDetailRoute/$txHash")
+}
+
 fun NavGraphBuilder.transactionGraph(
     navigateBack: () -> Unit,
+    navigateToDetail: (String) -> Unit
 ) {
     navigation(
         route = transactionGraphRoutePattern,
@@ -76,9 +82,26 @@ fun NavGraphBuilder.transactionGraph(
             val tokenId = backStackEntry.arguments?.getString("tokenId")
                 LogRoute(
                     tokenId = tokenId,
-                    navigateBack = navigateBack
+                    navigateBack = navigateBack,
+                    onTransactionClick = navigateToDetail
                 )
 
+        }
+        composable(
+            route = "$transactionDetailRoute/{txHash}",
+            arguments = listOf(
+                navArgument("txHash") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val txHash = backStackEntry.arguments?.getString("txHash")
+            if (txHash != null) {
+                DetailLogRoute(
+                    navigateBack = navigateBack,
+                    txHash = txHash
+                )
+            }
         }
     }
 }

@@ -50,7 +50,8 @@ private fun getBlockExplorerUrl(chainId: Int, txHash: String): String {
 fun LogEntry(
     logoUrl: String = "",
     logEntry : TransferItem,
-    primaryColor: Color
+    primaryColor: Color,
+    onNavigateToDetail: (String) -> Unit
 ) {
     val context = LocalContext.current
     val decimalFormat = DecimalFormat("0.00").apply {
@@ -77,10 +78,7 @@ fun LogEntry(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.clickable {
-            // Open block explorer URL when clicked
-            val explorerUrl = getBlockExplorerUrl(logEntry.chainId, logEntry.txHash)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(explorerUrl))
-            context.startActivity(intent)
+            onNavigateToDetail(logEntry.txHash)
         }
     ) {
 
@@ -229,7 +227,7 @@ fun PreviewLogEntity() {
         txHash = ""
     )
 
-    LogEntry(logEntry = transferItem, primaryColor = Color.Red)
+    LogEntry(logEntry = transferItem, primaryColor = Color.Red, onNavigateToDetail = {})
 
 
 

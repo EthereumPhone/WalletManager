@@ -73,11 +73,15 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun LogRoute(
     navigateBack: () -> Unit,
     tokenId: String?,
+    onTransactionClick: (String) -> Unit,
     viewModel: TransactionViewModel = hiltViewModel()
 ){
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
@@ -85,24 +89,29 @@ fun LogRoute(
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
     val userData by viewModel.userData.collectAsStateWithLifecycle()
 
-    //opens terminal screen for receive button
-    LaunchedEffect(Unit) {
-        viewModel.onLogOpened()
-    }
-
-    //closes terminal screen for receive button
-    DisposableEffect(Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onLogOpened()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            viewModel.onLogClosed()
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = navigateBack,
+        onNavigateBack = {
+            viewModel.onLogClosed()
+            navigateBack()
+        },
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
+        onTransactionClick = onTransactionClick,
         //onRefresh = viewModel::refreshData
     )
 }
@@ -115,6 +124,7 @@ fun LogScreen(
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
     tokenId: String?,
+    onTransactionClick: (String) -> Unit,
     //onRefresh: () -> Unit,
 ){
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
@@ -201,7 +211,12 @@ fun LogScreen(
                                         //TODO: Add Logos
                                         Log.d("LogScreen", "transfer.asset ${transfer.txHash} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
 
-                                        LogEntry(logEntry = transfer, primaryColor = primaryColor, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
+                                        LogEntry(
+                                            logEntry = transfer,
+                                            primaryColor = primaryColor,
+                                            logoUrl = metaBySymbol[transfer.asset]?.logo ?: "",
+                                            onNavigateToDetail = onTransactionClick
+                                        )
                                     }
 
                                     item {
@@ -376,8 +391,8 @@ fun LogViewPreview(){
         refreshState = false,
         tokenId = "DAI",
         //onRefresh = {},
-        tokenMetadata = sampleMetadata
-//        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
+        tokenMetadata = sampleMetadata,
+        onTransactionClick = {}
     )
 
 }
