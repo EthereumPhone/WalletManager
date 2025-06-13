@@ -172,7 +172,6 @@ fun SendRoute2(
     //val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
-    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
@@ -233,7 +232,6 @@ fun SendRoute2(
         onToAddressChanged = viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         updateSelectedAsset = viewModel::updateSelectedAsset,
-        txComplete = txComplete,
         tokenId = tokenId,
         tokenData = tokenData,
         loadSymbol = viewModel::loadSymbol,
@@ -260,7 +258,6 @@ fun SendScreen2(
     sendTransaction: (() -> Unit) -> Unit,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
-    txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
@@ -297,41 +294,21 @@ fun SendScreen2(
         }
     }
 
-    // Monitor transaction completion state for SUCCESS only
-    LaunchedEffect(txComplete) {
-        Log.d("SendScreen", "=== TX COMPLETE STATE CHANGED ===")
-        Log.d("SendScreen", "New txComplete state: $txComplete")
-        Log.d("SendScreen", "Current transactionStatus: $transactionStatus")
-        
-        when (txComplete) {
-            is TxCompleteUiState.Complete -> {
-                Log.d("SendScreen", "🟢 TxCompleteUiState.Complete detected - transaction successful")
-                // Display success overlay for longer duration to celebrate the success
-                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
-                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
-                
-                // Start navigation while overlay is still visible for smooth fade effect
-                onBackClick() 
-                
-                // Keep overlay visible during fade transition for seamless experience
-                delay(TransactionTiming.FADE_TRANSITION_DURATION)
-                Log.d("SendScreen", "Fade transition complete, clearing overlay")
-                clearTransactionStatus()
-            }
-            is TxCompleteUiState.UnComplete -> {
-                Log.d("SendScreen", "🔴 TxCompleteUiState.UnComplete detected - no action needed")
-                // The transactionStatus from ViewModel will handle PENDING and FAILURE states
-            }
-        }
-        Log.d("SendScreen", "=== TX COMPLETE HANDLING ENDED ===")
-    }
-
     // Monitor transaction status for auto-dismiss of FAILURE state
     LaunchedEffect(transactionStatus) {
         Log.d("SendScreen", "=== TRANSACTION STATUS CHANGED ===")
         Log.d("SendScreen", "New transactionStatus: $transactionStatus")
         
         when (transactionStatus) {
+            TransactionStatus.SUCCESS -> {
+                Log.d("SendScreen", "🟢 SUCCESS status detected - transaction successful")
+                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
+                onBackClick()
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                clearTransactionStatus()
+            }
             TransactionStatus.FAILURE -> {
                 Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
                 // Display failure overlay for a reasonable duration to acknowledge the error
@@ -602,7 +579,6 @@ fun SendScreen2(
                     }
                 }
                 is AssetsUiState.Success -> {
-
                     
                     // Selected chain state
                     var selectedChainIndex by remember { mutableStateOf(0) }
@@ -1523,7 +1499,9 @@ fun SendScreen2(
         TransactionStatusOverlay(
             status = transactionStatus,
             gifLoader = gifEnabledLoader,
-            onDismiss = { clearTransactionStatus() }
+            onDismiss = { clearTransactionStatus() },
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
         )
     }
 

@@ -61,6 +61,11 @@ enum class TransactionStatus {
     FAILURE
 }
 
+sealed interface TxCompleteUiState {
+    object UnComplete: TxCompleteUiState
+    object Complete: TxCompleteUiState
+}
+
 @HiltViewModel
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
@@ -207,8 +212,7 @@ class SendViewModel @Inject constructor(
             Log.d("SendViewModel", "To address: ${toAddress.value}")
             
             _transactionStatus.value = TransactionStatus.PENDING
-            _txComplete.value = TxCompleteUiState.UnComplete // Reset to UnComplete when starting
-            Log.d("SendViewModel", "Set status to PENDING and txComplete to UnComplete")
+            Log.d("SendViewModel", "Status set to PENDING")
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
@@ -242,64 +246,47 @@ class SendViewModel @Inject constructor(
                     // Observe the transaction result
                     val txResult = sendRepository.currentTransactionHash.first()
                     if (txResult.lowercase() != "decline" && txResult.lowercase() != "error") {
-                        callback()
-                    } else {
-                        // Optionally, handle the "decline" or "error" case, e.g., show a message
-                        Log.d("SendViewModel", "Transaction declined or failed: $txResult")
-                        onScreenOpened()
-                    }
-                    
-                    // Now check the transaction result from the repository's flow
-                    val transactionResult = sendRepository.currentTransactionHash.first()
-                    Log.d("SendViewModel", "Transaction result from repository: '$transactionResult'")
-                    
-                    // Check if the transaction was successful by examining the result
-                    if (transactionResult.isEmpty() || transactionResult == "error" || transactionResult == "decline" || transactionResult.contains("error", ignoreCase = true)) {
-                        Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
-                        _transactionStatus.value = TransactionStatus.FAILURE
-                        _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
-                        Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
-                    } else {
-                        terminalSDK?.displayBlackText("TXN IN ORBIT...")
-                        checkTransactionInclusion(
-                            txResult
-                        ) { hasBeenIncluded ->
-                            if (hasBeenIncluded) {
-                                Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
-                                _transactionStatus.value = TransactionStatus.SUCCESS
-                                _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
-                                Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
-                                terminalSDK?.displayBlackText("TXN SUCCESS!")
-                            } else {
-                                Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
-                                _transactionStatus.value = TransactionStatus.FAILURE
-                                _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
-                                Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete (not included)")
+                        // Now check the transaction result from the repository's flow
+                        val transactionResult = sendRepository.currentTransactionHash.first()
+                        Log.d("SendViewModel", "Transaction result from repository: '$transactionResult'")
+                        
+                        // Check if the transaction was successful by examining the result
+                        if (transactionResult.isEmpty() || transactionResult == "error" || transactionResult == "decline" || transactionResult.contains("error", ignoreCase = true)) {
+                            Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
+                            _transactionStatus.value = TransactionStatus.FAILURE
+                        } else {
+                            terminalSDK?.displayBlackText("TXN IN ORBIT...")
+                            checkTransactionInclusion(
+                                txResult
+                            ) { hasBeenIncluded ->
+                                if (hasBeenIncluded) {
+                                    Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
+                                    _transactionStatus.value = TransactionStatus.SUCCESS
+                                    terminalSDK?.displayBlackText("TXN SUCCESS!")
+                                } else {
+                                    Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
+                                    _transactionStatus.value = TransactionStatus.FAILURE
+                                }
                             }
-                        }
 
+                        }
+                    } else {
+                        Log.e("SendViewModel", "🔴 TRANSACTION FAILED - User declined or error before sending")
+                        _transactionStatus.value = TransactionStatus.FAILURE
                     }
-                    //onTransactionFinalized(true)
                 } catch (e: Exception) {
                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Exception caught: ${e.message}", e)
                     Log.e("SendViewModel", "Exception type: ${e.javaClass.simpleName}")
                     e.printStackTrace()
                     _transactionStatus.value = TransactionStatus.FAILURE
-                    _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
-                    Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete")
-                    //onTransactionFinalized(false)
                 }
             } else {
                 Log.e("SendViewModel", "🔴 NO ASSET SELECTED - Transaction failed")
-                // Handle case where no asset is selected, though UI should prevent this
                 _transactionStatus.value = TransactionStatus.FAILURE
-                _txComplete.value = TxCompleteUiState.UnComplete // Keep as UnComplete on failure
-                Log.d("SendViewModel", "❌ Status set: transactionStatus=FAILURE, txComplete=UnComplete (no asset)")
-                //onTransactionFinalized(false)
             }
             
             Log.d("SendViewModel", "=== SEND TRANSACTION ENDED ===")
-            Log.d("SendViewModel", "Final status - transactionStatus: ${_transactionStatus.value}, txComplete: ${_txComplete.value}")
+            Log.d("SendViewModel", "Final status - transactionStatus: ${_transactionStatus.value}")
             callback()
         }
     }
@@ -687,7 +674,10 @@ class SendViewModel @Inject constructor(
             val client = OkHttpClient()
             val contentType = "application/json; charset=utf-8".toMediaType()
 
-            while (true) {
+            val startTime = System.currentTimeMillis()
+            val timeoutMillis = 60000 // 1 minute timeout
+
+            while (System.currentTimeMillis() - startTime < timeoutMillis) {
                 val bodyJson = """
                     {
                         "jsonrpc": "2.0",
@@ -731,16 +721,15 @@ class SendViewModel @Inject constructor(
                 // Wait 4 seconds before next poll
                 delay(4000)
             }
+
+            withContext(Dispatchers.Main) {
+                callback(false)
+            }
         }
     }
 
 }
 
-
-sealed interface TxCompleteUiState {
-    object UnComplete: TxCompleteUiState
-    object Complete: TxCompleteUiState
-}
 
 sealed interface SelectedTokenUiState {
     object Unselected: SelectedTokenUiState

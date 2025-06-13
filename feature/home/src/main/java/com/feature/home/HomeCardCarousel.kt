@@ -247,7 +247,6 @@ fun HomeScreen2(
                         primaryColor = primaryColor
                     )
                 } else {
-                    val test = AssetsUiState.Loading
                     when(assetState){
                         is AssetsUiState.Empty -> {
                             EmptyHomeScreen(
