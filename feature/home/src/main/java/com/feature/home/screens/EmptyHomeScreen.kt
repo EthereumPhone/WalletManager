@@ -23,6 +23,8 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun EmptyHomeScreen(
@@ -44,7 +46,7 @@ fun EmptyHomeScreen(
                 model = com.core.ui.R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(primaryColor.copy(0.5f))
+                colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
 
             )
 
@@ -52,7 +54,7 @@ fun EmptyHomeScreen(
                 text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = primaryColor.copy(0.5f),
+                    color = primaryColor.copy(neonOpacity),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     letterSpacing = 0.sp,

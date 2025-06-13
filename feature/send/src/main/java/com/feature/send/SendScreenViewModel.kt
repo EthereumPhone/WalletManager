@@ -47,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.TransactionStatus
 import com.core.data.util.chainIdToBundler
+import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -607,13 +608,9 @@ class SendViewModel @Inject constructor(
                         }
                         // show Toast
                         withContext(Dispatchers.Main) {
-                            context.showCustomToast(
+                            showDgenToast(
+                                context,
                                 "$${dollarAmount} = $formattedAmount $realTokenLogo",
-                                Toast.LENGTH_SHORT,
-                                fontFamily = PitagonsSans,
-                                fontWeight = FontWeight.SemiBold,
-                                backgroundColor = dgenOcean,
-                                textColor = dgenTurqoise
                             )
                         }
                         
@@ -627,13 +624,9 @@ class SendViewModel @Inject constructor(
                     }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    context.showCustomToast(
+                    showDgenToast(
+                        context,
                         "Error at calculation: ${e.message}",
-                        Toast.LENGTH_SHORT,
-                        fontFamily = PitagonsSans,
-                        fontWeight = FontWeight.SemiBold,
-                        backgroundColor = dgenOcean,
-                        textColor = dgenTurqoise
                     )
                 }
             }

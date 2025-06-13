@@ -113,8 +113,6 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onCopy()
-                    resume(ID_STATUSBAR)
-                    destroyTouchHandler()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

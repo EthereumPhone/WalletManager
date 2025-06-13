@@ -2,10 +2,12 @@ package com.feature.send.ui
 
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -20,16 +22,24 @@ class CustomCaptureActivity : CaptureActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Verstecke Status- und Navigationsleisten
+
         setupFullscreen()
-        
+
         setContentView(R.layout.custom_qr_scanner)
 
         barcodeScannerView = findViewById(R.id.zxing_barcode_scanner)
+
+        val systemColor = getColorForRender()
+
+
+        val infoText = findViewById<TextView>(R.id.info_text)
+        infoText.setTextColor(systemColor)
+        infoText.alpha = 0.5f
         
         // Back button handling
-        findViewById<ImageButton>(R.id.back_button).setOnClickListener {
+        val backButton = findViewById<ImageButton>(R.id.back_button)
+        backButton.setColorFilter(systemColor)
+        backButton.setOnClickListener {
             finish()
             // Fade-Out-Animation beim Verlassen
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
@@ -41,6 +51,20 @@ class CustomCaptureActivity : CaptureActivity() {
         
         // Fade-In-Animation beim Öffnen
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+    }
+
+    private fun getColorForRender(): Int {
+        val accentColor = Settings.Secure.getInt(
+            contentResolver,
+            "systemui_accent_color",
+            -0x20000 // Default red
+        )
+
+        when (accentColor) {
+            -131072 -> return -0x10000
+        }
+
+        return accentColor
     }
     
     private fun setupFullscreen() {

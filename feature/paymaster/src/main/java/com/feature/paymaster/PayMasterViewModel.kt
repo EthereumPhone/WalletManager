@@ -38,6 +38,7 @@ import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import com.core.terminalsdk.TerminalSDK
+import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 
 // Data classes for API interaction
@@ -96,7 +97,7 @@ class PayMasterViewModel @Inject constructor(
                 paymasterSDK.queryUpdate() // Query after registration to ensure observer gets it
             } else {
                 _balance.value = "Error: SDK Init failed"
-                showToast("Error: SDK initialization failed. Please try again later.")
+                showDgenToast(appContext,"Error: SDK initialization failed. Please try again later.")
             }
         }
     }
@@ -104,7 +105,7 @@ class PayMasterViewModel @Inject constructor(
     suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         // Early exit if there is no internet connection
         if (!isInternetAvailable()) {
-            showToast("No internet connection!")
+            showDgenToast(appContext,"No internet connection!")
             return@withContext null
         }
 
@@ -129,7 +130,7 @@ class PayMasterViewModel @Inject constructor(
                     // Handle API error
                     val errorBody = response.body?.string()
                     _balance.value = "Error: API ${response.code} ${errorBody ?: "Unknown error"}"
-                    showToast("Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
+                    showDgenToast(appContext,"Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
                     return@withContext null
                 }
 
@@ -145,7 +146,7 @@ class PayMasterViewModel @Inject constructor(
 
                 if (daimoPaymentUrl.isNullOrBlank()) {
                     _balance.value = "Error: Daimo Payment ID not found in response"
-                    showToast("Error: Daimo Payment information missing in response")
+                    showDgenToast(appContext,"Error: Daimo Payment information missing in response")
                     return@withContext null
                 }
                 
@@ -156,9 +157,9 @@ class PayMasterViewModel @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             if (e is UnknownHostException) {
-                showToast("No internet connection!")
+                showDgenToast(appContext,"No internet connection!")
             } else {
-                showToast("Error: ${e.message}")
+                showDgenToast(appContext,"Error: ${e.message}")
                 _balance.value = "Error: ${e.message}"
             }
             return@withContext null
@@ -174,19 +175,6 @@ class PayMasterViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         paymasterSDK.cleanup()
-    }
-
-    // Helper to display styled toast messages safely from any thread
-    private fun showToast(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            context.showCustomToast(
-                message = message,
-                fontFamily = PitagonsSans,
-                fontWeight = FontWeight.SemiBold,
-                backgroundColor = dgenRed,
-                textColor = dgenWhite
-            )
-        }
     }
 
     // Helper to check internet connectivity
@@ -213,7 +201,7 @@ class PayMasterViewModel @Inject constructor(
                     // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
                     val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
                     if (cleanAmount.isEmpty()) {
-                        showToast("Top up amount is empty.")
+                        showDgenToast(appContext,"Top up amount is empty.")
                         return@displayTopUp
                     }
                     viewModelScope.launch(Dispatchers.Main) {

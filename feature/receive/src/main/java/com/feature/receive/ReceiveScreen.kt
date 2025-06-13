@@ -55,6 +55,8 @@ import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.dgenWhite
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 import com.feature.receive.ui.rememberQrBitmapPainter
 
 @Composable
@@ -124,8 +126,6 @@ fun ReceiveScreen(
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
 
-    val scope = rememberCoroutineScope()
-
 
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -143,7 +143,6 @@ fun ReceiveScreen(
                 modifier = Modifier.weight(1f)
             ){
                 Image(
-                    //TODO: Change Address
                     painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
@@ -173,7 +172,7 @@ fun ReceiveScreen(
                     modifier = modifier.width(300.dp),
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = primaryColor.copy(0.5f),
+                        color = primaryColor.copy(neonOpacity),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,

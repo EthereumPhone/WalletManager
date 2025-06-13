@@ -26,7 +26,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.lazerCore
 import com.feature.send.R
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun SelectableCarousel(
@@ -122,49 +125,53 @@ fun SelectableCarousel(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
+                            val imageModifier = if (primaryColor == lazerCore) {
+                                Modifier
+                                    .size(34.dp)
+                                    .border(1.dp, secondaryColor, CircleShape)
+                            } else {
+                                Modifier.size(34.dp)
+                            }
                             when(item) {
                                 "base" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(R.drawable.base),
                                         contentDescription = "Base"
                                     )
                                 }
                                 "main" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(R.drawable.mainnet),
                                         contentDescription = "Mainnet"
                                     )
                                 }
                                 "zora" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.zorb),
                                         contentDescription = "Zorb"
                                     )
                                 }
                                 "op" -> {
+                                    
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.optimism),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "arb" -> {
                                     Image(
-                                        modifier = Modifier.size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.arbitrum),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "pol" -> {
                                     Image(
-                                        modifier = Modifier.size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.polygon),
                                         contentDescription = "Optimism"
                                     )

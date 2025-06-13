@@ -18,6 +18,7 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.smallDuration
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun TextToggle(
@@ -66,7 +67,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = primaryColor.copy(0.25f),
+                color = primaryColor.copy(pulseOpacity),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
@@ -100,7 +101,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = primaryColor.copy(0.25f),
+                            color = primaryColor.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,

@@ -24,6 +24,8 @@ import coil.compose.AsyncImage
 import com.core.ui.R
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun NoInternetHomeScreen(
@@ -45,14 +47,14 @@ fun NoInternetHomeScreen(
                 model = R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(primaryColor.copy(0.5f))
+                colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
             )
 
             Text(
                 text = "Connect to the internet see your tokens.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
-                    color = primaryColor.copy(0.5f),
+                    color = primaryColor.copy(neonOpacity),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     letterSpacing = 0.sp,

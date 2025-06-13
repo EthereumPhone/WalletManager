@@ -67,6 +67,7 @@ import androidx.compose.foundation.shape.CircleShape
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.body2_fontSize
+import com.core.ui.util.pulseOpacity
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -390,7 +391,7 @@ fun DgenButtonTextfieldPreview() {
                         text = "0.00",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenWhite.copy(0.5f),
+                            color = dgenWhite.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = body2_fontSize
                         )
@@ -441,7 +442,7 @@ fun DgenButtonTextfieldPreview() {
                 view = view,
                 labelContent = {
                     Text(
-                        text = "Aktiver MAX Button (persistente Buttons)",
+                        text = " MAX Button",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
                             color = dgenTurqoise,
@@ -452,10 +453,10 @@ fun DgenButtonTextfieldPreview() {
                 },
                 placeholder = {
                     Text(
-                        text = "Nur Zahlen eingeben...",
+                        text = "Put in numbers...",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenWhite.copy(0.5f),
+                            color = dgenWhite.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = body2_fontSize
                         )

@@ -60,6 +60,8 @@ import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -163,7 +165,7 @@ fun PayMasterScreen(
                     Spacer(Modifier.offset(y = 5.dp)
                         .height(77.dp)
                         .width(8.dp)
-                        .background(primaryColor.copy(0.5f))
+                        .background(primaryColor.copy(pulseOpacity))
                         .padding(end = 16.dp)
                     )
                     Column {
@@ -197,7 +199,7 @@ fun PayMasterScreen(
                     "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = primaryColor.copy(0.5f),
+                        color = primaryColor.copy(neonOpacity),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,
@@ -253,7 +255,7 @@ fun PayMasterScreen(
                     text = "0.00",
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenWhite.copy(0.5f),
+                        color = dgenWhite.copy(pulseOpacity),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = body2_fontSize
                     )

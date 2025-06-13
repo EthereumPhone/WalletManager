@@ -22,6 +22,7 @@ import com.core.ui.showCustomToast
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenTurqoise
 import androidx.compose.ui.text.font.FontWeight
+import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 
 @HiltViewModel
@@ -50,13 +51,9 @@ class ReceiveViewModel @Inject constructor(
                 terminalSDK.displayCopyAddress {
                     copyToClipboard(userData.value.walletAddress)
                     viewModelScope.launch(Dispatchers.Main) {
-                        appContext.showCustomToast(
-                            message = "Address copied!",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenOcean,
-                            textColor = dgenTurqoise,
-                            duration = Toast.LENGTH_SHORT
+                        showDgenToast(
+                            context = appContext,
+                            message = "Address copied!"
                         )
                     }
                 }

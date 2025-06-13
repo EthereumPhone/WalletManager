@@ -63,6 +63,7 @@ import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.pulseOpacity
 import com.feature.send.R // Assuming R.drawable.globe_wireframe is in the feature.send module
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -131,7 +132,7 @@ fun TransactionStatusOverlay(
                 val infiniteTransition = rememberInfiniteTransition()
                 val pulsatingAlpha by infiniteTransition.animateFloat(
                     initialValue = 1f,
-                    targetValue = 0.5f,
+                    targetValue = pulseOpacity,
                     animationSpec = infiniteRepeatable(
                         animation = tween(durationMillis = 1500),
                         repeatMode = RepeatMode.Reverse

@@ -32,5 +32,10 @@ val largeExitDuration = 400 //ms
 val extraLargeEnterDuration = 2000 //ms
 val extraLargeExitDuration = 1500 //ms
 
+val pulseOpacity = 0.5f
+val neonOpacity = 0.75f
+
+
+
 
 

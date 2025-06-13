@@ -21,7 +21,7 @@ val dgenTurqoise = Color(0xFFBFD6EA) //gunmetal - Color(0xFFC8C8C8) //lazer - Co
 
 // Color - LAZER
 val lazerBurn = Color(0xFF1E0505)
-val lazerCore = Color(0xFFFF4C4C)
+val lazerCore = Color(0xFFFF0000)//Color(0xFFFF4C4C)
 
 // Color - TERMINAL
 val terminalHack = Color(0xFF081B03)

@@ -130,6 +130,8 @@ import com.core.ui.util.smallDuration
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import com.core.ui.showDgenToast
+import com.core.ui.util.pulseOpacity
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -483,7 +485,7 @@ fun SendScreen2(
         targetValue = if (isMaxAmount) {
             1f
         } else {
-            0.25f
+            pulseOpacity
         },
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
@@ -510,7 +512,7 @@ fun SendScreen2(
     ) {
 
         AsyncImage(
-            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
+            modifier = Modifier.alpha(pulseOpacity).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
             contentDescription = null,
@@ -538,7 +540,7 @@ fun SendScreen2(
                                 text = "EMPTY",
                                 style = TextStyle(
                                     fontFamily = PitagonsSans,
-                                    color = primaryColor.copy(0.5f),
+                                    color = primaryColor.copy(pulseOpacity),
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 24.sp,
                                     letterSpacing = 0.sp,
@@ -559,7 +561,7 @@ fun SendScreen2(
                             text = "ERROR",
                             style = TextStyle(
                                 fontFamily = PitagonsSans,
-                                color = primaryColor.copy(0.5f),
+                                color = primaryColor.copy(pulseOpacity),
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 24.sp,
                                 letterSpacing = 0.sp,
@@ -751,27 +753,27 @@ fun SendScreen2(
                                 when {
                                     isAmountError && !isMaxAmount -> {
                                         Log.w("SendScreen", "Error: Insufficient balance")
-                                        showToast(context,"Insufficient balance")
+                                        showDgenToast(context,"Insufficient balance")
                                     }
                                     toAddress.isEmpty() -> {
                                         Log.w("SendScreen", "Error: Enter target address")
-                                        showToast(context,"Enter target address")
+                                        showDgenToast(context,"Enter target address")
                                     }
                                     isResolvingENS -> {
                                         Log.w("SendScreen", "Error: Resolving ENS name...")
-                                        showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
+                                        showDgenToast(context,"Resolving ENS name...", toastBackgroundColor = dgenOrche)
                                     }
                                     ensError != null -> {
                                         Log.w("SendScreen", "Error: ENS error - $ensError")
-                                        showToast(context,ensError ?: "ENS error")
+                                        showDgenToast(context,ensError ?: "ENS error")
                                     }
                                     !isValidAddress -> {
                                         Log.w("SendScreen", "Error: Invalid address format")
-                                        showToast(context,"Invalid address format")
+                                        showDgenToast(context,"Invalid address format")
                                     }
                                     selectedToken == SelectedTokenUiState.Unselected -> {
                                         Log.w("SendScreen", "Error: Select a chain")
-                                        showToast(context,"Select a chain")
+                                        showDgenToast(context,"Select a chain")
                                     }
                                 }
                             } else {
@@ -782,7 +784,7 @@ fun SendScreen2(
                                 
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
                                     Log.w("SendScreen", "Error: No amount specified")
-                                    showToast(context, "Type in an amount")
+                                    showDgenToast(context, "Type in an amount")
                                 } else {
                                     Log.d("SendScreen", "🟡 Executing transaction (ViewModel will set PENDING status)")
                                     
@@ -946,7 +948,7 @@ fun SendScreen2(
                                         modifier = Modifier
                                             .drawBehind {
                                                 drawLine(
-                                                    color = primaryColor.copy(0.5f),
+                                                    color = primaryColor.copy(pulseOpacity),
                                                     start = Offset(0f, 15f),
                                                     end = Offset(0f, size.height-0f),
                                                     strokeWidth = 8.dp.toPx()
@@ -1109,7 +1111,7 @@ fun SendScreen2(
                                                                         withStyle(
                                                                             style = SpanStyle(
                                                                                 fontFamily = PitagonsSans,
-                                                                                color = primaryColor.copy(alpha = 0.25f),
+                                                                                color = primaryColor.copy(alpha = pulseOpacity),
                                                                                 fontWeight = FontWeight.SemiBold,
                                                                                 fontSize = 39.sp,
                                                                             )
@@ -1120,7 +1122,7 @@ fun SendScreen2(
                                                                     },
                                                                     style = TextStyle(
                                                                         fontFamily = PitagonsSans,
-                                                                        color = primaryColor.copy(alpha = 0.25f),
+                                                                        color = primaryColor.copy(alpha = pulseOpacity),
                                                                         fontWeight = FontWeight.SemiBold,
                                                                         fontSize = 42.sp,
                                                                         textAlign = TextAlign.Start
@@ -1167,7 +1169,7 @@ fun SendScreen2(
                                                                     text = "0.0", // Static placeholder
                                                                     style = TextStyle(
                                                                         fontFamily = PitagonsSans,
-                                                                        color = primaryColor.copy(alpha = 0.25f),
+                                                                        color = primaryColor.copy(alpha = pulseOpacity),
                                                                         fontWeight = FontWeight.SemiBold,
                                                                         fontSize = 42.sp,
                                                                         textAlign = TextAlign.Start
@@ -1444,7 +1446,7 @@ fun SendScreen2(
                                                 text = "Address",
                                                 style = TextStyle(
                                                     fontFamily = PitagonsSans,
-                                                    color = primaryColor.copy(0.25f),
+                                                    color = primaryColor.copy(pulseOpacity),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 24.sp
                                                 ),
@@ -1512,22 +1514,6 @@ fun SendScreen2(
         )
     }
 
-}
-
-fun showToast(
-    context: Context,
-    message: String,
-    backgroundColor: Color = dgenRed,
-    textColor: Color = dgenWhite
-) {
-    context.showCustomToast(
-        message,
-        Toast.LENGTH_SHORT,
-        fontFamily = PitagonsSans,
-        fontWeight = FontWeight.SemiBold,
-        backgroundColor = backgroundColor,
-        textColor = textColor,
-    )
 }
 
 fun parseEthereumUri(uri: String): String {

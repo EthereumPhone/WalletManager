@@ -57,6 +57,7 @@ import android.view.ViewTreeObserver
 import androidx.compose.animation.core.animateFloatAsState
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.body2_fontSize
+import com.core.ui.util.pulseOpacity
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -277,7 +278,7 @@ fun SimpleDgenTextfieldPreview() {
                         text = "0.00",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenWhite.copy(0.5f),
+                            color = dgenWhite.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = body2_fontSize
                         )
@@ -342,7 +343,7 @@ fun SimpleDgenTextfieldPreview() {
                         text = "Nur Zahlen eingeben...",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenWhite.copy(0.5f),
+                            color = dgenWhite.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = body2_fontSize
                         )

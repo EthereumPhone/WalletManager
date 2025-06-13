@@ -61,6 +61,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun SendCardView(
@@ -158,7 +159,7 @@ fun SendCardView(
             ){
                 if (amountCard.isEmpty()){
                     Text(
-                        modifier = Modifier.alpha(0.5f),
+                        modifier = Modifier.alpha(pulseOpacity),
                         text = "0.0",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
@@ -251,7 +252,7 @@ fun SendCardView(
             ){
                 if (toAddressCard.isEmpty()){
                     Text(
-                        modifier = Modifier.alpha(0.5f),
+                        modifier = Modifier.alpha(pulseOpacity),
                         text = "Address",
                         style = TextStyle(
                             fontFamily = PitagonsSans,

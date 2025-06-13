@@ -72,11 +72,14 @@ import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
+import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
@@ -304,13 +307,13 @@ fun HomeScreen2(
                                                 model = R.drawable.wireframe_torus,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(275.dp),
-                                                colorFilter = ColorFilter.tint(primaryColor.copy(0.5f))
+                                                colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
                                             )
                                             Text(
                                                 text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                                 style = TextStyle(
                                                     fontFamily = PitagonsSans,
-                                                    color = primaryColor.copy(0.5f),
+                                                    color = primaryColor.copy(neonOpacity),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 16.sp,
                                                     letterSpacing = 0.sp,
@@ -365,12 +368,9 @@ fun HomeScreen2(
                 hasTransfer,
                 navigateToLog = {
                     if (isOffline) {
-                        context.showCustomToast(
+                        showDgenToast(
+                            context,
                             message = "No internet connection!",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenRed,
-                            textColor = dgenWhite
                         )
                     } else {
                         navigateToLog(selectedTokenId.value)
