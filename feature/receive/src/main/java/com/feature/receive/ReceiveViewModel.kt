@@ -29,6 +29,7 @@ import com.example.dgenlibrary.ui.theme.PitagonsSans
 import com.example.dgenlibrary.ui.theme.dgenOcean
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.delay
 
 @HiltViewModel
 class ReceiveViewModel @Inject constructor(
@@ -69,6 +70,37 @@ class ReceiveViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e("ReceiveViewModel", "Error copying address", e)
+        }
+    }
+
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                delay(2000)
+                if (terminalSDK?.isAvailable() == true) {
+                    while(terminalSDK.isScreenOn() != true) {
+                        Log.d("ReceiveViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
+                        delay(500)
+                    }
+                    terminalSDK.displayCopyAddress {
+                        copyToClipboard(userData.value.walletAddress)
+                        viewModelScope.launch(Dispatchers.Main) {
+                            appContext.showCustomToast(
+                                message = "Address copied!",
+                                fontFamily = PitagonsSans,
+                                fontWeight = FontWeight.SemiBold,
+                                backgroundColor = dgenOcean,
+                                textColor = dgenTurqoise,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        }
+                    }
+                } else {
+                    Log.w("ReceiveViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("ReceiveViewModel", "Error displaying on secondary screen", e)
+            }
         }
     }
 

@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 
 
 @HiltViewModel
@@ -86,6 +87,41 @@ class TransactionViewModel @Inject constructor(
                 e.printStackTrace()
             }
             _refreshState.value = false
+        }
+    }
+
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                delay(2000)
+                if (terminalSDK?.isAvailable() == true) {
+                    while(terminalSDK.isScreenOn() != true) {
+                        Log.d("TransactionViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
+                        delay(500)
+                    }
+                    terminalSDK.displayLog {
+                        val walletAddress = userData.value.walletAddress
+                        if (walletAddress.isNotBlank()) {
+                            val url = "https://etherscan.io/address/$walletAddress"
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            try {
+                                appContext.startActivity(intent)
+                            } catch (e: Exception) {
+                                Log.e("TransactionViewModel", "Could not open Etherscan for address $walletAddress", e)
+                                Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Log.w("TransactionViewModel", "Wallet address is empty, can't open Etherscan.")
+                        }
+                    }
+                } else {
+                    Log.w("TransactionViewModel", "TerminalSDK not available")
+                }
+            } catch (e: Exception) {
+                Log.e("TransactionViewModel", "Error on displayLog", e)
+            }
         }
     }
 

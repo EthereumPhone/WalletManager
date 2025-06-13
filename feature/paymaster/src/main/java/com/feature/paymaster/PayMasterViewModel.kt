@@ -39,6 +39,7 @@ import com.example.dgenlibrary.ui.theme.dgenRed
 import com.example.dgenlibrary.ui.theme.dgenTurqoise
 import com.example.dgenlibrary.ui.theme.dgenWhite
 import com.core.terminalsdk.TerminalSDK
+import kotlinx.coroutines.delay
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)
@@ -205,6 +206,53 @@ class PayMasterViewModel @Inject constructor(
      *
      * When opened it displays the copy button
      */
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                delay(2000)
+                if (terminalSDK?.isAvailable() == true) {
+                    while (terminalSDK.isScreenOn() != true) {
+                        Log.d(
+                            "PayMasterViewModel",
+                            "ETHOSDEBUG: Waiting for secondary screen to be on..."
+                        )
+                        delay(500)
+                    }
+                    terminalSDK.displayTopUp {
+                        // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
+                        val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
+                        if (cleanAmount.isEmpty()) {
+                            showToast("Top up amount is empty.")
+                            return@displayTopUp
+                        }
+                        viewModelScope.launch(Dispatchers.Main) {
+                            Log.e(
+                                "PayMasterViewModel",
+                                "topUpAmount.value.text: ${topUpAmount.value.text}"
+                            )
+                            val daimoUrl = topUp(topUpAmount.value.text)
+                            if (daimoUrl != null) {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                appContext.startActivity(intent)
+                            }
+                            appContext.showCustomToast(
+                                message = "You added ${topUpAmount.value.text} to your Paymaster.",
+                                fontFamily = PitagonsSans,
+                                fontWeight = FontWeight.SemiBold,
+                                backgroundColor = dgenOcean,
+                                textColor = dgenTurqoise,
+                                duration = Toast.LENGTH_SHORT
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("PayMasterViewModel", "Error toppin up", e)
+            }
+        }
+    }
+
     fun onTopUpOpened(){
         try{
             //check if terminal sdk is available

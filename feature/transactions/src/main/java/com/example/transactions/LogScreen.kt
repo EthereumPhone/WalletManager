@@ -71,7 +71,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.example.dgenlibrary.ui.theme.PitagonsSans
@@ -114,6 +117,30 @@ fun LogRoute(
     //opens terminal screen for receive button
     LaunchedEffect(Unit) {
         viewModel.onLogOpened()
+    }
+
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    if (!hasHandledInitialResume) {
+                        hasHandledInitialResume = true
+                    } else {
+                        viewModel.onScreenOpenedAfterResume()
+                    }
+                }
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     //closes terminal screen for receive button

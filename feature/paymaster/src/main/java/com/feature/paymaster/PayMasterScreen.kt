@@ -74,6 +74,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.core.ui.DgenButtonTextfield
 import com.core.ui.HeaderBar
 import com.core.ui.showCustomToast
@@ -106,6 +109,30 @@ internal fun PayMasterScreenRoute(
     //opens terminal screen for paymaster button
     LaunchedEffect(Unit) {
         viewModel.onTopUpOpened()
+    }
+
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    if (!hasHandledInitialResume) {
+                        hasHandledInitialResume = true
+                    } else {
+                        viewModel.onScreenOpenedAfterResume()
+                    }
+                }
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     //closes terminal screen for paymaster button
