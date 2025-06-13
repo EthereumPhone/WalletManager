@@ -58,19 +58,13 @@ import androidx.compose.ui.text.style.TextAlign
 import com.core.model.TokenAsset
 import com.core.model.TokenData
 import com.core.ui.DgenLoadingMatrix
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenGreen
-import com.example.dgenlibrary.ui.theme.dgenOrche
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
-import com.example.dgenlibrary.ui.theme.label_fontSize
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenGray
+import com.core.ui.util.dgenGreen
+import com.core.ui.util.dgenOrche
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.dgenWhite
 import com.feature.send.ui.SelectableCarousel
 import com.feature.send.ui.TextToggle
 import com.feature.send.ui.TransactionStatusOverlay
@@ -82,13 +76,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.DgenBasicTextfield
 import com.core.ui.HeaderBar
-import com.example.dgenlibrary.ui.theme.SpaceMono
 import androidx.compose.ui.draw.scale
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.example.dgenlibrary.ui.theme.smallDuration
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
@@ -105,7 +97,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.core.data.util.chainToApiKey
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
+import com.core.ui.util.dgenGunMetal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
@@ -120,14 +112,26 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlin.reflect.KFunction1
 import com.core.ui.util.formatWithSuffix
-import java.util.concurrent.CompletableFuture
 import androidx.compose.ui.unit.TextUnit
 import com.core.ui.SimpleDgenTextfield
 import kotlin.math.abs
 import java.util.Locale
 import androidx.compose.ui.text.TextRange
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
+import com.core.ui.util.label_fontSize
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.smallDuration
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
+import com.core.ui.showDgenToast
+import com.core.ui.util.pulseOpacity
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -173,7 +177,6 @@ fun SendRoute2(
     //val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
-    val txComplete by viewModel.txComplete.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
@@ -240,7 +243,6 @@ fun SendRoute2(
         onToAddressChanged = viewModel::updateToAddress,
         sendTransaction = viewModel::send,
         updateSelectedAsset = viewModel::updateSelectedAsset,
-        txComplete = txComplete,
         tokenId = tokenId,
         tokenData = tokenData,
         loadSymbol = viewModel::loadSymbol,
@@ -267,7 +269,6 @@ fun SendScreen2(
     sendTransaction: (() -> Unit) -> Unit,
     updateSelectedAsset: (TokenAsset) -> Unit,
     selectedToken: SelectedTokenUiState,
-    txComplete: TxCompleteUiState,
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
@@ -291,37 +292,6 @@ fun SendScreen2(
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
-    var rotated by remember { mutableStateOf(false) }
-
-    val rotation by animateFloatAsState(
-        targetValue = if (rotated) 180f else 0f,
-        animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing)
-    )
-
-    var isAnimating by remember { mutableStateOf(false) }
-
-    // Adjusted scaling values for a smoother transition
-    val initialScale = 0.8f  // Corresponds to the scaling factor from CardCarousel
-    val targetScale = 0.85f  // Target scaling for the send screen
-
-    val scale by animateFloatAsState(
-        targetValue = if (isAnimating) initialScale else targetScale,
-        animationSpec = tween(
-            durationMillis = mediumEnterDuration,
-            easing = FastOutSlowInEasing
-        ),
-        label = "ScaleAnimation"
-    )
-    var translateY by remember { mutableStateOf(0f) }
-
-    Log.d("CardAnimation","tokenId: ${tokenId} - initialAddress: ${initialAddress} ")
-
-
-    var testamount by remember { mutableStateOf("TEST") }
-    var testaddress by remember { mutableStateOf("TEST") }
-
-    Log.d("DEBUG","initialAddress: $initialAddress, tokenId: $tokenId")
-
     // Set the selected asset when the screen loads with a tokenId
     LaunchedEffect(tokenId, assets) {
         if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
@@ -335,41 +305,21 @@ fun SendScreen2(
         }
     }
 
-    // Monitor transaction completion state for SUCCESS only
-    LaunchedEffect(txComplete) {
-        Log.d("SendScreen", "=== TX COMPLETE STATE CHANGED ===")
-        Log.d("SendScreen", "New txComplete state: $txComplete")
-        Log.d("SendScreen", "Current transactionStatus: $transactionStatus")
-        
-        when (txComplete) {
-            is TxCompleteUiState.Complete -> {
-                Log.d("SendScreen", "🟢 TxCompleteUiState.Complete detected - transaction successful")
-                // Display success overlay for longer duration to celebrate the success
-                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
-                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
-                
-                // Start navigation while overlay is still visible for smooth fade effect
-                onBackClick() 
-                
-                // Keep overlay visible during fade transition for seamless experience
-                delay(TransactionTiming.FADE_TRANSITION_DURATION)
-                Log.d("SendScreen", "Fade transition complete, clearing overlay")
-                clearTransactionStatus()
-            }
-            is TxCompleteUiState.UnComplete -> {
-                Log.d("SendScreen", "🔴 TxCompleteUiState.UnComplete detected - no action needed")
-                // The transactionStatus from ViewModel will handle PENDING and FAILURE states
-            }
-        }
-        Log.d("SendScreen", "=== TX COMPLETE HANDLING ENDED ===")
-    }
-
     // Monitor transaction status for auto-dismiss of FAILURE state
     LaunchedEffect(transactionStatus) {
         Log.d("SendScreen", "=== TRANSACTION STATUS CHANGED ===")
         Log.d("SendScreen", "New transactionStatus: $transactionStatus")
         
         when (transactionStatus) {
+            TransactionStatus.SUCCESS -> {
+                Log.d("SendScreen", "🟢 SUCCESS status detected - transaction successful")
+                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
+                onBackClick()
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                clearTransactionStatus()
+            }
             TransactionStatus.FAILURE -> {
                 Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
                 // Display failure overlay for a reasonable duration to acknowledge the error
@@ -488,7 +438,6 @@ fun SendScreen2(
             }
         }.build()
 
-
     //Variables for QR Scanner
     val barCodeLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
@@ -542,10 +491,17 @@ fun SendScreen2(
         targetValue = if (isMaxAmount) {
             1f
         } else {
-            0.5f
+            pulseOpacity
         },
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
+
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
 
     Box(
         modifier = Modifier
@@ -562,11 +518,11 @@ fun SendScreen2(
     ) {
 
         AsyncImage(
-            modifier = Modifier.alpha(0.2f).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
+            modifier = Modifier.alpha(pulseOpacity).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
             imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(dgenTurqoise)
+            colorFilter = ColorFilter.tint(primaryColor)
         )
 
         AnimatedContent(
@@ -590,7 +546,7 @@ fun SendScreen2(
                                 text = "EMPTY",
                                 style = TextStyle(
                                     fontFamily = PitagonsSans,
-                                    color = dgenGunMetal,
+                                    color = primaryColor.copy(pulseOpacity),
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 24.sp,
                                     letterSpacing = 0.sp,
@@ -611,7 +567,7 @@ fun SendScreen2(
                             text = "ERROR",
                             style = TextStyle(
                                 fontFamily = PitagonsSans,
-                                color = dgenGunMetal,
+                                color = primaryColor.copy(pulseOpacity),
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 24.sp,
                                 letterSpacing = 0.sp,
@@ -627,11 +583,13 @@ fun SendScreen2(
                         modifier = modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ){
-                        DgenLoadingMatrix()
+                        DgenLoadingMatrix(
+                            unactiveLEDColor = secondaryColor,
+                            activeLEDColor = primaryColor
+                        )
                     }
                 }
                 is AssetsUiState.Success -> {
-
                     
                     // Selected chain state
                     var selectedChainIndex by remember { mutableStateOf(0) }
@@ -785,6 +743,7 @@ fun SendScreen2(
                     // Handle send transaction trigger from ViewModel
                     LaunchedEffect(sendTransactionTriggered) {
                         if (sendTransactionTriggered) {
+                            focusManager.clearFocus()
                             Log.d("SendScreen", "=== SEND TRANSACTION TRIGGERED ===")
                             Log.d("SendScreen", "Validating transaction parameters...")
                             Log.d("SendScreen", "Amount error: $isAmountError, Max amount: $isMaxAmount")
@@ -800,27 +759,27 @@ fun SendScreen2(
                                 when {
                                     isAmountError && !isMaxAmount -> {
                                         Log.w("SendScreen", "Error: Insufficient balance")
-                                        showToast(context,"Insufficient balance")
+                                        showDgenToast(context,"Insufficient balance")
                                     }
                                     toAddress.isEmpty() -> {
                                         Log.w("SendScreen", "Error: Enter target address")
-                                        showToast(context,"Enter target address")
+                                        showDgenToast(context,"Enter target address")
                                     }
                                     isResolvingENS -> {
                                         Log.w("SendScreen", "Error: Resolving ENS name...")
-                                        showToast(context,"Resolving ENS name...", backgroundColor = dgenOrche)
+                                        showDgenToast(context,"Resolving ENS name...", toastBackgroundColor = dgenOrche)
                                     }
                                     ensError != null -> {
                                         Log.w("SendScreen", "Error: ENS error - $ensError")
-                                        showToast(context,ensError ?: "ENS error")
+                                        showDgenToast(context,ensError ?: "ENS error")
                                     }
                                     !isValidAddress -> {
                                         Log.w("SendScreen", "Error: Invalid address format")
-                                        showToast(context,"Invalid address format")
+                                        showDgenToast(context,"Invalid address format")
                                     }
                                     selectedToken == SelectedTokenUiState.Unselected -> {
                                         Log.w("SendScreen", "Error: Select a chain")
-                                        showToast(context,"Select a chain")
+                                        showDgenToast(context,"Select a chain")
                                     }
                                 }
                             } else {
@@ -831,7 +790,7 @@ fun SendScreen2(
                                 
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
                                     Log.w("SendScreen", "Error: No amount specified")
-                                    showToast(context, "Type in an amount")
+                                    showDgenToast(context, "Type in an amount")
                                 } else {
                                     Log.d("SendScreen", "🟡 Executing transaction (ViewModel will set PENDING status)")
                                     
@@ -868,420 +827,385 @@ fun SendScreen2(
                     Box(
                         Modifier.fillMaxSize()
                     ) {
-                        Column (
-                            horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            modifier = modifier
-                                .fillMaxSize()
-                                .padding(bottom = 24.dp)
-                        ){
-                            HeaderBar(content = {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "SEND",
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
-                                            color = dgenTurqoise,
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 24.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None
+                        val customTextSelectionColors = TextSelectionColors(
+                            handleColor = Color.Transparent,
+                            backgroundColor = primaryColor.copy(alpha = 0.4f)
+                        )
+                        CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
+                            Column(
+                                horizontalAlignment = Alignment.Start,
+                                verticalArrangement = Arrangement.SpaceBetween,
+                                modifier = modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = 24.dp)
+                            ){
+                                HeaderBar(content = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "SEND",
+                                            style = TextStyle(
+                                                fontFamily = SpaceMono,
+                                                color = primaryColor,
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 24.sp,
+                                                letterSpacing = 0.sp,
+                                                textDecoration = TextDecoration.None
+                                            )
                                         )
-                                    )
 
-                                    // Show token logo based on selectedToken
-                                    when (selectedToken) {
-                                        is SelectedTokenUiState.Selected -> {
-                                            val token = selectedToken.tokenAsset
+                                        // Show token logo based on selectedToken
+                                        when (selectedToken) {
+                                            is SelectedTokenUiState.Selected -> {
+                                                val token = selectedToken.tokenAsset
 
-                                            // Token Logo
-                                            if (!token.logoUrl.isNullOrEmpty()) {
-                                                AsyncImage(
-                                                    model = token.logoUrl,
-                                                    contentDescription = token.name,
-                                                    modifier = Modifier
-                                                        .size(28.dp)
-                                                        .clip(CircleShape),
-                                                    placeholder = painterResource(R.drawable.placeholer_icon_5),
-                                                    error = painterResource(R.drawable.placeholer_icon_5)
-                                                )
-                                            } else {
-                                                val tokenLogo = when(token.symbol.uppercase()) {
-                                                    "MAINNET" -> R.drawable.mainnet
-                                                    "OPTIMISM" -> R.drawable.mainnet
-                                                    "ARBITRUM" -> R.drawable.mainnet
-                                                    "POLYGON" -> R.drawable.polygon
-                                                    "SEPOLIA" -> R.drawable.mainnet
-                                                    "BASE" -> R.drawable.mainnet
-                                                    "ZORA" -> R.drawable.mainnet
-                                                    else -> R.drawable.placeholer_icon_5
+                                                // Token Logo
+                                                if (!token.logoUrl.isNullOrEmpty()) {
+                                                    AsyncImage(
+                                                        model = token.logoUrl,
+                                                        contentDescription = token.name,
+                                                        modifier = Modifier
+                                                            .size(28.dp)
+                                                            .clip(CircleShape),
+                                                        placeholder = painterResource(R.drawable.placeholer_icon_5),
+                                                        error = painterResource(R.drawable.placeholer_icon_5)
+                                                    )
+                                                } else {
+                                                    val tokenLogo = when(token.symbol.uppercase()) {
+                                                        "MAINNET" -> R.drawable.mainnet
+                                                        "OPTIMISM" -> R.drawable.mainnet
+                                                        "ARBITRUM" -> R.drawable.mainnet
+                                                        "POLYGON" -> R.drawable.polygon
+                                                        "SEPOLIA" -> R.drawable.mainnet
+                                                        "BASE" -> R.drawable.mainnet
+                                                        "ZORA" -> R.drawable.mainnet
+                                                        else -> R.drawable.placeholer_icon_5
+                                                    }
+                                                    Image(
+                                                        modifier = Modifier
+                                                            .size(28.dp),
+                                                        painter = painterResource(tokenLogo),
+                                                        contentDescription = token.name
+                                                    )
                                                 }
+
+
+
+                                                val tokenName = when(token.symbol.uppercase()){
+                                                    "MAINNET" -> "ETH"
+                                                    "OPTIMISM" -> "ETH"
+                                                    "ARBITRUM" -> "ETH"
+                                                    "POLYGON" -> "MATIC"
+                                                    "SEPOLIA" -> "ETH"
+                                                    "BASE" -> "ETH"
+                                                    "ZORA" -> "ETH"
+
+                                                    else -> {
+                                                        token.symbol.uppercase()
+                                                    }
+                                                }
+                                                // Token Symbol
+                                                Text(
+                                                    text = tokenName,
+                                                    style = TextStyle(
+                                                        fontFamily = SpaceMono,
+                                                        color = primaryColor,
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontSize = 24.sp,
+                                                        letterSpacing = 0.sp,
+                                                        textDecoration = TextDecoration.None
+                                                    )
+                                                )
+                                            }
+                                            else -> {
+                                                // Fallback to ETH when no token is selected
                                                 Image(
                                                     modifier = Modifier
                                                         .size(28.dp),
-                                                    painter = painterResource(tokenLogo),
-                                                    contentDescription = token.name
+                                                    painter = painterResource(R.drawable.ethereum_placeholder),
+                                                    contentDescription = "Ethereum"
+                                                )
+                                                Text(
+                                                    text = "ETH",
+                                                    style = TextStyle(
+                                                        fontFamily = SpaceMono,
+                                                        color = primaryColor,
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontSize = 24.sp,
+                                                        letterSpacing = 0.sp,
+                                                        textDecoration = TextDecoration.None
+                                                    )
                                                 )
                                             }
-
-
-
-                                            val tokenName = when(token.symbol.uppercase()){
-                                                "MAINNET" -> "ETH"
-                                                "OPTIMISM" -> "ETH"
-                                                "ARBITRUM" -> "ETH"
-                                                "POLYGON" -> "MATIC"
-                                                "SEPOLIA" -> "ETH"
-                                                "BASE" -> "ETH"
-                                                "ZORA" -> "ETH"
-
-                                                else -> {
-                                                    token.symbol.uppercase()
-                                                }
-                                            }
-                                            // Token Symbol
-                                            Text(
-                                                text = tokenName,
-                                                style = TextStyle(
-                                                    fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 24.sp,
-                                                    letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None
-                                                )
-                                            )
-                                        }
-                                        else -> {
-                                            // Fallback to ETH when no token is selected
-                                            Image(
-                                                modifier = Modifier
-                                                    .size(28.dp),
-                                                painter = painterResource(R.drawable.ethereum_placeholder),
-                                                contentDescription = "Ethereum"
-                                            )
-                                            Text(
-                                                text = "ETH",
-                                                style = TextStyle(
-                                                    fontFamily = SpaceMono,
-                                                    color = dgenTurqoise,
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 24.sp,
-                                                    letterSpacing = 0.sp,
-                                                    textDecoration = TextDecoration.None
-                                                )
-                                            )
                                         }
                                     }
-                                }
-                            }, onClick = onBackClick, modifier = modifier.padding(horizontal = 24.dp))
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                                }, primaryColor = primaryColor, onClick = onBackClick, modifier = modifier.padding(horizontal = 24.dp))
 
                                 Column(
                                     modifier = Modifier
-                                        .drawBehind {
-                                            drawLine(
-                                                color = dgenGray.copy(0.5f),
-                                                start = Offset(0f, 15f),
-                                                end = Offset(0f, size.height-0f),
-                                                strokeWidth = 8.dp.toPx()
-                                            )
-                                        }
-                                        .padding(start = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Row(
-                                        Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(24.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ){
-                                        TextToggle(
-                                            Modifier.offset(x = 2.dp, y=2.dp),
-                                            when (selectedToken) {
-                                                is SelectedTokenUiState.Selected -> {
-                                                    when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                        "MAINNET" -> "ETH"
-                                                        "OPTIMISM" -> "ETH"
-                                                        "ARBITRUM" -> "ETH"
-                                                        "POLYGON" -> "MATIC"
-                                                        "SEPOLIA" -> "ETH"
-                                                        "BASE" -> "ETH"
-                                                        "ZORA" -> "ETH"
-                                                        else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                    }
-                                                }
-                                                else -> "ETH"
-                                            },
-                                            "$",
-                                            onToggle = {
-                                                useDollarAmount = !useDollarAmount
-                                                isMaxAmount = false  // Reset MAX when toggling
-                                                scope.launch{
-                                                    delay(200)
-                                                    dollarAmount = TextFieldValue("")
-                                                    amountFieldValue = TextFieldValue("")
-                                                    onAmountChange("")
-                                                }
 
-                                            },
-                                            value = useDollarAmount
-                                        )
-
-                                        val valueString = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
-                                            if (useDollarAmount) {
-                                                if (availableBalance > 0) {
-                                                    val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedToken) {
-                                                        is SelectedTokenUiState.Selected -> {
-                                                            val assetSymbolUpper = currentSelectedToken.tokenAsset.symbol.uppercase()
-                                                            when (assetSymbolUpper) {
-                                                                "MAINNET" -> "ETH"
-                                                                // Assuming other native tokens (OPTIMISM, ARBITRUM, POLYGON, etc.)
-                                                                // are keyed by their own symbol in tokenData for price,
-                                                                // or "ETH" if that's how their price is listed.
-                                                                // This matches convertDollarToToken's logic.
-                                                                else -> assetSymbolUpper
-                                                            }
-                                                        }
-                                                        else -> "ETH"
-                                                    }
-                                                    val currentPrice = tokenData.find { it.symbol.equals(tokenSymbolForPriceLookup, ignoreCase = true) }
-                                                        ?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-
-                                                    if (currentPrice != null && currentPrice > 0) {
-                                                        (availableBalance * currentPrice).formatWithSuffix(maxDecimals = 2)
-                                                    } else {
-                                                        0.0.formatWithSuffix(maxDecimals = 2) // Fallback if price not available, now uses 2 decimals for $ value
-                                                    }
-                                                } else {
-                                                    0.0.formatWithSuffix(maxDecimals = 2) // No balance, now uses 2 decimals for $ value
-                                                }
-                                            } else { // Token amount
-                                                if (availableBalance > 0.0) {
-                                                    if (abs(availableBalance) >= 1000.0) {
-                                                        // If amount is 1000 or more, use formatWithSuffix (which applies K, M, B, T)
-                                                        // formatWithSuffix uses 2 decimals when a suffix is present by default.
-                                                        availableBalance.formatWithSuffix()
-                                                    } else {
-                                                        // For amounts less than 1000, use precise formatting up to 6 decimals
-                                                        String.format(Locale.US, "%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                    }
-                                                } else { // availableBalance is 0.0 or less
-                                                    "0" // For zero or negative balance, display "0"
-                                                }
+                                    Column(
+                                        modifier = Modifier
+                                            .drawBehind {
+                                                drawLine(
+                                                    color = primaryColor.copy(pulseOpacity),
+                                                    start = Offset(0f, 15f),
+                                                    end = Offset(0f, size.height-0f),
+                                                    strokeWidth = 8.dp.toPx()
+                                                )
                                             }
-                                        }
+                                            .padding(start = 16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
 
+                                    ) {
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ){
+                                            TextToggle(
+                                                Modifier.offset(x = 2.dp, y=2.dp),
+                                                when (selectedToken) {
+                                                    is SelectedTokenUiState.Selected -> {
+                                                        when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                            "MAINNET" -> "ETH"
+                                                            "OPTIMISM" -> "ETH"
+                                                            "ARBITRUM" -> "ETH"
+                                                            "POLYGON" -> "MATIC"
+                                                            "SEPOLIA" -> "ETH"
+                                                            "BASE" -> "ETH"
+                                                            "ZORA" -> "ETH"
+                                                            else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                        }
+                                                    }
+                                                    else -> "ETH"
+                                                },
+                                                "$",
+                                                onToggle = {
+                                                    useDollarAmount = !useDollarAmount
+                                                    isMaxAmount = false  // Reset MAX when toggling
+                                                    scope.launch{
+                                                        delay(200)
+                                                        dollarAmount = TextFieldValue("")
+                                                        amountFieldValue = TextFieldValue("")
+                                                        onAmountChange("")
+                                                    }
 
-                                        Text(
-                                            text = buildAnnotatedString {
-                                                withStyle(style = SpanStyle(fontFamily = SpaceMono, fontSize = 18.sp)) {
-                                                    append("MAX ") // "MAX "
-                                                }
-                                                // Append currency symbol and value in PitagonsSans with dynamic font size
+                                                },
+                                                value = useDollarAmount,
+                                                primaryColor = primaryColor
+                                            )
+
+                                            val valueString = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
                                                 if (useDollarAmount) {
+                                                    if (availableBalance > 0) {
+                                                        val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedToken) {
+                                                            is SelectedTokenUiState.Selected -> {
+                                                                val assetSymbolUpper = currentSelectedToken.tokenAsset.symbol.uppercase()
+                                                                when (assetSymbolUpper) {
+                                                                    "MAINNET" -> "ETH"
+                                                                    // Assuming other native tokens (OPTIMISM, ARBITRUM, POLYGON, etc.)
+                                                                    // are keyed by their own symbol in tokenData for price,
+                                                                    // or "ETH" if that's how their price is listed.
+                                                                    // This matches convertDollarToToken's logic.
+                                                                    else -> assetSymbolUpper
+                                                                }
+                                                            }
+                                                            else -> "ETH"
+                                                        }
+                                                        val currentPrice = tokenData.find { it.symbol.equals(tokenSymbolForPriceLookup, ignoreCase = true) }
+                                                            ?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+
+                                                        if (currentPrice != null && currentPrice > 0) {
+                                                            (availableBalance * currentPrice).formatWithSuffix(maxDecimals = 2)
+                                                        } else {
+                                                            0.0.formatWithSuffix(maxDecimals = 2) // Fallback if price not available, now uses 2 decimals for $ value
+                                                        }
+                                                    } else {
+                                                        0.0.formatWithSuffix(maxDecimals = 2) // No balance, now uses 2 decimals for $ value
+                                                    }
+                                                } else { // Token amount
+                                                    if (availableBalance > 0.0) {
+                                                        if (abs(availableBalance) >= 1000.0) {
+                                                            // If amount is 1000 or more, use formatWithSuffix (which applies K, M, B, T)
+                                                            // formatWithSuffix uses 2 decimals when a suffix is present by default.
+                                                            availableBalance.formatWithSuffix()
+                                                        } else {
+                                                            // For amounts less than 1000, use precise formatting up to 6 decimals
+                                                            String.format(Locale.US, "%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                        }
+                                                    } else { // availableBalance is 0.0 or less
+                                                        "0" // For zero or negative balance, display "0"
+                                                    }
+                                                }
+                                            }
+
+
+                                            Text(
+                                                text = buildAnnotatedString {
+                                                    withStyle(style = SpanStyle(fontFamily = SpaceMono, fontSize = 18.sp)) {
+                                                        append("MAX ") // "MAX "
+                                                    }
+                                                    // Append currency symbol and value in PitagonsSans with dynamic font size
+                                                    if (useDollarAmount) {
+                                                        withStyle(style = SpanStyle(fontFamily = PitagonsSans, fontSize = 18.sp)) {
+                                                            append("$")
+                                                        }
+                                                    }
                                                     withStyle(style = SpanStyle(fontFamily = PitagonsSans, fontSize = 18.sp)) {
-                                                        append("$")
+                                                        append(valueString)
+                                                    }
+                                                },
+                                                color = primaryColor.copy(maxAlpha),
+                                                fontWeight = FontWeight.SemiBold,
+                                                lineHeight = 18.sp,
+                                                letterSpacing = 0.sp,
+                                                textDecoration = TextDecoration.None,
+                                                modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
+                                                    detectTapGestures {
+                                                        setMax = !setMax
                                                     }
                                                 }
-                                                withStyle(style = SpanStyle(fontFamily = PitagonsSans, fontSize = 18.sp)) {
-                                                    append(valueString)
-                                                }
-                                            },
-                                            color = dgenTurqoise.copy(maxAlpha),
-                                            fontWeight = FontWeight.SemiBold,
-                                            lineHeight = 18.sp,
-                                            letterSpacing = 0.sp,
-                                            textDecoration = TextDecoration.None,
-                                            modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
-                                                detectTapGestures {
-                                                    setMax = !setMax
-                                                }
-                                            }
-                                        )
+                                            )
 
-
-                                    }
-
-                                    Row(
-                                        Modifier.fillMaxWidth(),
-                                    ){
-                                        Crossfade(
-                                            useDollarAmount,
-                                            animationSpec = tween(smallDuration),
-                                        ) { usedollar ->
-                                            if(usedollar){
-                                                DgenBasicTextfield(
-                                                    value = dollarAmount,
-                                                    onValueChange = { new ->
-                                                        isMaxAmount = false  // Reset when user manually changes amount
-                                                        val cleanInput = new.text.removePrefix("$")
-
-                                                        if (cleanInput.isEmpty()) {
-                                                            dollarAmount = TextFieldValue("")
-                                                        } else if (cleanInput.all { it.isDigit() || it == '.' } && cleanInput.count { it == '.' } <= 1) {
-                                                            val newText = "$$cleanInput"
-                                                            dollarAmount = TextFieldValue(
-                                                                text = newText,
-                                                                selection = TextRange(newText.length)
-                                                            )
-                                                        }
-                                                    },
-                                                    maxLines = 1,
-                                                    maxLength = 15,
-                                                    placeholder = {
-                                                        Row (
-                                                            Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.Start
-                                                        ){
-                                                            Text(
-                                                                modifier = Modifier,
-                                                                text =  buildAnnotatedString {
-                                                                    withStyle(
-                                                                        style = SpanStyle(
-                                                                            fontFamily = PitagonsSans,
-                                                                            color = dgenGray.copy(alpha = 0.5f),
-                                                                            fontWeight = FontWeight.SemiBold,
-                                                                            fontSize = 39.sp,
-                                                                        )
-                                                                    ){
-                                                                        append("$")
-                                                                    }
-                                                                    append("0.0") // Static placeholder
-                                                                },
-                                                                style = TextStyle(
-                                                                    fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(alpha = 0.5f),
-                                                                    fontWeight = FontWeight.SemiBold,
-                                                                    fontSize = 42.sp,
-                                                                    textAlign = TextAlign.Start
-                                                                ),
-                                                            )
-                                                        }
-
-                                                    },
-                                                    textStyle = TextStyle(
-                                                        fontFamily = PitagonsSans,
-                                                        color = if (isAmountError) dgenRed else dgenWhite,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        fontSize = 42.sp,
-                                                        textAlign = TextAlign.Start
-                                                    ),
-                                                    keyboardtype =  KeyboardType.Number,
-                                                    cursorWidth = 24.dp,
-                                                    cursorHeight= 32.dp,
-                                                    isAnyFieldFocused= remember { mutableStateOf(false) },
-                                                )
-                                            }else{
-                                                DgenBasicTextfield(
-                                                    value = amountFieldValue,
-                                                    onValueChange={ new ->
-                                                        isMaxAmount = false  // Reset when user manually changes amount
-
-                                                        if (amountFieldValue.text.isEmpty() || amountFieldValue.text == "." || amountFieldValue.text.matches("-?\\d*(\\.\\d*)?".toRegex())) {
-                                                            // If it's a valid format or empty, call onAmountChange with the text
-                                                            amountFieldValue = new
-                                                            onAmountChange(new.text)
-                                                        }
-//                                                        // Check if the new value contains more than one dot
-//                                                        val dotCount = new.text.count { it == '.' }
-//                                                        if (dotCount <= 1) {
-//                                                            amountFieldValue = new
-//                                                            onAmountChange(new.text)
-//                                                        }
-                                                    },
-                                                    maxLines = 1,
-                                                    maxLength = 15,
-                                                    placeholder = {
-                                                        Row (
-                                                            Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.Start
-                                                        ){
-                                                            Text(
-                                                                modifier = Modifier,
-                                                                text = "0.0", // Static placeholder
-                                                                style = TextStyle(
-                                                                    fontFamily = PitagonsSans,
-                                                                    color = dgenGray.copy(alpha = 0.5f),
-                                                                    fontWeight = FontWeight.SemiBold,
-                                                                    fontSize = 42.sp,
-                                                                    textAlign = TextAlign.Start
-                                                                ),
-                                                            )
-                                                        }
-
-                                                    },
-                                                    textStyle = TextStyle(
-                                                        fontFamily = PitagonsSans,
-                                                        color = if (isAmountError) dgenRed else dgenWhite,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        fontSize = 42.sp,
-                                                        textAlign = TextAlign.Start
-                                                    ),
-                                                    keyboardtype =  KeyboardType.Number,
-                                                    cursorWidth = 24.dp,
-                                                    cursorHeight= 32.dp,
-                                                    isAnyFieldFocused= remember { mutableStateOf(false) },
-                                                )
-                                            }
 
                                         }
-                                    }
 
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                        ){
+                                            Crossfade(
+                                                useDollarAmount,
+                                                animationSpec = tween(smallDuration),
+                                            ) { usedollar ->
+                                                if(usedollar){
+                                                    DgenBasicTextfield(
+                                                        value = dollarAmount,
+                                                        onValueChange = { new ->
+                                                            isMaxAmount = false  // Reset when user manually changes amount
+                                                            val cleanInput = new.text.removePrefix("$")
 
-                                    LaunchedEffect(dollarAmount.text, useDollarAmount, selectedToken) {
-                                        if (useDollarAmount && dollarAmount.text.isNotEmpty()) {
-                                            delay(500)
+                                                            // Allow only numbers and a single dot, no commas or spaces
+                                                            if (cleanInput.matches("^\\d*\\.?\\d*$".toRegex())) {
+                                                                if (cleanInput.isEmpty()) {
+                                                                    dollarAmount = TextFieldValue("")
+                                                                } else {
+                                                                    val newText = "$$cleanInput"
+                                                                    dollarAmount = TextFieldValue(
+                                                                        text = newText,
+                                                                        selection = TextRange(newText.length)
+                                                                    )
+                                                                }
+                                                            }
+                                                        },
+                                                        maxLines = 1,
+                                                        maxLength = 15,
+                                                        placeholder = {
+                                                            Row (
+                                                                Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.Start
+                                                            ){
+                                                                Text(
+                                                                    modifier = Modifier,
+                                                                    text =  buildAnnotatedString {
+                                                                        withStyle(
+                                                                            style = SpanStyle(
+                                                                                fontFamily = PitagonsSans,
+                                                                                color = primaryColor.copy(alpha = pulseOpacity),
+                                                                                fontWeight = FontWeight.SemiBold,
+                                                                                fontSize = 39.sp,
+                                                                            )
+                                                                        ){
+                                                                            append("$")
+                                                                        }
+                                                                        append("0.0") // Static placeholder
+                                                                    },
+                                                                    style = TextStyle(
+                                                                        fontFamily = PitagonsSans,
+                                                                        color = primaryColor.copy(alpha = pulseOpacity),
+                                                                        fontWeight = FontWeight.SemiBold,
+                                                                        fontSize = 42.sp,
+                                                                        textAlign = TextAlign.Start
+                                                                    ),
+                                                                )
+                                                            }
 
-                                            val tokenSymbol = when (selectedToken) {
-                                                is SelectedTokenUiState.Selected -> {
-                                                    when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                        "MAINNET" -> "ETH"
-                                                        else -> selectedToken.tokenAsset.symbol.uppercase()
-                                                    }
+                                                        },
+                                                        textStyle = TextStyle(
+                                                            fontFamily = PitagonsSans,
+                                                            color = if (isAmountError) dgenRed else dgenWhite,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 42.sp,
+                                                            textAlign = TextAlign.Start
+                                                        ),
+                                                        keyboardtype =  KeyboardType.Number,
+                                                        cursorWidth = 24.dp,
+                                                        cursorHeight= 24.dp,
+                                                        cursorColor = primaryColor,
+                                                        isAnyFieldFocused= remember { mutableStateOf(false) },
+                                                    )
+                                                }else{
+                                                    DgenBasicTextfield(
+                                                        value = amountFieldValue,
+                                                        onValueChange={ new ->
+                                                            isMaxAmount = false  // Reset when user manually changes amount
+
+                                                            // Allow only numbers and a single dot
+                                                            if (new.text.matches("^\\d*\\.?\\d*$".toRegex())) {
+                                                                amountFieldValue = new
+                                                                onAmountChange(new.text)
+                                                            }
+                                                        },
+                                                        maxLines = 1,
+                                                        maxLength = 15,
+                                                        cursorColor = primaryColor,
+                                                        placeholder = {
+                                                            Row (
+                                                                Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.Start
+                                                            ){
+                                                                Text(
+                                                                    modifier = Modifier,
+                                                                    text = "0.0", // Static placeholder
+                                                                    style = TextStyle(
+                                                                        fontFamily = PitagonsSans,
+                                                                        color = primaryColor.copy(alpha = pulseOpacity),
+                                                                        fontWeight = FontWeight.SemiBold,
+                                                                        fontSize = 42.sp,
+                                                                        textAlign = TextAlign.Start
+                                                                    ),
+                                                                )
+                                                            }
+
+                                                        },
+                                                        textStyle = TextStyle(
+                                                            fontFamily = PitagonsSans,
+                                                            color = if (isAmountError) dgenRed else dgenWhite,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 42.sp,
+                                                            textAlign = TextAlign.Start
+                                                        ),
+                                                        keyboardtype =  KeyboardType.Number,
+                                                        cursorWidth = 24.dp,
+                                                        cursorHeight= 24.dp,
+                                                        isAnyFieldFocused= remember { mutableStateOf(false) },
+                                                    )
                                                 }
-                                                else -> {
-                                                    "ETH"
-                                                }
+
                                             }
-
-                                            convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
-                                            
-                                            // Calculate the converted token amount for validation
-                                            try {
-                                                val dollarValue = dollarAmount.text.removePrefix("$").toDoubleOrNull() ?: 0.0
-                                                val currentPrice = tokenData.find { 
-                                                    it.symbol.equals(tokenSymbol, ignoreCase = true) 
-                                                }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                
-                                                if (currentPrice != null && currentPrice > 0) {
-                                                    convertedTokenAmount = (dollarValue / currentPrice).toString()
-                                                }
-                                            } catch (e: Exception) {
-                                                // Error handling
-                                            }
-                                        } else if (!useDollarAmount) {
-                                            convertedTokenAmount = ""
                                         }
-                                    }
 
-                                    // Add LaunchedEffect for MAX functionality
-                                    LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
-                                        if (setMax && availableBalance > 0) {
-                                            isMaxAmount = true  // Set flag when MAX is used
-                                            val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                            
-                                            if (useDollarAmount) {
-                                                // Calculate dollar value from token balance
+
+                                        LaunchedEffect(dollarAmount.text, useDollarAmount, selectedToken) {
+                                            if (useDollarAmount && dollarAmount.text.isNotEmpty()) {
+                                                delay(500)
+
                                                 val tokenSymbol = when (selectedToken) {
                                                     is SelectedTokenUiState.Selected -> {
                                                         when (selectedToken.tokenAsset.symbol.uppercase()) {
@@ -1289,252 +1213,296 @@ fun SendScreen2(
                                                             else -> selectedToken.tokenAsset.symbol.uppercase()
                                                         }
                                                     }
-                                                    else -> "ETH"
+                                                    else -> {
+                                                        "ETH"
+                                                    }
                                                 }
+
+                                                convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
                                                 
-                                                val currentPrice = tokenData.find { 
-                                                    it.symbol.equals(tokenSymbol, ignoreCase = true) 
-                                                }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                
-                                                if (currentPrice != null && currentPrice > 0) {
-                                                    val dollarValue = availableBalance * currentPrice
-                                                    val formattedDollar = String.format("%.2f", dollarValue)
-                                                    val newText = "$$formattedDollar"
-                                                    dollarAmount = TextFieldValue(
-                                                        text = newText,
-                                                        selection = TextRange(newText.length)
-                                                    )
+                                                // Calculate the converted token amount for validation
+                                                try {
+                                                    val dollarValue = dollarAmount.text.removePrefix("$").toDoubleOrNull() ?: 0.0
+                                                    val currentPrice = tokenData.find { 
+                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                    
+                                                    if (currentPrice != null && currentPrice > 0) {
+                                                        convertedTokenAmount = (dollarValue / currentPrice).toString()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    // Error handling
                                                 }
-                                            } else {
-                                                // Set token amount directly
-                                                amountFieldValue = TextFieldValue(formattedBalance)
-                                                onAmountChange(formattedBalance)
+                                            } else if (!useDollarAmount) {
+                                                convertedTokenAmount = ""
                                             }
-                                            
-                                            // Reset setMax after setting the value
-                                            setMax = false
                                         }
+
+                                        // Add LaunchedEffect for MAX functionality
+                                        LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
+                                            if (setMax && availableBalance > 0) {
+                                                isMaxAmount = true  // Set flag when MAX is used
+                                                val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
+                                                
+                                                if (useDollarAmount) {
+                                                    // Calculate dollar value from token balance
+                                                    val tokenSymbol = when (selectedToken) {
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                                "MAINNET" -> "ETH"
+                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                            }
+                                                        }
+                                                        else -> "ETH"
+                                                    }
+                                                    
+                                                    val currentPrice = tokenData.find { 
+                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                    
+                                                    if (currentPrice != null && currentPrice > 0) {
+                                                        val dollarValue = availableBalance * currentPrice
+                                                        val formattedDollar = String.format("%.2f", dollarValue)
+                                                        val newText = "$$formattedDollar"
+                                                        dollarAmount = TextFieldValue(
+                                                            text = newText,
+                                                            selection = TextRange(newText.length)
+                                                        )
+                                                    }
+                                                } else {
+                                                    // Set token amount directly
+                                                    amountFieldValue = TextFieldValue(formattedBalance)
+                                                    onAmountChange(formattedBalance)
+                                                }
+                                                
+                                                // Reset setMax after setting the value
+                                                setMax = false
+                                            }
+                                        }
+
                                     }
 
-                                }
 
-
-                                // Chain selection based on token availability
-                                // REMOVED - Already defined above before availableBalance
-                                
-                                // Set the initial chain based on the selected token
-                                LaunchedEffect(selectedToken, availableChains) {
-                                    when (selectedToken) {
-                                        is SelectedTokenUiState.Selected -> {
-                                            // If a token is already selected, find its chain index
-                                            val tokenChainName = when (selectedToken.tokenAsset.chainId) {
-                                                1 -> "main"
-                                                11155111 -> "sepolia"
-                                                10 -> "op"
-                                                137 -> "pol"
-                                                42161 -> "arb"
-                                                8453 -> "base"
-                                                7777777 -> "zora"
-                                                else -> null
-                                            }
-                                            
-                                            tokenChainName?.let { chainName ->
-                                                val chainIndex = availableChains.indexOf(chainName)
-                                                if (chainIndex >= 0) {
-                                                    selectedChainIndex = chainIndex
-                                                }
-                                            }
-                                        }
-                                        else -> {
-                                            // Only auto-select if there's exactly one chain and no token is selected
-                                            if (availableChains.size == 1 && assetsUiState is AssetsUiState.Success) {
-                                                val chainName = availableChains.first()
-                                                val chainId = when (chainName) {
-                                                    "main" -> 1
-                                                    "sepolia" -> 11155111
-                                                    "op" -> 10
-                                                    "pol" -> 137
-                                                    "arb" -> 42161
-                                                    "base" -> 8453
-                                                    "zora" -> 7777777
+                                    // Chain selection based on token availability
+                                    // REMOVED - Already defined above before availableBalance
+                                    
+                                    // Set the initial chain based on the selected token
+                                    LaunchedEffect(selectedToken, availableChains) {
+                                        when (selectedToken) {
+                                            is SelectedTokenUiState.Selected -> {
+                                                // If a token is already selected, find its chain index
+                                                val tokenChainName = when (selectedToken.tokenAsset.chainId) {
+                                                    1 -> "main"
+                                                    11155111 -> "sepolia"
+                                                    10 -> "op"
+                                                    137 -> "pol"
+                                                    42161 -> "arb"
+                                                    8453 -> "base"
+                                                    7777777 -> "zora"
                                                     else -> null
                                                 }
                                                 
-                                                chainId?.let { id ->
+                                                tokenChainName?.let { chainName ->
                                                     val chainIndex = availableChains.indexOf(chainName)
                                                     if (chainIndex >= 0) {
                                                         selectedChainIndex = chainIndex
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-
-                                // Ensure a token is selected when a chain is already chosen (initial load)
-                                LaunchedEffect(selectedChainIndex, selectedToken) {
-                                    if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
-                                        val selectedChainName = availableChains.getOrNull(selectedChainIndex)
-                                        val selectedChainId = when (selectedChainName) {
-                                            "main" -> 1
-                                            "sepolia" -> 11155111
-                                            "op" -> 10
-                                            "pol" -> 137
-                                            "arb" -> 42161
-                                            "base" -> 8453
-                                            "zora" -> 7777777
-                                            else -> null
-                                        }
-                                        selectedChainId?.let { chainId ->
-                                            val nativeToken = assetsUiState.assets.firstOrNull { asset ->
-                                                asset.chainId == chainId && asset.address == chainId.toString()
-                                            }
-                                            nativeToken?.let { updateSelectedAsset(it) }
-                                        }
-                                    }
-                                }
-
-                                SelectableCarousel(
-                                    modifier = modifier.offset(x = (-3).dp),
-                                    items = availableChains,
-                                    itemWidth = 65.dp,
-                                    itemHeight = 65.dp,
-                                    initialSelectedIndex = selectedChainIndex,
-                                    onItemSelected = { index -> 
-                                        val newIndex = index ?: 0
-                                        
-                                        // Only process if actually changing to a different chain
-                                        if (selectedChainIndex != newIndex) {
-                                            selectedChainIndex = newIndex
-                                            
-                                            // Handle token selection based on current state
-                                            if (assetsUiState is AssetsUiState.Success) {
-                                                val selectedChainName = availableChains.getOrNull(newIndex)
-                                                val selectedChainId = when (selectedChainName) {
-                                                    "main" -> 1
-                                                    "sepolia" -> 11155111
-                                                    "op" -> 10
-                                                    "pol" -> 137
-                                                    "arb" -> 42161
-                                                    "base" -> 8453
-                                                    "zora" -> 7777777
-                                                    else -> null
-                                                }
-                                                
-                                                selectedChainId?.let { chainId ->
-                                                    when (selectedToken) {
-                                                        // If no token is selected, select the native token
-                                                        is SelectedTokenUiState.Unselected -> {
-                                                            if (!tokenPreselected) {
-                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
-                                                                    asset.chainId == chainId && 
-                                                                    asset.address == chainId.toString()
-                                                                }
-                                                                nativeToken?.let {
-                                                                    updateSelectedAsset(it)
-                                                                }
-                                                            }
-                                                        }
-                                                        // If a token is selected, check if it's native or ERC20
-                                                        is SelectedTokenUiState.Selected -> {
-                                                            val currentToken = selectedToken.tokenAsset
-                                                            // If current token is native, switch to the native token of the new chain
-                                                            if (currentToken.address == currentToken.chainId.toString()) {
-                                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
-                                                                    asset.chainId == chainId && 
-                                                                    asset.address == chainId.toString()
-                                                                }
-                                                                nativeToken?.let {
-                                                                    updateSelectedAsset(it)
-                                                                }
-                                                            }
-                                                            // If current token is ERC20, keep it selected
+                                            else -> {
+                                                // Only auto-select if there's exactly one chain and no token is selected
+                                                if (availableChains.size == 1 && assetsUiState is AssetsUiState.Success) {
+                                                    val chainName = availableChains.first()
+                                                    val chainId = when (chainName) {
+                                                        "main" -> 1
+                                                        "sepolia" -> 11155111
+                                                        "op" -> 10
+                                                        "pol" -> 137
+                                                        "arb" -> 42161
+                                                        "base" -> 8453
+                                                        "zora" -> 7777777
+                                                        else -> null
+                                                    }
+                                                    
+                                                    chainId?.let { id ->
+                                                        val chainIndex = availableChains.indexOf(chainName)
+                                                        if (chainIndex >= 0) {
+                                                            selectedChainIndex = chainIndex
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                )
-                            }
 
-                            SimpleDgenTextfield(
-                                modifier = modifier.padding(horizontal = 8.dp),
-                                value = toAddressFieldValue,
-                                maxLines = 4,
-                                maxLength = 43,
-                                scrollHorizontally = false,
-                                autoCorrectEnabled = false,
-                                onValueChange = { new ->
-                                    toAddressFieldValue = new
-                                    onToAddressChanged(new.text)
-                                },
-                                textStyle = TextStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = dgenWhite,
-                                    fontWeight = FontWeight. SemiBold,
-                                    fontSize = 25.sp
-                                ),
-                                placeholder = {
-                                    Row (
-                                        Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Start
-                                    ){
-                                        Text(
-                                            modifier = Modifier,
-                                            text = "Address",
-                                            style = TextStyle(
-                                                fontFamily = PitagonsSans,
-                                                color = dgenGray.copy(0.5f),
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 24.sp
-                                            ),
-                                        )
+                                    // Ensure a token is selected when a chain is already chosen (initial load)
+                                    LaunchedEffect(selectedChainIndex, selectedToken) {
+                                        if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
+                                            val selectedChainName = availableChains.getOrNull(selectedChainIndex)
+                                            val selectedChainId = when (selectedChainName) {
+                                                "main" -> 1
+                                                "sepolia" -> 11155111
+                                                "op" -> 10
+                                                "pol" -> 137
+                                                "arb" -> 42161
+                                                "base" -> 8453
+                                                "zora" -> 7777777
+                                                else -> null
+                                            }
+                                            selectedChainId?.let { chainId ->
+                                                val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                    asset.chainId == chainId && asset.address == chainId.toString()
+                                                }
+                                                nativeToken?.let { updateSelectedAsset(it) }
+                                            }
+                                        }
                                     }
 
-                                },
-                                keyboardtype =  KeyboardType.Text,
-                                cursorWidth = 16.dp,
-                                cursorHeight= 32.dp,
-                                isAnyFieldFocused= remember { mutableStateOf(false) },
-                                onEditDone = {},
-                                view = view
-                            ){
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Text(
-                                        text = when {
-                                            isResolvingENS -> "Resolving ENS...".uppercase()
-                                            ensError != null -> "ENS Error".uppercase()
-                                            toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> "ENS Resolved".uppercase()
-                                            else -> "Target Address".uppercase()
+                                    SelectableCarousel(
+                                        modifier = modifier.offset(x = (-3).dp),
+                                        items = availableChains,
+                                        itemWidth = 65.dp,
+                                        itemHeight = 65.dp,
+                                        initialSelectedIndex = selectedChainIndex,
+                                        onItemSelected = { index -> 
+                                            val newIndex = index ?: 0
+                                            
+                                            // Only process if actually changing to a different chain
+                                            if (selectedChainIndex != newIndex) {
+                                                selectedChainIndex = newIndex
+                                                
+                                                // Handle token selection based on current state
+                                                if (assetsUiState is AssetsUiState.Success) {
+                                                    val selectedChainName = availableChains.getOrNull(newIndex)
+                                                    val selectedChainId = when (selectedChainName) {
+                                                        "main" -> 1
+                                                        "sepolia" -> 11155111
+                                                        "op" -> 10
+                                                        "pol" -> 137
+                                                        "arb" -> 42161
+                                                        "base" -> 8453
+                                                        "zora" -> 7777777
+                                                        else -> null
+                                                    }
+                                                    
+                                                    selectedChainId?.let { chainId ->
+                                                        when (selectedToken) {
+                                                            // If no token is selected, select the native token
+                                                            is SelectedTokenUiState.Unselected -> {
+                                                                if (!tokenPreselected) {
+                                                                    val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                        asset.chainId == chainId && 
+                                                                        asset.address == chainId.toString()
+                                                                    }
+                                                                    nativeToken?.let {
+                                                                        updateSelectedAsset(it)
+                                                                    }
+                                                                }
+                                                            }
+                                                            // If a token is selected, check if it's native or ERC20
+                                                            is SelectedTokenUiState.Selected -> {
+                                                                val currentToken = selectedToken.tokenAsset
+                                                                // If current token is native, switch to the native token of the new chain
+                                                                if (currentToken.address == currentToken.chainId.toString()) {
+                                                                    val nativeToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                        asset.chainId == chainId && 
+                                                                        asset.address == chainId.toString()
+                                                                    }
+                                                                    nativeToken?.let {
+                                                                        updateSelectedAsset(it)
+                                                                    }
+                                                                }
+                                                                // If current token is ERC20, keep it selected
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         },
-                                        style = TextStyle(
-                                            fontFamily = SpaceMono,
+                                        primaryColor = primaryColor,
+                                        secondaryColor = secondaryColor
+                                    )
+                                }
+
+                                SimpleDgenTextfield(
+                                    modifier = modifier.padding(horizontal = 8.dp),
+                                    value = toAddressFieldValue,
+                                    maxLines = 4,
+                                    maxLength = 43,
+                                    scrollHorizontally = false,
+                                    autoCorrectEnabled = false,
+                                    onValueChange = { new ->
+                                        toAddressFieldValue = new
+                                        onToAddressChanged(new.text)
+                                    },
+                                    textStyle = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenWhite,
+                                        fontWeight = FontWeight. SemiBold,
+                                        fontSize = 25.sp
+                                    ),
+                                    activeColor = primaryColor,
+                                    placeholder = {
+                                        Row (
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Start
+                                        ){
+                                            Text(
+                                                modifier = Modifier,
+                                                text = "Address",
+                                                style = TextStyle(
+                                                    fontFamily = PitagonsSans,
+                                                    color = primaryColor.copy(pulseOpacity),
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 24.sp
+                                                ),
+                                            )
+                                        }
+                                    },
+                                    cursorColor = primaryColor,
+                                    keyboardtype =  KeyboardType.Text,
+                                    cursorWidth = 16.dp,
+                                    cursorHeight= 16.dp,
+                                    isAnyFieldFocused= remember { mutableStateOf(false) },
+                                    onEditDone = {},
+                                    view = view
+                                ){
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(
+                                            text = when {
+                                                isResolvingENS -> "Resolving ENS...".uppercase()
+                                                ensError != null -> "ENS Error".uppercase()
+                                                toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> "ENS Resolved".uppercase()
+                                                else -> "Target Address".uppercase()
+                                            },
+                                            style = TextStyle(
+                                                fontFamily = SpaceMono,
+                                                color = when {
+                                                    isResolvingENS -> dgenOrche
+                                                    ensError != null -> dgenRed
+                                                    toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
+                                                    else -> primaryColor
+                                                },
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = label_fontSize,
+                                                lineHeight = label_fontSize,
+                                                letterSpacing = 1.sp,
+                                                textDecoration = TextDecoration.None,
+                                                textAlign = TextAlign.Left
+                                            ),
                                             color = when {
                                                 isResolvingENS -> dgenOrche
                                                 ensError != null -> dgenRed
                                                 toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
-                                                else -> dgenTurqoise
-                                            },
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = label_fontSize,
-                                            lineHeight = label_fontSize,
-                                            letterSpacing = 1.sp,
-                                            textDecoration = TextDecoration.None,
-                                            textAlign = TextAlign.Left
-                                        ),
-                                        color = when {
-                                            isResolvingENS -> dgenOrche
-                                            ensError != null -> dgenRed
-                                            toAddressFieldValue.text.endsWith(".eth") && isValidAddress -> dgenGreen
-                                            else -> dgenTurqoise
-                                        }
-                                    )
-                                }
+                                                else -> primaryColor
+                                            }
+                                        )
+                                    }
 
+                                }
                             }
                         }
                     }
@@ -1546,26 +1514,12 @@ fun SendScreen2(
         TransactionStatusOverlay(
             status = transactionStatus,
             gifLoader = gifEnabledLoader,
-            onDismiss = { clearTransactionStatus() }
+            onDismiss = { clearTransactionStatus() },
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
         )
     }
 
-}
-
-fun showToast(
-    context: Context,
-    message: String,
-    backgroundColor: Color = dgenRed,
-    textColor: Color = dgenWhite
-) {
-    context.showCustomToast(
-        message,
-        Toast.LENGTH_SHORT,
-        fontFamily = PitagonsSans,
-        fontWeight = FontWeight.SemiBold,
-        backgroundColor = backgroundColor,
-        textColor = textColor,
-    )
 }
 
 fun parseEthereumUri(uri: String): String {

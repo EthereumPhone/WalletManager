@@ -7,8 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.largeExitDuration
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.largeExitDuration
 import com.feature.paymaster.PayMasterScreenRoute
 
 const val paymasterRoute = "paymaster_route"

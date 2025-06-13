@@ -3,20 +3,14 @@ package com.example.transactions
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,28 +23,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -58,10 +42,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -77,19 +58,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.dgenOcean
+import com.core.ui.util.dgenTurqoise
 import com.example.transactions.ui.LogEntry
-import com.example.transactions.ui.TxEntry
-import com.example.transactions.ui.TxType
 import kotlinx.coroutines.delay
-import org.ethosmobile.components.library.theme.Colors
-import org.ethosmobile.components.library.walletmanager.ethOSTransferListItem
 import kotlin.random.Random
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -98,15 +72,19 @@ import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
 import com.core.ui.HeaderBar
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
-import com.example.dgenlibrary.ui.theme.smallDuration
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun LogRoute(
     navigateBack: () -> Unit,
     tokenId: String?,
+    onTransactionClick: (String) -> Unit,
     viewModel: TransactionViewModel = hiltViewModel()
 ){
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
@@ -143,19 +121,16 @@ fun LogRoute(
         }
     }
 
-    //closes terminal screen for receive button
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onLogClosed()
-        }
-    }
-
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = navigateBack,
+        onNavigateBack = {
+            viewModel.onLogClosed()
+            navigateBack()
+        },
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
+        onTransactionClick = onTransactionClick,
         //onRefresh = viewModel::refreshData
     )
 }
@@ -168,11 +143,18 @@ fun LogScreen(
     onNavigateBack: () -> Unit = {},
     refreshState: Boolean,
     tokenId: String?,
+    onTransactionClick: (String) -> Unit,
     //onRefresh: () -> Unit,
 ){
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
 
     val scrollState = rememberLazyListState()
 
@@ -195,7 +177,8 @@ fun LogScreen(
         HeaderBar(
             modifier = Modifier.padding(horizontal = 24.dp),
             text = "ACTIVITY LOG",
-            onClick = onNavigateBack
+            onClick = onNavigateBack,
+            primaryColor = primaryColor
         )
 
         Box(modifier = Modifier.fillMaxSize()){
@@ -212,7 +195,7 @@ fun LogScreen(
                 when(txState){
                     is TransfersUiState.Loading -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            DgenLoadingMatrix()
+                            DgenLoadingMatrix(activeLEDColor = primaryColor, unactiveLEDColor = secondaryColor)
                         }
                     }
                     is TransfersUiState.Success -> {
@@ -230,7 +213,11 @@ fun LogScreen(
                                 LazyColumn(
                                     state= scrollState,
                                     modifier = Modifier
-                                            .verticalLazyListScrollbar(scrollState) // Apply the scrollbar first
+                                            .verticalLazyListScrollbar(
+                                                scrollState,
+                                                scrollBarTrackColor = secondaryColor,
+                                                scrollBarColor = primaryColor
+                                            ) // Apply the scrollbar first
                                         .fillMaxSize()
                                         .padding(horizontal = 24.dp),
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -243,7 +230,12 @@ fun LogScreen(
                                         //TODO: Add Logos
                                         Log.d("LogScreen", "transfer.asset ${transfer.txHash} logoUrl ${metaBySymbol[transfer.asset]?.logo ?: ""}")
 
-                                        LogEntry(logEntry = transfer, logoUrl = metaBySymbol[transfer.asset]?.logo ?: "")
+                                        LogEntry(
+                                            logEntry = transfer,
+                                            primaryColor = primaryColor,
+                                            logoUrl = metaBySymbol[transfer.asset]?.logo ?: "",
+                                            onNavigateToDetail = onTransactionClick
+                                        )
                                     }
 
                                     item {
@@ -418,8 +410,8 @@ fun LogViewPreview(){
         refreshState = false,
         tokenId = "DAI",
         //onRefresh = {},
-        tokenMetadata = sampleMetadata
-//        tokenAssetUiState = TokenAssetUiState.Success(tokenAssets)
+        tokenMetadata = sampleMetadata,
+        onTransactionClick = {}
     )
 
 }
@@ -484,8 +476,8 @@ fun Modifier.verticalLazyListScrollbar(
     lazyListState: LazyListState,
     width: Dp = 6.dp,
     showScrollBarTrack: Boolean = true,
-    scrollBarTrackColor: Color = dgenOcean,
-    scrollBarColor: Color = dgenTurqoise,
+    scrollBarTrackColor: Color,
+    scrollBarColor: Color,
     scrollBarCornerRadius: Float = 4f,
     endPadding: Float = 12f
 ): Modifier {

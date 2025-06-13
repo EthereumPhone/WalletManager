@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -14,13 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,15 +27,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.core.model.TransferItem
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
 import com.core.ui.util.abbreviateNumber
 import com.core.ui.util.formatAddress
 import com.core.ui.util.formatWithSuffix
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.dgenWhite
 import com.example.transactions.R
-import com.example.transactions.TokenAssetUiState
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -51,7 +49,9 @@ private fun getBlockExplorerUrl(chainId: Int, txHash: String): String {
 @Composable
 fun LogEntry(
     logoUrl: String = "",
-    logEntry : TransferItem
+    logEntry : TransferItem,
+    primaryColor: Color,
+    onNavigateToDetail: (String) -> Unit
 ) {
     val context = LocalContext.current
     val decimalFormat = DecimalFormat("0.00").apply {
@@ -78,10 +78,7 @@ fun LogEntry(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.clickable {
-            // Open block explorer URL when clicked
-            val explorerUrl = getBlockExplorerUrl(logEntry.chainId, logEntry.txHash)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(explorerUrl))
-            context.startActivity(intent)
+            onNavigateToDetail(logEntry.txHash)
         }
     ) {
 
@@ -123,7 +120,7 @@ fun LogEntry(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = SpaceMono,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
                             textDecoration = TextDecoration.None
@@ -152,7 +149,7 @@ fun LogEntry(
 
                     withStyle(style = SpanStyle(
                         fontFamily = SpaceMono,
-                        color = dgenTurqoise,
+                        color = primaryColor,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp,
                         textDecoration = TextDecoration.None
@@ -230,7 +227,7 @@ fun PreviewLogEntity() {
         txHash = ""
     )
 
-    LogEntry(logEntry = transferItem)
+    LogEntry(logEntry = transferItem, primaryColor = Color.Red, onNavigateToDetail = {})
 
 
 

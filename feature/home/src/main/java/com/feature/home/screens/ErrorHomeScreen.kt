@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -21,14 +22,17 @@ import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.core.ui.R
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun ErrorHomeScreen(
     modifier: Modifier = Modifier,
-    gifEnabledLoader: ImageLoader
+    gifEnabledLoader: ImageLoader,
+    primaryColor: Color
 ){
     Box(
         modifier = modifier.fillMaxSize(),
@@ -44,15 +48,14 @@ fun ErrorHomeScreen(
                 model = R.drawable.wireframe_torus,
                 contentDescription = null,
                 modifier = Modifier.size(275.dp),
-                colorFilter = ColorFilter.tint(dgenGunMetal)
-
+                colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
             )
 
             Text(
                 text = "ERROR",
                 style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenGunMetal,
+                    fontFamily = SpaceMono,
+                    color = primaryColor.copy(neonOpacity),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 24.sp,
                     letterSpacing = 0.sp,

@@ -1,35 +1,31 @@
 package com.feature.send.ui
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.smallDuration
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.smallDuration
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun TextToggle(
     modifier: Modifier = Modifier,
     primaryStateName: String,
     secondaryStateName: String,
+    primaryColor: Color,
     onToggle: () -> Unit,
     value: Boolean
 ){
@@ -47,7 +43,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -60,7 +56,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp,
                             letterSpacing = 0.sp,
@@ -71,7 +67,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = dgenTurqoise.copy(0.5f),
+                color = primaryColor.copy(pulseOpacity),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
@@ -92,7 +88,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise,
+                            color = primaryColor,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -105,7 +101,7 @@ fun TextToggle(
                     withStyle(
                         style = SpanStyle(
                             fontFamily = PitagonsSans,
-                            color = dgenTurqoise.copy(0.5f),
+                            color = primaryColor.copy(pulseOpacity),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 17.sp,
                             letterSpacing = 0.sp,
@@ -116,7 +112,7 @@ fun TextToggle(
                     }
                 },
                 fontFamily = SpaceMono,
-                color = dgenTurqoise,
+                color = primaryColor,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 lineHeight = 18.sp,

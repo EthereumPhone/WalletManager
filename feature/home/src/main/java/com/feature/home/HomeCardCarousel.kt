@@ -33,17 +33,14 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -58,9 +55,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.core.model.TokenData
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenBlack
+import com.core.ui.util.SystemColorManager
 import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
 import kotlinx.coroutines.launch
@@ -70,16 +65,21 @@ import coil.decode.ImageDecoderDecoder
 import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.example.dgenlibrary.ui.theme.extraLargeEnterDuration
-import com.example.dgenlibrary.ui.theme.extraLargeExitDuration
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
 import com.core.ui.BottomBar
+import com.core.ui.showDgenToast
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.extraLargeEnterDuration
+import com.core.ui.util.extraLargeExitDuration
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
@@ -196,10 +196,16 @@ fun HomeScreen2(
             }.build()
     }
 
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
     Box (
         modifier = Modifier
             .fillMaxSize()
-            .background(dgenBlack),
     ) {
 
 
@@ -207,7 +213,6 @@ fun HomeScreen2(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxSize()
-                .background(dgenBlack)
             //.weight(1f) // Allows it to take up remaining space
 
         ) {
@@ -241,25 +246,31 @@ fun HomeScreen2(
 
                 if (isOffline) {
                     NoInternetHomeScreen(
-                        gifEnabledLoader = gifEnabledLoader
+                        gifEnabledLoader = gifEnabledLoader,
+                        primaryColor = primaryColor
                     )
                 } else {
                     when(assetState){
                         is AssetsUiState.Empty -> {
                             EmptyHomeScreen(
-                                gifEnabledLoader = gifEnabledLoader
+                                gifEnabledLoader = gifEnabledLoader,
+                                primaryColor = primaryColor
                             )
                             Log.d("DEBUG","AssetsUiState.EMPTY")
                         }
                         is AssetsUiState.Error -> {
                             Log.d("DEBUG","AssetsUiState.ERROR")
                             ErrorHomeScreen(
-                                gifEnabledLoader = gifEnabledLoader
+                                gifEnabledLoader = gifEnabledLoader,
+                                primaryColor = primaryColor
                             )
                         }
                         is AssetsUiState.Loading -> {
                             Log.d("DEBUG","AssetsUiState.LOADING")
-                            LoadingHomeScreen()
+                            LoadingHomeScreen(
+                                primaryColor = primaryColor,
+                                secondaryColor = secondaryColor,
+                            )
                         }
                         is AssetsUiState.Success -> {
                             Log.d("DEBUG","AssetsUiState.SUCCESS")
@@ -277,8 +288,8 @@ fun HomeScreen2(
                                         navigateToSend = navigateToSend,
                                         selectedTokenUiState = selectedTokenUiState,
                                         setSelectedToken = setSelectedTokenId,
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedContentScope = animatedContentScope,
+                                        primaryColor = primaryColor,
+                                        secondaryColor = secondaryColor
                                     )
                                 },
                                 secondaryContent = {
@@ -296,13 +307,13 @@ fun HomeScreen2(
                                                 model = R.drawable.wireframe_torus,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(275.dp),
-                                                colorFilter = ColorFilter.tint(dgenGunMetal)
+                                                colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
                                             )
                                             Text(
                                                 text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
                                                 style = TextStyle(
                                                     fontFamily = PitagonsSans,
-                                                    color = dgenGunMetal,
+                                                    color = primaryColor.copy(neonOpacity),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 16.sp,
                                                     letterSpacing = 0.sp,
@@ -357,12 +368,9 @@ fun HomeScreen2(
                 hasTransfer,
                 navigateToLog = {
                     if (isOffline) {
-                        context.showCustomToast(
+                        showDgenToast(
+                            context,
                             message = "No internet connection!",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenRed,
-                            textColor = dgenWhite
                         )
                     } else {
                         navigateToLog(selectedTokenId.value)
@@ -386,8 +394,8 @@ fun HomeScreen2(
                 },
                 navigateToPayMaster = {
                     navigateToPayMaster()
-
-                }
+                },
+                primaryColor = primaryColor
             )
         }
     }

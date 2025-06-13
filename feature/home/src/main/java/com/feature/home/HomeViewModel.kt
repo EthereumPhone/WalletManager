@@ -59,9 +59,10 @@ import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
 import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.showDgenToast
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -266,7 +267,7 @@ class HomeViewModel @Inject constructor(
         // Check for internet connectivity first
         // If offline, show a toast and return the original uri so that callers don't crash
         if (!networkMonitor.isOnline.first()) {
-            showToast("No internet connection!")
+            showDgenToast(context,"No internet connection!")
             return null
         }
 
@@ -303,19 +304,6 @@ class HomeViewModel @Inject constructor(
     data class MoonpayResponse(
         val link: String
     )
-
-    // Helper to display styled toast consistent with UI components
-    private fun showToast(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            context.showCustomToast(
-                message = message,
-                fontFamily = PitagonsSans,
-                fontWeight = FontWeight.SemiBold,
-                backgroundColor = dgenRed,
-                textColor = dgenWhite
-            )
-        }
-    }
 
     fun setOnboardingComplete(onboardingComplete: Boolean) {
         viewModelScope.launch {
@@ -395,7 +383,7 @@ class HomeViewModel @Inject constructor(
             if (terminalSDK.isAvailable()) {
                 val message: String
                 if (!isFirstLaunchCompleted()) {
-                    message = "WELCOME"
+                    message = "WELCOME ONBOARD ヽ(•◡•)ノ"
                     setFirstLaunchCompleted()
                 } else {
                     var nextIndex = welcomeMessages.indices.random()

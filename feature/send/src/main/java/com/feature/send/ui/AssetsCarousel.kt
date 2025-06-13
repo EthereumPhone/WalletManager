@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -26,15 +25,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.body1_fontSize
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGray
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.label_fontSize
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.lazerCore
 import com.feature.send.R
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun SelectableCarousel(
@@ -42,6 +37,8 @@ fun SelectableCarousel(
     items: List<String>,
     itemWidth: Dp = 200.dp,
     itemHeight: Dp = 150.dp,
+    primaryColor: Color,
+    secondaryColor: Color,
     initialSelectedIndex: Int? = null,
     onItemSelected: (index: Int?) -> Unit
 ) {
@@ -98,8 +95,8 @@ fun SelectableCarousel(
                 Card(
                     shape = RoundedCornerShape(0.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) dgenTurqoise
-                        else dgenOcean
+                        containerColor = if (isSelected) primaryColor
+                        else secondaryColor
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
@@ -128,49 +125,53 @@ fun SelectableCarousel(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
+                            val imageModifier = if (primaryColor == lazerCore) {
+                                Modifier
+                                    .size(34.dp)
+                                    .border(1.dp, secondaryColor, CircleShape)
+                            } else {
+                                Modifier.size(34.dp)
+                            }
                             when(item) {
                                 "base" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(R.drawable.base),
                                         contentDescription = "Base"
                                     )
                                 }
                                 "main" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(R.drawable.mainnet),
                                         contentDescription = "Mainnet"
                                     )
                                 }
                                 "zora" -> {
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.zorb),
                                         contentDescription = "Zorb"
                                     )
                                 }
                                 "op" -> {
+                                    
                                     Image(
-                                        modifier = Modifier
-                                            .size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.optimism),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "arb" -> {
                                     Image(
-                                        modifier = Modifier.size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.arbitrum),
                                         contentDescription = "Optimism"
                                     )
                                 }
                                 "pol" -> {
                                     Image(
-                                        modifier = Modifier.size(34.dp),
+                                        modifier = imageModifier,
                                         painter = painterResource(id = R.drawable.polygon),
                                         contentDescription = "Optimism"
                                     )
@@ -184,8 +185,8 @@ fun SelectableCarousel(
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp
                                 ),
-                                color = if (isSelected) dgenOcean
-                                else dgenTurqoise
+                                color = if (isSelected) secondaryColor
+                                else primaryColor
                             )
                         }
                     }
@@ -231,7 +232,7 @@ fun SelectableCarouselPreview() {
         SelectableCarousel(
             items = sampleItems,
             initialSelectedIndex = 0,
-            onItemSelected = { index -> selected = index }
+            onItemSelected = { index -> selected = index }, primaryColor =  Color.Red, secondaryColor = Color.Blue
         )
     }
 }

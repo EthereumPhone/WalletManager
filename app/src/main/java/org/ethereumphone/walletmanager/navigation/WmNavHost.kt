@@ -23,7 +23,6 @@ import com.example.assets.navigation.navigateToAsset
 import com.example.assets.navigation.navigateToAssetDetail
 import com.example.transactions.navigation.navigateToTransaction
 import com.example.transactions.navigation.navigateToTransactionDetail
-import com.example.transactions.navigation.transactionDetailScreen
 import com.example.transactions.navigation.transactionGraph
 import com.feature.home.navigation.homeGraph
 import com.feature.home.navigation.homeGraphRoutePattern
@@ -113,6 +112,9 @@ fun WmNavHost(
 
             transactionGraph(
                 navigateBack = navController::popBackStack,
+                navigateToDetail = { txHash ->
+                    navController.navigateToTransactionDetail(txHash)
+                }
             )
         }
     }

@@ -22,12 +22,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.mediumEnterDuration
-import com.example.dgenlibrary.ui.theme.mediumExitDuration
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.mediumExitDuration
+import com.core.ui.util.SystemColorManager
+
 
 @Composable
 fun BottomBar(
@@ -36,6 +39,7 @@ fun BottomBar(
     navigateToReceive: () -> Unit,
     navigateToBuy: () -> Unit,
     navigateToPayMaster: () -> Unit,
+    primaryColor: Color
 ){
 
     Row(
@@ -56,13 +60,14 @@ fun BottomBar(
             )
         ){
             BottomBarButton(
+                primaryColor = primaryColor,
                 onClick = navigateToLog,
                 icon = {
                     Icon(
                         modifier = Modifier.size(24.dp),
                         painter = painterResource(R.drawable.baseline_swap_vert_24),
                         contentDescription = "Back",
-                        tint = dgenTurqoise
+                        tint = primaryColor
                     )
                 },
                 text = "Log"
@@ -82,19 +87,21 @@ fun BottomBar(
         }
 
         BottomBarButton(
+            primaryColor = primaryColor,
             onClick = navigateToBuy,
             icon = {
                 Icon(
                     modifier = Modifier.size(24.dp),
                     imageVector = Icons.Outlined.Add,
                     contentDescription = "Back",
-                    tint = dgenTurqoise
+                    tint = primaryColor
                 )
             },
             text = "Buy"
         )
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
+            primaryColor = primaryColor,
             onClick = navigateToReceive,
             icon = {
                 Icon(
@@ -103,7 +110,7 @@ fun BottomBar(
                         .rotate(180f),
                     imageVector = Icons.Outlined.ArrowOutward,
                     contentDescription = "Back",
-                    tint = dgenTurqoise
+                    tint = primaryColor
                 )
             },
             text = "Receive"
@@ -111,6 +118,7 @@ fun BottomBar(
 
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
+            primaryColor = primaryColor,
             onClick = navigateToPayMaster,
             icon = {
                 Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
@@ -118,7 +126,7 @@ fun BottomBar(
                         modifier = Modifier.size(16.dp),
                         painter = painterResource(R.drawable.gas_icon),
                         contentDescription = "Back",
-                        tint = dgenTurqoise
+                        tint = primaryColor
                     )
                 }
 

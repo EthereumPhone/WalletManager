@@ -1,22 +1,20 @@
 package com.feature.receive.ui
 
 import android.graphics.Bitmap
-import android.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
+import com.core.ui.util.dgenBlack
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.WriterException
@@ -28,7 +26,8 @@ import kotlinx.coroutines.launch
 fun rememberQrBitmapPainter(
     content: String,
     size: Dp = 150.dp,
-    padding: Dp = 0.dp
+    padding: Dp = 0.dp,
+    primaryColor: Color,
 ): BitmapPainter {
 
     val density = LocalDensity.current
@@ -72,7 +71,7 @@ fun rememberQrBitmapPainter(
             for (x in 0 until matrixWidth) {
                 for (y in 0 until matrixHeight) {
                     val shouldColorPixel = bitmapMatrix?.get(x, y) ?: false
-                    val pixelColor = if (shouldColorPixel) dgenBlack else dgenTurqoise
+                    val pixelColor = if (shouldColorPixel) dgenBlack else primaryColor
 
                     newBitmap.setPixel(x, y, pixelColor.toArgb())
                 }
@@ -86,7 +85,7 @@ fun rememberQrBitmapPainter(
         val currentBitmap = bitmap ?: Bitmap.createBitmap(
             sizePx, sizePx,
             Bitmap.Config.ARGB_8888,
-        ).apply { eraseColor(Color.TRANSPARENT) }
+        ).apply { eraseColor(Color.Transparent.toArgb()) }
 
         BitmapPainter(currentBitmap.asImageBitmap())
     }

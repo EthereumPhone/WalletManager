@@ -1,17 +1,13 @@
 package com.core.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,9 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenRed
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenTurqoise
 
 @Composable
 fun BottomBarButton(
@@ -33,6 +28,7 @@ fun BottomBarButton(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     text: String,
+    primaryColor: Color
 ) {
     Button(
         modifier = Modifier
@@ -42,7 +38,7 @@ fun BottomBarButton(
         onClick = onClick,
         shape = RoundedCornerShape(0.dp),
         colors = ButtonDefaults.buttonColors(
-            contentColor = dgenTurqoise,
+            contentColor = primaryColor,
             containerColor = Color.Transparent
         ),
         contentPadding = PaddingValues(8.dp)
@@ -58,7 +54,7 @@ fun BottomBarButton(
                 modifier = Modifier,
                 style = TextStyle(
                     fontFamily = SpaceMono,
-                    color = dgenTurqoise,
+                    color = primaryColor,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     lineHeight = 16.sp,

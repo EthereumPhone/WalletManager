@@ -28,8 +28,8 @@ import com.core.model.TokenData
 import com.core.model.TokenMetadata
 import com.core.ui.Card
 import com.core.ui.views.IdleView
-import com.example.dgenlibrary.ui.theme.largeEnterDuration
-import com.example.dgenlibrary.ui.theme.smallDuration
+import com.core.ui.util.largeEnterDuration
+import com.core.ui.util.smallDuration
 import com.feature.send.SelectedTokenUiState
 import kotlin.collections.find
 import kotlin.math.abs
@@ -39,17 +39,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Velocity
 import com.core.model.TokenAssetWithPrice
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
-import dev.chrisbanes.snapper.SnapOffsets
-import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -61,12 +56,13 @@ fun TokenCardCarousel(
     assets: List<TokenAssetWithPrice>,
     loadSymbol: (List<String>) -> Unit,
     selectedTokenUiState: SelectedTokenUiState,
-    sharedTransitionScope: SharedTransitionScope,
     navigateToSend: (address: String, tokenId: String) -> Unit,
-    animatedContentScope: AnimatedContentScope,
     setSelectedToken: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+    primaryColor: Color,
+    secondaryColor: Color,
+    modifier: Modifier = Modifier,
+
+    ) {
     var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
     var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
     var autoScrollDone by rememberSaveable { mutableStateOf(false) }
@@ -223,8 +219,6 @@ fun TokenCardCarousel(
                 animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
             )
 
-
-            with(sharedTransitionScope) {
                 Card(
                     isFirst = isFirstCard,
                     modifier = Modifier
@@ -255,11 +249,13 @@ fun TokenCardCarousel(
                             navigateToSend = {
                                 navigateToSend(item.address, item.address)
                             },
-                            enableSend = item.balance > 0
+                            enableSend = item.balance > 0,
+                            primaryColor = primaryColor,
                         )
                     },
+                    primaryColor = primaryColor,
+                    secondaryColor = secondaryColor
                 )
-            }
         }
     }
 }

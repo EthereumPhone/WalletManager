@@ -1,7 +1,6 @@
 package com.core.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,21 +15,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenTurqoise
 
 @Composable
 fun HeaderBar(
     modifier: Modifier = Modifier,
     text: String = "",
     content: @Composable () -> Unit = {},
+    primaryColor: Color,
     onClick: () -> Unit
 ){
     // Debouncing-State für das Verhindern von mehrfachen schnellen Klicks
@@ -51,7 +51,7 @@ fun HeaderBar(
                 text = text.uppercase(),
                 style = TextStyle(
                     fontFamily = SpaceMono,
-                    color = dgenTurqoise,
+                    color = primaryColor,
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.sp,
                     letterSpacing = 0.sp,
@@ -74,7 +74,7 @@ fun HeaderBar(
             ,
             painter = painterResource(R.drawable.baseline_close_24),
             contentDescription = "Back",
-            tint = dgenTurqoise
+            tint = primaryColor
         )
 
     }

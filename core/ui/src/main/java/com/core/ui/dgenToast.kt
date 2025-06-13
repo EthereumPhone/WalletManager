@@ -14,31 +14,28 @@ import androidx.compose.ui.unit.dp
 import android.view.Gravity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.graphics.Typeface
-import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.remember
-import androidx.core.app.NotificationCompat
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.graphics.drawable.GradientDrawable
-import androidx.compose.ui.text.font.Font
+import android.os.Handler
+import android.os.Looper
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.res.ResourcesCompat
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import android.graphics.Color as AndroidColor
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.dgenOcean
+import com.core.ui.util.dgenTurqoise
 
 
 object FontResourceMap {
@@ -195,15 +192,38 @@ fun Color.toAndroidColor(): Int {
     }
 }*/
 
+
+fun showDgenToast(context: Context, message: String, toastBackgroundColor: Color? = null, toastTextColor: Color? = null) {
+    Handler(Looper.getMainLooper()).post {
+        SystemColorManager.refresh(context)
+        val backgroundColor = toastBackgroundColor ?: SystemColorManager.secondaryColor
+        val textColor = toastTextColor ?: SystemColorManager.primaryColor
+        context.showCustomToast(
+            message = message.uppercase(),
+            backgroundColor = backgroundColor,
+            textColor = textColor,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
 // Compose UI example
 @Preview(device = "spec:width=720px,height=720px,dpi=240", name = "DDevice")
 @Composable
 fun ToastDemoScreen() {
-    val context = LocalContext.current
+    /*val context = LocalContext.current
     //val notificationHelper = remember { NotificationHelper(context) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDegenToast by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
     initializeFontMap(SpaceMono, PitagonsSans)
+
+    if (showDegenToast) {
+        DgenToast(message = toastMessage) {
+            showDegenToast = false
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -246,8 +266,18 @@ fun ToastDemoScreen() {
                 Text("Show Snackbar")
             }
 
+            Button(
+                onClick = {
+                    toastMessage = "Primary Theme Toast!"
+                    showDegenToast = true
+                },
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text("Show Theme Toast")
+            }
+
         }
-    }
+    }*/
 }
 
 

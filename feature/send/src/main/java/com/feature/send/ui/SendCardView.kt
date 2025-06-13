@@ -1,7 +1,6 @@
 package com.feature.send.ui
 
 
-import InstantGif
 import android.os.Build.VERSION.SDK_INT
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,13 +49,8 @@ import coil.compose.AsyncImage
 import com.core.data.util.chainToApiKey
 import com.core.ui.R
 import com.core.ui.util.abbreviateNumber
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
+import com.core.ui.util.dgenTurqoise
 import kotlinx.coroutines.delay
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
@@ -66,6 +59,9 @@ import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.pulseOpacity
 
 @Composable
 fun SendCardView(
@@ -163,7 +159,7 @@ fun SendCardView(
             ){
                 if (amountCard.isEmpty()){
                     Text(
-                        modifier = Modifier.alpha(0.5f),
+                        modifier = Modifier.alpha(pulseOpacity),
                         text = "0.0",
                         style = TextStyle(
                             fontFamily = PitagonsSans,
@@ -256,7 +252,7 @@ fun SendCardView(
             ){
                 if (toAddressCard.isEmpty()){
                     Text(
-                        modifier = Modifier.alpha(0.5f),
+                        modifier = Modifier.alpha(pulseOpacity),
                         text = "Address",
                         style = TextStyle(
                             fontFamily = PitagonsSans,

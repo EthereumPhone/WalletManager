@@ -13,9 +13,9 @@
         android:id="@+id/zxing_viewfinder_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:zxing_possible_result_points="#BFD6EA"
-        app:zxing_result_view="#BFD6EA"
-        app:zxing_viewfinder_laser="#BFD6EA"
+        app:zxing_possible_result_points="#050505"
+        app:zxing_result_view="#050505"
+        app:zxing_viewfinder_laser="#050505"
         app:zxing_viewfinder_laser_visibility="true"
         app:zxing_viewfinder_mask="#050505" />
 

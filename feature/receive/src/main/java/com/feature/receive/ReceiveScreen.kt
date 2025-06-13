@@ -1,37 +1,24 @@
 package com.feature.receive
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -46,12 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,15 +55,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.core.model.UserData
 import com.core.ui.HeaderBar
 import com.core.ui.initializeFontMap
-import com.core.ui.showCustomToast
-import com.example.dgenlibrary.ui.theme.PitagonsSans
-import com.example.dgenlibrary.ui.theme.SpaceMono
-import com.example.dgenlibrary.ui.theme.dgenBlack
-import com.example.dgenlibrary.ui.theme.dgenGunMetal
-import com.example.dgenlibrary.ui.theme.dgenOcean
-import com.example.dgenlibrary.ui.theme.dgenTurqoise
-import com.example.dgenlibrary.ui.theme.dgenWhite
-import com.feature.receive.ui.TruncatedAddress
+import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenGunMetal
+import com.core.ui.util.dgenWhite
+import com.core.ui.util.neonOpacity
+import com.core.ui.util.pulseOpacity
 import com.feature.receive.ui.rememberQrBitmapPainter
 
 @Composable
@@ -165,9 +148,13 @@ fun ReceiveScreen(
     onCopyClick: () -> Unit,
 
 ) {
-
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        SystemColorManager.refresh(context)
+    }
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
 
 
         Column (
@@ -178,7 +165,7 @@ fun ReceiveScreen(
                 .padding(horizontal = 24.dp)
             //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
-            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick)
+            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick, primaryColor = primaryColor)
 
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,8 +173,7 @@ fun ReceiveScreen(
                 modifier = Modifier.weight(1f)
             ){
                 Image(
-                    //TODO: Change Address
-                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}"),
+                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
@@ -216,7 +202,7 @@ fun ReceiveScreen(
                     modifier = modifier.width(300.dp),
                     style = TextStyle(
                         fontFamily = PitagonsSans,
-                        color = dgenGunMetal,
+                        color = primaryColor.copy(neonOpacity),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         letterSpacing = 0.sp,
@@ -240,7 +226,7 @@ fun TestQr() {
 
     ) {
         Image(
-            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55"),
+            painter = rememberQrBitmapPainter(content = "ethereum:0xBB6d8Def979571Da5e7231938248B18B19374c55", primaryColor = Color.Red),
             contentDescription = "wallet address QR",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.size(135.dp),
