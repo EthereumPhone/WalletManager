@@ -45,7 +45,7 @@ class ReceiveViewModel @Inject constructor(
      *
      * When opened it displays the copy button
      */
-    fun onCopyOpened(){
+    suspend fun onCopyOpened(){
         try{
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {

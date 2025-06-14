@@ -422,6 +422,9 @@ class SendViewModel @Inject constructor(
     fun onScreenOpened() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
+                val result = terminalSDK?.isAvailable() == false
+                println("TerminalSDK isAvailable: $result")
+
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.displayQRCode(
                         onQrCode = {

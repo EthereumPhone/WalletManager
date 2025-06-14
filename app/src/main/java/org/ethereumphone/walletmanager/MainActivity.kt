@@ -33,6 +33,9 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
 import com.workers.work.SeedUniswapTokensWorker
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
@@ -55,6 +58,8 @@ class MainActivity() : ComponentActivity() {
     var terminalSDK: TerminalSDK? = null
 
     val viewModel: MainActivityViewModel by viewModels()
+
+    val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,9 +141,13 @@ class MainActivity() : ComponentActivity() {
     override fun onPause() {
         super.onPause()
 
-        terminalSDK?.let {
-            it.resume(it.ID_STATUSBAR)
-            it.destroyTouchHandler()
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                terminalSDK?.let {
+                    it.resume(it.ID_STATUSBAR)
+                    it.destroyTouchHandler()
+                }
+            }
         }
     }
 
@@ -152,10 +161,15 @@ class MainActivity() : ComponentActivity() {
 
         // Stop the periodic update
         walletAddressUpdater.stopPeriodicUpdate()
-        terminalSDK?.let {
-            it.resume(it.ID_STATUSBAR)
-            it.destroyTouchHandler()
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                terminalSDK?.let {
+                    it.resume(it.ID_STATUSBAR)
+                    it.destroyTouchHandler()
+                }
+            }
         }
+
     }
 
 }

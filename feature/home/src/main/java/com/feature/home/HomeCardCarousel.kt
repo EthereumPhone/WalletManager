@@ -83,6 +83,7 @@ import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KSuspendFunction1
 
 
@@ -184,6 +185,15 @@ fun HomeScreen2(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
+
+    val lastClickTime = remember { AtomicLong(0) }
+    fun onDebouncedClick(action: () -> Unit) {
+        val now = System.currentTimeMillis()
+        if (now - lastClickTime.get() > 1000L) {
+            lastClickTime.set(now)
+            action()
+        }
+    }
 
     val gifEnabledLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -378,16 +388,20 @@ fun HomeScreen2(
                     }
                 },
                 navigateToReceive = {
-                    navigateToReceive()
+                    onDebouncedClick {
+                        navigateToReceive()
+                    }
                 },
                 navigateToBuy = {
-                    if (userData is WalletDataUiState.Success) {
-                        val address = userData.userData.walletAddress
-                        scope.launch {
-                            val json = Uri.encode("{\"eth\":\"$address\"}")
-                            getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
-                                println("Opening URI: $uri")
-                                uriHandler.openUri(uri)
+                    onDebouncedClick {
+                        if (userData is WalletDataUiState.Success) {
+                            val address = userData.userData.walletAddress
+                            scope.launch {
+                                val json = Uri.encode("{\"eth\":\"$address\"}")
+                                getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
+                                    println("Opening URI: $uri")
+                                    uriHandler.openUri(uri)
+                                }
                             }
                         }
                     }

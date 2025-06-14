@@ -241,7 +241,7 @@ class PayMasterViewModel @Inject constructor(
         }
     }
 
-    fun onTopUpOpened(){
+    suspend fun onTopUpOpened(){
         try{
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {
