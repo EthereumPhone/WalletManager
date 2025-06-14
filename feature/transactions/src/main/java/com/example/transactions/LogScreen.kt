@@ -76,9 +76,6 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun LogRoute(
