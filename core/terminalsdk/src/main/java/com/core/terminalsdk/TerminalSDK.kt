@@ -3,6 +3,13 @@ package com.core.terminalsdk
 import android.content.Context
 import android.graphics.Bitmap
 import android.view.MotionEvent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TerminalSDK(private val context: Context) {
 
@@ -37,29 +44,72 @@ class TerminalSDK(private val context: Context) {
     /* reference to current touch handler */
     private var miniDisplayTouchHandler: MiniDisplayTouchHandler? = null
 
+    private val methodMutex = Mutex()
+
+    // Indicates whether a bitmap has been pushed since the last resume.
+    private var bitmapPushed: Boolean = false
+
+    private val scope = CoroutineScope(Dispatchers.Main)
+
+    private suspend fun <T> synchronizedBuffer(action: suspend () -> T): T {
+        methodMutex.lock()
+        try {
+            val result = action()
+            return result
+        } finally {
+            methodMutex.unlock()
+        }
+    }
+
     /* ----------------------------------------------------------------------------------------- */
     /*  Public façade                                                                            */
     /* ----------------------------------------------------------------------------------------- */
 
     /** Is the proxy (and therefore the back-screen HAL) available? */
-    fun isAvailable(): Boolean = proxy != null
+    suspend fun isAvailable(): Boolean {
+        println("ETHOSDEBUGTERMINAL isAvailable")
+        return synchronizedBuffer { proxy != null }
+    }
 
-    fun isScreenOn(): Boolean =
-        call { mIsOn.invoke(it) as Boolean } == true
+    suspend fun isScreenOn(): Boolean {
+        println("ETHOSDEBUGTERMINAL isScreenOn")
+        return synchronizedBuffer { call { mIsOn.invoke(it) as Boolean } == true }
+    }
 
-    fun refresh(bitmap: Bitmap, id: Int): Boolean =
-        call { mRefresh.invoke(it, bitmap, id) as Boolean } ?: false
+    suspend fun refresh(bitmap: Bitmap, id: Int): Boolean {
+        println("ETHOSDEBUGTERMINAL refresh id=$id")
+        return synchronizedBuffer {
+            val success = call { mRefresh.invoke(it, bitmap, id) as Boolean } ?: false
+            if (success) {
+                bitmapPushed = true
+            }
+            success
+        }
+    }
 
-    fun resume(id: Int) = call { mResume.invoke(it, id) }
+    suspend fun resume(id: Int) {
+        println("ETHOSDEBUGTERMINAL resume id=$id")
+        synchronizedBuffer {
+            if (bitmapPushed) {
+                call { mResume.invoke(it, id) }
+                bitmapPushed = false
+            } else {
+                println("ETHOSDEBUGTERMINAL resume skipped - no prior bitmap pushed")
+            }
+        }
+    }
 
     /* ----------------------------------------------------------------------------------------- */
     /*  Helpers                                                                                  */
     /* ----------------------------------------------------------------------------------------- */
 
-    private inline fun <T> call(block: (Any) -> T): T? =
-        proxy?.let(block)
+    private suspend inline fun <T> call(crossinline block: (Any) -> T): T? =
+        withContext(Dispatchers.Main) {
+            proxy?.let { block(it) }
+        }
 
-    fun displayQRCode(onQrCode: () -> Unit, sendTx: () -> Unit) {
+    suspend fun displayQRCode(onQrCode: () -> Unit, sendTx: () -> Unit) {
+        println("ETHOSDEBUGTERMINAL displayQRCode")
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -88,7 +138,8 @@ class TerminalSDK(private val context: Context) {
         )
     }
 
-    fun removeQRCode() {
+    suspend fun removeQRCode() {
+        println("ETHOSDEBUGTERMINAL removeQRCode")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
@@ -96,7 +147,8 @@ class TerminalSDK(private val context: Context) {
     /**
      * Displays the copy bitmap in ReceiveScreen
      */
-    fun displayCopyAddress(onCopy: () -> Unit) {
+    suspend fun displayCopyAddress(onCopy: () -> Unit) {
+        println("ETHOSDEBUGTERMINAL displayCopyAddress")
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -113,8 +165,10 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onCopy()
-                    resume(ID_STATUSBAR)
-                    destroyTouchHandler()
+                    scope.launch {
+                        resume(ID_STATUSBAR)
+                        destroyTouchHandler()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -122,7 +176,8 @@ class TerminalSDK(private val context: Context) {
         )
     }
 
-    fun removeCopyAddress() {
+    suspend fun removeCopyAddress() {
+        println("ETHOSDEBUGTERMINAL removeCopyAddress")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
@@ -131,7 +186,8 @@ class TerminalSDK(private val context: Context) {
     /**
      * Displays the copy bitmap in ReceiveScreen
      */
-    fun displayTopUp(onTopUp: () -> Unit) {
+    suspend fun displayTopUp(onTopUp: () -> Unit) {
+        println("ETHOSDEBUGTERMINAL displayTopUp")
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -148,8 +204,10 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onTopUp()
-                    resume(ID_STATUSBAR)
-                    destroyTouchHandler()
+                    scope.launch {
+                        resume(ID_STATUSBAR)
+                        destroyTouchHandler()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -157,7 +215,8 @@ class TerminalSDK(private val context: Context) {
         )
     }
 
-    fun removeTopUp() {
+    suspend fun removeTopUp() {
+        println("ETHOSDEBUGTERMINAL removeTopUp")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
@@ -165,7 +224,8 @@ class TerminalSDK(private val context: Context) {
     /**
     * Displays the log bitmap in LogScreen
     */
-    fun displayLog(onLog: () -> Unit) {
+    suspend fun displayLog(onLog: () -> Unit) {
+        println("ETHOSDEBUGTERMINAL displayLog")
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -182,8 +242,10 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onLog()
-                    resume(ID_STATUSBAR)
-                    destroyTouchHandler()
+                    scope.launch {
+                        resume(ID_STATUSBAR)
+                        destroyTouchHandler()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -191,7 +253,8 @@ class TerminalSDK(private val context: Context) {
         )
     }
 
-    fun removeLog() {
+    suspend fun removeLog() {
+        println("ETHOSDEBUGTERMINAL removeLog")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
@@ -199,12 +262,16 @@ class TerminalSDK(private val context: Context) {
     /**
      * Manually destroy the current touch handler
      */
-    fun destroyTouchHandler() {
-        miniDisplayTouchHandler?.destroy()
-        miniDisplayTouchHandler = null
+    suspend fun destroyTouchHandler() {
+        println("ETHOSDEBUGTERMINAL destroyTouchHandler")
+        synchronizedBuffer {
+            miniDisplayTouchHandler?.destroy()
+            miniDisplayTouchHandler = null
+        }
     }
 
-    fun finishScreen() {
+    suspend fun finishScreen() {
+        println("ETHOSDEBUGTERMINAL finishScreen")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }
@@ -217,7 +284,8 @@ class TerminalSDK(private val context: Context) {
      * rendered bitmap to the mini-display using the persistent layer (ID_PERSISTENT).
      * No touch processing is installed for this view.
      */
-    fun displayBlackText(text: String) {
+    suspend fun displayBlackText(text: String) {
+        println("ETHOSDEBUGTERMINAL displayBlackText text='$text'")
         // Remove any existing touch handling to avoid leaking receivers
         destroyTouchHandler()
 

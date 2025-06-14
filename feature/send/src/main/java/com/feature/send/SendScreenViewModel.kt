@@ -279,7 +279,9 @@ class SendViewModel @Inject constructor(
                                 _transactionStatus.value = TransactionStatus.SUCCESS
                                 _txComplete.value = TxCompleteUiState.Complete // ✅ Set txComplete to Complete on success!
                                 Log.d("SendViewModel", "✅ Status set: transactionStatus=SUCCESS, txComplete=Complete")
-                                terminalSDK?.displayBlackText("TXN SUCCESS!")
+                                viewModelScope.launch {
+                                    terminalSDK?.displayBlackText("TXN SUCCESS!")
+                                }
                             } else {
                                 Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
                                 _transactionStatus.value = TransactionStatus.FAILURE
@@ -444,6 +446,9 @@ class SendViewModel @Inject constructor(
     fun onScreenOpened() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
+                val result = terminalSDK?.isAvailable() == false
+                println("TerminalSDK isAvailable: $result")
+
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.displayQRCode(
                         onQrCode = {

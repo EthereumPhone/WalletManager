@@ -125,7 +125,7 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-    fun onLogOpened(){
+    suspend fun onLogOpened(){
         try{
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {

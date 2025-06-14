@@ -13,6 +13,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -38,6 +39,8 @@ import com.feature.send.navigation.sendRoute
 import com.feature.send.navigation.sendScreen
 import com.feature.swap.navigation.navigateToSwap
 import com.feature.swap.navigation.swapScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.ethereumphone.walletmanager.ui.WmAppState
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -48,6 +51,7 @@ fun WmNavHost(
     startDestination: String = homeGraphRoutePattern,
     terminalSDK: TerminalSDK?
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val navController = appState.navController
     SharedTransitionLayout {
         NavHost(
@@ -88,19 +92,27 @@ fun WmNavHost(
                     navController.navigateToSwap()
                 },
                 navigateToSend = { address, tokenId ->
-                    terminalSDK?.finishScreen()
+                    coroutineScope.launch(Dispatchers.IO) {
+                        terminalSDK?.finishScreen()
+                    }
                     navController.navigateToSend(address= address, tokenId =tokenId)
                 },
                 navigateToLog = { it ->
-                    terminalSDK?.finishScreen()
+                    coroutineScope.launch(Dispatchers.IO) {
+                        terminalSDK?.finishScreen()
+                    }
                     navController.navigateToTransaction(tokenId = it)
                 },
                 navigateToReceive = {
-                    terminalSDK?.finishScreen()
+                    coroutineScope.launch(Dispatchers.IO) {
+                        terminalSDK?.finishScreen()
+                    }
                     navController.navigateToReceive()
                                     },
                 navigateToPayMaster = {
-                    terminalSDK?.finishScreen()
+                    coroutineScope.launch(Dispatchers.IO) {
+                        terminalSDK?.finishScreen()
+                    }
                     navController.navigateToPayMaster()
                                       },
                 nestedGraphs = {
