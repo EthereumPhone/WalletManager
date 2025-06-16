@@ -220,7 +220,7 @@ class TerminalSDK(private val context: Context) {
     /**
      * Displays the log bitmap in LogScreen
      */
-    fun displayLog(onLog: () -> Unit) {
+    suspend fun displayLog(onLog: () -> Unit) {
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -257,7 +257,7 @@ class TerminalSDK(private val context: Context) {
     /**
      * Displays the log bitmap in LogScreen
      */
-    fun displayDetailLog(onLog: () -> Unit) {
+    suspend fun displayDetailLog(onLog: () -> Unit) {
         // Clean up any existing touch handler first
         destroyTouchHandler()
 
@@ -274,8 +274,10 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onLog()
-                    resume(ID_STATUSBAR)
-                    destroyTouchHandler()
+                    scope.launch {
+                        resume(ID_STATUSBAR)
+                        destroyTouchHandler()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -283,7 +285,8 @@ class TerminalSDK(private val context: Context) {
         )
     }
 
-    fun removeDetailLog() {
+    suspend fun removeDetailLog() {
+        println("ETHOSDEBUGTERMINAL removeDetailLog")
         resume(ID_STATUSBAR)
         destroyTouchHandler()
     }

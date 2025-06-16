@@ -263,7 +263,9 @@ class SendViewModel @Inject constructor(
                                 if (hasBeenIncluded) {
                                     Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
                                     _transactionStatus.value = TransactionStatus.SUCCESS
-                                    terminalSDK?.displayBlackText("TXN SUCCESS!")
+                                    viewModelScope.launch {
+                                        terminalSDK?.displayBlackText("TXN SUCCESS!")
+                                    }
                                 } else {
                                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
                                     _transactionStatus.value = TransactionStatus.FAILURE
