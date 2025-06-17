@@ -490,15 +490,15 @@ fun SendScreen2(
     val maxAlpha by animateFloatAsState(
         targetValue = if (isMaxAmount) {
             1f
-        } else {
+        } else {LaunchedEffect(Unit) {
+            SystemColorManager.refresh(context)
+        }
             pulseOpacity
         },
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
 
-    LaunchedEffect(Unit) {
-        SystemColorManager.refresh(context)
-    }
+
 
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
