@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import android.widget.Space
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedContent
@@ -90,6 +91,8 @@ import kotlinx.coroutines.delay
 import android.widget.Toast
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
@@ -873,7 +876,8 @@ fun SendScreen2(
                                                         placeholder = painterResource(R.drawable.placeholer_icon_5),
                                                         error = painterResource(R.drawable.placeholer_icon_5)
                                                     )
-                                                } else {
+                                                }
+                                                else {
                                                     val tokenLogo = when(token.symbol.uppercase()) {
                                                         "MAINNET" -> R.drawable.mainnet
                                                         "OPTIMISM" -> R.drawable.mainnet
@@ -951,20 +955,23 @@ fun SendScreen2(
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
 
-                                    Column(
-                                        modifier = Modifier
-                                            .drawBehind {
-                                                drawLine(
-                                                    color = primaryColor.copy(pulseOpacity),
-                                                    start = Offset(0f, 15f),
-                                                    end = Offset(0f, size.height-0f),
-                                                    strokeWidth = 8.dp.toPx()
-                                                )
-                                            }
-                                            .padding(start = 16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ){
+                                        Spacer(Modifier.offset(y = 5.dp)
+                                            .height(77.dp)
+                                            .width(8.dp)
+                                            .background(primaryColor.copy(pulseOpacity))
+                                            .padding(end = 8.dp)
+                                        )
+                                        Column(
+                                                modifier = Modifier
+                                            ,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
 
-                                    ) {
+                                        ) {
                                         Row(
                                             Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.spacedBy(24.dp),
@@ -1220,14 +1227,14 @@ fun SendScreen2(
                                                 }
 
                                                 convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
-                                                
+
                                                 // Calculate the converted token amount for validation
                                                 try {
                                                     val dollarValue = dollarAmount.text.removePrefix("$").toDoubleOrNull() ?: 0.0
-                                                    val currentPrice = tokenData.find { 
-                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
+                                                    val currentPrice = tokenData.find {
+                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
                                                     }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                    
+
                                                     if (currentPrice != null && currentPrice > 0) {
                                                         convertedTokenAmount = (dollarValue / currentPrice).toString()
                                                     }
@@ -1244,7 +1251,7 @@ fun SendScreen2(
                                             if (setMax && availableBalance > 0) {
                                                 isMaxAmount = true  // Set flag when MAX is used
                                                 val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
-                                                
+
                                                 if (useDollarAmount) {
                                                     // Calculate dollar value from token balance
                                                     val tokenSymbol = when (selectedToken) {
@@ -1256,11 +1263,11 @@ fun SendScreen2(
                                                         }
                                                         else -> "ETH"
                                                     }
-                                                    
-                                                    val currentPrice = tokenData.find { 
-                                                        it.symbol.equals(tokenSymbol, ignoreCase = true) 
+
+                                                    val currentPrice = tokenData.find {
+                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
                                                     }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
-                                                    
+
                                                     if (currentPrice != null && currentPrice > 0) {
                                                         val dollarValue = availableBalance * currentPrice
                                                         val formattedDollar = String.format("%.2f", dollarValue)
@@ -1275,13 +1282,15 @@ fun SendScreen2(
                                                     amountFieldValue = TextFieldValue(formattedBalance)
                                                     onAmountChange(formattedBalance)
                                                 }
-                                                
+
                                                 // Reset setMax after setting the value
                                                 setMax = false
                                             }
                                         }
 
                                     }
+                                    }
+
 
 
                                     // Chain selection based on token availability
@@ -1360,7 +1369,7 @@ fun SendScreen2(
                                     }
 
                                     SelectableCarousel(
-                                        modifier = modifier.offset(x = (-3).dp),
+                                        modifier = modifier.offset(x = 0.dp),
                                         items = availableChains,
                                         itemWidth = 65.dp,
                                         itemHeight = 65.dp,
@@ -1426,7 +1435,7 @@ fun SendScreen2(
                                 }
 
                                 SimpleDgenTextfield(
-                                    modifier = modifier.padding(horizontal = 8.dp),
+                                    modifier = modifier.padding(horizontal = 10.dp),
                                     value = toAddressFieldValue,
                                     maxLines = 4,
                                     maxLength = 43,
