@@ -57,6 +57,7 @@ import android.view.ViewTreeObserver
 import androidx.compose.animation.core.animateFloatAsState
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.body2_fontSize
+import com.core.ui.util.ghostOpacity
 import com.core.ui.util.pulseOpacity
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
@@ -108,7 +109,7 @@ fun SimpleDgenTextfield(
     )
 
     val animatedBackgroundOpacity by animateFloatAsState(
-        targetValue = if (isFocused) 0.33f else 0f,
+        targetValue = if (isFocused) ghostOpacity else 0f,
         animationSpec = tween(durationMillis = 300),
         label = "backgroundColor"
     )
@@ -140,7 +141,7 @@ fun SimpleDgenTextfield(
             .clip(shape)
             .drawBehind {
                 drawRect(
-                    color = activeColor.copy(0.25f),
+                    color = activeColor,
                     size = size,
                     topLeft = Offset(0f, 0f),
                     alpha = animatedBackgroundOpacity
