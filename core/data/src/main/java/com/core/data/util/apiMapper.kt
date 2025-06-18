@@ -20,5 +20,5 @@ fun chainIdToRPC(chainId: Int): String {
 }
 
 fun chainIdToBundler(chainId: Int): String {
-    return "https://api.pimlico.io/v2/$chainId/rpc?apikey=pim_7TcvnUhBUJDatSS2ayjK9X"
+    return "https://api.pimlico.io/v2/$chainId/rpc?apikey=${BuildConfig.BUNDLER_API}"
 }
