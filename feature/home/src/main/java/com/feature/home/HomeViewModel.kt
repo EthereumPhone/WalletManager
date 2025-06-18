@@ -215,6 +215,7 @@ class HomeViewModel @Inject constructor(
         "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
         "Engaging warp drive  ◉◡◉",
         "Big Brain: Activated  ಠ◡ಠ",
+        "Refueled n ready ₊⋆☾⋆⁺✧"
     )
 
     private fun isFirstLaunchCompleted(): Boolean = sharedPrefs.getBoolean(KEY_FIRST_LAUNCH_COMPLETED, false)
