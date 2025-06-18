@@ -1296,7 +1296,7 @@ fun SendScreen2(
                                     // Chain selection based on token availability
                                     // REMOVED - Already defined above before availableBalance
                                     
-                                    // Set the initial chain based on the selected token
+                                    // Set the initial chain  based on the selected token
                                     LaunchedEffect(selectedToken, availableChains) {
                                         when (selectedToken) {
                                             is SelectedTokenUiState.Selected -> {

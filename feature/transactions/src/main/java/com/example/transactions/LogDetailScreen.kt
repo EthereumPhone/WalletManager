@@ -28,7 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
@@ -66,6 +69,8 @@ import java.util.Locale
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.core.data.util.chainIdToName
 
 @Composable
@@ -81,9 +86,26 @@ fun DetailLogRoute(
         viewModel.onDetailLogOpened(txHash)
     }
 
-    DisposableEffect(Unit) {
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    if (hasHandledInitialResume) {
+                        viewModel.onDetailLogOpened(txHash)
+                    } else {
+                        hasHandledInitialResume = true
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             viewModel.onDetailLogClosed()
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
