@@ -22,6 +22,8 @@ android {
 
         buildConfigField "String", "ALCHEMY_API", "\"${properties.getProperty("ALCHEMY_API")}\""
         buildConfigField "String", "TOKEN_PRICE_API", "\"${properties.getProperty("TOKEN_PRICE_API","fallback_value")}\""
+        buildConfigField "String", "BUNDLER_API", "\"${properties.getProperty("BUNDLER_API")}\""
+
 
 
 
