@@ -89,30 +89,14 @@ fun LogRoute(
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
     val userData by viewModel.userData.collectAsStateWithLifecycle()
 
-    //opens terminal screen for receive button
-    LaunchedEffect(Unit) {
-        viewModel.onLogOpened()
-    }
-
-    var hasHandledInitialResume by remember { mutableStateOf(false) }
-
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    if (!hasHandledInitialResume) {
-                        hasHandledInitialResume = true
-                    } else {
-                        viewModel.onScreenOpenedAfterResume()
-                    }
-                }
-                else -> {}
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onScreenOpenedAfterResume()
             }
         }
-
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }

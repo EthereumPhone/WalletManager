@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 
 @HiltViewModel
@@ -39,6 +41,8 @@ class TransactionViewModel @Inject constructor(
     private val terminalSDK: TerminalSDK?,
     @ApplicationContext private val appContext: Context,
     ): ViewModel() {
+
+    private val onLogOpenedMutex = Mutex()
 
     val userData = userDataRepository.userData
         .stateIn(
@@ -85,63 +89,41 @@ class TransactionViewModel @Inject constructor(
 
     fun onScreenOpenedAfterResume() {
         viewModelScope.launch(Dispatchers.Main) {
+            onLogOpened()
+        }
+    }
+
+    suspend fun onLogOpened(){
+        onLogOpenedMutex.withLock {
             try {
-                delay(2000)
+                //check if terminal sdk is available
                 if (terminalSDK?.isAvailable() == true) {
+                    // Wait for screen to be ready before drawing
                     while(terminalSDK.isScreenOn() != true) {
                         Log.d("TransactionViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
-                        delay(500)
+                        delay(100)
                     }
                     terminalSDK.displayLog {
                         val walletAddress = userData.value.walletAddress
                         if (walletAddress.isNotBlank()) {
-                            val url = "https://etherscan.io/address/$walletAddress"
+                            val url = "https://blockscan.com/address/$walletAddress"
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
                             try {
                                 appContext.startActivity(intent)
                             } catch (e: Exception) {
-                                Log.e("TransactionViewModel", "Could not open Etherscan for address $walletAddress", e)
+                                Log.e("TransactionViewModel", "Could not open Blockscan for address $walletAddress", e)
                                 Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            Log.w("TransactionViewModel", "Wallet address is empty, can't open Etherscan.")
+                            Log.w("TransactionViewModel", "Wallet address is empty, can't open Blockscan.")
                         }
                     }
-                } else {
-                    Log.w("TransactionViewModel", "TerminalSDK not available")
                 }
             } catch (e: Exception) {
                 Log.e("TransactionViewModel", "Error on displayLog", e)
             }
-        }
-    }
-
-    suspend fun onLogOpened(){
-        try{
-            //check if terminal sdk is available
-            if (terminalSDK?.isAvailable() == true) {
-                terminalSDK.displayLog {
-                    val walletAddress = userData.value.walletAddress
-                    if (walletAddress.isNotBlank()) {
-                        val url = "https://blockscan.com/address/$walletAddress"
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        try {
-                            appContext.startActivity(intent)
-                        } catch (e: Exception) {
-                            Log.e("TransactionViewModel", "Could not open Blockscan for address $walletAddress", e)
-                            Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        Log.w("TransactionViewModel", "Wallet address is empty, can't open Blockscan.")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("TransactionViewModel", "Error on displayLog", e)
         }
     }
 
@@ -190,7 +172,7 @@ class TransactionViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.removeDetailLog()
+                    onLogOpened()
                 } else {
                     Log.w("TransactionViewModel", "TerminalSDK not available")
                 }

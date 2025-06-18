@@ -216,10 +216,6 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onTopUp()
-                    scope.launch {
-                        resume(ID_STATUSBAR)
-                        destroyTouchHandler()
-                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -253,10 +249,6 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onLog()
-                    scope.launch {
-                        resume(ID_STATUSBAR)
-                        destroyTouchHandler()
-                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -290,10 +282,6 @@ class TerminalSDK(private val context: Context) {
                 }
                 try {
                     onLog()
-                    scope.launch {
-                        resume(ID_STATUSBAR)
-                        destroyTouchHandler()
-                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
