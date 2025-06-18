@@ -77,7 +77,8 @@ class HomeViewModel @Inject constructor(
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val walletSDK: WalletSDK?,
     @ApplicationContext private val context: Context,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val terminal: TerminalSDK?
 ) : ViewModel() {
 
     companion object {
@@ -87,10 +88,6 @@ class HomeViewModel @Inject constructor(
     }
 
     private val isHomeScreenVisible = AtomicBoolean(false)
-
-    private val terminalSDK: TerminalSDK by lazy {
-        TerminalSDK(context)
-    }
 
     private val sharedPrefs: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -381,7 +378,8 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            if (terminalSDK.isAvailable()) {
+            val sdk = terminal ?: return@launch // SDK unavailable
+            if (sdk.isAvailable()) {
                 val message: String
                 if (!isFirstLaunchCompleted()) {
                     message = "WELCOME ONBOARD ヽ(•◡•)ノ"
@@ -395,11 +393,11 @@ class HomeViewModel @Inject constructor(
                     lastMessageIndex = nextIndex
                 }
 
-                terminalSDK.displayBlackText(message)
+                sdk.displayBlackText(message)
 
                 delay(3000)
                 if (isHomeScreenVisible.get()) {
-                    terminalSDK.finishScreen()
+                    sdk.finishScreen()
                 }
             } else {
                 welcomeScreenShownThisSession.set(false)

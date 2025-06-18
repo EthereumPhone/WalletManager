@@ -55,6 +55,7 @@ class TerminalSDK(private val context: Context) {
         methodMutex.lock()
         try {
             val result = action()
+            //delay(150)
             return result
         } finally {
             methodMutex.unlock()
@@ -73,13 +74,26 @@ class TerminalSDK(private val context: Context) {
 
     suspend fun isScreenOn(): Boolean {
         println("ETHOSDEBUGTERMINAL isScreenOn")
-        return synchronizedBuffer { call { mIsOn.invoke(it) as Boolean } == true }
+        return synchronizedBuffer {
+            // Some firmware versions return void/Unit. Consider any non-exceptional call as "true".
+            val result = call { mIsOn.invoke(it) }
+            (result as? Boolean) ?: true
+        }
     }
 
     suspend fun refresh(bitmap: Bitmap, id: Int): Boolean {
         println("ETHOSDEBUGTERMINAL refresh id=$id")
         return synchronizedBuffer {
-            val success = call { mRefresh.invoke(it, bitmap, id) as Boolean } ?: false
+            var success = false
+            try {
+                // On some devices/firmware the underlying proxy method returns void (i.e. Unit/null).
+                // Treat any successful invocation (no exception thrown) as a successful refresh.
+                call { mRefresh.invoke(it, bitmap, id) }
+                success = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
             if (success) {
                 bitmapPushed = true
             }
@@ -88,13 +102,15 @@ class TerminalSDK(private val context: Context) {
     }
 
     suspend fun resume(id: Int) {
-        println("ETHOSDEBUGTERMINAL resume id=$id")
+        println("ETHOSDEBUGTERMINAL resume id=$id, bitmapPushed=$bitmapPushed")
         synchronizedBuffer {
-            if (bitmapPushed) {
+            try {
                 call { mResume.invoke(it, id) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                // Reset flag so that subsequent resumes know a fresh bitmap is needed
                 bitmapPushed = false
-            } else {
-                println("ETHOSDEBUGTERMINAL resume skipped - no prior bitmap pushed")
             }
         }
     }
