@@ -38,14 +38,24 @@ object SystemColorManager {
         val accentInt = Settings.Secure.getInt(
             context.contentResolver,
             "systemui_accent_color",
-            DEFAULT_PRIMARY.toArgb()
+            Color.Red.toArgb()
         )
 
-        val accentColor = Color(accentInt)
+        val accentColor = if(accentInt == -65536) {
+            Color.Red
+        } else {
+            Color(accentInt)
+        }
+
         Log.d("SystemColorManager","accentInt: $accentInt, accentColor: $accentColor")
 
         //Decide the colorway
         when(accentInt){
+            // If the accent color is not set, we use the default colors.
+            -65536 -> {
+                primaryColor = lazerCore
+                secondaryColor = lazerBurn
+            }
             //TERMINAL
             -13510400 -> {
                 primaryColor = terminalCore
