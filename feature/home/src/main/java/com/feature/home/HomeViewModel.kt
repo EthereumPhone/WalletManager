@@ -393,6 +393,8 @@ class HomeViewModel @Inject constructor(
                     lastMessageIndex = nextIndex
                 }
 
+                // Add 2-second delay before displaying the message
+                delay(2000)
                 sdk.displayBlackText(message)
 
                 delay(3000)
