@@ -29,8 +29,6 @@
         android:fitsSystemWindows="true"
         android:screenOrientation="portrait"
         tools:targetApi="33"
-        android:debuggable="true"
-        tools:ignore="HardcodedDebugMode"
         android:background="#050505"
         >
 
