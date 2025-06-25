@@ -43,4 +43,7 @@ interface TransferDao {
         toaddress: String
     )
 
+    @Query("DELETE FROM transfer WHERE hash = :txHash")
+    suspend fun deleteTransferByHash(txHash: String)
+
 }

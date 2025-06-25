@@ -156,7 +156,7 @@ class SendRepositoryImp @Inject constructor(
 
                     val fromAddress = walletSDK.getAddress()
                     val transferEntity = TransferEntity(
-                        uniqueId = txHash,
+                        uniqueId = "temp_${txHash}",
                         asset = tokenAsset.symbol,
                         chainId = chainId,
                         blockNum = "",

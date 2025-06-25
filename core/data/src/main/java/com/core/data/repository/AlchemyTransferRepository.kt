@@ -68,6 +68,17 @@ class AlchemyTransferRepository @Inject constructor(
                         userIsSender = true,
                     )
                 }
+
+                // Remove locally created provisional rows (uniqueId like "temp_%") that match these transfers.
+                transferEntities.forEach { entity ->
+                    transferDao.deleteTransfer(
+                        chainId = entity.chainId,
+                        value = entity.value,
+                        userIsSender = entity.userIsSender,
+                        toaddress = entity.toaddress
+                    )
+                }
+
                 transferDao.insertTransfers(transferEntities)
             }
 
@@ -91,6 +102,12 @@ class AlchemyTransferRepository @Inject constructor(
                         userIsSender = false,
                     )
                 }
+
+                // Remove any locally stored temporary entry with the same transaction hash
+                transferEntities.forEach { entity ->
+                    transferDao.deleteTransferByHash(entity.hash)
+                }
+
                 transferDao.insertTransfers(transferEntities)
             }
         }
