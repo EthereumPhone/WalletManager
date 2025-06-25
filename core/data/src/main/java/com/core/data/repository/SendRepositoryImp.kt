@@ -91,6 +91,46 @@ class SendRepositoryImp @Inject constructor(
                 "error"
             }
             
+            // If the transaction was successful (we got a valid bundler tx hash)
+            if (res.isNotEmpty() && res != "error" && res != "decline") {
+                // Update native currency balance in the DB
+                val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
+                val currentBalance = currentBalances.firstOrNull { it.chainId == chainId }
+
+                if (currentBalance != null) {
+                    val amountBigDecimal = BigDecimal(amountDouble)
+                    val newBalance = currentBalance.tokenBalance - amountBigDecimal
+
+                    val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
+                    tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
+                }
+
+                // Insert provisional transfer entry so the UI can display it immediately
+                val fromAddress = walletSDK.getAddress()
+                val transferEntity = TransferEntity(
+                    uniqueId = "temp_${res}",
+                    asset = "ETH",
+                    chainId = chainId,
+                    blockNum = "",
+                    category = "external",
+                    erc1155Metadata = emptyList(),
+                    erc721TokenId = "",
+                    fromaddress = fromAddress,
+                    hash = res,
+                    rawContract = RawContract(
+                        address = "",
+                        decimal = "18",
+                        value = decimalValue
+                    ),
+                    toaddress = toAddress,
+                    tokenId = chainId.toString(),
+                    value = amountDouble,
+                    blockTimestamp = Clock.System.now(),
+                    userIsSender = true
+                )
+                transferDao.insertTransfer(transferEntity)
+            }
+            
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
         }
@@ -156,7 +196,7 @@ class SendRepositoryImp @Inject constructor(
 
                     val fromAddress = walletSDK.getAddress()
                     val transferEntity = TransferEntity(
-                        uniqueId = txHash,
+                        uniqueId = "temp_${txHash}",
                         asset = tokenAsset.symbol,
                         chainId = chainId,
                         blockNum = "",
