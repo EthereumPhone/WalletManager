@@ -9,26 +9,28 @@ import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
-import okhttp3.internal.wait
 import org.ethereumphone.walletsdk.WalletSDK
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import org.web3j.utils.Convert
-import java.lang.NullPointerException
 import java.math.BigDecimal
 import java.math.BigInteger
 import javax.inject.Inject
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.dao.TransferDao
+import com.core.database.model.Erc1155MetadataObject
+import com.core.database.model.RawContract
 import com.core.database.model.TransferEntity
-import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.Clock
 
 class SendRepositoryImp @Inject constructor(
     private val web3j: Web3j,
     private val erc20TransferApi: Erc20TransferApi,
     private val mContext: Context,
     private val tokenBalanceDao: TokenBalanceDao,
+    private val transferDao: TransferDao,
     private val transferRepository: TransferRepository,
     private val terminalSDK: TerminalSDK?
 ): SendRepository {
@@ -151,6 +153,30 @@ class SendRepositoryImp @Inject constructor(
                         val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
                         tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
                     }
+
+                    val fromAddress = walletSDK.getAddress()
+                    val transferEntity = TransferEntity(
+                        uniqueId = txHash,
+                        asset = tokenAsset.symbol,
+                        chainId = chainId,
+                        blockNum = "",
+                        category = "erc20",
+                        erc1155Metadata = emptyList(),
+                        erc721TokenId = "",
+                        fromaddress = fromAddress,
+                        hash = txHash,
+                        rawContract = RawContract(
+                            address = tokenAsset.address,
+                            decimal = tokenAsset.decimals.toString(),
+                            value = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals)).toBigInteger().toString()
+                        ),
+                        toaddress = toAddress,
+                        tokenId = tokenAsset.address,
+                        value = amount,
+                        blockTimestamp = Clock.System.now(),
+                        userIsSender = true
+                    )
+                    transferDao.insertTransfer(transferEntity)
                 }
                 
                 txHash
@@ -160,7 +186,6 @@ class SendRepositoryImp @Inject constructor(
             currentTransactionHash.value = res
             currentTransactionChainId.value = chainId
         }
-
     }
 
     override suspend fun maxAllowedSend(
