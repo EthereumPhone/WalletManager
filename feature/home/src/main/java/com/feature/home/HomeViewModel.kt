@@ -207,11 +207,11 @@ class HomeViewModel @Inject constructor(
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
     private val welcomeMessages = listOf(
-//        "WELCOME BACK  ◕◡◕",
-//        "Hey Stranger  ⌐■◡■",
-//        "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
-//        "Engaging warp drive  ◉◡◉",
-//        "Big Brain: Activated  ಠ◡ಠ",
+        "WELCOME BACK  ◕◡◕",
+        "Hey Stranger  ⌐■◡■",
+        "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
+        "Engaging warp drive  ◉◡◉",
+        "Big Brain: Activated  ಠ◡ಠ",
         "Refueled n ready ⊹⋆☾⋆⊹✧"
     )
 
