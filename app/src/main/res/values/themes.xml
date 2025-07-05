@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.WalletManager.Fullscreen" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Hide the status bar at the window level -->
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowFullscreen">false</item>
         <!-- Make nav bar transparent/edge-to-edge -->
         <item name="android:windowTranslucentNavigation">true</item>
         <!-- (Optional) if you want a cutout: -->

@@ -68,47 +68,10 @@ class CustomCaptureActivity : CaptureActivity() {
     }
     
     private fun setupFullscreen() {
-        // Moderne Vollbild-Implementation
+        // Draw edge-to-edge while keeping system bars visible
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        
-        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        windowInsetsController?.let { controller ->
-            // Verstecke Status- und Navigationsleisten
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            // Verhalten bei Swipe-Gesten - verhindere das Anzeigen der Leisten
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-        
-        // Zusätzliche Flags für robuste Vollbild-Darstellung
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-        )
-        
-        // Für Android 11+ (API 30+) - verhindere Kamera-Indikator-Störungen
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let { controller ->
-                controller.hide(android.view.WindowInsets.Type.statusBars() or android.view.WindowInsets.Type.navigationBars())
-                controller.systemBarsBehavior = android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        }
-        
-        // Immersive Sticky Mode für ältere Versionen
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        }
+        WindowCompat.getInsetsController(window, window.decorView)
+            ?.show(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun onResume() {

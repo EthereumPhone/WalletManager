@@ -14,7 +14,7 @@
         <item name="android:textColorPrimary">@color/white</item>
         <!-- Customize your theme here. -->
 
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowFullscreen">false</item>
         <!-- Make nav bar transparent/edge-to-edge -->
         <item name="android:windowTranslucentNavigation">true</item>
         <!-- (Optional) if you want a cutout: -->
