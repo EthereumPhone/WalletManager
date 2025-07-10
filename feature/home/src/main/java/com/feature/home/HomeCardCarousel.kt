@@ -101,7 +101,6 @@ internal fun HomeRoute2(
     animatedContentScope: AnimatedContentScope,
     viewModel: HomeViewModel = hiltViewModel(),
     sendViewModel: SendViewModel = hiltViewModel()
-
 ) {
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()

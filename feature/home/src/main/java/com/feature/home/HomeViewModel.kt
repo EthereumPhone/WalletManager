@@ -64,6 +64,8 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
 
+import com.core.terminalsdk.ReflectiveLedPattern
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
@@ -78,6 +80,7 @@ class HomeViewModel @Inject constructor(
     private val walletSDK: WalletSDK?,
     @ApplicationContext private val context: Context,
     private val savedStateHandle: SavedStateHandle,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     private val terminal: TerminalSDK?
 ) : ViewModel() {
 
@@ -378,6 +381,8 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            // Trigger LED "Chad" pattern when we start showing the welcome message
+            reflectiveLedPattern?.displayChad()
             val sdk = terminal ?: return@launch // SDK unavailable
             if (sdk.isAvailable()) {
                 val message: String

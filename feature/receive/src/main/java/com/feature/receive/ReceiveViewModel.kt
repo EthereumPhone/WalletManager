@@ -22,6 +22,7 @@ import com.core.ui.showCustomToast
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenTurqoise
 import androidx.compose.ui.text.font.FontWeight
+import com.core.terminalsdk.ReflectiveLedPattern
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
@@ -30,6 +31,7 @@ import com.core.ui.util.PitagonsSans
 class ReceiveViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
     private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val appContext: Context,
 ): ViewModel() {
 
@@ -57,6 +59,7 @@ class ReceiveViewModel @Inject constructor(
                             message = "Address copied!"
                         )
                     }
+                    reflectiveLedPattern?.clear()
                 }
             }
         } catch (e: Exception) {
@@ -100,6 +103,7 @@ class ReceiveViewModel @Inject constructor(
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeCopyAddress()
+                    reflectiveLedPattern?.clear()
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
                 }
@@ -118,6 +122,7 @@ class ReceiveViewModel @Inject constructor(
             val clip = ClipData.newPlainText("wallet_address", text)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 clipboard.setPrimaryClip(clip)
+                reflectiveLedPattern?.displayInfo()
             } else {
                 clipboard.setPrimaryClip(clip)
             }
