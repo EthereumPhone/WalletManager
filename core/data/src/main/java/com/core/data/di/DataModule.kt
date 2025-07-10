@@ -13,6 +13,7 @@ import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.datastore.ExclusionListProtoSerializer
 import com.core.model.NetworkChain
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -76,6 +77,17 @@ object DataModule {
             TerminalSDK(
                 context = context
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    @Singleton
+    @Provides
+    fun provideReflectiveLedPattern(): ReflectiveLedPattern? {
+        return try {
+            ReflectiveLedPattern()
         } catch (e: Exception) {
             e.printStackTrace()
             null

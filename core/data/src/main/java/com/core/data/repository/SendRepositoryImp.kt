@@ -21,6 +21,7 @@ import com.core.database.dao.TransferDao
 import com.core.database.model.Erc1155MetadataObject
 import com.core.database.model.RawContract
 import com.core.database.model.TransferEntity
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
@@ -32,7 +33,8 @@ class SendRepositoryImp @Inject constructor(
     private val tokenBalanceDao: TokenBalanceDao,
     private val transferDao: TransferDao,
     private val transferRepository: TransferRepository,
-    private val terminalSDK: TerminalSDK?
+    private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?
 ): SendRepository {
 
     override val currentTransactionHash = MutableStateFlow("")
@@ -78,6 +80,7 @@ class SendRepositoryImp @Inject constructor(
 
 
             terminalSDK?.finishScreen()
+            reflectiveLedPattern?.displayArrowUp()
 
             val res = try {
                 walletSDK.sendTransaction(
@@ -166,6 +169,8 @@ class SendRepositoryImp @Inject constructor(
             }
 
             terminalSDK?.finishScreen()
+
+            reflectiveLedPattern?.displayArrowUp()
 
             val res = try {
                 val txHash = erc20TransferApi.sendErc20Token(

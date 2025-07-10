@@ -33,6 +33,7 @@ import org.ethereumphone.walletmanager.navigation.WmNavHost
 import org.ethereumphone.walletmanager.utils.Screen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 import com.core.ui.util.dgenBlack
 import kotlinx.coroutines.launch
@@ -50,7 +51,8 @@ fun WmApp(
         networkMonitor,
         sendRepository
     ),
-    terminalSDK: TerminalSDK?
+    terminalSDK: TerminalSDK?,
+    reflectiveLedPattern: ReflectiveLedPattern?
 ) {
 
     val scope = rememberCoroutineScope()
@@ -101,7 +103,8 @@ fun WmApp(
         WmNavHost(
             appState = appState,
             modifier = Modifier.padding(paddingValues),
-            terminalSDK = terminalSDK
+            terminalSDK = terminalSDK,
+            reflectiveLedPattern = reflectiveLedPattern
         )
     }
 }

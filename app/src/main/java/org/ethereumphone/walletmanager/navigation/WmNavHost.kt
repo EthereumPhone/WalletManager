@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 
 import com.example.assets.navigation.navigateToAsset
@@ -48,7 +49,8 @@ fun WmNavHost(
     appState: WmAppState,
     modifier: Modifier = Modifier,
     startDestination: String = homeGraphRoutePattern,
-    terminalSDK: TerminalSDK?
+    terminalSDK: TerminalSDK?,
+    reflectiveLedPattern: ReflectiveLedPattern?
 ) {
     val coroutineScope = rememberCoroutineScope()
     val navController = appState.navController
@@ -116,7 +118,7 @@ fun WmNavHost(
                                       },
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
-                    sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout)
+                    sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout, reflectiveLedPattern)
                     receiveScreen(navController::popBackStack)
                     payMasterScreen(navController::popBackStack)
                 }

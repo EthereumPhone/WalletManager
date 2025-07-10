@@ -28,6 +28,7 @@ import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
@@ -52,6 +53,10 @@ class MainActivity() : ComponentActivity() {
 
     @Inject
     lateinit var sendRepository: SendRepository
+
+    @Inject
+    @JvmField
+    var reflectiveLedPattern: ReflectiveLedPattern? = null
 
     @Inject
     @JvmField
@@ -82,9 +87,7 @@ class MainActivity() : ComponentActivity() {
             .then(seedNetworkBalanceWork)
             .enqueue()
 
-
-
-
+        reflectiveLedPattern?.setup()
 
         /*
         WorkManager.getInstance(applicationContext)
@@ -133,7 +136,8 @@ class MainActivity() : ComponentActivity() {
             WmApp(
                 networkMonitor = networkMonitor,
                 sendRepository = sendRepository,
-                terminalSDK = terminalSDK
+                terminalSDK = terminalSDK,
+                reflectiveLedPattern = reflectiveLedPattern
             )
         }
     }

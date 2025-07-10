@@ -16,6 +16,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.largeExitDuration
 import com.feature.send.SendRoute2
@@ -43,6 +44,7 @@ fun NavGraphBuilder.sendScreen(
     onBackClick: () -> Unit,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
+    reflectiveLedPattern: ReflectiveLedPattern?
 ) {
     composable(
         route = sendRoute,
@@ -100,6 +102,7 @@ fun NavGraphBuilder.sendScreen(
                 } else {
                     onBackClick()
                 }
+                reflectiveLedPattern?.clear()
             },
             initialAddress = address,
             tokenId = tokenId,

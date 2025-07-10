@@ -47,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.TransactionStatus
 import com.core.data.util.chainIdToBundler
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 import okhttp3.MediaType.Companion.toMediaType
@@ -78,6 +79,7 @@ class SendViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi,
     private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val context: Context
 ): ViewModel()
 {
@@ -254,6 +256,9 @@ class SendViewModel @Inject constructor(
                         // Check if the transaction was successful by examining the result
                         if (transactionResult.isEmpty() || transactionResult == "error" || transactionResult == "decline" || transactionResult.contains("error", ignoreCase = true)) {
                             Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
+
+                            reflectiveLedPattern?.displayError()
+
                             _transactionStatus.value = TransactionStatus.FAILURE
                         } else {
                             terminalSDK?.displayBlackText("TXN IN ORBIT...")
@@ -262,12 +267,14 @@ class SendViewModel @Inject constructor(
                             ) { hasBeenIncluded ->
                                 if (hasBeenIncluded) {
                                     Log.d("SendViewModel", "🟢 TRANSACTION SUCCESS - Repository returned valid hash: '$transactionResult'")
+                                    reflectiveLedPattern?.displaySuccess()
                                     _transactionStatus.value = TransactionStatus.SUCCESS
                                     viewModelScope.launch {
                                         terminalSDK?.displayBlackText("TXN SUCCESS!")
                                     }
                                 } else {
                                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
+                                    reflectiveLedPattern?.displayError()
                                     _transactionStatus.value = TransactionStatus.FAILURE
                                 }
                             }
@@ -275,16 +282,19 @@ class SendViewModel @Inject constructor(
                         }
                     } else {
                         Log.e("SendViewModel", "🔴 TRANSACTION FAILED - User declined or error before sending")
+                        reflectiveLedPattern?.displayError()
                         _transactionStatus.value = TransactionStatus.FAILURE
                     }
                 } catch (e: Exception) {
                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Exception caught: ${e.message}", e)
                     Log.e("SendViewModel", "Exception type: ${e.javaClass.simpleName}")
+                    reflectiveLedPattern?.displayError()
                     e.printStackTrace()
                     _transactionStatus.value = TransactionStatus.FAILURE
                 }
             } else {
                 Log.e("SendViewModel", "🔴 NO ASSET SELECTED - Transaction failed")
+                reflectiveLedPattern?.displayError()
                 _transactionStatus.value = TransactionStatus.FAILURE
             }
             
