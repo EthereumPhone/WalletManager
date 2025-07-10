@@ -49,8 +49,10 @@ class ReceiveViewModel @Inject constructor(
      */
     suspend fun onCopyOpened(){
         try{
+            reflectiveLedPattern?.displayArrowDown()
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {
+
                 terminalSDK.displayCopyAddress {
                     copyToClipboard(userData.value.walletAddress)
                     viewModelScope.launch(Dispatchers.Main) {
@@ -59,7 +61,7 @@ class ReceiveViewModel @Inject constructor(
                             message = "Address copied!"
                         )
                     }
-                    reflectiveLedPattern?.clear()
+                    // Removed premature clear to prevent flickering – copyToClipboard handles LED reset
                 }
             }
         } catch (e: Exception) {
@@ -118,13 +120,17 @@ class ReceiveViewModel @Inject constructor(
      */
     private fun copyToClipboard(text: String) {
         try {
+            reflectiveLedPattern?.displayInfo()
             val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("wallet_address", text)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 clipboard.setPrimaryClip(clip)
-                reflectiveLedPattern?.displayInfo()
             } else {
                 clipboard.setPrimaryClip(clip)
+            }
+            viewModelScope.launch {
+                delay(2000)
+                reflectiveLedPattern?.displayArrowDown()
             }
         } catch (e: Exception) {
             Log.e("ReceiveViewModel", "Error while copying", e)

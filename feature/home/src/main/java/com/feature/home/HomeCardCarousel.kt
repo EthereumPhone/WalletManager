@@ -145,7 +145,8 @@ internal fun HomeRoute2(
         loadSymbol = {}, // not needed anymore
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
-        navigateToPayMaster = navigateToPayMaster
+        navigateToPayMaster = navigateToPayMaster,
+        showPlusMatrix = viewModel::showPlusMatrix
 
     )
 }
@@ -170,6 +171,7 @@ fun HomeScreen2(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     getLink: KSuspendFunction1<String, String?>,
+    showPlusMatrix: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Log HomeScreen2 recomposition
@@ -393,6 +395,7 @@ fun HomeScreen2(
                 },
                 navigateToBuy = {
                     onDebouncedClick {
+                        showPlusMatrix()
                         if (userData is WalletDataUiState.Success) {
                             val address = userData.userData.walletAddress
                             scope.launch {

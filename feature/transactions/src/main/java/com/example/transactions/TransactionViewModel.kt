@@ -14,6 +14,7 @@ import com.core.domain.GetTransfersUseCase
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.model.UserData
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +40,7 @@ class TransactionViewModel @Inject constructor(
     private val transferRepository: TransferRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val appContext: Context,
     ): ViewModel() {
 
@@ -96,6 +98,7 @@ class TransactionViewModel @Inject constructor(
     suspend fun onLogOpened(){
         onLogOpenedMutex.withLock {
             try {
+                reflectiveLedPattern?.displayInfo()
                 //check if terminal sdk is available
                 if (terminalSDK?.isAvailable() == true) {
                     // Wait for screen to be ready before drawing
@@ -132,6 +135,7 @@ class TransactionViewModel @Inject constructor(
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeLog()
+                    reflectiveLedPattern?.clear()
                 } else {
                     Log.w("TransactionViewModel", "TerminalSDK not available")
                 }

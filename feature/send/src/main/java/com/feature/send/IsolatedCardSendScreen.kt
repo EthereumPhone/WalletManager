@@ -184,6 +184,7 @@ fun SendRoute2(
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
+
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
@@ -255,7 +256,9 @@ fun SendRoute2(
         sendTransactionTriggered = sendTransactionTriggered,
         resetSendTransactionTrigger = viewModel::resetSendTransactionTrigger,
         transactionStatus = transactionStatus,
-        clearTransactionStatus = viewModel::clearTransactionStatus
+        clearTransactionStatus = viewModel::clearTransactionStatus,
+        showFailedMatrix = viewModel::showFailedMatrix,
+        showSuccessMatrix = viewModel::showSuccessMatrix
     )
 }
 
@@ -282,6 +285,8 @@ fun SendScreen2(
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
     resetSendTransactionTrigger: () -> Unit,
+    showFailedMatrix: () -> Unit,
+    showSuccessMatrix: () -> Unit,
     transactionStatus: TransactionStatus?,
     clearTransactionStatus: () -> Unit,
 ){
@@ -764,10 +769,12 @@ fun SendScreen2(
                                     isAmountError && !isMaxAmount -> {
                                         Log.w("SendScreen", "Error: Insufficient balance")
                                         showDgenToast(context,"Insufficient balance")
+                                        showFailedMatrix()
                                     }
                                     toAddress.isEmpty() -> {
                                         Log.w("SendScreen", "Error: Enter target address")
                                         showDgenToast(context,"Enter target address")
+                                        showFailedMatrix()
                                     }
                                     isResolvingENS -> {
                                         Log.w("SendScreen", "Error: Resolving ENS name...")
@@ -776,14 +783,17 @@ fun SendScreen2(
                                     ensError != null -> {
                                         Log.w("SendScreen", "Error: ENS error - $ensError")
                                         showDgenToast(context,ensError ?: "ENS error")
+                                        showFailedMatrix()
                                     }
                                     !isValidAddress -> {
                                         Log.w("SendScreen", "Error: Invalid address format")
                                         showDgenToast(context,"Invalid address format")
+                                        showFailedMatrix()
                                     }
                                     selectedToken == SelectedTokenUiState.Unselected -> {
                                         Log.w("SendScreen", "Error: Select a chain")
                                         showDgenToast(context,"Select a chain")
+                                        showFailedMatrix()
                                     }
                                 }
                             } else {
@@ -795,6 +805,7 @@ fun SendScreen2(
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
                                     Log.w("SendScreen", "Error: No amount specified")
                                     showDgenToast(context, "Type in an amount")
+                                    showFailedMatrix()
                                 } else {
                                     Log.d("SendScreen", "🟡 Executing transaction (ViewModel will set PENDING status)")
                                     
@@ -816,6 +827,7 @@ fun SendScreen2(
                                         sendTransaction {
                                             // Callback after send operation - the status will be handled by ViewModel
                                             Log.d("SendScreen", "✅ Transaction callback executed")
+//                                            showSuccessMatrix()
                                         }
                                     } else {
                                         Log.w("SendScreen", "Error: Final amount is empty")

@@ -32,6 +32,7 @@ import javax.inject.Inject
 import java.net.UnknownHostException
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.showCustomToast
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenRed
@@ -51,6 +52,7 @@ class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val walletSDK: WalletSDK?,
     private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
@@ -244,6 +246,7 @@ class PayMasterViewModel @Inject constructor(
     suspend fun onTopUpOpened(){
         try{
             //check if terminal sdk is available
+            reflectiveLedPattern?.displayPlus()
             if (terminalSDK?.isAvailable() == true) {
                 terminalSDK.displayTopUp {
                     // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
@@ -281,6 +284,7 @@ class PayMasterViewModel @Inject constructor(
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeTopUp()
+                    reflectiveLedPattern?.clear()
                 } else {
                     Log.w("PayMasterViewModel", "TerminalSDK not available")
                 }

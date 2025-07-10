@@ -50,6 +50,7 @@ import com.core.data.util.chainIdToBundler
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
+import com.core.ui.util.extraLargeExitDuration
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -507,6 +508,33 @@ class SendViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("SendViewModel", "Error removing QR code", e)
             }
+        }
+    }
+
+    fun showFailedMatrix(){
+        viewModelScope.launch {
+            reflectiveLedPattern?.displayError()
+            delay(2000)
+            reflectiveLedPattern?.clear()
+            reflectiveLedPattern?.displayArrowUp()
+        }
+    }
+
+    fun showWarningMatrix(){
+        viewModelScope.launch {
+            reflectiveLedPattern?.displayWarning()
+            delay(2000)
+            reflectiveLedPattern?.clear()
+            reflectiveLedPattern?.displayArrowUp()
+        }
+    }
+
+    fun showSuccessMatrix(){
+        viewModelScope.launch {
+            reflectiveLedPattern?.displayError()
+            delay(2000)
+            reflectiveLedPattern?.clear()
+            reflectiveLedPattern?.displayArrowUp()
         }
     }
 

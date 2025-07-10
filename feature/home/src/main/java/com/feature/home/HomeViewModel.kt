@@ -424,6 +424,20 @@ class HomeViewModel @Inject constructor(
         isHomeScreenVisible.set(false)
     }
 
+    //LED Matrix
+
+    fun showPlusMatrix(){
+        viewModelScope.launch {
+            reflectiveLedPattern?.displayPlus()
+        }
+    }
+
+    fun clearMatrix(){
+        viewModelScope.launch {
+            reflectiveLedPattern?.clear()
+        }
+    }
+
 }
 
 sealed interface AssetsUiState {
