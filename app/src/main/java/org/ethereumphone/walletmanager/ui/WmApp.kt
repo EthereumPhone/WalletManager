@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.utils.SnackbarState
 import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
+import androidx.compose.foundation.layout.fillMaxSize
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,10 +100,11 @@ fun WmApp(
 
     Scaffold(
        containerColor = dgenBlack,
-    ) { paddingValues ->
+    ) { _ ->
         WmNavHost(
             appState = appState,
-            modifier = Modifier.padding(paddingValues),
+            // Fill the entire screen without automatic system bar padding
+            modifier = Modifier.fillMaxSize(),
             terminalSDK = terminalSDK,
             reflectiveLedPattern = reflectiveLedPattern
         )
