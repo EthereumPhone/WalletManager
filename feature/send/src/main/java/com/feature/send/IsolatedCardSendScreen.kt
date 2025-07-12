@@ -93,6 +93,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
@@ -516,6 +517,7 @@ fun SendScreen2(
         modifier = Modifier
             .fillMaxSize()
             .background(dgenBlack)
+            .statusBarsPadding()
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {

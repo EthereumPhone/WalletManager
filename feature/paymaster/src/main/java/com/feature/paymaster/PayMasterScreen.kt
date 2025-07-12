@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -163,6 +164,7 @@ fun PayMasterScreen(
         modifier = modifier
             .fillMaxSize()
             .background(dgenBlack)
+            .statusBarsPadding()
             .padding(start = 12.dp, end = 12.dp, bottom = 24.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
