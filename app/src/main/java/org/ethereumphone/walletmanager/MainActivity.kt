@@ -154,6 +154,9 @@ class MainActivity() : ComponentActivity() {
                 }
             }
         }
+        
+        // Clear LED pattern when app goes to background
+        reflectiveLedPattern?.clear()
     }
 
     override fun onResume() {
@@ -162,6 +165,9 @@ class MainActivity() : ComponentActivity() {
         
         // Refresh system accent colors in case they changed while app was in background
         SystemColorManager.refresh(this)
+        
+        // Optionally: Re-setup LED pattern when app comes back to foreground
+        // reflectiveLedPattern?.setup()
     }
 
     override fun onDestroy() {
@@ -177,6 +183,8 @@ class MainActivity() : ComponentActivity() {
                 }
             }
         }
+
+        reflectiveLedPattern?.clear()
 
     }
 
