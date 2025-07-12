@@ -98,7 +98,11 @@ fun NavGraphBuilder.sendScreen(
             onBackClick = {
                 if (!address.isNullOrEmpty()) {
                     // Navigate to the home screen explicitly if opened via a deep link
-                    navController.navigate("home_route")
+                    navController.navigate("home_route") {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                    }
                 } else {
                     onBackClick()
                 }
