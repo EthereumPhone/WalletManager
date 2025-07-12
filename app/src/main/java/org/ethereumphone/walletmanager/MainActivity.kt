@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
+import com.core.ui.util.SystemColorManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -153,6 +154,9 @@ class MainActivity() : ComponentActivity() {
                 }
             }
         }
+        
+        // Clear LED pattern when app goes to background
+        reflectiveLedPattern?.clear()
     }
 
     override fun onResume() {
@@ -165,6 +169,8 @@ class MainActivity() : ComponentActivity() {
             .beginWith(seedUniswapTokensWork)
             .then(seedNetworkBalanceWork)
             .enqueue()
+
+        SystemColorManager.refresh(this)
 
     }
 
@@ -181,6 +187,8 @@ class MainActivity() : ComponentActivity() {
                 }
             }
         }
+
+        reflectiveLedPattern?.clear()
 
     }
 

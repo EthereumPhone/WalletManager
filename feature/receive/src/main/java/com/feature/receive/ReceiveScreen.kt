@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
@@ -162,6 +163,7 @@ fun ReceiveScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(dgenBlack)
+                .statusBarsPadding()
                 .padding(horizontal = 24.dp)
             //.padding(horizontal = 32.dp, vertical = 32.dp)
         ){
