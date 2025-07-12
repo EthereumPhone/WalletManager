@@ -54,6 +54,11 @@ dependencies {
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
     implementation project(path: ':core:terminalsdk')
+
+    // Add WorkManager and shared workers dependencies for refreshing token balances
+    implementation project(path: ':workers:work')
+    implementation libs.androidx.hilt.work
+    implementation libs.androidx.work.runtime.ktx
     
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit

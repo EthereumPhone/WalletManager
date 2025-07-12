@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -217,6 +218,7 @@ fun HomeScreen2(
     Box (
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
     ) {
 
 
@@ -395,7 +397,6 @@ fun HomeScreen2(
                 },
                 navigateToBuy = {
                     onDebouncedClick {
-                        showPlusMatrix()
                         if (userData is WalletDataUiState.Success) {
                             val address = userData.userData.walletAddress
                             scope.launch {
