@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
+import com.core.ui.util.SystemColorManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -158,6 +159,9 @@ class MainActivity() : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onAppResumed()
+        
+        // Refresh system accent colors in case they changed while app was in background
+        SystemColorManager.refresh(this)
     }
 
     override fun onDestroy() {
