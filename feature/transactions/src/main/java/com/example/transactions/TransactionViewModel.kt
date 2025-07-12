@@ -45,6 +45,7 @@ class TransactionViewModel @Inject constructor(
     ): ViewModel() {
 
     private val onLogOpenedMutex = Mutex()
+    private var hasDisplayedPattern = false
 
     val userData = userDataRepository.userData
         .stateIn(
@@ -98,7 +99,12 @@ class TransactionViewModel @Inject constructor(
     suspend fun onLogOpened(){
         onLogOpenedMutex.withLock {
             try {
-                reflectiveLedPattern?.displayInfo()
+                // Only display pattern if it hasn't been displayed yet
+                if (!hasDisplayedPattern) {
+                    reflectiveLedPattern?.displayInfo()
+                    hasDisplayedPattern = true
+                }
+                
                 //check if terminal sdk is available
                 if (terminalSDK?.isAvailable() == true) {
                     // Wait for screen to be ready before drawing
@@ -123,6 +129,8 @@ class TransactionViewModel @Inject constructor(
                             Log.w("TransactionViewModel", "Wallet address is empty, can't open Blockscan.")
                         }
                     }
+                } else {
+                    Log.d("TransactionViewModel", "Terminal SDK not available")
                 }
             } catch (e: Exception) {
                 Log.e("TransactionViewModel", "Error on displayLog", e)
@@ -133,6 +141,9 @@ class TransactionViewModel @Inject constructor(
     fun onLogClosed() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
+                // Reset the flag so pattern can be displayed next time
+                hasDisplayedPattern = false
+                
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeLog()
                     reflectiveLedPattern?.clear()
