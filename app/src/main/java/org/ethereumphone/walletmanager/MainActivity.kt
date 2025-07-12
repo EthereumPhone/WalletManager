@@ -158,6 +158,14 @@ class MainActivity() : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onAppResumed()
+        val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
+        val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
+
+        WorkManager.getInstance(applicationContext)
+            .beginWith(seedUniswapTokensWork)
+            .then(seedNetworkBalanceWork)
+            .enqueue()
+
     }
 
     override fun onDestroy() {

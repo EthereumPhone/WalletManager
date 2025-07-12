@@ -26,6 +26,9 @@ import com.core.terminalsdk.ReflectiveLedPattern
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
+import androidx.work.WorkManager
+import com.workers.work.SeedTokensWorker
+import com.workers.work.SeedUniswapTokensWorker
 
 @HiltViewModel
 class ReceiveViewModel @Inject constructor(
@@ -108,6 +111,19 @@ class ReceiveViewModel @Inject constructor(
                     reflectiveLedPattern?.clear()
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
+                }
+
+                // Trigger a token refresh whenever the user leaves the Receive screen
+                try {
+                    val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
+                    val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
+
+                    WorkManager.getInstance(appContext)
+                        .beginWith(seedUniswapTokensWork)
+                        .then(seedNetworkBalanceWork)
+                        .enqueue()
+                } catch (e: Exception) {
+                    Log.e("ReceiveViewModel", "Error enqueuing token refresh work", e)
                 }
             } catch (e: Exception) {
                 Log.e("ReceiveViewModel", "Error removing copy terminal screen", e)
