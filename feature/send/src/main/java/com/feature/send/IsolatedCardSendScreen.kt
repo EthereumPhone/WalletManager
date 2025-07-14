@@ -136,6 +136,7 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import com.core.ui.showDgenToast
 import com.core.ui.util.pulseOpacity
+import com.core.ui.util.TokenLogoFallback
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -879,35 +880,60 @@ fun SendScreen2(
                                             is SelectedTokenUiState.Selected -> {
                                                 val token = selectedToken.tokenAsset
 
-                                                // Token Logo
-                                                if (!token.logoUrl.isNullOrEmpty()) {
-                                                    AsyncImage(
-                                                        model = token.logoUrl,
-                                                        contentDescription = token.name,
-                                                        modifier = Modifier
-                                                            .size(28.dp)
-                                                            .clip(CircleShape),
-                                                        placeholder = painterResource(R.drawable.placeholer_icon_5),
-                                                        error = painterResource(R.drawable.placeholer_icon_5)
-                                                    )
-                                                }
-                                                else {
-                                                    val tokenLogo = when(token.symbol.uppercase()) {
-                                                        "MAINNET" -> R.drawable.mainnet
-                                                        "OPTIMISM" -> R.drawable.mainnet
-                                                        "ARBITRUM" -> R.drawable.mainnet
-                                                        "POLYGON" -> R.drawable.polygon
-                                                        "SEPOLIA" -> R.drawable.mainnet
-                                                        "BASE" -> R.drawable.mainnet
-                                                        "ZORA" -> R.drawable.mainnet
-                                                        else -> R.drawable.placeholer_icon_5
+                                                // Token Logo with fallback support
+                                                val fallbackLogo = TokenLogoFallback.getFallbackLogo(token.symbol)
+                                                
+                                                when {
+                                                    // First try the token's logoUrl if available
+                                                    !token.logoUrl.isNullOrEmpty() -> {
+                                                        AsyncImage(
+                                                            model = token.logoUrl,
+                                                            contentDescription = token.name,
+                                                            modifier = Modifier
+                                                                .size(28.dp)
+                                                                .clip(CircleShape),
+                                                            placeholder = painterResource(R.drawable.placeholer_icon_5),
+                                                            error = painterResource(R.drawable.placeholer_icon_5)
+                                                        )
                                                     }
-                                                    Image(
-                                                        modifier = Modifier
-                                                            .size(28.dp),
-                                                        painter = painterResource(tokenLogo),
-                                                        contentDescription = token.name
-                                                    )
+                                                    // Then check for URL fallback
+                                                    fallbackLogo is TokenLogoFallback.LogoSource.Url -> {
+                                                        AsyncImage(
+                                                            model = fallbackLogo.url,
+                                                            contentDescription = token.name,
+                                                            modifier = Modifier
+                                                                .size(28.dp)
+                                                                .clip(CircleShape),
+                                                            placeholder = painterResource(R.drawable.placeholer_icon_5),
+                                                            error = painterResource(R.drawable.placeholer_icon_5)
+                                                        )
+                                                    }
+                                                    // Then check for local resource fallback
+                                                    fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
+                                                        Image(
+                                                            modifier = Modifier.size(28.dp),
+                                                            painter = painterResource(fallbackLogo.resourceId),
+                                                            contentDescription = token.name
+                                                        )
+                                                    }
+                                                    // Finally use hardcoded mappings (temporary until drawables are added)
+                                                    else -> {
+                                                        val tokenLogo = when(token.symbol.uppercase()) {
+                                                            "MAINNET" -> R.drawable.mainnet
+                                                            "OPTIMISM" -> R.drawable.mainnet
+                                                            "ARBITRUM" -> R.drawable.mainnet
+                                                            "POLYGON" -> R.drawable.polygon
+                                                            "SEPOLIA" -> R.drawable.mainnet
+                                                            "BASE" -> R.drawable.mainnet
+                                                            "ZORA" -> R.drawable.mainnet
+                                                            else -> R.drawable.placeholer_icon_5
+                                                        }
+                                                        Image(
+                                                            modifier = Modifier.size(28.dp),
+                                                            painter = painterResource(tokenLogo),
+                                                            contentDescription = token.name
+                                                        )
+                                                    }
                                                 }
 
 

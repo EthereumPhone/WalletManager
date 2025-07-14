@@ -49,6 +49,7 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.dgenWhite
+import com.core.ui.util.TokenLogoFallback
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -112,8 +113,23 @@ fun IdleView(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
-                    when(icon){
-                        "ETH" -> {
+                    // Check if we have a valid icon URL, otherwise use fallback
+                    val effectiveIcon = when {
+                        !icon.isNullOrEmpty() && icon != "ETH" && icon != "MATIC" -> icon
+                        else -> {
+                            // Try to get fallback logo for this token
+                            val fallbackLogo = TokenLogoFallback.getFallbackLogo(tokenName)
+                            when (fallbackLogo) {
+                                is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+                                is TokenLogoFallback.LogoSource.LocalResource -> null // Will handle local resources below
+                                null -> null
+                            }
+                        }
+                    }
+
+                    when {
+                        // Handle special case for ETH hardcoded icon
+                        icon == "ETH" -> {
                             Image(
                                 modifier = Modifier
                                     .graphicsLayer {
@@ -128,21 +144,44 @@ fun IdleView(
                                 contentDescription = "Ethereum"
                             )
                         }
-                        "" -> {
-                            Image(
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        rotationX = 5f
-                                    }
-                                    .padding(bottom = 2.dp)
-                                    .height(48.dp)
-                                    .width(46.dp)
-                                    .clip(RoundedCornerShape(95)),
-                                contentScale = ContentScale.Crop,
-                                painter = painterResource(R.drawable.placeholer_icon_5),
-                                contentDescription = "Ethereum"
-                            )
+                        // Handle local resource fallbacks
+                        effectiveIcon == null -> {
+                            val fallbackLogo = TokenLogoFallback.getFallbackLogo(tokenName)
+                            when (fallbackLogo) {
+                                is TokenLogoFallback.LogoSource.LocalResource -> {
+                                    Image(
+                                        modifier = Modifier
+                                            .graphicsLayer {
+                                                rotationX = 5f
+                                            }
+                                            .padding(bottom = 2.dp)
+                                            .height(48.dp)
+                                            .width(46.dp)
+                                            .clip(RoundedCornerShape(95)),
+                                        contentScale = ContentScale.Crop,
+                                        painter = painterResource(fallbackLogo.resourceId),
+                                        contentDescription = tokenName
+                                    )
+                                }
+                                else -> {
+                                    // Default placeholder if no fallback exists
+                                    Image(
+                                        modifier = Modifier
+                                            .graphicsLayer {
+                                                rotationX = 5f
+                                            }
+                                            .padding(bottom = 2.dp)
+                                            .height(48.dp)
+                                            .width(46.dp)
+                                            .clip(RoundedCornerShape(95)),
+                                        contentScale = ContentScale.Crop,
+                                        painter = painterResource(R.drawable.placeholer_icon_5),
+                                        contentDescription = "Token placeholder"
+                                    )
+                                }
+                            }
                         }
+                        // Handle URL icons (either from API or fallback)
                         else -> {
                             AsyncImage(
                                 modifier = Modifier
@@ -151,8 +190,10 @@ fun IdleView(
                                     .width(46.dp)
                                     .clip(RoundedCornerShape(95)),
                                 contentScale = ContentScale.Crop,
-                                model = icon,
-                                contentDescription = "Translated description of what the image contains"
+                                model = effectiveIcon,
+                                contentDescription = tokenName,
+                                placeholder = painterResource(R.drawable.placeholer_icon_5),
+                                error = painterResource(R.drawable.placeholer_icon_5)
                             )
                         }
                     }
