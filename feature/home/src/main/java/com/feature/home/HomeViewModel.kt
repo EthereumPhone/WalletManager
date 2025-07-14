@@ -402,10 +402,8 @@ class HomeViewModel @Inject constructor(
                 delay(2000)
                 sdk.displayBlackText(message)
 
-                delay(3000)
-                if (isHomeScreenVisible.get()) {
-                    sdk.finishScreen()
-                }
+                delay(4000)
+                sdk.finishScreen()
             } else {
                 welcomeScreenShownThisSession.set(false)
             }
