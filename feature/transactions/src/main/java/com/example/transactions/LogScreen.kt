@@ -100,15 +100,13 @@ fun LogRoute(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onLogClosed()
         }
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = {
-            viewModel.onLogClosed()
-            navigateBack()
-        },
+        onNavigateBack = navigateBack,
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
