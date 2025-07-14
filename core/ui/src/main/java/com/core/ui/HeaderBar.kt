@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,21 +62,20 @@ fun HeaderBar(
         }
 
 
-        Icon(
-            modifier = Modifier
-                .size(32.dp)
-                .clickable {
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastClickTime >= debounceDelay) {
-                        lastClickTime = currentTime
-                        onClick()
-                    }
-                }
-            ,
-            painter = painterResource(R.drawable.baseline_close_24),
-            contentDescription = "Back",
-            tint = primaryColor
-        )
+        IconButton(onClick = {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastClickTime >= debounceDelay) {
+                lastClickTime = currentTime
+                onClick()
+            }
+        }) {
+            Icon(
+                modifier = Modifier.size(32.dp),
+                painter = painterResource(R.drawable.baseline_close_24),
+                contentDescription = "Back",
+                tint = primaryColor
+            )
+        }
 
     }
 }
