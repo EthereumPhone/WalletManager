@@ -399,11 +399,8 @@ class HomeViewModel @Inject constructor(
                 }
 
                 // Add 2-second delay before displaying the message
-                delay(2000)
+                delay(500)
                 sdk.displayBlackText(message)
-
-                delay(4000)
-                sdk.finishScreen()
             } else {
                 welcomeScreenShownThisSession.set(false)
             }
