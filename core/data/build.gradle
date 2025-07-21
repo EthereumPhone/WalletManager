@@ -20,9 +20,21 @@ android {
         Properties properties = new Properties()
         properties.load(project.rootProject.file("local.properties").newDataInputStream())
 
-        buildConfigField "String", "ALCHEMY_API", "\"${properties.getProperty("ALCHEMY_API")}\""
-        buildConfigField "String", "TOKEN_PRICE_API", "\"${properties.getProperty("TOKEN_PRICE_API","fallback_value")}\""
-        buildConfigField "String", "BUNDLER_API", "\"${properties.getProperty("BUNDLER_API")}\""
+        // Fail the build early if any required API key is missing or blank
+        ["BUNDLER_API", "ALCHEMY_API", "TOKEN_PRICE_API"].each { key ->
+            def value = properties.getProperty(key)
+            if (value == null || value.trim().isEmpty()) {
+                throw new GradleException("$key is not defined in local.properties – please add it before building.")
+            }
+        }
+
+        def alchemyApi = properties.getProperty("ALCHEMY_API")
+        def tokenPriceApi = properties.getProperty("TOKEN_PRICE_API")
+        def bundlerApi = properties.getProperty("BUNDLER_API")
+
+        buildConfigField "String", "ALCHEMY_API", "\"${alchemyApi}\""
+        buildConfigField "String", "TOKEN_PRICE_API", "\"${tokenPriceApi}\""
+        buildConfigField "String", "BUNDLER_API", "\"${bundlerApi}\""
 
 
 
