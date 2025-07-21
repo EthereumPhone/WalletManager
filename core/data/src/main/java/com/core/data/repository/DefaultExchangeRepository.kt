@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 import android.util.Log
+import com.core.data.model.dto.TokenAddress
 import com.core.data.remote.TokenPriceDataSource
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.model.erc20.TokenExchangeEntity
@@ -51,14 +52,67 @@ class DefaultExchangeRepository @Inject constructor(
 
             if (entities.isNotEmpty()) {
                 exchangeDao.insertAllExchanges(entities)
-            } else {
-                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $symbols")
+            }
+
+            val failedSymbols = data.filter { it.error != null }
+            if (failedSymbols.isNotEmpty()) {
+                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $failedSymbols. Attempting fallback.")
+                fetchExchangeByAddressForFailedSymbols(failedSymbols.map { it.symbol })
             }
         } catch (e: Exception) {
             Log.e("DefaultExchangeRepository", "Error fetching exchange data for symbols: $symbols", e)
             e.printStackTrace()
         }
     }
+
+    private suspend fun fetchExchangeByAddressForFailedSymbols(symbols: List<String>) {
+        val metadataList = tokenMetadataRepository.getTokensMetadataBySymbols(symbols).first()
+
+        if (metadataList.isEmpty()) {
+            Log.w("fetchExchangeByAddressForFailedSymbols", "No metadata found for failed symbols: $symbols")
+            return
+        }
+
+        val addressesToFetch = metadataList.map {
+            TokenAddress(network = it.chainId.toString(), address = it.contractAddress)
+        }
+
+        try {
+            val response = tokenPriceDataSource.fetchTokenPriceByAddresses(addressesToFetch)
+
+            if (response.error != null) {
+                Log.e("fetchExchangeByAddressForFailedSymbols", "Error from by-address API: ${response.error.message}")
+                return
+            }
+
+            val entities = response.data.mapNotNull { tokenPriceInfo ->
+                val metadata = metadataList.find { it.contractAddress == tokenPriceInfo.address }
+                if (metadata == null) {
+                    Log.w("fetchExchangeByAddressForFailedSymbols", "No metadata found for address: ${tokenPriceInfo.address}")
+                    return@mapNotNull null
+                }
+
+                tokenPriceInfo.prices.map { price ->
+                    TokenExchangeEntity(
+                        symbol = metadata.symbol,
+                        address = tokenPriceInfo.address,
+                        chainId = metadata.chainId,
+                        currency = price.currency,
+                        value = price.value.toDouble(),
+                        timestamp = Instant.parse(price.lastUpdatedAt)
+                    )
+                }
+            }.flatten()
+
+            if (entities.isNotEmpty()) {
+                exchangeDao.insertAllExchanges(entities)
+            }
+
+        } catch (e: Exception) {
+            Log.e("fetchExchangeByAddressForFailedSymbols", "Error fetching exchange data for addresses", e)
+        }
+    }
+
 
     override suspend fun fetchAllExchanges() {
         // Get the latest token balances.
@@ -90,8 +144,15 @@ class DefaultExchangeRepository @Inject constructor(
 
         // Get all contract addresses for ERC20 tokens
         val contractAddresses = erc20Tokens.map { it.contractAddress }
+        val chainIds = erc20Tokens.map { it.chainId }.distinct()
 
         // Fetch metadata for ERC20 tokens
+        if (contractAddresses.isNotEmpty()) {
+            chainIds.forEach { chainId ->
+                val addressesForChain = erc20Tokens.filter { it.chainId == chainId }.map { it.contractAddress }
+                tokenMetadataRepository.refreshTokensMetadata(addressesForChain, chainId)
+            }
+        }
         val metadataList = if (contractAddresses.isNotEmpty()) {
             tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
         } else {

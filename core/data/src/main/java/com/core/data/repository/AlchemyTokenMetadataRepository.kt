@@ -32,6 +32,10 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         tokenMetadataDao.getTokenMetadata(contractAddresses)
             .map { it.map(TokenMetadataEntity::asExternalModel) }
 
+    override fun getTokensMetadataBySymbols(symbols: List<String>): Flow<List<TokenMetadata>> =
+        tokenMetadataDao.getTokensMetadataBySymbols(symbols)
+            .map { it.map(TokenMetadataEntity::asExternalModel) }
+
     override fun getTokensMetadata(chainId: Int): Flow<List<TokenMetadata>> =
         tokenMetadataDao.getTokenMetadata(chainId)
             .map { it.map(TokenMetadataEntity::asExternalModel) }

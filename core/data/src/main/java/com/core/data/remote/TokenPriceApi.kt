@@ -3,12 +3,18 @@ package com.core.data.remote
 import androidx.tracing.trace
 import com.core.data.BuildConfig
 import com.core.data.model.dto.NetworkTokenExchange
+import com.core.data.model.dto.TokenAddress
+import com.core.data.model.dto.TokenPriceAddressesRequest
+import com.core.data.model.dto.TokenPricesResponse
+import com.core.data.util.chainIdToName
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 import javax.inject.Inject
@@ -22,13 +28,11 @@ private interface TokenPriceApi {
         @Query("symbols") symbols: List<String>
     ): NetworkResponse<List<NetworkTokenExchange>>
 
-    //FIX: This won't work.
-    @GET("/prices/v1/{apiKey}/tokens/by-address")
-    suspend fun getTokenPrice(
+    @POST("/prices/v1/{apiKey}/tokens/by-address")
+    suspend fun getTokenPriceByAddress(
         @Path("apiKey") apiKey: String,
-        @Query("network") network: String,
-        @Query("address") symbols: List<String>
-    ): NetworkResponse<List<NetworkTokenExchange>>
+        @Body body: TokenPriceAddressesRequest
+    ): TokenPricesResponse
 }
 
 @JsonClass(generateAdapter = true)
@@ -53,10 +57,12 @@ class RetrofitTokenPrice @Inject constructor(
             .create(TokenPriceApi::class.java)
     }
 
-    override suspend fun fetchTokenPriceByAddresses(
-        networks: List<String>,
-        addresses: List<String>): List<NetworkTokenExchange> {
-        TODO()
+    override suspend fun fetchTokenPriceByAddresses(addresses: List<TokenAddress>)
+    : TokenPricesResponse {
+        val fixRequest = addresses.map { it.copy(network = chainIdToName(it.network.toInt())) }
+
+        val request = TokenPriceAddressesRequest(addresses = fixRequest)
+        return networkApi.getTokenPriceByAddress(BuildConfig.ALCHEMY_API, request)
     }
 
     override suspend fun fetchTokenPriceBySymbols(symbols: List<String>): List<NetworkTokenExchange> =
