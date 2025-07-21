@@ -41,6 +41,7 @@ object TokenLogoFallback {
     private val fallbackLogos = mutableMapOf<String, LogoSource>(
         // Add AAVE with the Alchemy static URL
         "AAVE" to LogoSource.Url("https://static.alchemyapi.io/images/assets/7278.png"),
+        "BARIO" to LogoSource.Url("https://assets.coingecko.com/coins/images/50719/standard/bario.jpg?1728803763"),
         
         // Add other common tokens that might have missing logos
         "USDC" to LogoSource.Url("https://static.alchemyapi.io/images/assets/3408.png"),
