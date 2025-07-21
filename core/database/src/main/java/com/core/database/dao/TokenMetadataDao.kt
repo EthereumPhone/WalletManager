@@ -17,10 +17,13 @@ interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata WHERE symbol == :symbol")
     fun getTokensMetadata(symbol: String): Flow<List<TokenMetadataEntity>>
 
+    @Query("SELECT * FROM token_metadata WHERE symbol IN (:symbols)")
+    fun getTokensMetadataBySymbols(symbols: List<String>): Flow<List<TokenMetadataEntity>>
+
     @Query("SELECT * FROM token_metadata WHERE contractAddress IN (:contractAddresses)")
     fun getTokenMetadata(contractAddresses: List<String>): Flow<List<TokenMetadataEntity>>
 
-    @Query("SELECT * FROM token_metadata WHERE chainId == :chainId")
+    @Query("SELECT * FROM token_metadata WHERE chainId = :chainId")
     fun getTokenMetadata(chainId: Int): Flow<List<TokenMetadataEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
