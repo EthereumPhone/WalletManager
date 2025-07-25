@@ -56,6 +56,9 @@ class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
+    private val WEB_APP_PACKAGE = "org.ethosmobile.webpwaemul"
+
+
     private val _topUpAmount = MutableStateFlow(TextFieldValue(""))
     val topUpAmount: StateFlow<TextFieldValue> = _topUpAmount
 
@@ -222,8 +225,15 @@ class PayMasterViewModel @Inject constructor(
                             )
                             val daimoUrl = topUp(topUpAmount.value.text)
                             if (daimoUrl != null) {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                                val intent = Intent().apply {
+                                    setClassName(WEB_APP_PACKAGE, "org.ethosmobile.webpwaemul.MainActivity")
+                                    data = Uri.parse(daimoUrl)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+
+                                // Add FLAG_ACTIVITY_NEW_TASK as we're starting from a non-Activity context
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
                                 appContext.startActivity(intent)
                             }
                             appContext.showCustomToast(
@@ -259,8 +269,15 @@ class PayMasterViewModel @Inject constructor(
                         Log.e("PayMasterViewModel", "topUpAmount.value.text: ${topUpAmount.value.text}")
                         val daimoUrl = topUp(topUpAmount.value.text)
                         if (daimoUrl != null) {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                            val intent = Intent().apply {
+                                setClassName(WEB_APP_PACKAGE, "org.ethosmobile.webpwaemul.MainActivity")
+                                data = Uri.parse(daimoUrl)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+
+                            // Add FLAG_ACTIVITY_NEW_TASK as we're starting from a non-Activity context
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
                             appContext.startActivity(intent)
                         }
                         appContext.showCustomToast(
