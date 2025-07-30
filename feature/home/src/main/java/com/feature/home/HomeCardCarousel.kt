@@ -110,6 +110,14 @@ internal fun HomeRoute2(
 
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
+    // Track Home screen visibility for periodic updates
+    DisposableEffect(Unit) {
+        viewModel.onHomeScreenVisible()
+        onDispose {
+            viewModel.onHomeScreenHidden()
+        }
+    }
+
 
     val hasTransfer by viewModel.hasTransfers.collectAsState()
 

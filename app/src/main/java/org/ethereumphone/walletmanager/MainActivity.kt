@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.work.ExistingWorkPolicy
@@ -46,6 +48,13 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity() : ComponentActivity() {
 
+    companion object {
+        private const val PREFS_NAME = "welcome_prefs"
+        private const val KEY_LAST_REFRESH_TIME = "lastRefreshTime"
+        private const val REFRESH_INTERVAL_MS = 90_000L // 1.5 minutes
+    }
+
+
     @Inject
     lateinit var walletAddressUpdater: SystemWalletAddressUpdater
 
@@ -67,6 +76,24 @@ class MainActivity() : ComponentActivity() {
 
     val coroutineScope = CoroutineScope(Dispatchers.IO)
 
+    private fun seedDataIfAllowed() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val lastRefresh = prefs.getLong(KEY_LAST_REFRESH_TIME, 0L)
+        if (now - lastRefresh >= REFRESH_INTERVAL_MS) {
+            val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
+            val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
+            
+
+            WorkManager.getInstance(applicationContext)
+                .beginWith(seedUniswapTokensWork)
+                .then(seedNetworkBalanceWork)
+                .enqueue()
+
+            prefs.edit().putLong(KEY_LAST_REFRESH_TIME, now).apply()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -80,13 +107,10 @@ class MainActivity() : ComponentActivity() {
             controller.hide(WindowInsetsCompat.Type.navigationBars())
         }
 
-        val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
-        val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
+        seedDataIfAllowed() // rate-limited
+        
 
-        WorkManager.getInstance(applicationContext)
-            .beginWith(seedUniswapTokensWork)
-            .then(seedNetworkBalanceWork)
-            .enqueue()
+
 
         reflectiveLedPattern?.setup()
 
@@ -162,6 +186,12 @@ class MainActivity() : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onAppResumed()
+
+        seedDataIfAllowed() // rate-limited
+        
+
+
+
 
         SystemColorManager.refresh(this)
 

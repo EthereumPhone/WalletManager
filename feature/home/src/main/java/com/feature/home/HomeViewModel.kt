@@ -30,6 +30,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -88,9 +90,12 @@ class HomeViewModel @Inject constructor(
         private val welcomeScreenShownThisSession = AtomicBoolean(false)
         private const val PREFS_NAME = "welcome_prefs"
         private const val KEY_FIRST_LAUNCH_COMPLETED = "isFirstLaunchCompleted"
+        private const val KEY_LAST_REFRESH_TIME = "lastRefreshTime"
+        private const val REFRESH_INTERVAL_MS = 90_000L
     }
 
     private val isHomeScreenVisible = AtomicBoolean(false)
+    private var periodicRefreshJob: Job? = null
 
     private val sharedPrefs: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -413,10 +418,26 @@ class HomeViewModel @Inject constructor(
 
     fun onHomeScreenVisible() {
         isHomeScreenVisible.set(true)
+        // Start periodic refresh if not already running
+        if (periodicRefreshJob?.isActive != true) {
+            periodicRefreshJob = viewModelScope.launch {
+                while (isActive && isHomeScreenVisible.get()) {
+                    val now = System.currentTimeMillis()
+                    val lastRefresh = sharedPrefs.getLong(KEY_LAST_REFRESH_TIME, 0L)
+                    if (now - lastRefresh >= REFRESH_INTERVAL_MS) {
+                        refreshAllBalances()
+                        sharedPrefs.edit().putLong(KEY_LAST_REFRESH_TIME, now).apply()
+                    }
+                    delay(REFRESH_INTERVAL_MS)
+                }
+            }
+        }
     }
 
     fun onHomeScreenHidden() {
         isHomeScreenVisible.set(false)
+        periodicRefreshJob?.cancel()
+        periodicRefreshJob = null
     }
 
     //LED Matrix
