@@ -87,7 +87,7 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     decimalValue,
                     data?: "",
-                    null,
+                    BigInteger("30000"),
                     chainId
                 )
             } catch (exception: Exception) {
@@ -239,9 +239,35 @@ class SendRepositoryImp @Inject constructor(
     ): String = withContext(Dispatchers.IO) {
         val rpc =  "https://${NetworkChain.getNetworkByChainId(chainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(chainId)?.chainName!!)}"
         val web3j = Web3j.build(HttpService(rpc))
-        val gas = web3j.ethGasPrice().sendAsync().get().gasPrice
-        val gasEther = Convert.fromWei(gas.toString(), Convert.Unit.ETHER)
-        amount.minus(gasEther).toString()
+        val gasPriceWei = web3j.ethGasPrice().sendAsync().get().gasPrice // current gas price per unit in wei
+        
+        // Log the gas price for debugging
+        val gasPriceGwei = Convert.fromWei(gasPriceWei.toString(), Convert.Unit.GWEI)
+        android.util.Log.d("SendRepository", "Chain ID: $chainId")
+        android.util.Log.d("SendRepository", "Gas price: ${gasPriceGwei} GWEI")
+        
+        // For a smart wallet transaction, assume a gas limit of 120,000 units
+        val gasLimit = java.math.BigInteger.valueOf(120_000L)
+        val totalGasCostWei = gasPriceWei.multiply(gasLimit)
+        val totalGasCostEther = Convert.fromWei(totalGasCostWei.toString(), Convert.Unit.ETHER)
+        
+        // Log the calculation details
+        android.util.Log.d("SendRepository", "Gas limit: $gasLimit units")
+        android.util.Log.d("SendRepository", "Total gas cost: $totalGasCostEther ETH")
+        android.util.Log.d("SendRepository", "Original amount: $amount ETH")
+        
+        val maxSend = amount.subtract(totalGasCostEther)
+        
+        // Log the result
+        android.util.Log.d("SendRepository", "Max send amount after gas: $maxSend ETH")
+        
+        // Ensure we never return a negative value
+        if (maxSend.signum() <= 0) {
+            android.util.Log.d("SendRepository", "Max send is negative or zero, returning 0")
+            "0"
+        } else {
+            maxSend.toPlainString()
+        }
     }
 
     override fun restoreState() {

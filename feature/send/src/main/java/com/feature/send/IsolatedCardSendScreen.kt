@@ -1,6 +1,7 @@
 package com.feature.send
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
@@ -137,6 +138,7 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import com.core.ui.showDgenToast
 import com.core.ui.util.pulseOpacity
 import com.core.ui.util.TokenLogoFallback
+import java.math.BigDecimal
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -260,10 +262,12 @@ fun SendRoute2(
         transactionStatus = transactionStatus,
         clearTransactionStatus = viewModel::clearTransactionStatus,
         showFailedMatrix = viewModel::showFailedMatrix,
-        showSuccessMatrix = viewModel::showSuccessMatrix
+        showSuccessMatrix = viewModel::showSuccessMatrix,
+        setMaxAmount = viewModel::setMaxAmount
     )
 }
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SendScreen2(
@@ -291,6 +295,7 @@ fun SendScreen2(
     showSuccessMatrix: () -> Unit,
     transactionStatus: TransactionStatus?,
     clearTransactionStatus: () -> Unit,
+    setMaxAmount: (BigDecimal, Int) -> Unit,
 ){
     val tokenPreselected = tokenId != null && tokenId.isNotEmpty() &&
                            (assets as? AssetsUiState.Success)?.assets?.firstOrNull {
@@ -677,13 +682,10 @@ fun SendScreen2(
                         }
                     }
                     
-                    // Get available balance based on selected chain
-                    val availableBalance = remember(selectedToken, selectedChainIndex, availableChains, assetsUiState.assets) {
-                        // Get the selected chain name
+                    // Get selected chain ID based on selected chain
+                    val selectedChainId = remember(selectedChainIndex, availableChains) {
                         val selectedChainName = availableChains.getOrNull(selectedChainIndex)
-                        
-                        // Convert chain name to chain ID
-                        val selectedChainId = when (selectedChainName) {
+                        when (selectedChainName) {
                             "main" -> 1
                             "sepolia" -> 11155111
                             "op" -> 10
@@ -693,7 +695,10 @@ fun SendScreen2(
                             "zora" -> 7777777
                             else -> null
                         }
-                        
+                    }
+                    
+                    // Get available balance based on selected chain
+                    val availableBalance = remember(selectedToken, selectedChainId, assetsUiState.assets) {
                         selectedChainId?.let { chainId ->
                             when (selectedToken) {
                                 is SelectedTokenUiState.Selected -> {
@@ -1057,11 +1062,8 @@ fun SendScreen2(
                                                             is SelectedTokenUiState.Selected -> {
                                                                 val assetSymbolUpper = currentSelectedToken.tokenAsset.symbol.uppercase()
                                                                 when (assetSymbolUpper) {
-                                                                    "MAINNET" -> "ETH"
-                                                                    // Assuming other native tokens (OPTIMISM, ARBITRUM, POLYGON, etc.)
-                                                                    // are keyed by their own symbol in tokenData for price,
-                                                                    // or "ETH" if that's how their price is listed.
-                                                                    // This matches convertDollarToToken's logic.
+                                                                    "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
+                                                                    "POLYGON" -> "MATIC"
                                                                     else -> assetSymbolUpper
                                                                 }
                                                             }
@@ -1257,13 +1259,12 @@ fun SendScreen2(
                                                 val tokenSymbol = when (selectedToken) {
                                                     is SelectedTokenUiState.Selected -> {
                                                         when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                            "MAINNET" -> "ETH"
+                                                            "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
+                                                            "POLYGON" -> "MATIC"
                                                             else -> selectedToken.tokenAsset.symbol.uppercase()
                                                         }
                                                     }
-                                                    else -> {
-                                                        "ETH"
-                                                    }
+                                                    else -> "ETH"
                                                 }
 
                                                 convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
@@ -1277,6 +1278,8 @@ fun SendScreen2(
 
                                                     if (currentPrice != null && currentPrice > 0) {
                                                         convertedTokenAmount = (dollarValue / currentPrice).toString()
+                                                    } else {
+                                                        convertedTokenAmount = "0"
                                                     }
                                                 } catch (e: Exception) {
                                                     // Error handling
@@ -1297,7 +1300,8 @@ fun SendScreen2(
                                                     val tokenSymbol = when (selectedToken) {
                                                         is SelectedTokenUiState.Selected -> {
                                                             when (selectedToken.tokenAsset.symbol.uppercase()) {
-                                                                "MAINNET" -> "ETH"
+                                                                "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
+                                                                "POLYGON" -> "MATIC"
                                                                 else -> selectedToken.tokenAsset.symbol.uppercase()
                                                             }
                                                         }
@@ -1318,9 +1322,22 @@ fun SendScreen2(
                                                         )
                                                     }
                                                 } else {
-                                                    // Set token amount directly
-                                                    amountFieldValue = TextFieldValue(formattedBalance)
-                                                    onAmountChange(formattedBalance)
+                                                    // For native tokens, use setMaxAmount to calculate gas-adjusted amount
+                                                    val isNativeToken = when (selectedToken) {
+                                                        is SelectedTokenUiState.Selected -> {
+                                                            selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()
+                                                        }
+                                                        else -> true // Default to native if nothing selected
+                                                    }
+                                                    
+                                                    if (isNativeToken && selectedChainId != null) {
+                                                        // Call setMaxAmount for native tokens to get gas-adjusted amount
+                                                        setMaxAmount(BigDecimal(availableBalance), selectedChainId)
+                                                    } else {
+                                                        // For ERC20 tokens, use full balance
+                                                        amountFieldValue = TextFieldValue(formattedBalance)
+                                                        onAmountChange(formattedBalance)
+                                                    }
                                                 }
 
                                                 // Reset setMax after setting the value
