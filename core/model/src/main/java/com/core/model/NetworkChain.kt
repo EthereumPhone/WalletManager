@@ -27,7 +27,7 @@ enum class NetworkChain(
     ),
     ZORA(
         chainId = 7777777,
-        chainName = "eth-mainnet"
+        chainName = "zora-mainnet"
     );
 
     companion object {
