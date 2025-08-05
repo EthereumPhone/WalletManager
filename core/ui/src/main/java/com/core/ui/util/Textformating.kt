@@ -65,37 +65,38 @@ fun abbreviateNumber(value: Double): String {
     return "$formatted${suffixes[index]}"
 }
 
-fun Double.formatWithSuffix(maxDecimals: Int = 4): String {
-    val value = this
-    val absValue = abs(value)
 
-    // pick divisor and suffix
+fun Double.formatWithSuffix(maxDecimals: Int = 4): String {
+    val absValue = kotlin.math.abs(this)
+
     val (divisor, suffix) = when {
         absValue >= 1_000_000_000_000 -> 1_000_000_000_000.0 to "T"
-        absValue >= 1_000_000_000 -> 1_000_000_000.0 to "B"
-        absValue >=   1_000_000 ->   1_000_000.0 to "M"
-        absValue >=       1_000 ->       1_000.0 to "K"
-        else                     ->           1.0 to ""
+        absValue >= 1_000_000_000     -> 1_000_000_000.0     to "B"
+        absValue >= 1_000_000         -> 1_000_000.0         to "M"
+        absValue >= 1_000             -> 1_000.0             to "K"
+        else                          -> 1.0                 to ""
     }
 
-    // decide how many decimals to allow
     val decimals = if (suffix.isNotEmpty()) 2 else maxDecimals
+    val scaled = this / divisor
+    val bd = BigDecimal.valueOf(scaled)
 
-    // build a pattern like "#.###" or "#.#####"
-    val pattern = buildString {
-        append('#')
-        if (decimals > 0) {
-            append('.')
-            repeat(decimals) { append('#') }
+    // New logic: avoid rounding to 0 if small
+    val scaledAndRounded = if (suffix.isNotEmpty()) {
+        // With suffix (e.g., "K", "M") – we can safely round to the desired decimals
+        bd.setScale(decimals, RoundingMode.HALF_UP).stripTrailingZeros()
+    } else {
+        // Without suffix (values < 1K): be careful not to round tiny numbers down to zero
+        val candidate = bd.setScale(decimals, RoundingMode.HALF_UP)
+        if (candidate.compareTo(BigDecimal.ZERO) == 0 && bd.compareTo(BigDecimal.ZERO) != 0) {
+            // Rounding wiped out all significant digits – fall back to full precision
+            bd.stripTrailingZeros()
+        } else {
+            candidate.stripTrailingZeros()
         }
     }
 
-    val fmt = DecimalFormat(pattern).apply {
-        roundingMode = RoundingMode.HALF_UP
-    }
-
-    val scaled = value / divisor
-    return fmt.format(scaled) + suffix
+    return scaledAndRounded.toPlainString() + suffix
 }
 
 // ——— Sample usage ———
@@ -107,7 +108,8 @@ fun main() {
         1_234.56789,       // K suffix, up to 3 decimals → "1.235K"
         2_500_000.0,       // M suffix, up to 3 decimals → "2.5M"
         7_890_123_456.0,   // B suffix, up to 3 decimals → "7.89B"
-        -15_000.3456       // negative K suffix → "-15K"
+        -15_000.3456,       // negative K suffix → "-15K"
+        0.0000005
     )
     examples.forEach { println("${it} → ${it.formatWithSuffix()}") }
 
