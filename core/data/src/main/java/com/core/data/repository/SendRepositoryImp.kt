@@ -87,7 +87,7 @@ class SendRepositoryImp @Inject constructor(
                     toAddress,
                     decimalValue,
                     data?: "",
-                    BigInteger("30000"),
+                    BigInteger("120000"),
                     chainId
                 )
             } catch (exception: Exception) {
