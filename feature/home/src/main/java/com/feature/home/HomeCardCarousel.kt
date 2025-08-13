@@ -409,7 +409,7 @@ fun HomeScreen2(
                             val address = userData.userData.walletAddress
                             scope.launch {
                                 val json = Uri.encode("{\"eth\":\"$address\"}")
-                                getLink("https://buy.moonpay.com/?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
+                                getLink("https://blocks.moonpay.com/v2/buy?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
                                     println("Opening URI: $uri")
                                     uriHandler.openUri(uri)
                                 }
