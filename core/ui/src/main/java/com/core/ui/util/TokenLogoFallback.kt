@@ -43,6 +43,7 @@ object TokenLogoFallback {
         "AAVE" to LogoSource.Url("https://static.alchemyapi.io/images/assets/7278.png"),
         "BARIO" to LogoSource.Url("https://assets.coingecko.com/coins/images/50719/standard/bario.jpg?1728803763"),
         "KIBBLE" to LogoSource.Url("https://assets.coingecko.com/coins/images/36444/standard/logo-32x32.png?1711441503"),
+        "BNKR" to LogoSource.Url("https://assets.coingecko.com/coins/images/52626/standard/bankr-static.png?1736405365"),
         // Add other common tokens that might have missing logos
         "USDC" to LogoSource.Url("https://static.alchemyapi.io/images/assets/3408.png"),
         "USDT" to LogoSource.Url("https://static.alchemyapi.io/images/assets/825.png"),
