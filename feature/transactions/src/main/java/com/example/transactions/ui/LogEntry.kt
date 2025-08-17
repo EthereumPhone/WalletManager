@@ -75,17 +75,15 @@ fun LogEntry(
         // Check if we should use a network logo
     val networkLogoResource = getNetworkLogoResource(logEntry.chainId, logEntry.asset)
     
-    // Check for fallback logo if logoUrl is empty
-    val fallbackLogo = if (logoUrl.isEmpty()) {
-        TokenLogoFallback.getFallbackLogo(logEntry.asset)
-    } else {
-        null
-    }
+    // Check for fallback logo for consistent display across screens
+    val fallbackLogo = TokenLogoFallback.getFallbackLogo(logEntry.asset)
     
-    // Determine the effective logo URL (either from API or fallback)
+    // Determine the effective logo URL: prefer fallback for consistency
     val effectiveLogoUrl = when {
-        logoUrl.isNotEmpty() -> logoUrl
+        // If we have a fallback URL, use it for consistency
         fallbackLogo is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+        // Otherwise use the provided logo URL
+        logoUrl.isNotEmpty() -> logoUrl
         else -> ""
     }
 

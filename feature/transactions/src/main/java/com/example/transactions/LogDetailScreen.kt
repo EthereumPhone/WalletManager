@@ -64,6 +64,7 @@ import com.core.ui.util.dgenWhite
 import com.core.ui.util.formatAddress
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.label_fontSize
+import com.core.ui.util.TokenLogoFallback
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -198,20 +199,49 @@ fun LogDetailScreen(
                                 textDecoration = TextDecoration.None
                             )
                         )
-                        if (logoUrl.isNotEmpty()) {
-                            AsyncImage(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape),
-                                model = logoUrl,
-                                contentDescription = "Token logo"
-                            )
-                        } else {
-                            Image(
-                                modifier = Modifier.size(28.dp),
-                                painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                                contentDescription = "Placeholder"
-                            )
+                        // Check for fallback logo for consistent display across screens
+                        val fallbackLogo = TokenLogoFallback.getFallbackLogo(transfer.asset)
+                        
+                        // Determine the effective logo: prefer fallback for consistency
+                        val effectiveLogoUrl = when {
+                            // If we have a fallback URL, use it for consistency
+                            fallbackLogo is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+                            // Otherwise use the provided logo URL
+                            logoUrl.isNotEmpty() -> logoUrl
+                            else -> ""
+                        }
+                        
+                        when {
+                            // Use URL (either fallback or provided)
+                            effectiveLogoUrl.isNotEmpty() -> {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape),
+                                    model = effectiveLogoUrl,
+                                    contentDescription = "Token logo",
+                                    placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                                    error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
+                                )
+                            }
+                            // Check for local resource fallback
+                            fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
+                                Image(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape),
+                                    painter = painterResource(fallbackLogo.resourceId),
+                                    contentDescription = "Token logo"
+                                )
+                            }
+                            // Fallback: Use placeholder
+                            else -> {
+                                Image(
+                                    modifier = Modifier.size(28.dp),
+                                    painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                                    contentDescription = "Placeholder"
+                                )
+                            }
                         }
 
                         Text(
