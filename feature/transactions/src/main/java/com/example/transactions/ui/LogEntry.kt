@@ -34,6 +34,7 @@ import com.core.ui.util.formatAddress
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
+import com.core.ui.util.TokenLogoFallback
 import com.example.transactions.R
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -71,14 +72,28 @@ fun LogEntry(
         formatAddress(logEntry.to)
     }
 
-    // Check if we should use a network logo
+        // Check if we should use a network logo
     val networkLogoResource = getNetworkLogoResource(logEntry.chainId, logEntry.asset)
+    
+    // Check for fallback logo if logoUrl is empty
+    val fallbackLogo = if (logoUrl.isEmpty()) {
+        TokenLogoFallback.getFallbackLogo(logEntry.asset)
+    } else {
+        null
+    }
+    
+    // Determine the effective logo URL (either from API or fallback)
+    val effectiveLogoUrl = when {
+        logoUrl.isNotEmpty() -> logoUrl
+        fallbackLogo is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+        else -> ""
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.clickable {
-            onNavigateToDetail(logEntry.txHash)
+onNavigateToDetail(logEntry.txHash)
         }
     ) {
 
@@ -91,11 +106,21 @@ fun LogEntry(
                     contentDescription = "${logEntry.asset} on chain ${logEntry.chainId}"
                 )
             }
-            // Second priority: Use provided logo URL
-            logoUrl.isNotEmpty() -> {
+            // Second priority: Use provided logo URL or fallback URL
+            effectiveLogoUrl.isNotEmpty() -> {
                 AsyncImage(
                     modifier = Modifier.size(24.dp).clip(CircleShape),
-                    model = logoUrl,
+                    model = effectiveLogoUrl,
+                    contentDescription = "Token logo",
+                    placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                    error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
+                )
+            }
+            // Third priority: Check for local resource fallback
+            fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
+                Image(
+                    modifier = Modifier.size(24.dp).clip(CircleShape),
+                    painter = painterResource(fallbackLogo.resourceId),
                     contentDescription = "Token logo"
                 )
             }
