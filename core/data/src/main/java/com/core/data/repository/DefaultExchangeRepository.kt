@@ -28,21 +28,75 @@ class DefaultExchangeRepository @Inject constructor(
     override fun getHistoricalExchanges(symbol: String): Flow<List<TokenExchange>> =
         exchangeDao.getHistoricalExchange(symbol)
 
-    override suspend fun fetchExchangeBySymbols(symbols: List<String>) {
-        try {
-            val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
+    /**
+     * Fetches token prices by their addresses with proper batching.
+     * Batches are limited to max 25 addresses across max 3 networks per request.
+     */
+    private suspend fun fetchExchangeByAddressesBatch(addressesWithMetadata: List<TokenAddressWithMetadata>) {
+        if (addressesWithMetadata.isEmpty()) return
 
-            val entities = data
-                .filter { response -> 
-                    // Only process tokens that don't have errors and have price data
-                    response.error == null && response.prices.isNotEmpty()
+        // Group addresses by network
+        val addressesByNetwork = addressesWithMetadata.groupBy { it.chainId }
+        
+        // Create batches respecting both constraints
+        val batches = mutableListOf<List<TokenAddressWithMetadata>>()
+        var currentBatch = mutableListOf<TokenAddressWithMetadata>()
+        var currentNetworks = mutableSetOf<Int>()
+        var currentAddressCount = 0
+
+        for ((chainId, addresses) in addressesByNetwork) {
+            for (address in addresses) {
+                // Check if adding this address would exceed our constraints
+                val wouldExceedNetworkLimit = !currentNetworks.contains(chainId) && currentNetworks.size >= 3
+                val wouldExceedAddressLimit = currentAddressCount >= 25
+
+                if (wouldExceedNetworkLimit || wouldExceedAddressLimit) {
+                    // Save current batch and start a new one
+                    if (currentBatch.isNotEmpty()) {
+                        batches.add(currentBatch.toList())
+                    }
+                    currentBatch = mutableListOf()
+                    currentNetworks = mutableSetOf()
+                    currentAddressCount = 0
                 }
-                .flatMap { response ->
-                    response.prices.map { price ->
+
+                currentBatch.add(address)
+                currentNetworks.add(chainId)
+                currentAddressCount++
+            }
+        }
+
+        // Don't forget the last batch
+        if (currentBatch.isNotEmpty()) {
+            batches.add(currentBatch)
+        }
+
+        // Process each batch
+        for (batch in batches) {
+            try {
+                val tokenAddresses = batch.map { 
+                    TokenAddress(network = it.chainId.toString(), address = it.address)
+                }
+
+                val response = tokenPriceDataSource.fetchTokenPriceByAddresses(tokenAddresses)
+
+                if (response.error != null) {
+                    Log.e("DefaultExchangeRepository", "Error from API for batch: ${response.error.message}")
+                    continue
+                }
+
+                val entities = response.data.flatMap { tokenPriceInfo ->
+                    val metadata = batch.find { it.address == tokenPriceInfo.address }
+                    if (metadata == null) {
+                        Log.w("DefaultExchangeRepository", "No metadata found for address: ${tokenPriceInfo.address}")
+                        return@flatMap emptyList()
+                    }
+
+                    tokenPriceInfo.prices.map { price ->
                         TokenExchangeEntity(
-                            symbol = response.symbol,
-                            address = null,
-                            chainId = null,
+                            symbol = metadata.symbol,
+                            address = tokenPriceInfo.address,
+                            chainId = metadata.chainId,
                             currency = price.currency,
                             value = price.value.toDouble(),
                             timestamp = Instant.parse(price.lastUpdatedAt)
@@ -50,73 +104,51 @@ class DefaultExchangeRepository @Inject constructor(
                     }
                 }
 
-            if (entities.isNotEmpty()) {
-                exchangeDao.insertAllExchanges(entities)
-            }
+                if (entities.isNotEmpty()) {
+                    exchangeDao.insertAllExchanges(entities)
+                }
 
-            val failedSymbols = data.filter { it.error != null }
-            if (failedSymbols.isNotEmpty()) {
-                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $failedSymbols. Attempting fallback.")
-                fetchExchangeByAddressForFailedSymbols(failedSymbols.map { it.symbol })
+            } catch (e: Exception) {
+                Log.e("DefaultExchangeRepository", "Error fetching exchange data for batch", e)
             }
-        } catch (e: Exception) {
-            Log.e("DefaultExchangeRepository", "Error fetching exchange data for symbols: $symbols", e)
-            e.printStackTrace()
         }
     }
 
-    private suspend fun fetchExchangeByAddressForFailedSymbols(symbols: List<String>) {
-        val metadataList = tokenMetadataRepository.getTokensMetadataBySymbols(symbols).first()
+    // Data class to hold address with its metadata
+    private data class TokenAddressWithMetadata(
+        val address: String,
+        val chainId: Int,
+        val symbol: String
+    )
 
+    // Deprecated - kept for backward compatibility but now uses address-based fetching
+    override suspend fun fetchExchangeBySymbols(symbols: List<String>) {
+        Log.w("DefaultExchangeRepository", "fetchExchangeBySymbols is deprecated. Using address-based fetching instead.")
+        
+        // Get metadata for these symbols to get their addresses
+        val metadataList = tokenMetadataRepository.getTokensMetadataBySymbols(symbols).first()
+        
         if (metadataList.isEmpty()) {
-            Log.w("fetchExchangeByAddressForFailedSymbols", "No metadata found for failed symbols: $symbols")
+            Log.w("DefaultExchangeRepository", "No metadata found for symbols: $symbols")
             return
         }
 
-        val addressesToFetch = metadataList.map {
-            TokenAddress(network = it.chainId.toString(), address = it.contractAddress)
+        val addressesWithMetadata = metadataList.map {
+            TokenAddressWithMetadata(
+                address = it.contractAddress,
+                chainId = it.chainId,
+                symbol = it.symbol
+            )
         }
 
-        try {
-            val response = tokenPriceDataSource.fetchTokenPriceByAddresses(addressesToFetch)
-
-            if (response.error != null) {
-                Log.e("fetchExchangeByAddressForFailedSymbols", "Error from by-address API: ${response.error.message}")
-                return
-            }
-
-            val entities = response.data.mapNotNull { tokenPriceInfo ->
-                val metadata = metadataList.find { it.contractAddress == tokenPriceInfo.address }
-                if (metadata == null) {
-                    Log.w("fetchExchangeByAddressForFailedSymbols", "No metadata found for address: ${tokenPriceInfo.address}")
-                    return@mapNotNull null
-                }
-
-                tokenPriceInfo.prices.map { price ->
-                    TokenExchangeEntity(
-                        symbol = metadata.symbol,
-                        address = tokenPriceInfo.address,
-                        chainId = metadata.chainId,
-                        currency = price.currency,
-                        value = price.value.toDouble(),
-                        timestamp = Instant.parse(price.lastUpdatedAt)
-                    )
-                }
-            }.flatten()
-
-            if (entities.isNotEmpty()) {
-                exchangeDao.insertAllExchanges(entities)
-            }
-
-        } catch (e: Exception) {
-            Log.e("fetchExchangeByAddressForFailedSymbols", "Error fetching exchange data for addresses", e)
-        }
+        fetchExchangeByAddressesBatch(addressesWithMetadata)
     }
 
 
+
+
     override suspend fun fetchAllExchanges() {
-        // Get the latest token balances.
-        // TokenBalanceEntity has 'contractAddress' and 'tokenBalance'
+        // Get the latest token balances
         val allBalances = tokenBalanceRepository.getTokensBalances().first()
 
         // Filter for balances > 0
@@ -125,68 +157,139 @@ class DefaultExchangeRepository @Inject constructor(
 
         if (balancesWithSufficientAmount.isEmpty()) {
             Log.d("fetchAllExchanges", "No token balances greater than zero found.")
-            return // No balances to process
+            return
         }
+
+        val addressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
 
         // Separate network currencies from ERC20 tokens
         val (networkCurrencies, erc20Tokens) = balancesWithSufficientAmount.partition {
             !it.contractAddress.startsWith("0x")
         }
 
-        // Handle network currencies
-        val networkSymbols = networkCurrencies.mapNotNull { balance ->
-            val chainId = balance.contractAddress.toIntOrNull()
-            when (chainId) {
-                137 -> "MATIC"    // Polygon
-                else -> "ETH"      // Unknown chain, skip
+        // Handle network currencies - we need to fetch their prices too
+        // For network currencies, we'll use special addresses
+        for (balance in networkCurrencies) {
+            val chainId = balance.contractAddress.toIntOrNull() ?: continue
+            
+            // Create special address entries for native tokens
+            val nativeTokenAddress = when (chainId) {
+                137 -> TokenAddressWithMetadata(
+                    address = "0x0000000000000000000000000000000000001010", // MATIC native token address
+                    chainId = chainId,
+                    symbol = "MATIC"
+                )
+                1, 10, 42161, 8453, 11155111, 5 -> TokenAddressWithMetadata(
+                    address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // ETH native token address
+                    chainId = chainId,
+                    symbol = "ETH"
+                )
+                else -> null
             }
-        }.distinct()
+            
+            nativeTokenAddress?.let { addressesWithMetadata.add(it) }
+        }
 
-        // Get all contract addresses for ERC20 tokens
-        val contractAddresses = erc20Tokens.map { it.contractAddress }
-        val chainIds = erc20Tokens.map { it.chainId }.distinct()
-
-        // Fetch metadata for ERC20 tokens
-        if (contractAddresses.isNotEmpty()) {
+        // Handle ERC20 tokens
+        if (erc20Tokens.isNotEmpty()) {
+            // Refresh metadata for all chains
+            val chainIds = erc20Tokens.map { it.chainId }.distinct()
             chainIds.forEach { chainId ->
                 val addressesForChain = erc20Tokens.filter { it.chainId == chainId }.map { it.contractAddress }
                 tokenMetadataRepository.refreshTokensMetadata(addressesForChain, chainId)
             }
-        }
-        val metadataList = if (contractAddresses.isNotEmpty()) {
-            tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
-        } else {
-            emptyList()
-        }
 
-        // Extract unique symbols from the metadata
-        val erc20Symbols = metadataList.map { it.symbol }.distinct()
+            // Get metadata for all ERC20 tokens
+            val contractAddresses = erc20Tokens.map { it.contractAddress }
+            val metadataList = tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
 
-        // Combine network symbols and ERC20 symbols
-        val symbolsToFetch = (networkSymbols + erc20Symbols).distinct()
-
-        if (symbolsToFetch.isEmpty()) {
-            Log.d("fetchAllExchanges", "No symbols could be determined for tokens with balance > 0.")
-            return // No symbols to fetch
-        }
-
-        Log.d("fetchAllExchanges", "Symbols to fetch: ${symbolsToFetch.joinToString()}")
-
-        // API has a 25 symbol limit per call, so chunk the list of symbols
-        val chunkSize = 25
-        symbolsToFetch.chunked(chunkSize).forEach { chunk ->
-            try {
-                fetchExchangeBySymbols(chunk)
-            } catch (e: IOException) {
-                // The fetchExchangeBySymbols method already has its own try-catch.
-                // Log error for this specific chunk.
-                Log.e("fetchAllExchanges", "Error fetching exchange data for chunk ${chunk.joinToString()}", e)
+            // Create address entries with metadata
+            for (metadata in metadataList) {
+                addressesWithMetadata.add(
+                    TokenAddressWithMetadata(
+                        address = metadata.contractAddress,
+                        chainId = metadata.chainId,
+                        symbol = metadata.symbol
+                    )
+                )
             }
         }
+
+        if (addressesWithMetadata.isEmpty()) {
+            Log.d("fetchAllExchanges", "No addresses to fetch prices for.")
+            return
+        }
+
+        Log.d("fetchAllExchanges", "Fetching prices for ${addressesWithMetadata.size} addresses")
+
+        // Use the new batching method
+        fetchExchangeByAddressesBatch(addressesWithMetadata)
     }
 
     override suspend fun fetchExchangeByAddress(address: String) {
-        TODO("Not yet implemented")
+        // First, try to find metadata for this address
+        val metadata = tokenMetadataRepository.getTokensMetadata(listOf(address)).first().firstOrNull()
+        
+        if (metadata != null) {
+            // We found metadata, use it to fetch the price
+            val addressWithMetadata = TokenAddressWithMetadata(
+                address = metadata.contractAddress,
+                chainId = metadata.chainId,
+                symbol = metadata.symbol
+            )
+            fetchExchangeByAddressesBatch(listOf(addressWithMetadata))
+        } else {
+            // No metadata found, this could be a native token or unknown token
+            // Try common native token addresses
+            val nativeAddresses = mutableListOf<TokenAddressWithMetadata>()
+            
+            // Check if it's a known native token address
+            when (address) {
+                "0x0000000000000000000000000000000000001010" -> {
+                    // MATIC on Polygon
+                    nativeAddresses.add(
+                        TokenAddressWithMetadata(
+                            address = address,
+                            chainId = 137,
+                            symbol = "MATIC"
+                        )
+                    )
+                }
+                "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" -> {
+                    // ETH on various chains - try common ones
+                    listOf(1, 10, 42161, 8453).forEach { chainId ->
+                        nativeAddresses.add(
+                            TokenAddressWithMetadata(
+                                address = address,
+                                chainId = chainId,
+                                symbol = "ETH"
+                            )
+                        )
+                    }
+                }
+                else -> {
+                    // Unknown address, try to fetch from common chains
+                    // This is a best-effort approach
+                    Log.w("fetchExchangeByAddress", "No metadata found for address: $address. Attempting common chains.")
+                    
+                    listOf(1, 137, 10, 42161, 8453).forEach { chainId ->
+                        nativeAddresses.add(
+                            TokenAddressWithMetadata(
+                                address = address,
+                                chainId = chainId,
+                                symbol = "UNKNOWN"
+                            )
+                        )
+                    }
+                }
+            }
+            
+            if (nativeAddresses.isNotEmpty()) {
+                fetchExchangeByAddressesBatch(nativeAddresses)
+            } else {
+                Log.e("fetchExchangeByAddress", "Unable to determine chain for address: $address")
+            }
+        }
     }
 
     override fun getExchanges(): Flow<List<TokenExchange>> {

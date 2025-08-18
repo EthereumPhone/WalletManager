@@ -19,7 +19,7 @@ android {
         applicationId "org.ethereumphone.walletmanager"
         minSdk 34
         targetSdk 34
-        versionCode 27
+        versionCode 28
         versionName versionCode.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
