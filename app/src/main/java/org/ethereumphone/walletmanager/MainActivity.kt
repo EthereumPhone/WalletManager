@@ -202,14 +202,8 @@ class MainActivity() : ComponentActivity() {
 
         // Stop the periodic update
         walletAddressUpdater.stopPeriodicUpdate()
-        coroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                terminalSDK?.let {
-                    it.resume(it.ID_STATUSBAR)
-                    it.destroyTouchHandler()
-                }
-            }
-        }
+        // Synchronously destroy the touch handler to ensure immediate cleanup
+        terminalSDK?.destroyTouchHandlerSync()
 
         reflectiveLedPattern?.clear()
 

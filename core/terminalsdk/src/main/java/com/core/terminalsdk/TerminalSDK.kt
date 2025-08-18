@@ -305,6 +305,16 @@ class TerminalSDK(private val context: Context) {
             miniDisplayTouchHandler = null
         }
     }
+    
+    /**
+     * Synchronously destroy the current touch handler
+     * Used in onDestroy() to ensure immediate cleanup
+     */
+    fun destroyTouchHandlerSync() {
+        println("ETHOSDEBUGTERMINAL destroyTouchHandlerSync")
+        miniDisplayTouchHandler?.destroy()
+        miniDisplayTouchHandler = null
+    }
 
     suspend fun finishScreen() {
         println("ETHOSDEBUGTERMINAL finishScreen")
