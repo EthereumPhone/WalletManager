@@ -75,6 +75,9 @@ internal fun ReceiveRoute(
     val userData by viewModel.userData.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
+    // Track if user is navigating back to home
+    var isNavigatingBack by remember { mutableStateOf(false) }
+
 
     //initializes fonts for toast
     initializeFontMap(SpaceMono, PitagonsSans)
@@ -111,14 +114,17 @@ internal fun ReceiveRoute(
     //closes terminal screen for receive button
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.onCopyClosed()
+            viewModel.onCopyClosed(clearLed = !isNavigatingBack)
         }
     }
     
     ReceiveScreen(
         userData = userData,
 //        modifier = modifier,
-        onBackClick = onBackClick,
+        onBackClick = {
+            isNavigatingBack = true
+            onBackClick()
+        },
         onCopyClick = {
             silentlyCopyToClipboard(context, userData.walletAddress)
             //clipboard.setText(AnnotatedString(userData.walletAddress))
@@ -179,7 +185,8 @@ fun ReceiveScreen(
                     contentDescription = "wallet address QR",
                     contentScale = ContentScale.FillBounds,
                     //colorFilter = ColorFilter.tint(dgenRed),
-                    modifier = Modifier.size(150.dp)
+                    modifier = Modifier
+                        .size(150.dp)
                         .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
                 )
 

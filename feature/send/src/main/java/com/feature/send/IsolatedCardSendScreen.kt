@@ -197,6 +197,9 @@ fun SendRoute2(
     // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
     var hasHandledInitialResume by remember { mutableStateOf(false) }
 
+    // Track if user is navigating back to home
+    var isNavigatingBack by remember { mutableStateOf(false) }
+
     // Observe lifecycle events to handle app resume
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, transactionStatus) {
@@ -234,14 +237,17 @@ fun SendRoute2(
     // Remove QR code from secondary screen when this screen is disposed/closed
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.onScreenClosed()
+            viewModel.onScreenClosed(clearLed = !isNavigatingBack)
         }
     }
 
     SendScreen2(
         initialAddress = initialAddress,
         modifier = Modifier,
-        onBackClick = onBackClick,
+        onBackClick = {
+            isNavigatingBack = true
+            onBackClick()
+        },
         toAddress = toAddress,
         amount = amount,
         walletDataUiState = walletDataUiState,
@@ -535,7 +541,11 @@ fun SendScreen2(
     ) {
 
         AsyncImage(
-            modifier = Modifier.alpha(pulseOpacity).offset(x = 250.dp,y = 20.dp).scale(1.3f).aspectRatio(1f),
+            modifier = Modifier
+                .alpha(pulseOpacity)
+                .offset(x = 250.dp, y = 20.dp)
+                .scale(1.3f)
+                .aspectRatio(1f),
             imageLoader = gifEnabledLoader,
             model = R.drawable.globe_wireframe,
             contentDescription = null,
@@ -1005,7 +1015,8 @@ fun SendScreen2(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                                     ){
-                                        Spacer(Modifier.offset(y = 5.dp)
+                                        Spacer(Modifier
+                                            .offset(y = 5.dp)
                                             .height(77.dp)
                                             .width(8.dp)
                                             .background(primaryColor.copy(pulseOpacity))
@@ -1117,11 +1128,13 @@ fun SendScreen2(
                                                 lineHeight = 18.sp,
                                                 letterSpacing = 0.sp,
                                                 textDecoration = TextDecoration.None,
-                                                modifier = Modifier.offset( y=2.dp).pointerInput(Unit){
-                                                    detectTapGestures {
-                                                        setMax = !setMax
+                                                modifier = Modifier
+                                                    .offset(y = 2.dp)
+                                                    .pointerInput(Unit) {
+                                                        detectTapGestures {
+                                                            setMax = !setMax
+                                                        }
                                                     }
-                                                }
                                             )
 
 

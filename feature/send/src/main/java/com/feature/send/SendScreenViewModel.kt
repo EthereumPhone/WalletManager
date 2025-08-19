@@ -495,12 +495,16 @@ class SendViewModel @Inject constructor(
     /**
      * Call this function when the send screen is closed/navigated away to remove QR code from secondary screen
      */
-    fun onScreenClosed() {
+    fun onScreenClosed(clearLed: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeQRCode()
-                    reflectiveLedPattern?.clear()
+                    // Only clear LED if explicitly requested
+                    if (clearLed) {
+                        reflectiveLedPattern?.clear()
+                    }
+
                     Log.d("SendViewModel", "QR code removed from secondary screen")
                 } else {
                     Log.w("SendViewModel", "TerminalSDK not available")

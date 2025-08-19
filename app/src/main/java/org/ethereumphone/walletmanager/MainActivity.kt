@@ -31,6 +31,7 @@ import com.core.data.repository.UserDataRepository
 import com.core.data.util.NetworkMonitor
 import com.core.designsystem.theme.background
 import com.core.terminalsdk.ReflectiveLedPattern
+import com.core.terminalsdk.TerminalLEDController
 import com.core.terminalsdk.TerminalSDK
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
@@ -112,6 +113,7 @@ class MainActivity() : ComponentActivity() {
 
 
 
+        TerminalLEDController.initialize(this)
         reflectiveLedPattern?.setup()
 
         /*
@@ -177,10 +179,9 @@ class MainActivity() : ComponentActivity() {
                     it.destroyTouchHandler()
                 }
             }
+            // Clear LED pattern when app goes to background
+            reflectiveLedPattern?.clear()
         }
-        
-        // Clear LED pattern when app goes to background
-        reflectiveLedPattern?.clear()
     }
 
     override fun onResume() {
@@ -188,11 +189,6 @@ class MainActivity() : ComponentActivity() {
         viewModel.onAppResumed()
 
         seedDataIfAllowed() // rate-limited
-        
-
-
-
-
         SystemColorManager.refresh(this)
 
     }

@@ -103,12 +103,15 @@ class ReceiveViewModel @Inject constructor(
         }
     }
 
-    fun onCopyClosed() {
+    fun onCopyClosed(clearLed: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeCopyAddress()
-                    reflectiveLedPattern?.clear()
+                    // Only clear LED if explicitly requested
+                    if (clearLed) {
+                        reflectiveLedPattern?.clear()
+                    }
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
                 }

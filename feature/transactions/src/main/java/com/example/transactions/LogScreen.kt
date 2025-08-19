@@ -90,6 +90,9 @@ fun LogRoute(
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
     val userData by viewModel.userData.collectAsStateWithLifecycle()
 
+    // Track if user is navigating back to home
+    var isNavigatingBack by remember { mutableStateOf(false) }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -100,13 +103,17 @@ fun LogRoute(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.onLogClosed()
+            // Don't clear LED if navigating back to home screen
+            viewModel.onLogClosed(clearLed = !isNavigatingBack)
         }
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = navigateBack,
+        onNavigateBack = {
+            isNavigatingBack = true
+            navigateBack()
+        },
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
@@ -465,6 +472,7 @@ fun Modifier.verticalLazyListScrollbar(
     val coroutineScope = rememberCoroutineScope()
     var isScrolling by remember { mutableStateOf(false) }
     var targetScrollBarOffset by remember { mutableStateOf(0f) } // Thumb Y position
+
 
 
     LaunchedEffect(lazyListState.isScrollInProgress) {

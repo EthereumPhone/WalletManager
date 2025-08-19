@@ -387,7 +387,7 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Trigger LED "Chad" pattern when we start showing the welcome message
-            reflectiveLedPattern?.displayChad()
+
             val sdk = terminal ?: return@launch // SDK unavailable
             if (sdk.isAvailable()) {
                 val message: String

@@ -33,6 +33,7 @@ import java.net.UnknownHostException
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.terminalsdk.ReflectiveLedPattern
+import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.showCustomToast
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenRed
@@ -208,6 +209,7 @@ class PayMasterViewModel @Inject constructor(
                         )
                         delay(500)
                     }
+                    TerminalLEDController.displayChadPattern()
                     terminalSDK.displayTopUp {
                         // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
                         val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
@@ -246,7 +248,8 @@ class PayMasterViewModel @Inject constructor(
     suspend fun onTopUpOpened(){
         try{
             //check if terminal sdk is available
-            reflectiveLedPattern?.displayPlus()
+            reflectiveLedPattern?.displayPlus(getSystemColorHex())
+//            TerminalLEDController.displaySignPattern()
             if (terminalSDK?.isAvailable() == true) {
                 terminalSDK.displayTopUp {
                     // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
@@ -279,18 +282,35 @@ class PayMasterViewModel @Inject constructor(
         }
     }
 
-    fun onTopUpClosed() {
+    fun onTopUpClosed(clearLed: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeTopUp()
-                    reflectiveLedPattern?.clear()
+                    // Only clear LED if explicitly requested
+                    if (clearLed) {
+                        reflectiveLedPattern?.clear()
+                    }
                 } else {
                     Log.w("PayMasterViewModel", "TerminalSDK not available")
                 }
             } catch (e: Exception) {
                 Log.e("PayMasterViewModel", "Error removing top up terminal screen", e)
             }
+        }
+    }
+
+    /**
+     * Get system accent color as hex string
+     */
+    private fun getSystemColorHex(): String? {
+        return appContext.let { context ->
+            val accentInt = android.provider.Settings.Secure.getInt(
+                context.contentResolver,
+                "systemui_accent_color",
+                0xFFFF0000.toInt()  // Default red
+            )
+            String.format("0x%08X", accentInt)
         }
     }
 

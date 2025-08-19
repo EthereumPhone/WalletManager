@@ -78,6 +78,8 @@ internal fun PayMasterScreenRoute(
 ) {
     val balance by viewModel.balance.collectAsState()
     val topUpAmount by viewModel.topUpAmount.collectAsState()
+    // Track if user is navigating back to home
+    var isNavigatingBack by remember { mutableStateOf(false) }
 
 
     //opens terminal screen for paymaster button
@@ -106,19 +108,23 @@ internal fun PayMasterScreenRoute(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onTopUpClosed(clearLed = !isNavigatingBack)
         }
     }
 
     //closes terminal screen for paymaster button
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.onTopUpClosed()
+            viewModel.onTopUpClosed(clearLed = !isNavigatingBack)
         }
     }
 
     PayMasterScreen(
         balance = balance,
-        onBackClick = onBackClick,
+        onBackClick = {
+            isNavigatingBack = true
+            onBackClick()
+        },
         topUp = viewModel::topUp,
         forceRefresh = viewModel::forceUpdateBalance,
         topUpAmount = topUpAmount,
@@ -192,7 +198,8 @@ fun PayMasterScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Spacer(Modifier.offset(y = 5.dp)
+                    Spacer(Modifier
+                        .offset(y = 5.dp)
                         .height(77.dp)
                         .width(8.dp)
                         .background(primaryColor.copy(pulseOpacity))
@@ -320,7 +327,7 @@ fun PayMasterScreen(
                 Box(
                     modifier = Modifier
                         .width(64.dp)
-                        .aspectRatio(16f/9f)
+                        .aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(4.dp))
                         .background(if (isSelected) primaryColor else Color.Transparent)
                         .border(BorderStroke(1.dp, primaryColor), RoundedCornerShape(4.dp))

@@ -54,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.core.ui.util.SystemColorManager
@@ -63,6 +64,7 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.R
 import com.core.ui.initializeFontMap
 import com.core.ui.showCustomToast
@@ -107,7 +109,6 @@ internal fun HomeRoute2(
     val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedTokenUiState: SelectedTokenUiState by sendViewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
-
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
     // Track Home screen visibility for periodic updates
@@ -124,12 +125,27 @@ internal fun HomeRoute2(
     val lifecycle = ProcessLifecycleOwner.get().lifecycle
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_START) {
-                viewModel.showWelcomeBack()
-            } else if (event == Lifecycle.Event.ON_STOP) {
-                viewModel.resetWelcomeScreenFlag()
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    viewModel.showWelcomeBack()
+
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    TerminalLEDController.displayChadPattern()
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Don't cleanup here - just log the event
+                    Log.d("CreateEditNoteScreen", "ON_PAUSE: Terminal remains active")
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    viewModel.resetWelcomeScreenFlag()
+                    // Don't cleanup here either - terminal should persist
+                    Log.d("CreateEditNoteScreen", "ON_STOP: Terminal remains active")
+                }
+                else -> {}
             }
         }
+
         lifecycle.addObserver(observer)
         onDispose {
             lifecycle.removeObserver(observer)
@@ -195,6 +211,7 @@ fun HomeScreen2(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val lastClickTime = remember { AtomicLong(0) }
     fun onDebouncedClick(action: () -> Unit) {

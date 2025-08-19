@@ -2,6 +2,7 @@ package com.core.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -69,12 +70,18 @@ fun HeaderBar(
                 onClick()
             }
         }) {
-            Icon(
-                modifier = Modifier.size(32.dp),
-                painter = painterResource(R.drawable.baseline_close_24),
-                contentDescription = "Back",
-                tint = primaryColor
-            )
+            Box(
+                modifier = Modifier.size(56.dp),
+                contentAlignment = Alignment.CenterEnd
+            ){
+                Icon(
+                    modifier = Modifier.size(32.dp),
+                    painter = painterResource(R.drawable.baseline_close_24),
+                    contentDescription = "Back",
+                    tint = primaryColor
+                )
+            }
+
         }
 
     }

@@ -138,7 +138,7 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-    fun onLogClosed() {
+    fun onLogClosed(clearLed: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 // Reset the flag so pattern can be displayed next time
@@ -146,7 +146,10 @@ class TransactionViewModel @Inject constructor(
                 
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeLog()
-                    reflectiveLedPattern?.clear()
+                    // Only clear LED if explicitly requested
+                    if (clearLed) {
+                        reflectiveLedPattern?.clear()
+                    }
                 } else {
                     Log.w("TransactionViewModel", "TerminalSDK not available")
                 }
