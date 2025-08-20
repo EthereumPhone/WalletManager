@@ -77,6 +77,7 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
+import kotlin.math.max
 
 @Composable
 fun LogRoute(
@@ -177,7 +178,7 @@ fun LogScreen(
                         animationSpec = tween(extraLargeEnterDuration)
                     ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                 },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
                 label = "Animated Content"
             ) { txState ->
                 when(txState){
@@ -204,10 +205,10 @@ fun LogScreen(
                                             .verticalLazyListScrollbar(
                                                 scrollState,
                                                 scrollBarTrackColor = secondaryColor,
-                                                scrollBarColor = primaryColor
+                                                scrollBarColor = primaryColor,
                                             ) // Apply the scrollbar first
                                         .fillMaxSize()
-                                        .padding(horizontal = 24.dp),
+                                        ,
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     item {
@@ -464,22 +465,51 @@ fun Modifier.verticalLazyListScrollbar(
     lazyListState: LazyListState,
     width: Dp = 6.dp,
     showScrollBarTrack: Boolean = true,
-    scrollBarTrackColor: Color,
-    scrollBarColor: Color,
+    scrollBarTrackColor: Color = dgenOcean,
+    scrollBarColor: Color = dgenTurqoise,
     scrollBarCornerRadius: Float = 4f,
-    endPadding: Float = 12f
+    trackTopInset: Dp = 32.dp,
+    trackBottomInset: Dp = 32.dp,
+    endPadding: Dp = 12.dp,
+    minThumbHeight: Dp = 40.dp,
+    verticalOffset: Dp = 0.dp
 ): Modifier {
-    val coroutineScope = rememberCoroutineScope()
-    var isScrolling by remember { mutableStateOf(false) }
-    var targetScrollBarOffset by remember { mutableStateOf(0f) } // Thumb Y position
+    val layoutInfo = lazyListState.layoutInfo
+    val totalItemsCount = layoutInfo.totalItemsCount
+    val firstVisibleItemIndex = lazyListState.firstVisibleItemIndex
+    val firstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
+    val visibleItemsInfo = layoutInfo.visibleItemsInfo
+    val viewportHeightPx = (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset)
+        .toFloat()
+        .coerceAtLeast(1f)
 
+    // Smooth, stable per-item height estimate to avoid jumping thumb size/position
+    var smoothedItemHeightPx by remember(totalItemsCount) { mutableStateOf<Float?>(null) }
+    val currentVisibleAverage = if (visibleItemsInfo.isNotEmpty()) {
+        visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
+    } else null
+    if (currentVisibleAverage != null) {
+        smoothedItemHeightPx = when (val prev = smoothedItemHeightPx) {
+            null -> currentVisibleAverage
+            else -> prev + (currentVisibleAverage - prev) * 0.15f
+        }
+    }
+    val itemHeightEstimatePx = smoothedItemHeightPx ?: viewportHeightPx
 
+    val contentHeightEstimatePx = (itemHeightEstimatePx * totalItemsCount)
+        .coerceAtLeast(viewportHeightPx)
+    val scrolledOffsetPx = (firstVisibleItemIndex * itemHeightEstimatePx) + firstVisibleItemScrollOffset
+    val maxScrollPx = (contentHeightEstimatePx - viewportHeightPx).coerceAtLeast(1f)
+    var progressFraction = (scrolledOffsetPx / maxScrollPx).coerceIn(0f, 1f)
 
-    LaunchedEffect(lazyListState.isScrollInProgress) {
-        if (lazyListState.isScrollInProgress) {
-            isScrolling = true
-        } else {
-            delay(1000) // Wait 1 second before fading out
+    // Force exact ends when at the start or when the last item is fully visible
+    if (firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset <= 0) {
+        progressFraction = 0f
+    } else if (visibleItemsInfo.isNotEmpty()) {
+        val lastVisible = visibleItemsInfo.last()
+        val lastVisibleBottom = (lastVisible.offset + lastVisible.size).toFloat()
+        if (lastVisible.index >= totalItemsCount - 1 && lastVisibleBottom <= viewportHeightPx + 0.5f) {
+            progressFraction = 1f
         }
     }
 
@@ -487,49 +517,48 @@ fun Modifier.verticalLazyListScrollbar(
         Modifier.drawWithContent {
             drawContent()
 
-            val layoutInfo = lazyListState.layoutInfo
-            val visibleItemsInfo = layoutInfo.visibleItemsInfo
-            val totalItemsCount = layoutInfo.totalItemsCount
+            if (totalItemsCount == 0) return@drawWithContent
 
-            if (visibleItemsInfo.isEmpty() || totalItemsCount == 0) return@drawWithContent
+            // Track geometry (right side with end padding)
+            val widthPx = width.toPx()
+            val endPaddingPx = endPadding.toPx()
+            val xRight = size.width - endPaddingPx - widthPx
+            val yShiftPx = verticalOffset.toPx()
+            val trackStartY = trackTopInset.toPx() + yShiftPx
+            val trackEndY = (size.height - trackBottomInset.toPx() + yShiftPx)
+                .coerceAtLeast(trackStartY)
+            val trackHeight = (trackEndY - trackStartY).coerceAtLeast(0f)
 
-            // 1️⃣ Fixed scrollbar track height
-            val trackHeight = size.height - 64.dp.toPx()
+            // Pill shape: ensure fully rounded ends regardless of provided corner radius
+            val effectiveCorner = max(scrollBarCornerRadius, widthPx / 2f)
+            val cornerRadius = CornerRadius(effectiveCorner)
 
-            // 2️⃣ Compute thumb height proportionally
-            val visibleItemCount = visibleItemsInfo.size.toFloat()
-            val thumbHeight = (visibleItemCount / totalItemsCount) * trackHeight
-                .coerceAtLeast(40.dp.toPx()) // Ensuring a minimum thumb height
+            // Thumb size: proportional to viewport vs content; clamped to min height
+            val thumbFractionOfTrack = (viewportHeightPx / contentHeightEstimatePx)
+                .coerceIn(0.06f, 1f)
+            val thumbHeightPx = (trackHeight * thumbFractionOfTrack)
+                .coerceAtLeast(minThumbHeight.toPx())
+                .coerceAtMost(trackHeight)
 
-            // 3️⃣ Compute scrollbar thumb position based on scroll progress
-            val firstVisibleItem = lazyListState.firstVisibleItemIndex
-            val firstItemOffset = lazyListState.firstVisibleItemScrollOffset
+            // Thumb position mapped smoothly to the full track range
+            val maxThumbOffset = (trackHeight - thumbHeightPx).coerceAtLeast(0f)
+            val thumbOffsetYPx = (progressFraction * maxThumbOffset)
+                .coerceIn(0f, maxThumbOffset)
 
-            // Estimate total scrollable distance
-            val averageItemHeight = visibleItemsInfo.sumOf { it.size }.toFloat() / visibleItemsInfo.size
-            val maxScrollOffset = (totalItemsCount - visibleItemCount) * averageItemHeight
-            val scrolledOffset = (firstVisibleItem * averageItemHeight) + firstItemOffset
-
-            // Compute scrollbar thumb position and update animated target
-            targetScrollBarOffset = ((scrolledOffset / maxScrollOffset) * (trackHeight - thumbHeight))
-                .coerceIn(0f, trackHeight - thumbHeight)
-
-            // 4️⃣ Draw the scrollbar track
             if (showScrollBarTrack) {
                 drawRoundRect(
                     color = scrollBarTrackColor,
-                    cornerRadius = CornerRadius(scrollBarCornerRadius),
-                    topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx()),
-                    size = Size(width.toPx(), trackHeight)
+                    cornerRadius = cornerRadius,
+                    topLeft = Offset(xRight, trackStartY),
+                    size = Size(widthPx, trackHeight)
                 )
             }
 
-            // 5️⃣ Draw the scrollbar thumb
             drawRoundRect(
                 color = scrollBarColor,
-                cornerRadius = CornerRadius(scrollBarCornerRadius),
-                topLeft = Offset(size.width - 32.dp.toPx(), 32.dp.toPx() + targetScrollBarOffset),
-                size = Size(width.toPx(), thumbHeight)
+                cornerRadius = cornerRadius,
+                topLeft = Offset(xRight, trackStartY + thumbOffsetYPx),
+                size = Size(widthPx, thumbHeightPx)
             )
         }
     )

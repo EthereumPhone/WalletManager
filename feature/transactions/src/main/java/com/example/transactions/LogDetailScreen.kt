@@ -262,7 +262,7 @@ fun LogDetailScreen(
 
 
         Box(
-            modifier = Modifier.fillMaxSize(1f)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)
         ) {
             LazyColumn(
                 state = scrollState,
@@ -271,8 +271,7 @@ fun LogDetailScreen(
                         lazyListState = scrollState,
                         scrollBarTrackColor = secondaryColor,
                         scrollBarColor = primaryColor
-                    )
-                    .padding(horizontal = 24.dp),
+                    ),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 item {
