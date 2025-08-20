@@ -1,10 +1,16 @@
 package com.core.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -26,26 +32,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.mediumEnterDuration
+import com.core.ui.util.mediumExitDuration
 
 @Composable
 fun HeaderBar(
     modifier: Modifier = Modifier,
     text: String = "",
+    enableCancel: Boolean = true,
     content: @Composable () -> Unit = {},
     primaryColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ){
     // Debouncing-State für das Verhindern von mehrfachen schnellen Klicks
     var lastClickTime by remember { mutableLongStateOf(0L) }
     val debounceDelay = 500L // 500ms Verzögerung zwischen Klicks
-    
+
+
     Row (
         modifier = modifier
             .fillMaxWidth()
+            .height(56.dp)
             .padding(top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
-    ){
+    )
+    {
         if (text == ""){
             content()
         } else {
@@ -63,26 +75,30 @@ fun HeaderBar(
         }
 
 
-        IconButton(onClick = {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastClickTime >= debounceDelay) {
-                lastClickTime = currentTime
-                onClick()
-            }
-        }) {
-            Box(
-                modifier = Modifier.size(56.dp),
-                contentAlignment = Alignment.CenterEnd
-            ){
-                Icon(
-                    modifier = Modifier.size(32.dp),
-                    painter = painterResource(R.drawable.baseline_close_24),
-                    contentDescription = "Back",
-                    tint = primaryColor
-                )
-            }
 
+        AnimatedVisibility(
+            modifier = Modifier.size(56.dp),
+            visible = enableCancel,
+            enter = fadeIn(tween(mediumEnterDuration)),
+            exit  = fadeOut(tween(mediumExitDuration))
+        ) {
+            IconButton(modifier = Modifier.size(56.dp),
+                onClick = {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastClickTime >= debounceDelay) {
+                        lastClickTime = currentTime
+                        onClick()
+                    }
+                }) {
+                Box(modifier = Modifier.size(56.dp)) {
+                    Icon(
+                        modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
+                        painter = painterResource(R.drawable.baseline_close_24),
+                        contentDescription = "Back",
+                        tint = primaryColor
+                    )
+                }
+            }
         }
-
     }
 }

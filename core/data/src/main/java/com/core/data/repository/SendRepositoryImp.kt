@@ -71,8 +71,28 @@ class SendRepositoryImp @Inject constructor(
                 }
             }
 
-            val decimalValue = BigDecimal(value.replace(",",".")).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+            // Check if the amount exceeds the actual database balance
+            val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
+            val currentBalance = currentBalances.firstOrNull { it.chainId == chainId }
+            
             val amountDouble = value.replace(",",".").toDouble()
+            
+            val finalAmountDouble = if (currentBalance != null) {
+                // Convert the UI amount to wei
+                val amountInWei = BigDecimal(amountDouble).multiply(BigDecimal.TEN.pow(18))
+                
+                // If the amount exceeds the database balance, use the exact database balance
+                if (amountInWei > currentBalance.tokenBalance) {
+                    // Convert the exact database balance back to ETH
+                    currentBalance.tokenBalance.divide(BigDecimal.TEN.pow(18)).toDouble()
+                } else {
+                    amountDouble
+                }
+            } else {
+                amountDouble
+            }
+            
+            val decimalValue = BigDecimal(finalAmountDouble).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
 
 
             var ethGasPrice = web3j.ethGasPrice().send().gasPrice
@@ -96,13 +116,10 @@ class SendRepositoryImp @Inject constructor(
             
             // If the transaction was successful (we got a valid bundler tx hash)
             if (res.isNotEmpty() && res != "error" && res != "decline") {
-                // Update native currency balance in the DB
-                val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
-                val currentBalance = currentBalances.firstOrNull { it.chainId == chainId }
-
                 if (currentBalance != null) {
-                    val amountBigDecimal = BigDecimal(amountDouble)
-                    val newBalance = currentBalance.tokenBalance - amountBigDecimal
+                    // Use the final amount in wei for balance update
+                    val finalAmountInWei = BigDecimal(finalAmountDouble).multiply(BigDecimal.TEN.pow(18))
+                    val newBalance = currentBalance.tokenBalance - finalAmountInWei
 
                     val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
                     tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
@@ -172,24 +189,39 @@ class SendRepositoryImp @Inject constructor(
 
             reflectiveLedPattern?.displayArrowUp()
 
+            // Check if the amount exceeds the actual database balance
+            val currentBalances = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first()
+            val currentBalance = currentBalances.firstOrNull { it.contractAddress == tokenAsset.address && it.chainId == chainId }
+            
+            val finalAmount = if (currentBalance != null) {
+                // Convert the UI amount to the smallest unit (e.g., wei)
+                val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                
+                // If the amount exceeds the database balance, use the exact database balance
+                if (amountInSmallestUnit > currentBalance.tokenBalance) {
+                    // Convert the exact database balance back to human-readable format
+                    currentBalance.tokenBalance.divide(BigDecimal.TEN.pow(tokenAsset.decimals)).toDouble()
+                } else {
+                    amount
+                }
+            } else {
+                amount
+            }
+
             val res = try {
                 val txHash = erc20TransferApi.sendErc20Token(
                     toAddress,
                     tokenAsset.address,
-                    amount,
+                    finalAmount,
                     tokenAsset.decimals,
                     chainId
                 )
                 
                 // If the transaction was successful (we got a valid transaction hash)
                 if (txHash.isNotEmpty() && txHash != "error" && txHash != "decline") {
-                    // Get the current balance from the database
-                    val currentBalances = tokenBalanceDao.getTokenBalances(listOf(tokenAsset.address)).first()
-                    val currentBalance = currentBalances.firstOrNull { it.contractAddress == tokenAsset.address && it.chainId == chainId }
-                    
                     if (currentBalance != null) {
-                        // Convert the amount to the smallest unit (e.g., wei) using the token's decimals
-                        val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                        // Convert the final amount to the smallest unit (e.g., wei) using the token's decimals
+                        val amountInSmallestUnit = BigDecimal(finalAmount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
                         
                         // Calculate the new balance by subtracting the sent amount
                         val newBalance = currentBalance.tokenBalance - amountInSmallestUnit
