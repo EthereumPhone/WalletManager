@@ -199,7 +199,11 @@ fun IdleView(
                     }
 
                     Text(
-                        text = tokenName.uppercase(),
+                        text = if (tokenName.length > 12) {
+                            tokenName.take(12).uppercase() + "..."
+                        } else {
+                            tokenName.uppercase()
+                        },
                         style = TextStyle(
                             fontFamily = SpaceMono,
                             color = primaryColor,
