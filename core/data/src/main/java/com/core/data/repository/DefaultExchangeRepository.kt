@@ -121,15 +121,48 @@ class DefaultExchangeRepository @Inject constructor(
         val symbol: String
     )
 
-    // Deprecated - kept for backward compatibility but now uses address-based fetching
     override suspend fun fetchExchangeBySymbols(symbols: List<String>) {
-        Log.w("DefaultExchangeRepository", "fetchExchangeBySymbols is deprecated. Using address-based fetching instead.")
-        
-        // Get metadata for these symbols to get their addresses
+        try {
+            val data = tokenPriceDataSource.fetchTokenPriceBySymbols(symbols)
+
+            val entities = data
+                .filter { response -> 
+                    // Only process tokens that don't have errors and have price data
+                    response.error == null && response.prices.isNotEmpty()
+                }
+                .flatMap { response ->
+                    response.prices.map { price ->
+                        TokenExchangeEntity(
+                            symbol = response.symbol,
+                            address = null,
+                            chainId = null,
+                            currency = price.currency,
+                            value = price.value.toDouble(),
+                            timestamp = Instant.parse(price.lastUpdatedAt)
+                        )
+                    }
+                }
+
+            if (entities.isNotEmpty()) {
+                exchangeDao.insertAllExchanges(entities)
+            }
+
+            val failedSymbols = data.filter { it.error != null }
+            if (failedSymbols.isNotEmpty()) {
+                Log.w("DefaultExchangeRepository", "No valid price data found for symbols: $failedSymbols. Attempting fallback.")
+                fetchExchangeByAddressForFailedSymbols(failedSymbols.map { it.symbol })
+            }
+        } catch (e: Exception) {
+            Log.e("DefaultExchangeRepository", "Error fetching exchange data for symbols: $symbols", e)
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun fetchExchangeByAddressForFailedSymbols(symbols: List<String>) {
         val metadataList = tokenMetadataRepository.getTokensMetadataBySymbols(symbols).first()
-        
+
         if (metadataList.isEmpty()) {
-            Log.w("DefaultExchangeRepository", "No metadata found for symbols: $symbols")
+            Log.w("fetchExchangeByAddressForFailedSymbols", "No metadata found for failed symbols: $symbols")
             return
         }
 
@@ -160,37 +193,23 @@ class DefaultExchangeRepository @Inject constructor(
             return
         }
 
-        val addressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
-
         // Separate network currencies from ERC20 tokens
         val (networkCurrencies, erc20Tokens) = balancesWithSufficientAmount.partition {
             !it.contractAddress.startsWith("0x")
         }
 
-        // Handle network currencies - we need to fetch their prices too
-        // For network currencies, we'll use special addresses
-        for (balance in networkCurrencies) {
-            val chainId = balance.contractAddress.toIntOrNull() ?: continue
-            
-            // Create special address entries for native tokens
-            val nativeTokenAddress = when (chainId) {
-                137 -> TokenAddressWithMetadata(
-                    address = "0x0000000000000000000000000000000000001010", // MATIC native token address
-                    chainId = chainId,
-                    symbol = "MATIC"
-                )
-                1, 10, 42161, 8453, 11155111, 5 -> TokenAddressWithMetadata(
-                    address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // ETH native token address
-                    chainId = chainId,
-                    symbol = "ETH"
-                )
-                else -> null
+        // Handle network currencies using symbol-based fetching
+        val networkSymbols = networkCurrencies.mapNotNull { balance ->
+            val chainId = balance.contractAddress.toIntOrNull()
+            when (chainId) {
+                137 -> "MATIC"    // Polygon
+                else -> "ETH"      // All other chains use ETH
             }
-            
-            nativeTokenAddress?.let { addressesWithMetadata.add(it) }
-        }
+        }.distinct()
 
-        // Handle ERC20 tokens
+        // Handle ERC20 tokens using address-based fetching
+        val addressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
+        
         if (erc20Tokens.isNotEmpty()) {
             // Refresh metadata for all chains
             val chainIds = erc20Tokens.map { it.chainId }.distinct()
@@ -215,15 +234,25 @@ class DefaultExchangeRepository @Inject constructor(
             }
         }
 
-        if (addressesWithMetadata.isEmpty()) {
-            Log.d("fetchAllExchanges", "No addresses to fetch prices for.")
-            return
+        // Fetch prices for native tokens using symbol-based API
+        if (networkSymbols.isNotEmpty()) {
+            Log.d("fetchAllExchanges", "Fetching native token prices for symbols: ${networkSymbols.joinToString()}")
+            
+            // API has a 25 symbol limit per call, so chunk if necessary
+            networkSymbols.chunked(25).forEach { chunk ->
+                try {
+                    fetchExchangeBySymbols(chunk)
+                } catch (e: IOException) {
+                    Log.e("fetchAllExchanges", "Error fetching exchange data for native tokens ${chunk.joinToString()}", e)
+                }
+            }
         }
 
-        Log.d("fetchAllExchanges", "Fetching prices for ${addressesWithMetadata.size} addresses")
-
-        // Use the new batching method
-        fetchExchangeByAddressesBatch(addressesWithMetadata)
+        // Fetch prices for ERC20 tokens using address-based API
+        if (addressesWithMetadata.isNotEmpty()) {
+            Log.d("fetchAllExchanges", "Fetching ERC20 token prices for ${addressesWithMetadata.size} addresses")
+            fetchExchangeByAddressesBatch(addressesWithMetadata)
+        }
     }
 
     override suspend fun fetchExchangeByAddress(address: String) {
