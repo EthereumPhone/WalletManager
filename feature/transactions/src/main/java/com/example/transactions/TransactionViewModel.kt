@@ -162,6 +162,9 @@ class TransactionViewModel @Inject constructor(
     fun onDetailLogOpened(txHash: String) {
         viewModelScope.launch(Dispatchers.Main) {
             try{
+                // Display the LED info pattern when opening detail screen
+                reflectiveLedPattern?.displayInfo()
+                
                 if (terminalSDK?.isAvailable() == true) {
                     // The user wants the button to say "VIEW TX". I don't have the TerminalSDK API.
                     // I will assume for now that displayLog can be used.
@@ -183,14 +186,59 @@ class TransactionViewModel @Inject constructor(
                 Log.e("TransactionViewModel", "Error on displayLog", e)
             }
         }
-
+    }
+    
+    fun onDetailLogResumed(txHash: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                // Re-display the LED info pattern when resuming from background
+                reflectiveLedPattern?.displayInfo()
+                
+                // Also re-display the detail log screen in case it was cleared
+                if (terminalSDK?.isAvailable() == true) {
+                    terminalSDK.displayDetailLog {
+                        val url = "https://blockscan.com/tx/$txHash"
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        try {
+                            appContext.startActivity(intent)
+                        } catch (e: Exception) {
+                            Log.e("TransactionViewModel", "Could not open Blockscan for tx $txHash", e)
+                            Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("TransactionViewModel", "Error on resuming detail log", e)
+            }
+        }
     }
 
     fun onDetailLogClosed() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 if (terminalSDK?.isAvailable() == true) {
-                    onLogOpened()
+                    // Remove the detail log display but keep the LED pattern
+                    terminalSDK.removeLog()
+                    // Re-display the main log screen
+                    terminalSDK.displayLog {
+                        val walletAddress = userData.value.walletAddress
+                        if (walletAddress.isNotBlank()) {
+                            val url = "https://blockscan.com/address/$walletAddress"
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            try {
+                                appContext.startActivity(intent)
+                            } catch (e: Exception) {
+                                Log.e("TransactionViewModel", "Could not open Blockscan for address $walletAddress", e)
+                                Toast.makeText(appContext, "Failed to open browser.", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Log.w("TransactionViewModel", "Wallet address is empty, can't open Blockscan.")
+                        }
+                    }
                 } else {
                     Log.w("TransactionViewModel", "TerminalSDK not available")
                 }

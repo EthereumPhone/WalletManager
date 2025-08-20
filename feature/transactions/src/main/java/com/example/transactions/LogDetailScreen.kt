@@ -48,6 +48,8 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
@@ -71,8 +73,6 @@ import java.util.Locale
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.Brush
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.core.data.util.chainIdToName
 
 @Composable
@@ -84,30 +84,35 @@ fun DetailLogRoute(
     val transfersUIState by viewModel.transferState.collectAsStateWithLifecycle()
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
 
+    // Track if this is the initial composition
+    var hasHandledInitialComposition by remember { mutableStateOf(false) }
+    
+    // Call onDetailLogOpened once when the screen is first composed
     LaunchedEffect(txHash) {
         viewModel.onDetailLogOpened(txHash)
+        hasHandledInitialComposition = true
     }
 
-    var hasHandledInitialResume by remember { mutableStateOf(false) }
+    // Handle lifecycle events for resume from background
     val lifecycleOwner = LocalLifecycleOwner.current
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    if (hasHandledInitialResume) {
-                        viewModel.onDetailLogOpened(txHash)
-                    } else {
-                        hasHandledInitialResume = true
+                    // Only re-display LED pattern if this is not the initial composition
+                    // (to avoid double display on first load)
+                    if (hasHandledInitialComposition) {
+                        viewModel.onDetailLogResumed(txHash)
                     }
                 }
                 else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        
         onDispose {
-            viewModel.onDetailLogClosed()
             lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onDetailLogClosed()
         }
     }
 
@@ -169,7 +174,6 @@ fun LogDetailScreen(
     }
     val outputFormat = SimpleDateFormat("MMMM d, yyyy 'at' hh:mm a", Locale.getDefault())
     val formattedTimestamp = date?.let { outputFormat.format(it) } ?: transfer.timeStamp
-
 
     Column(
         modifier = Modifier
