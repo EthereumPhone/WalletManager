@@ -8,6 +8,8 @@ import android.database.MatrixCursor
 import android.net.Uri
 import com.core.database.WmDatabase
 import com.core.database.dao.TokenMetadataDao
+import com.core.database.dao.TokenExchangeDao
+import com.core.ui.util.TokenLogoFallback
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -45,6 +47,7 @@ class TokenMetadataContentProvider : ContentProvider() {
         const val COLUMN_LOGO = "logo"
         const val COLUMN_CHAIN_ID = "chain_id"
         const val COLUMN_SWAPPABLE = "swappable"
+        const val COLUMN_PRICE = "price"
         
         private val COLUMNS = arrayOf(
             COLUMN_CONTRACT_ADDRESS,
@@ -53,7 +56,8 @@ class TokenMetadataContentProvider : ContentProvider() {
             COLUMN_SYMBOL,
             COLUMN_LOGO,
             COLUMN_CHAIN_ID,
-            COLUMN_SWAPPABLE
+            COLUMN_SWAPPABLE,
+            COLUMN_PRICE
         )
         
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
@@ -68,9 +72,36 @@ class TokenMetadataContentProvider : ContentProvider() {
     @InstallIn(SingletonComponent::class)
     interface TokenMetadataContentProviderEntryPoint {
         fun tokenMetadataDao(): TokenMetadataDao
+        fun tokenExchangeDao(): TokenExchangeDao
     }
     
     private lateinit var tokenMetadataDao: TokenMetadataDao
+    private lateinit var tokenExchangeDao: TokenExchangeDao
+    
+    /**
+     * Get the effective logo URL for a token, checking fallback if needed
+     * @param originalLogo The logo URL from the database
+     * @param symbol The token symbol for fallback lookup
+     * @return The effective logo URL (original, fallback, or special URI for local resources)
+     */
+    private fun getEffectiveLogo(originalLogo: String?, symbol: String): String? {
+        // If we have a valid logo URL from the database, use it
+        if (!originalLogo.isNullOrEmpty()) {
+            return originalLogo
+        }
+        
+        // Otherwise, check for fallback
+        val fallbackLogo = TokenLogoFallback.getFallbackLogo(symbol)
+        return when (fallbackLogo) {
+            is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+            is TokenLogoFallback.LogoSource.LocalResource -> {
+                // For local resources, return a special URI that consuming apps can recognize
+                // Format: android.resource://packageName/resourceId
+                "android.resource://${context?.packageName}/${fallbackLogo.resourceId}"
+            }
+            null -> null
+        }
+    }
     
     override fun onCreate(): Boolean {
         val context = context ?: return false
@@ -80,6 +111,7 @@ class TokenMetadataContentProvider : ContentProvider() {
             TokenMetadataContentProviderEntryPoint::class.java
         )
         tokenMetadataDao = entryPoint.tokenMetadataDao()
+        tokenExchangeDao = entryPoint.tokenExchangeDao()
         
         return true
     }
@@ -102,15 +134,20 @@ class TokenMetadataContentProvider : ContentProvider() {
                 runBlocking {
                     val tokens = tokenMetadataDao.getTokenMetadata(listOf(contractAddress)).first()
                     tokens.filter { it.chainId == chainId }.forEach { token ->
+                        // Fetch the latest price for this token
+                        val latestExchange = tokenExchangeDao.getLatestExchange(token.symbol).first()
+                        val priceValue = latestExchange?.value ?: 0.0
+                        
                         cursor.addRow(
                             arrayOf(
                                 token.contractAddress,
                                 token.decimals,
                                 token.name,
                                 token.symbol,
-                                token.logo,
+                                getEffectiveLogo(token.logo, token.symbol),
                                 token.chainId,
-                                if (token.swappable) 1 else 0
+                                if (token.swappable) 1 else 0,
+                                priceValue
                             )
                         )
                     }
@@ -124,15 +161,20 @@ class TokenMetadataContentProvider : ContentProvider() {
                 runBlocking {
                     val tokens = tokenMetadataDao.getTokenMetadata(chainId).first()
                     tokens.forEach { token ->
+                        // Fetch the latest price for this token
+                        val latestExchange = tokenExchangeDao.getLatestExchange(token.symbol).first()
+                        val priceValue = latestExchange?.value ?: 0.0
+                        
                         cursor.addRow(
                             arrayOf(
                                 token.contractAddress,
                                 token.decimals,
                                 token.name,
                                 token.symbol,
-                                token.logo,
+                                getEffectiveLogo(token.logo, token.symbol),
                                 token.chainId,
-                                if (token.swappable) 1 else 0
+                                if (token.swappable) 1 else 0,
+                                priceValue
                             )
                         )
                     }

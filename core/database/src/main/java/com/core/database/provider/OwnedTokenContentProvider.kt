@@ -9,6 +9,7 @@ import android.net.Uri
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TokenExchangeDao
+import com.core.ui.util.TokenLogoFallback
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -63,6 +64,31 @@ class OwnedTokenContentProvider : ContentProvider() {
     private lateinit var tokenMetadataDao: TokenMetadataDao
     private lateinit var tokenBalanceDao: TokenBalanceDao
     private lateinit var tokenExchangeDao: TokenExchangeDao
+
+    /**
+     * Get the effective logo URL for a token, checking fallback if needed
+     * @param originalLogo The logo URL from the database
+     * @param symbol The token symbol for fallback lookup
+     * @return The effective logo URL (original, fallback, or special URI for local resources)
+     */
+    private fun getEffectiveLogo(originalLogo: String?, symbol: String): String? {
+        // If we have a valid logo URL from the database, use it
+        if (!originalLogo.isNullOrEmpty()) {
+            return originalLogo
+        }
+        
+        // Otherwise, check for fallback
+        val fallbackLogo = TokenLogoFallback.getFallbackLogo(symbol)
+        return when (fallbackLogo) {
+            is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+            is TokenLogoFallback.LogoSource.LocalResource -> {
+                // For local resources, return a special URI that consuming apps can recognize
+                // Format: android.resource://packageName/resourceId
+                "android.resource://${context?.packageName}/${fallbackLogo.resourceId}"
+            }
+            null -> null
+        }
+    }
 
     override fun onCreate(): Boolean {
         val ctx = context ?: return false
@@ -170,7 +196,7 @@ class OwnedTokenContentProvider : ContentProvider() {
                 meta.decimals,
                 meta.name,
                 meta.symbol,
-                meta.logo,
+                getEffectiveLogo(meta.logo, meta.symbol),
                 meta.chainId,
                 if (meta.swappable) 1 else 0,
                 displayBalance.toPlainString(),

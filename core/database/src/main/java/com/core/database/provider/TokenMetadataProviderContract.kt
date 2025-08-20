@@ -34,6 +34,7 @@ object TokenMetadataProviderContract {
     const val COLUMN_LOGO = "logo"
     const val COLUMN_CHAIN_ID = "chain_id"
     const val COLUMN_SWAPPABLE = "swappable"
+    const val COLUMN_PRICE = "price"
     
     /**
      * Data class representing token metadata
@@ -45,7 +46,8 @@ object TokenMetadataProviderContract {
         val symbol: String,
         val logo: String?,
         val chainId: Int,
-        val swappable: Boolean
+        val swappable: Boolean,
+        val price: Double
     )
     
     /**
@@ -89,7 +91,8 @@ object TokenMetadataProviderContract {
                     symbol = it.getString(it.getColumnIndexOrThrow(COLUMN_SYMBOL)),
                     logo = it.getString(it.getColumnIndexOrThrow(COLUMN_LOGO)),
                     chainId = it.getInt(it.getColumnIndexOrThrow(COLUMN_CHAIN_ID)),
-                    swappable = it.getInt(it.getColumnIndexOrThrow(COLUMN_SWAPPABLE)) == 1
+                    swappable = it.getInt(it.getColumnIndexOrThrow(COLUMN_SWAPPABLE)) == 1,
+                    price = it.getDouble(it.getColumnIndexOrThrow(COLUMN_PRICE))
                 )
             } else {
                 null
@@ -118,7 +121,8 @@ object TokenMetadataProviderContract {
                         symbol = it.getString(it.getColumnIndexOrThrow(COLUMN_SYMBOL)),
                         logo = it.getString(it.getColumnIndexOrThrow(COLUMN_LOGO)),
                         chainId = it.getInt(it.getColumnIndexOrThrow(COLUMN_CHAIN_ID)),
-                        swappable = it.getInt(it.getColumnIndexOrThrow(COLUMN_SWAPPABLE)) == 1
+                        swappable = it.getInt(it.getColumnIndexOrThrow(COLUMN_SWAPPABLE)) == 1,
+                        price = it.getDouble(it.getColumnIndexOrThrow(COLUMN_PRICE))
                     )
                 )
             }
