@@ -180,7 +180,7 @@ class MainActivity() : ComponentActivity() {
                 }
             }
             // Clear LED pattern when app goes to background
-            reflectiveLedPattern?.clear()
+            //reflectiveLedPattern?.clear()
         }
     }
 
@@ -201,7 +201,7 @@ class MainActivity() : ComponentActivity() {
         // Synchronously destroy the touch handler to ensure immediate cleanup
         terminalSDK?.destroyTouchHandlerSync()
 
-        reflectiveLedPattern?.clear()
+        //reflectiveLedPattern?.clear()
 
     }
 

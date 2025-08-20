@@ -467,7 +467,7 @@ class HomeViewModel @Inject constructor(
 
     fun clearMatrix(){
         viewModelScope.launch {
-            reflectiveLedPattern?.clear()
+            //reflectiveLedPattern?.clear()
         }
     }
 
