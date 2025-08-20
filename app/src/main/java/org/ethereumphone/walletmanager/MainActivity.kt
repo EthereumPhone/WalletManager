@@ -114,7 +114,7 @@ class MainActivity() : ComponentActivity() {
 
 
         TerminalLEDController.initialize(this)
-        reflectiveLedPattern?.setup()
+        //reflectiveLedPattern?.setup()
 
         /*
         WorkManager.getInstance(applicationContext)

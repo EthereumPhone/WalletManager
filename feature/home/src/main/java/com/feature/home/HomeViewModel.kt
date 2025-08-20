@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
+import com.core.terminalsdk.ReflectiveLedManager
 import com.core.ui.showCustomToast
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
@@ -380,6 +381,21 @@ class HomeViewModel @Inject constructor(
         return rounded.toDouble()
     }
 
+
+    fun showResumeChad(color: String) {
+        val reflectiveLedManager = ReflectiveLedManager()
+
+        viewModelScope.launch {
+            while (reflectiveLedManager.isRunning() == true) {
+                delay(70)
+            }
+
+            // give time to dismiss all leds
+            delay(135)
+            reflectiveLedPattern?.displayChad(color)
+        }
+    }
+
     fun showWelcomeBack() {
         if (welcomeScreenShownThisSession.getAndSet(true)) {
             return
@@ -405,6 +421,7 @@ class HomeViewModel @Inject constructor(
 
                 // Add 2-second delay before displaying the message
                 delay(500)
+                //reflectiveLedPattern?.displayChad()
                 sdk.displayBlackText(message)
             } else {
                 welcomeScreenShownThisSession.set(false)

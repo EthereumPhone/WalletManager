@@ -64,6 +64,7 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.core.terminalsdk.ReflectiveLedManager
 import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.R
 import com.core.ui.initializeFontMap
@@ -86,6 +87,10 @@ import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KSuspendFunction1
 
@@ -131,7 +136,10 @@ internal fun HomeRoute2(
 
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    TerminalLEDController.displayChadPattern()
+
+                    val color = TerminalLEDController.getColorHex()
+                    viewModel.showResumeChad(color)
+
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     // Don't cleanup here - just log the event

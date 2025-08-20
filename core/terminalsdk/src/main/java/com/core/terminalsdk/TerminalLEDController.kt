@@ -80,6 +80,16 @@ object TerminalLEDController {
         Log.d(TAG, "Chad pattern displayed with color: $systemColorHex")
     }
 
+
+    @JvmStatic
+    fun getColorHex(): String {
+        return getSystemColorHex()!!
+    }
+
+
+
+
+
     
     /**
      * Display success pattern
