@@ -16,10 +16,10 @@ android {
     }
 
     defaultConfig {
-        applicationId "org.ethereumphone.walletmanager"
+        applicationId "org.ethereumphone.walletmanager.testing123"
         minSdk 34
         targetSdk 34
-        versionCode 41
+        versionCode 39
         versionName versionCode.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

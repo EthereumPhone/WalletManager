@@ -1180,7 +1180,7 @@ fun SendScreen2(
                                                                         withStyle(
                                                                             style = SpanStyle(
                                                                                 fontFamily = PitagonsSans,
-                                                                                color = primaryColor.copy(alpha = pulseOpacity),
+                                                                                color = dgenWhite.copy(alpha = pulseOpacity),
                                                                                 fontWeight = FontWeight.SemiBold,
                                                                                 fontSize = 39.sp,
                                                                             )
@@ -1191,7 +1191,7 @@ fun SendScreen2(
                                                                     },
                                                                     style = TextStyle(
                                                                         fontFamily = PitagonsSans,
-                                                                        color = primaryColor.copy(alpha = pulseOpacity),
+                                                                        color = dgenWhite.copy(alpha = pulseOpacity),
                                                                         fontWeight = FontWeight.SemiBold,
                                                                         fontSize = 42.sp,
                                                                         textAlign = TextAlign.Start
@@ -1238,7 +1238,7 @@ fun SendScreen2(
                                                                     text = "0.0", // Static placeholder
                                                                     style = TextStyle(
                                                                         fontFamily = PitagonsSans,
-                                                                        color = primaryColor.copy(alpha = pulseOpacity),
+                                                                        color = dgenWhite.copy(alpha = pulseOpacity),
                                                                         fontWeight = FontWeight.SemiBold,
                                                                         fontSize = 42.sp,
                                                                         textAlign = TextAlign.Start
@@ -1532,7 +1532,7 @@ fun SendScreen2(
                                                 text = "Address",
                                                 style = TextStyle(
                                                     fontFamily = PitagonsSans,
-                                                    color = primaryColor.copy(pulseOpacity),
+                                                    color = dgenWhite.copy(pulseOpacity),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 24.sp
                                                 ),
