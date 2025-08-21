@@ -65,6 +65,7 @@ import com.core.ui.util.dgenWhite
 import com.core.ui.util.neonOpacity
 import com.core.ui.util.pulseOpacity
 import com.feature.receive.ui.rememberQrBitmapPainter
+import androidx.activity.compose.BackHandler
 
 @Composable
 internal fun ReceiveRoute(
@@ -76,6 +77,7 @@ internal fun ReceiveRoute(
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     // Track if user is navigating back to home
+    // Set to false by default to ensure LED is always cleared
     var isNavigatingBack by remember { mutableStateOf(false) }
 
 
@@ -118,11 +120,19 @@ internal fun ReceiveRoute(
         }
     }
     
+    // Handle device back button press
+    BackHandler {
+        // Clear LED on back button press as well
+        isNavigatingBack = false
+        onBackClick()
+    }
+    
     ReceiveScreen(
         userData = userData,
 //        modifier = modifier,
         onBackClick = {
-            isNavigatingBack = true
+            // X button press - clear LED
+            isNavigatingBack = false
             onBackClick()
         },
         onCopyClick = {

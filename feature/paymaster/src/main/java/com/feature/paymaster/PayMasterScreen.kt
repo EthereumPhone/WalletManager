@@ -69,6 +69,7 @@ import com.core.ui.util.neonOpacity
 import com.core.ui.util.pulseOpacity
 import java.math.BigDecimal
 import java.math.RoundingMode
+import androidx.activity.compose.BackHandler
 
 @Composable
 internal fun PayMasterScreenRoute(
@@ -79,6 +80,7 @@ internal fun PayMasterScreenRoute(
     val balance by viewModel.balance.collectAsState()
     val topUpAmount by viewModel.topUpAmount.collectAsState()
     // Track if user is navigating back to home
+    // Set to false by default to ensure LED is always cleared
     var isNavigatingBack by remember { mutableStateOf(false) }
 
 
@@ -119,10 +121,18 @@ internal fun PayMasterScreenRoute(
         }
     }
 
+    // Handle device back button press
+    BackHandler {
+        // Clear LED on back button press as well
+        isNavigatingBack = false
+        onBackClick()
+    }
+
     PayMasterScreen(
         balance = balance,
         onBackClick = {
-            isNavigatingBack = true
+            // X button press - clear LED
+            isNavigatingBack = false
             onBackClick()
         },
         topUp = viewModel::topUp,

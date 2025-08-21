@@ -78,6 +78,7 @@ import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import kotlin.math.max
+import androidx.activity.compose.BackHandler
 
 @Composable
 fun LogRoute(
@@ -92,6 +93,7 @@ fun LogRoute(
     val userData by viewModel.userData.collectAsStateWithLifecycle()
 
     // Track if user is navigating back to home
+    // Set to false by default to ensure LED is always cleared
     var isNavigatingBack by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -109,10 +111,18 @@ fun LogRoute(
         }
     }
 
+    // Handle device back button press
+    BackHandler {
+        // Clear LED on back button press as well
+        isNavigatingBack = false
+        navigateBack()
+    }
+
     LogScreen(
         transfersUIState = transfersUIState,
         onNavigateBack = {
-            isNavigatingBack = true
+            // X button press - clear LED
+            isNavigatingBack = false
             navigateBack()
         },
         refreshState = refreshState,
