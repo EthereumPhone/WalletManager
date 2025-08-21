@@ -240,6 +240,8 @@ fun TokenCardCarousel(
                         } else {
                             item.symbol
                         }
+                        
+
 
                         IdleView(
                             amount = item.balance,

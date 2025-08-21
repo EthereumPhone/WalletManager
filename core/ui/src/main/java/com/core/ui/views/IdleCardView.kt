@@ -199,8 +199,8 @@ fun IdleView(
                     }
 
                     Text(
-                        text = if (tokenName.length > 12) {
-                            tokenName.take(12).uppercase() + "..."
+                        text = if (tokenName.length > 10) {
+                            tokenName.take(10).uppercase() + "..."
                         } else {
                             tokenName.uppercase()
                         },
@@ -218,7 +218,11 @@ fun IdleView(
 
 
                 Text(
-                    text="$" + decimalFormat.format(fiatAmount),
+                    text = if (fiatAmount < 0.01 && fiatAmount > 0) {
+                        "› $0.01"
+                    } else {
+                        "$" + decimalFormat.format(fiatAmount)
+                    },
                     style = TextStyle(
                         fontFamily = PitagonsSans,
                         color = dgenWhite,
@@ -317,7 +321,7 @@ fun IdlePreview(){
         frontSide = {
             IdleView(
                 amount = 0.13,
-                tokenName = "USDC",
+                tokenName = "USDCaaaaaaaaaaaaaaaaaaaaaa",
                 fiatAmount = 209.47,
                 icon = "",//R.drawable.placeholer_icon_5.toString()
                 navigateToSend = { },
