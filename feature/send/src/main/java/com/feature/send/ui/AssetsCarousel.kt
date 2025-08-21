@@ -134,9 +134,18 @@ fun SelectableCarousel(
                             }
                             when(item) {
                                 "base" -> {
+                                    // Use special modifier for base_square to maintain its shape
+                                    // Using 2.dp corner radius to match the subtle rounding of the base_square icon
+                                    val baseModifier = if (primaryColor == lazerCore) {
+                                        Modifier
+                                            .size(34.dp)
+                                            .border(1.dp, secondaryColor, RoundedCornerShape(2.dp))
+                                    } else {
+                                        Modifier.size(34.dp)
+                                    }
                                     Image(
-                                        modifier = imageModifier,
-                                        painter = painterResource(R.drawable.base),
+                                        modifier = baseModifier,
+                                        painter = painterResource(R.drawable.base_square),
                                         contentDescription = "Base"
                                     )
                                 }

@@ -98,8 +98,14 @@ onNavigateToDetail(logEntry.txHash)
         when {
             // First priority: Use network logo for native tokens
             networkLogoResource != null -> {
+                // Don't clip base_square to a circle, it should maintain its square shape with rounded corners
+                val modifier = if (networkLogoResource == R.drawable.base_square) {
+                    Modifier.size(24.dp)
+                } else {
+                    Modifier.size(24.dp).clip(CircleShape)
+                }
                 Image(
-                    modifier = Modifier.size(24.dp).clip(CircleShape),
+                    modifier = modifier,
                     painter = painterResource(networkLogoResource),
                     contentDescription = "${logEntry.asset} on chain ${logEntry.chainId}"
                 )
@@ -229,7 +235,7 @@ private fun getNetworkLogoResource(chainId: Int, asset: String): Int? {
         137 -> R.drawable.polygon // Polygon
         10 -> R.drawable.optimism_logo // Optimism
         42161 -> R.drawable.arbitrum_logo // Arbitrum
-        8453 -> R.drawable.base // Base
+        8453 -> R.drawable.base_square // Base
         7777777 -> R.drawable.zorb
         else -> null
     }
