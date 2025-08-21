@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -242,6 +243,29 @@ fun LogScreen(
                                     }
                                 }
 
+                                // Fade gradient overlay - positioned on top of content but below scrollbar
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(40.dp) // Width of the fade gradient
+                                        .align(Alignment.CenterEnd)
+                                        .drawWithContent {
+                                            drawContent()
+                                            // Draw gradient from transparent to black
+                                            val gradientWidth = size.width
+                                            drawRect(
+                                                brush = Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        dgenBlack
+                                                    ),
+                                                    startX = 0f,
+                                                    endX = gradientWidth
+                                                ),
+                                                size = size
+                                            )
+                                        }
+                                )
                             }
 
 
@@ -414,6 +438,76 @@ fun LogViewPreview(){
     )
 
 }
+/*
+@Preview(name = "Long Token Names Test", showBackground = true)
+@Composable
+fun LogScreenLongTokenNamesPreview() {
+    // Generate mock transfers with very long token names to test the fade effect
+    val longTokenTransfers = listOf(
+        TransferItem(
+            chainId = 1,
+            from = "0x742d35Cc6634C0532925a3b844Bc9e7595f89999",
+            to = "0x742d35Cc6634C0532925a3b844Bc9e7595f89000",
+            asset = "VERYLONGTOKENNAMETHATSHOULDFADEINTOSCROLLBAR",
+            value = "123.456",
+            timeStamp = "2024-01-01 10:00:00",
+            userSent = true,
+            txHash = "0xabc123"
+        ),
+        TransferItem(
+            chainId = 1,
+            from = "0x123456789012345678901234567890123456789012",
+            to = "0x987654321098765432109876543210987654321098",
+            asset = "ANOTHERLONGTOKENNAMEFORFADETESTING-SCROLLBAR",
+            value = "789.012",
+            timeStamp = "2024-01-01 09:00:00",
+            userSent = false,
+            txHash = "0xdef456"
+        ),
+        TransferItem(
+            chainId = 137,
+            from = "longusername.eth",
+            to = "anotherlongusername.eth",
+            asset = "SUPERLONGPOLYGONTOKENNAMETESTINGFADEEFFECT",
+            value = "1000.0",
+            timeStamp = "2024-01-01 08:00:00",
+            userSent = true,
+            txHash = "0xghi789"
+        ),
+        // Add more transfers to test scrollbar
+        TransferItem(
+            chainId = 1,
+            from = "0x111",
+            to = "0x222",
+            asset = "SHORTTOKEN",
+            value = "50.0",
+            timeStamp = "2024-01-01 07:00:00",
+            userSent = true,
+            txHash = "0x111"
+        ),
+        TransferItem(
+            chainId = 1,
+            from = "0x333",
+            to = "0x444",
+            asset = "VERYLONGTOKENNAMETHATEXCEEDSTHEBOUNDARIESOFTHESCREENWIDTHANDSHOULDFADE",
+            value = "75.0",
+            timeStamp = "2024-01-01 06:00:00",
+            userSent = false,
+            txHash = "0x222"
+        ),
+        // Add more items to ensure scrollbar appears
+        *generateRandomTransfers().toTypedArray()
+    )
+    
+    LogScreen(
+        transfersUIState = TransfersUiState.Success(longTokenTransfers),
+        tokenMetadata = listOf(),
+        refreshState = false,
+        tokenId = null,
+        onTransactionClick = {}
+    )
+}
+*/
 
 
 //method for testing
