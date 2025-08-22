@@ -243,7 +243,7 @@ fun PayMasterScreen(
                 }
 
                 Text(
-                    "Your wallet comes with a Paymaster account that covers gas on any chain. You can transact across chains without ETH or native tokens. \n\nPaymaster funds are not removeable.",
+                    "This is your wallets paymaster account that handles all gas fees on any EVM chain. \n\nPaymaster transactions incur a 10% gas fee and funds cannot be withdrawn once filled.",
                     style = TextStyle(
                         fontFamily = PitagonsSans,
                         color = primaryColor.copy(neonOpacity),
