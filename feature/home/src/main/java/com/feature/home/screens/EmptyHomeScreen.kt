@@ -51,7 +51,7 @@ fun EmptyHomeScreen(
             )
 
             Text(
-                text = "Tap Buy to purchase your first token, or Receive to add assets from \n another wallet.",
+                text = "Tap Buy to swap for your first token, or Receive to add assets from \n another wallet.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = primaryColor.copy(neonOpacity),

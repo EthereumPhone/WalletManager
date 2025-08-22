@@ -92,12 +92,12 @@ fun BottomBar(
             icon = {
                 Icon(
                     modifier = Modifier.size(24.dp),
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Back",
+                    painter = painterResource(R.drawable.baseline_swap_vert_24),
+                    contentDescription = "Swap",
                     tint = primaryColor
                 )
             },
-            text = "Buy"
+            text = "Swap"
         )
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(

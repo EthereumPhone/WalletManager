@@ -3,6 +3,7 @@ package com.feature.home
 import android.annotation.SuppressLint
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
@@ -427,14 +428,26 @@ fun HomeScreen2(
                 },
                 navigateToBuy = {
                     onDebouncedClick {
-                        if (userData is WalletDataUiState.Success) {
-                            val address = userData.userData.walletAddress
-                            scope.launch {
-                                val json = Uri.encode("{\"eth\":\"$address\"}")
-                                getLink("https://blocks.moonpay.com/v2/buy?apiKey=pk_live_jzpq2k0QOfqab9kF1Nk75vjWfll4axA&walletAddresses=$json")?.let { uri ->
-                                    println("Opening URI: $uri")
-                                    uriHandler.openUri(uri)
-                                }
+                        try {
+                            val intent = Intent().apply {
+                                setClassName(
+                                    "org.ethosmobile.webpwaemul",              // WebPWA Emulator package
+                                    "org.ethosmobile.webpwaemul.MainActivity"   // Main activity
+                                )
+                                data = Uri.parse("https://app.uniswap.org")                   // Pass the URL as data
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)         // Launch in new task
+                            }
+
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // If the specific app is not installed, open in default browser
+                            try {
+                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.uniswap.org"))
+                                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(browserIntent)
+                            } catch (ex: Exception) {
+                                // Show error if no browser is available
+                                showDgenToast(context, "Unable to open Uniswap")
                             }
                         }
                     }
