@@ -74,6 +74,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.Brush
 import com.core.data.util.chainIdToName
+import androidx.activity.compose.BackHandler
 
 @Composable
 fun DetailLogRoute(
@@ -86,6 +87,19 @@ fun DetailLogRoute(
 
     // Track if this is the initial composition
     var hasHandledInitialComposition by remember { mutableStateOf(false) }
+    
+    // Add navigation state to prevent multiple navigation calls
+    var isNavigating by remember { mutableStateOf(false) }
+    
+    // Debounced navigation function with additional protection
+    val safeNavigateBack: () -> Unit = remember {
+        {
+            if (!isNavigating) {
+                isNavigating = true
+                navigateBack()
+            }
+        }
+    }
     
     // Call onDetailLogOpened once when the screen is first composed
     LaunchedEffect(txHash) {
@@ -118,6 +132,11 @@ fun DetailLogRoute(
 
     val secondaryColor = SystemColorManager.secondaryColor
     val primaryColor = SystemColorManager.primaryColor
+    
+    // Handle device back button press with safe navigation
+    BackHandler {
+        safeNavigateBack()
+    }
 
     when (transfersUIState) {
         is TransfersUiState.Loading -> {
@@ -135,7 +154,7 @@ fun DetailLogRoute(
                 LogDetailScreen(
                     transfer = transfer,
                     logoUrl = meta?.logo ?: "",
-                    onNavigateBack = navigateBack
+                    onNavigateBack = safeNavigateBack
                 )
             } else {
                 // Handle case where transaction is not found

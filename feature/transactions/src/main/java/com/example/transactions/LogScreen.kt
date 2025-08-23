@@ -78,8 +78,9 @@ import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
-import kotlin.math.max
+import kotlin.math.max 
 import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.launch
 
 @Composable
 fun LogRoute(
@@ -96,6 +97,21 @@ fun LogRoute(
     // Track if user is navigating back to home
     // Set to false by default to ensure LED is always cleared
     var isNavigatingBack by remember { mutableStateOf(false) }
+    
+    // Add navigation state to prevent multiple navigation calls
+    var isNavigating by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Debounced navigation function
+    val safeNavigateBack: () -> Unit = remember {
+        {
+            if (!isNavigating) {
+                isNavigating = true
+                isNavigatingBack = false
+                navigateBack()
+            }
+        }
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -114,18 +130,13 @@ fun LogRoute(
 
     // Handle device back button press
     BackHandler {
-        // Clear LED on back button press as well
-        isNavigatingBack = false
-        navigateBack()
+        // Use safe navigation to prevent multiple calls
+        safeNavigateBack()
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = {
-            // X button press - clear LED
-            isNavigatingBack = false
-            navigateBack()
-        },
+        onNavigateBack = safeNavigateBack,
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
