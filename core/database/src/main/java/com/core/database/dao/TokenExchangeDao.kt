@@ -32,6 +32,16 @@ interface TokenExchangeDao {
     @Query(
         """
             SELECT * FROM token_exchange
+            WHERE address = :address
+            ORDER BY timestamp DESC
+            LIMIT 1
+            """
+    )
+    fun getLatestExchangeByAddress(address: String): Flow<TokenExchange?>
+
+    @Query(
+        """
+            SELECT * FROM token_exchange
             WHERE symbol = :symbol
             ORDER BY timestamp
         """

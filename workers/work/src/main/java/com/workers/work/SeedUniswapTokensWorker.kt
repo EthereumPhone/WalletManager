@@ -98,7 +98,7 @@ fun buildTokenList(context: Context, version: String): TokenList {
         R.raw.base,
         R.raw.blast,
         R.raw.zksync,
-        R.raw.worldchain,
+        //R.raw.worldchain,
         R.raw.zora
     ).flatMap { context.loadTokenListFromRaw(it) }
 

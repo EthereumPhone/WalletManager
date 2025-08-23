@@ -233,19 +233,9 @@ fun TokenCardCarousel(
                             cameraDistance = 32f * density
                         },
                     frontSide = {
-                        val tokenName = if (item.name.equals(item.symbol, ignoreCase = true) && item.symbol.equals("ETH", ignoreCase=true)) {
-                            if (item.name.isNotEmpty() && !item.name.equals(item.symbol, ignoreCase = true)) item.name else item.symbol
-                        } else if (item.name.equals(item.symbol, ignoreCase = true)) {
-                            item.symbol
-                        } else {
-                            item.symbol
-                        }
-                        
-
-
                         IdleView(
                             amount = item.balance,
-                            tokenName = tokenName,
+                            tokenName = item.symbol,
                             fiatAmount = item.fiatAmount,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
                             navigateToSend = {

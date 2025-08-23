@@ -138,7 +138,7 @@ class SendViewModel @Inject constructor(
     val tokenAssetState: StateFlow<AssetsUiState> = getAllTokensUsecase()
         .map { tokens ->
             val filteredTokens = tokens
-                .filter { it.balance > 0 }
+                //.filter { it.balance > 0 }
                 .filter { token -> // Filter out tokens with URLs in their names or symbols
                     val name = token.name.lowercase()
                     val symbol = token.symbol.lowercase()
