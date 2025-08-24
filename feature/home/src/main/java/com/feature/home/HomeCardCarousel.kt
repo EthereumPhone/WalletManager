@@ -87,6 +87,7 @@ import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
+import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KSuspendFunction1
 
@@ -134,9 +135,13 @@ internal fun HomeRoute2(
 
                 }
                 Lifecycle.Event.ON_RESUME -> {
+
                     val color = TerminalLEDController.getColorHex()
                     viewModel.showResumeChad(color)
-
+//                    coroutineScope.launch {
+//                        TerminalLEDController.displayChadPattern()
+//                    }
+//                    TerminalLEDController.displayChadPattern()
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     // Don't cleanup here - just log the event
