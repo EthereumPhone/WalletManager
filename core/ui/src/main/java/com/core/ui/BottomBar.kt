@@ -88,20 +88,6 @@ fun BottomBar(
 
         BottomBarButton(
             primaryColor = primaryColor,
-            onClick = navigateToBuy,
-            icon = {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    painter = painterResource(R.drawable.baseline_swap_vert_24),
-                    contentDescription = "Swap",
-                    tint = primaryColor
-                )
-            },
-            text = "Swap"
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        BottomBarButton(
-            primaryColor = primaryColor,
             onClick = navigateToReceive,
             icon = {
                 Icon(
@@ -114,6 +100,22 @@ fun BottomBar(
                 )
             },
             text = "Receive"
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        BottomBarButton(
+            primaryColor = primaryColor,
+            onClick = navigateToBuy,
+            icon = {
+                Icon(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(90f),
+                    painter = painterResource(R.drawable.baseline_swap_vert_24),
+                    contentDescription = "Swap",
+                    tint = primaryColor
+                )
+            },
+            text = "Swap"
         )
 
         Spacer(modifier = Modifier.width(8.dp))
