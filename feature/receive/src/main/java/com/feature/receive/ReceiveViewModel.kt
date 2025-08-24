@@ -84,13 +84,9 @@ class ReceiveViewModel @Inject constructor(
                     terminalSDK.displayCopyAddress {
                         copyToClipboard(userData.value.walletAddress)
                         viewModelScope.launch(Dispatchers.Main) {
-                            appContext.showCustomToast(
-                                message = "Address copied!",
-                                fontFamily = PitagonsSans,
-                                fontWeight = FontWeight.SemiBold,
-                                backgroundColor = dgenOcean,
-                                textColor = dgenTurqoise,
-                                duration = Toast.LENGTH_SHORT
+                            showDgenToast(
+                                context = appContext,
+                                message = "Address copied!"
                             )
                         }
                     }

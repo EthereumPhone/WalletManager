@@ -254,29 +254,7 @@ fun LogScreen(
                                     }
                                 }
 
-                                // Fade gradient overlay - positioned on top of content but below scrollbar
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(40.dp) // Width of the fade gradient
-                                        .align(Alignment.CenterEnd)
-                                        .drawWithContent {
-                                            drawContent()
-                                            // Draw gradient from transparent to black
-                                            val gradientWidth = size.width
-                                            drawRect(
-                                                brush = Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        dgenBlack
-                                                    ),
-                                                    startX = 0f,
-                                                    endX = gradientWidth
-                                                ),
-                                                size = size
-                                            )
-                                        }
-                                )
+
                             }
 
 
