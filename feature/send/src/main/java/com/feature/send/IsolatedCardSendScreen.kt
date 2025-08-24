@@ -72,6 +72,7 @@ import com.feature.send.ui.TextToggle
 import com.feature.send.ui.TransactionStatusOverlay
 import com.feature.send.ui.TransactionStatus
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.input.KeyboardType
@@ -333,11 +334,38 @@ fun SendScreen2(
                 it.address.equals(tokenId, ignoreCase = true)
             }
             
-            // If not found and it looks like WETH address, try to find any WETH token
-            if (token == null && tokenId.lowercase().startsWith("0x4200000000000000000000000000000000000006")) {
-                Log.d("SendScreen2", "Exact WETH not found, looking for any WETH token with balance")
+            // If not found and it looks like WETH address, try to find WETH on the appropriate chain
+            if (token == null) {
+                val tokenIdLower = tokenId.lowercase()
+                
+                // Check for known WETH addresses on different chains
+                val wethChainId = when {
+                    tokenIdLower.startsWith("0x4200000000000000000000000000000000000006") -> {
+                        Log.d("SendScreen2", "Base WETH address detected")
+                        8453 // Base
+                    }
+                    tokenIdLower.startsWith("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") -> {
+                        Log.d("SendScreen2", "Mainnet WETH address detected")
+                        1 // Mainnet
+                    }
+                    else -> null
+                }
+                
+                if (wethChainId != null) {
+                    // Try to find WETH on the specific chain
+                    token = assets.assets.firstOrNull {
+                        it.symbol.equals("WETH", ignoreCase = true) && 
+                        it.chainId == wethChainId && 
+                        it.balance > 0
+                    }
+                    
+                    // If no WETH on the specific chain, fall back to any WETH with balance
+                    if (token == null) {
+                        Log.d("SendScreen2", "No WETH on chain $wethChainId found, looking for any WETH token with balance")
                 token = assets.assets.firstOrNull {
                     it.symbol.equals("WETH", ignoreCase = true) && it.balance > 0
+                        }
+                    }
                 }
             }
             
@@ -351,6 +379,13 @@ fun SendScreen2(
                     }
                 }
             }
+            
+            // Log all WETH tokens in assets for debugging
+            Log.d("SendScreen2", "=== ALL WETH TOKENS IN ASSETS ===")
+            assets.assets.filter { it.symbol.equals("WETH", ignoreCase = true) }.forEach { weth ->
+                Log.d("SendScreen2", "WETH: chainId=${weth.chainId}, address=${weth.address}, balance=${weth.balance}")
+            }
+            Log.d("SendScreen2", "=================================")
             
             token?.let {
                 updateSelectedAsset(it)
@@ -693,8 +728,8 @@ fun SendScreen2(
                                                 // For other tokens, match by symbol or address
                                                 asset.symbol.equals(selectedTokenSymbol, ignoreCase = true) ||
                                                 asset.address.equals(selectedTokenAddress, ignoreCase = true)
-                                            ) &&
-                                            asset.balance > 0.0
+                                            )
+                                            // Note: Removed balance > 0 requirement to show all chains where token exists
                                         }
                                     
                                     Log.d("SendScreen2", "Found ${tokenMatches.size} matching tokens across chains")
@@ -1506,6 +1541,10 @@ fun SendScreen2(
                                             
                                             // Only process if actually changing to a different chain
                                             if (selectedChainIndex != newIndex) {
+                                                val oldChainName = availableChains.getOrNull(selectedChainIndex)
+                                                val newChainName = availableChains.getOrNull(newIndex)
+                                                Log.d("SendScreen2", "Chain selection changed from $oldChainName (index $selectedChainIndex) to $newChainName (index $newIndex)")
+                                                
                                                 selectedChainIndex = newIndex
                                                 
                                                 // Handle token selection based on current state
@@ -1521,6 +1560,8 @@ fun SendScreen2(
                                                         "zora" -> 7777777
                                                         else -> null
                                                     }
+                                                    
+                                                    Log.d("SendScreen2", "Selected chain: $selectedChainName -> chainId: $selectedChainId")
                                                     
                                                     selectedChainId?.let { chainId ->
                                                         when (selectedToken) {
@@ -1548,8 +1589,58 @@ fun SendScreen2(
                                                                     nativeToken?.let {
                                                                         updateSelectedAsset(it)
                                                                     }
+                                                                } else {
+                                                                    // If current token is ERC20, find the same token on the new chain
+                                                                    Log.d("SendScreen2", "Current ERC20 token: ${currentToken.symbol} (${currentToken.address}) on chain ${currentToken.chainId}")
+                                                                    Log.d("SendScreen2", "Looking for matching token on chain $chainId")
+                                                                    
+                                                                    val matchingToken = assetsUiState.assets.firstOrNull { asset ->
+                                                                        val isMatchingChain = asset.chainId == chainId
+                                                                        val isERC20 = asset.address != asset.chainId.toString()
+                                                                        val isSymbolMatch = if (currentToken.symbol.equals("WETH", ignoreCase = true)) {
+                                                                            // For WETH, match by symbol since addresses differ across chains
+                                                                            asset.symbol.equals("WETH", ignoreCase = true)
+                                                                        } else {
+                                                                            // For other tokens, match by symbol
+                                                                            asset.symbol.equals(currentToken.symbol, ignoreCase = true)
+                                                                        }
+                                                                        
+                                                                        if (isMatchingChain && isERC20 && isSymbolMatch) {
+                                                                            Log.d("SendScreen2", "Found potential match: ${asset.symbol} (${asset.address}) on chain ${asset.chainId}, balance: ${asset.balance}")
+                                                                        }
+                                                                        
+                                                                        // For WETH, don't require balance since it's a common token
+                                                                        // For other tokens, require balance > 0
+                                                                        val balanceOk = if (currentToken.symbol.equals("WETH", ignoreCase = true)) {
+                                                                            true // Allow WETH selection even with 0 balance
+                                                                        } else {
+                                                                            asset.balance > 0.0
+                                                                        }
+                                                                        
+                                                                        // Return true if all conditions match
+                                                                        isMatchingChain && isERC20 && isSymbolMatch && balanceOk
+                                                                    }
+                                                                    
+                                                                    if (matchingToken != null) {
+                                                                        Log.d("SendScreen2", "✅ Switching ${currentToken.symbol} from chain ${currentToken.chainId} to ${matchingToken.symbol} on chain ${matchingToken.chainId}")
+                                                                        Log.d("SendScreen2", "New token address: ${matchingToken.address}")
+                                                                        updateSelectedAsset(matchingToken)
+                                                                        
+                                                                        // Log to confirm update was called
+                                                                        Log.d("SendScreen2", "Called updateSelectedAsset with token on chain ${matchingToken.chainId}")
+                                                                    } else {
+                                                                        // If no matching token found on new chain, keep current selection but log warning
+                                                                        Log.w("SendScreen2", "⚠️ No ${currentToken.symbol} with balance found on chain $chainId")
+                                                                        Log.w("SendScreen2", "⚠️ Current selection remains: ${currentToken.symbol} on chain ${currentToken.chainId}")
+                                                                        
+                                                                        // Log available assets on target chain for debugging
+                                                                        val assetsOnTargetChain = assetsUiState.assets.filter { it.chainId == chainId }
+                                                                        Log.d("SendScreen2", "Available assets on chain $chainId:")
+                                                                        assetsOnTargetChain.forEach { asset ->
+                                                                            Log.d("SendScreen2", "  - ${asset.symbol}: ${asset.address} (balance: ${asset.balance})")
+                                                                        }
+                                                                    }
                                                                 }
-                                                                // If current token is ERC20, keep it selected
                                                             }
                                                         }
                                                     }
