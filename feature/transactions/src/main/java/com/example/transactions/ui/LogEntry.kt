@@ -3,16 +3,24 @@ package com.example.transactions.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -21,6 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,6 +44,7 @@ import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.TokenLogoFallback
+import com.core.ui.util.dgenBlack
 import com.example.transactions.R
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -87,120 +97,163 @@ fun LogEntry(
         else -> ""
     }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clickable {
-onNavigateToDetail(logEntry.txHash)
-        }
+    Box(
+        Modifier.fillMaxWidth(),
     ) {
-
-        when {
-            // First priority: Use network logo for native tokens
-            networkLogoResource != null -> {
-                // Don't clip base_square to a circle, it should maintain its square shape with rounded corners
-                val modifier = if (networkLogoResource == R.drawable.base_square) {
-                    Modifier.size(24.dp)
-                } else {
-                    Modifier.size(24.dp).clip(CircleShape)
-                }
-                Image(
-                    modifier = modifier,
-                    painter = painterResource(networkLogoResource),
-                    contentDescription = "${logEntry.asset} on chain ${logEntry.chainId}"
-                )
+        Box(
+            modifier = Modifier.clickable {
+                onNavigateToDetail(logEntry.txHash)
             }
-            // Second priority: Use provided logo URL or fallback URL
-            effectiveLogoUrl.isNotEmpty() -> {
-                AsyncImage(
-                    modifier = Modifier.size(24.dp).clip(CircleShape),
-                    model = effectiveLogoUrl,
-                    contentDescription = "Token logo",
-                    placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                    error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
-                )
-            }
-            // Third priority: Check for local resource fallback
-            fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
-                Image(
-                    modifier = Modifier.size(24.dp).clip(CircleShape),
-                    painter = painterResource(fallbackLogo.resourceId),
-                    contentDescription = "Token logo"
-                )
-            }
-            // Fallback: Use placeholder
-            else -> {
-                Image(
-                    modifier = Modifier.size(24.dp),
-                    painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                    contentDescription = "Placeholder"
-                )
-            }
-        }
+        ){
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                modifier = Modifier.background(Color.Red).clickable {
+//                    onNavigateToDetail(logEntry.txHash)
+//                }
+            )
+            {
 
-        //if the tx was sending something
-        if (logEntry.userSent) {
-
-            Text(
-                buildAnnotatedString {
-                    //append("Sent ")
-                    append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
-
-                    withStyle(
-                        style = SpanStyle(
-                            fontFamily = SpaceMono,
-                            color = primaryColor,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            textDecoration = TextDecoration.None
+                when {
+                    // First priority: Use network logo for native tokens
+                    networkLogoResource != null -> {
+                        // Don't clip base_square to a circle, it should maintain its square shape with rounded corners
+                        val modifier = if (networkLogoResource == R.drawable.base_square) {
+                            Modifier.size(24.dp)
+                        } else {
+                            Modifier.size(24.dp).clip(CircleShape)
+                        }
+                        Image(
+                            modifier = modifier,
+                            painter = painterResource(networkLogoResource),
+                            contentDescription = "${logEntry.asset} on chain ${logEntry.chainId}"
                         )
-                    ) {
-                        append(" TO ")
                     }
+                    // Second priority: Use provided logo URL or fallback URL
+                    effectiveLogoUrl.isNotEmpty() -> {
+                        AsyncImage(
+                            modifier = Modifier.size(24.dp).clip(CircleShape),
+                            model = effectiveLogoUrl,
+                            contentDescription = "Token logo",
+                            placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                            error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
+                        )
+                    }
+                    // Third priority: Check for local resource fallback
+                    fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
+                        Image(
+                            modifier = Modifier.size(24.dp).clip(CircleShape),
+                            painter = painterResource(fallbackLogo.resourceId),
+                            contentDescription = "Token logo"
+                        )
+                    }
+                    // Fallback: Use placeholder
+                    else -> {
+                        Image(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                            contentDescription = "Placeholder"
+                        )
+                    }
+                }
 
-                    append(toValue)
-                },
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenWhite,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp,
-                    lineHeight = 22.sp,
-                    textDecoration = TextDecoration.None
-                )
-            )
-        }
-        else{
-            Text(
+                //if the tx was sending something
+                if (logEntry.userSent) {
 
-                buildAnnotatedString {
-                    append("${logEntry.value.toDouble().formatWithSuffix()} ${logEntry.asset}")
+                    Text(
+                        buildAnnotatedString {
+                            //append("Sent ")
+                            append("${abbreviateNumber(logEntry.value.toDouble())} ${logEntry.asset}")
 
-                    withStyle(style = SpanStyle(
-                        fontFamily = SpaceMono,
-                        color = primaryColor,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        textDecoration = TextDecoration.None
+                            withStyle(
+                                style = SpanStyle(
+                                    fontFamily = SpaceMono,
+                                    color = primaryColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    textDecoration = TextDecoration.None
+                                )
+                            ) {
+                                append(" TO ")
+                            }
+
+                            append(toValue)
+                        },
+                        style = TextStyle(
+                            fontFamily = PitagonsSans,
+                            color = dgenWhite,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp,
+                            lineHeight = 22.sp,
+                            textDecoration = TextDecoration.None
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    ) {
-                        append(" FROM ")
-                    }
+                }
+                else{
+                    Text(
 
-                    append(fromValue)
-                },
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenWhite,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp,
-                    lineHeight = 22.sp,
-                    textDecoration = TextDecoration.None
-                )
-            )
+                        buildAnnotatedString {
+                            append("${logEntry.value.toDouble().formatWithSuffix()} ${logEntry.asset}")
 
+                            withStyle(style = SpanStyle(
+                                fontFamily = SpaceMono,
+                                color = primaryColor,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                textDecoration = TextDecoration.None
+                            )
+                            ) {
+                                append(" FROM ")
+                            }
+
+                            append(fromValue)
+
+
+                        },
+                        style = TextStyle(
+                            fontFamily = PitagonsSans,
+                            color = dgenWhite,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp,
+                            lineHeight = 22.sp,
+                            textDecoration = TextDecoration.None,
+
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                }
+            }
         }
+
+        Box(
+            modifier = Modifier
+                .height(28.dp)
+                .width(56.dp) // Width of the fade gradient
+                .align(Alignment.CenterEnd)
+                .drawWithContent {
+                    drawContent()
+                    // Draw gradient from transparent to black
+                    val gradientWidth = size.width
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                dgenBlack,
+                                dgenBlack
+                            ),
+                            startX = 0f,
+                            endX = gradientWidth
+                        ),
+                        size = size
+                    )
+                }
+        )
     }
+
 
 
 }
