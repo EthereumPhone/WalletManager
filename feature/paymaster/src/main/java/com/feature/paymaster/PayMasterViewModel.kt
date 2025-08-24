@@ -227,15 +227,16 @@ class PayMasterViewModel @Inject constructor(
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 appContext.startActivity(intent)
+
+                                
+                                // Only show success toasts if internet is available and topUp was successful
+                                if (isInternetAvailable()) {
+                                    showDgenToast(
+                                        context = appContext,
+                                        message = "You added ${topUpAmount.value.text} to your Paymaster."
+                                    )
+                                }
                             }
-                            appContext.showCustomToast(
-                                message = "You added ${topUpAmount.value.text} to your Paymaster.",
-                                fontFamily = PitagonsSans,
-                                fontWeight = FontWeight.SemiBold,
-                                backgroundColor = dgenOcean,
-                                textColor = dgenTurqoise,
-                                duration = Toast.LENGTH_SHORT
-                            )
                         }
                     }
                 }
@@ -265,15 +266,15 @@ class PayMasterViewModel @Inject constructor(
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             appContext.startActivity(intent)
+                            
+                            // Only show success toasts if internet is available and topUp was successful
+                            if (isInternetAvailable()) {
+                                showDgenToast(
+                                    context = appContext,
+                                    message = "You added ${topUpAmount.value.text} to your Paymaster."
+                                )
+                            }
                         }
-                        appContext.showCustomToast(
-                            message = "You added ${topUpAmount.value.text} to your Paymaster.",
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.SemiBold,
-                            backgroundColor = dgenOcean,
-                            textColor = dgenTurqoise,
-                            duration = Toast.LENGTH_SHORT
-                        )
                     }
                 }
             }
