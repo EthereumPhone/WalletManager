@@ -303,10 +303,19 @@ fun SendScreen2(
     clearTransactionStatus: () -> Unit,
     setMaxAmount: (BigDecimal, Int) -> Unit,
 ){
-    val tokenPreselected = tokenId != null && tokenId.isNotEmpty() &&
-                           (assets as? AssetsUiState.Success)?.assets?.firstOrNull {
-                               it.address.equals(tokenId, ignoreCase = true)
-                           }?.let { it.address != it.chainId.toString() } == true
+    // Check if a token was preselected via navigation (non-native token)
+    val tokenPreselected = remember(tokenId, assets) {
+        if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
+            // Check if we can find a token with this address that's not a native token
+            val foundToken = assets.assets.firstOrNull {
+                it.address.equals(tokenId, ignoreCase = true)
+            }
+            // Return true if found and it's not a native token (ERC20)
+            foundToken != null && foundToken.address != foundToken.chainId.toString()
+        } else {
+            false
+        }
+    }
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -316,12 +325,38 @@ fun SendScreen2(
     // Set the selected asset when the screen loads with a tokenId
     LaunchedEffect(tokenId, assets) {
         if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
-            val token = assets.assets.firstOrNull {
+            Log.d("SendScreen2", "Looking for token with address: $tokenId")
+            Log.d("SendScreen2", "Available assets: ${assets.assets.size}")
+            
+            // First try to find exact match by address
+            var token = assets.assets.firstOrNull {
                 it.address.equals(tokenId, ignoreCase = true)
             }
+            
+            // If not found and it looks like WETH address, try to find any WETH token
+            if (token == null && tokenId.lowercase().startsWith("0x4200000000000000000000000000000000000006")) {
+                Log.d("SendScreen2", "Exact WETH not found, looking for any WETH token with balance")
+                token = assets.assets.firstOrNull {
+                    it.symbol.equals("WETH", ignoreCase = true) && it.balance > 0
+                }
+            }
+            
+            // If still not found, log available tokens for debugging
+            if (token == null) {
+                Log.w("SendScreen2", "Token not found! Looking for: $tokenId")
+                assets.assets.forEach { asset ->
+                    if (asset.symbol.contains("WETH", ignoreCase = true) || 
+                        asset.address.contains("420000000000", ignoreCase = true)) {
+                        Log.d("SendScreen2", "Potential match - Symbol: ${asset.symbol}, Address: ${asset.address}, Chain: ${asset.chainId}, Balance: ${asset.balance}")
+                    }
+                }
+            }
+            
             token?.let {
                 updateSelectedAsset(it)
-                Log.d("SendScreen2", "Selected asset set to: ${it.symbol}")
+                Log.d("SendScreen2", "Selected asset set to: ${it.symbol} on chain ${it.chainId} with address ${it.address}")
+            } ?: run {
+                Log.e("SendScreen2", "Failed to find and select token with address: $tokenId")
             }
         }
     }
@@ -433,6 +468,7 @@ fun SendScreen2(
     }
     
     // Load exchange rates for selected token
+    /*
     LaunchedEffect(selectedToken) {
         when (selectedToken) {
             is SelectedTokenUiState.Selected -> {
@@ -448,6 +484,8 @@ fun SendScreen2(
             }
         }
     }
+     */
+
 
     //Loader for GIF
     val gifEnabledLoader = ImageLoader.Builder(context)
@@ -629,6 +667,8 @@ fun SendScreen2(
                                 val selectedTokenAddress = selectedToken.tokenAsset.address
                                 val selectedTokenSymbol = selectedToken.tokenAsset.symbol
                                 
+                                Log.d("SendScreen2", "Finding chains for token: ${selectedTokenSymbol} (${selectedTokenAddress})")
+                                
                                 val chainsWithThisTokenBalance = if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
                                     // For native tokens, find chains where user has native token balance
                                     assetsUiState.assets
@@ -640,19 +680,32 @@ fun SendScreen2(
                                         .map { it.chainId }
                                         .distinct()
                                 } else {
-                                    // For ERC20 tokens, find chains where user has this specific token with balance > 0
-                                    assetsUiState.assets
+                                    // For ERC20 tokens (including WETH), find chains where user has this specific token with balance > 0
+                                    // WETH on different chains have different addresses, so we match by symbol
+                                    val tokenMatches = assetsUiState.assets
                                         .filter { asset ->
-                                            // Match by symbol and ensure it's an ERC20 token with balance > 0
-                                            asset.address != asset.chainId.toString() &&
-                                            asset.symbol.equals(selectedTokenSymbol, ignoreCase = true) &&
+                                            // Match by symbol for WETH, or by exact address for other tokens
+                                            asset.address != asset.chainId.toString() && // Must be ERC20
+                                            (
+                                                // For WETH, match by symbol
+                                                (selectedTokenSymbol.equals("WETH", ignoreCase = true) && 
+                                                 asset.symbol.equals("WETH", ignoreCase = true)) ||
+                                                // For other tokens, match by symbol or address
+                                                asset.symbol.equals(selectedTokenSymbol, ignoreCase = true) ||
+                                                asset.address.equals(selectedTokenAddress, ignoreCase = true)
+                                            ) &&
                                             asset.balance > 0.0
                                         }
-                                        .map { it.chainId }
-                                        .distinct()
+                                    
+                                    Log.d("SendScreen2", "Found ${tokenMatches.size} matching tokens across chains")
+                                    tokenMatches.forEach { 
+                                        Log.d("SendScreen2", "  - ${it.symbol} on chain ${it.chainId}: ${it.balance}")
+                                    }
+                                    
+                                    tokenMatches.map { it.chainId }.distinct()
                                 }
                                 
-                                chainsWithThisTokenBalance.mapNotNull { chainId ->
+                                val chains = chainsWithThisTokenBalance.mapNotNull { chainId ->
                                     when (chainId) {
                                         1 -> "main"
                                         11155111 -> "sepolia"
@@ -664,6 +717,9 @@ fun SendScreen2(
                                         else -> null
                                     }
                                 }
+                                
+                                Log.d("SendScreen2", "Available chains: $chains")
+                                chains
                             }
                             else -> {
                                 // If no token is selected, show only chains that have native tokens with balance > 0
@@ -941,6 +997,7 @@ fun SendScreen2(
                                                             "SEPOLIA" -> R.drawable.mainnet
                                                             "BASE" -> R.drawable.mainnet
                                                             "ZORA" -> R.drawable.mainnet
+                                                            "WETH" -> R.drawable.placeholer_icon_5 // WETH placeholder
                                                             else -> R.drawable.placeholer_icon_5
                                                         }
                                                         Image(
@@ -961,7 +1018,7 @@ fun SendScreen2(
                                                     "SEPOLIA" -> "ETH"
                                                     "BASE" -> "ETH"
                                                     "ZORA" -> "ETH"
-
+                                                    "WETH" -> "WETH" // Show WETH as WETH, not ETH
                                                     else -> {
                                                         token.symbol.uppercase()
                                                     }

@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowOutward
-import androidx.compose.material.icons.rounded.AttachMoney
-import androidx.compose.material.icons.rounded.Money
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.runtime.Composable
@@ -20,7 +17,6 @@ import org.ethosmobile.components.library.core.ethOSIconButton
 
 @Composable
 internal fun FunctionsRow(
-    navigateToSwap: () -> Unit,
     navigateToSend: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToBuy: () -> Unit
@@ -56,26 +52,13 @@ internal fun FunctionsRow(
 
         Box(
             modifier = Modifier.clickable {
-                navigateToSwap()
-            }
-        ) {
-            ethOSIconButton(
-                onClick = { navigateToSwap() },
-                icon = Icons.Rounded.SwapVert,
-                contentDescription = "Swap"
-            )
-        }
-
-
-        Box(
-            modifier = Modifier.clickable {
                 navigateToBuy()
             }
         ) {
             ethOSIconButton(
                 onClick = { navigateToBuy() },
-                icon = Icons.Rounded.AttachMoney,
-                contentDescription = "Buy"
+                icon = Icons.Rounded.SwapVert,
+                contentDescription = "Swap"
             )
         }
 
@@ -89,7 +72,6 @@ internal fun FunctionsRow(
 @Composable
 private fun previewFunctionsRow() {
     FunctionsRow(
-        {},
         {},
         {},
         {}

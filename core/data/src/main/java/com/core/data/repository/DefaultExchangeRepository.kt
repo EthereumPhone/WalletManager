@@ -25,6 +25,9 @@ class DefaultExchangeRepository @Inject constructor(
     override fun getLatestExchange(symbol: String): Flow<TokenExchange?> =
         exchangeDao.getLatestExchange(symbol)
 
+    override fun getLatestExchangeByAddress(address: String): Flow<TokenExchange?> =
+        exchangeDao.getLatestExchangeByAddress(address)
+
     override fun getHistoricalExchanges(symbol: String): Flow<List<TokenExchange>> =
         exchangeDao.getHistoricalExchange(symbol)
 

@@ -57,7 +57,7 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                 TokenAsset(
                     address = representativeToken.tokenMetadataEntity.contractAddress,
                     chainId = representativeToken.tokenMetadataEntity.chainId,
-                    symbol = representativeToken.tokenMetadataEntity.symbol,
+                    symbol = symbol,
                     name = representativeToken.tokenMetadataEntity.name,
                     balance = totalBalanceForSymbol.stripTrailingZeros().toDouble(),
                     decimals = representativeToken.tokenMetadataEntity.decimals,
