@@ -219,7 +219,7 @@ fun IdleView(
 
                 Text(
                     text = if (fiatAmount < 0.01 && fiatAmount > 0) {
-                        "› $0.01"
+                        "‹ $0.01"
                     } else {
                         "$" + decimalFormat.format(fiatAmount)
                     },
