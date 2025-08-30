@@ -51,7 +51,7 @@ fun NoInternetHomeScreen(
             )
 
             Text(
-                text = "Connect to the internet see to your tokens.",
+                text = "Connect to the internet to see your tokens.",
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = primaryColor.copy(neonOpacity),
