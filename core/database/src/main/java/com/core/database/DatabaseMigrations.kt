@@ -20,10 +20,9 @@ internal object DatabaseMigrations {
                 CREATE TABLE IF NOT EXISTS token_group (
                     groupId TEXT PRIMARY KEY NOT NULL,
                     canonicalChainId INTEGER NOT NULL,
-                    address TEXT NOT NULL,
+                    canonicalAddress TEXT NOT NULL,
                     symbol TEXT NOT NULL,
-                    canonicalName TEXT NOT NULL,
-                    isVerified INTEGER NOT NULL DEFAULT 0
+                    name TEXT NOT NULL
                 )
             """)
 

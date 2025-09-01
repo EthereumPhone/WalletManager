@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import com.core.database.model.erc20.CompositeTokenGroup
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenBridgeEntity
 import com.core.database.model.erc20.TokenGroupEntity
@@ -14,6 +15,40 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TokenGroupDao {
+    
+    /**
+     * Get a single token group with all its tokens and balances.
+     */
+    @Transaction
+    @Query("SELECT * FROM token_group WHERE groupId = :groupId")
+    suspend fun getCompositeTokenGroup(groupId: String): CompositeTokenGroup?
+    
+    /**
+     * Get all token groups with their tokens and balances.
+     */
+    @Transaction
+    @Query("SELECT * FROM token_group")
+    fun getAllCompositeTokenGroups(): Flow<List<CompositeTokenGroup>>
+    
+    /**
+     * Get all token groups that have at least one token with a non-zero balance.
+     */
+    @Transaction
+    @Query("""
+        SELECT DISTINCT tg.* FROM token_group tg
+        INNER JOIN token_metadata tm ON tg.groupId = tm.groupId
+        INNER JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
+            AND tm.chainId = tb.chainId
+        WHERE tb.tokenBalance > 0
+    """)
+    fun getActiveCompositeTokenGroups(): Flow<List<CompositeTokenGroup>>
+    
+    /**
+     * Get token groups ordered by total balance (requires post-processing).
+     */
+    @Transaction
+    @Query("SELECT * FROM token_group")
+    suspend fun getAllCompositeTokenGroupsSync(): List<CompositeTokenGroup>
 
     @Query("SELECT * FROM token_group WHERE groupId = :groupId")
     suspend fun getGroupedToken(groupId: String): TokenGroupEntity?
