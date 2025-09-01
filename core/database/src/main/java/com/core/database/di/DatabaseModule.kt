@@ -2,6 +2,7 @@ package com.core.database.di
 
 import android.content.Context
 import androidx.room.Room
+import com.core.database.DatabaseMigrations
 import com.core.database.WmDatabase
 import com.core.database.dao.EnsDao
 import com.core.database.util.BigDecimalTypeConverter
@@ -33,7 +34,9 @@ object DatabaseModule {
         .addTypeConverter(Erc1155MetadataConverter(MoshiJsonConverter(moshi)))
         .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
         .addTypeConverter(BigDecimalTypeConverter())
-        .fallbackToDestructiveMigration() // For development, remove in production
+        .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+        // Uncomment for development/testing if you want to start fresh:
+        // .fallbackToDestructiveMigration()
         .build()
 
 }

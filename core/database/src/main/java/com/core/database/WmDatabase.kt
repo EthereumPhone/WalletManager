@@ -6,12 +6,15 @@ import androidx.room.TypeConverters
 import com.core.database.dao.EnsDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TransferDao
 import com.core.database.model.EnsEntity
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenBridgeEntity
 import com.core.database.model.erc20.TokenExchangeEntity
+import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.util.BigDecimalTypeConverter
 import com.core.database.util.Erc1155MetadataConverter
@@ -24,10 +27,12 @@ import com.core.database.util.RawContractConverter
         TokenMetadataEntity::class,
         TokenBalanceEntity::class,
         TokenExchangeEntity::class,
-        EnsEntity::class
+        EnsEntity::class,
+        TokenGroupEntity::class,
+        TokenBridgeEntity::class
     ],
-    version = 2,
-    exportSchema = false
+    version = 3,  // Updated for token grouping feature
+    exportSchema = true
 )
 
 @TypeConverters(
@@ -42,4 +47,6 @@ abstract class WmDatabase: RoomDatabase() {
     abstract val tokenMetadataDao: TokenMetadataDao
     abstract val tokenExchangeDao: TokenExchangeDao
     abstract val ensDao: EnsDao
+
+    abstract val tokenGroupDao: TokenGroupDao
 }

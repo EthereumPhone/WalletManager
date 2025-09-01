@@ -1,10 +1,26 @@
 package com.core.database.model.erc20
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.core.model.TokenMetadata
 
-@Entity("token_metadata")
+@Entity(
+    tableName = "token_metadata",
+    foreignKeys = [
+        ForeignKey(
+            entity = TokenGroupEntity::class,
+            parentColumns = ["groupId"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ],
+    indices = [
+        Index(value = ["groupId"]),
+        Index(value = ["chainId", "contractAddress"], unique = true)
+    ]
+)
 data class TokenMetadataEntity(
     @PrimaryKey
     val contractAddress: String,
@@ -13,7 +29,8 @@ data class TokenMetadataEntity(
     val symbol: String,
     val logo: String?,
     val chainId: Int,
-    val swappable: Boolean = false
+    val swappable: Boolean = false,
+    val groupId: String? = null
 )
 
 
