@@ -58,12 +58,49 @@ internal object DatabaseMigrations {
     }
     
     /**
+     * Migration from version 3 to 4:
+     * - No schema changes, but marks database as having pre-seeded tokens
+     * - This migration is specifically for handling the transition from
+     *   runtime seeding to pre-populated database
+     */
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // No schema changes needed
+            // The version bump itself indicates that token seeding should be handled
+            // This allows us to differentiate between:
+            // - New installations (will get pre-populated database at version 4)
+            // - Existing installations (will migrate through this and keep their data)
+            
+            // You could optionally check if tokens exist and seed them here if needed
+            // For example:
+            val cursor = database.query("SELECT COUNT(*) FROM token_metadata WHERE groupId IS NOT NULL")
+            cursor.use {
+                if (it.moveToFirst() && it.getInt(0) == 0) {
+                    // No grouped tokens exist, this installation needs seeding
+                    // Mark for seeding via a metadata table or handle it here
+                    database.execSQL("""
+                        CREATE TABLE IF NOT EXISTS database_metadata (
+                            key TEXT PRIMARY KEY NOT NULL,
+                            value TEXT
+                        )
+                    """)
+                    database.execSQL("""
+                        INSERT OR REPLACE INTO database_metadata (key, value) 
+                        VALUES ('needs_token_seeding', 'true')
+                    """)
+                }
+            }
+        }
+    }
+    
+    /**
      * All migrations for the database.
      * Add new migrations here as the schema evolves.
      */
     val ALL_MIGRATIONS = arrayOf(
-        MIGRATION_2_3
-        // Future migrations will be added here: MIGRATION_3_4, etc.
+        MIGRATION_2_3,
+        MIGRATION_3_4
+        // Future migrations will be added here: MIGRATION_4_5, etc.
     )
     
     /**

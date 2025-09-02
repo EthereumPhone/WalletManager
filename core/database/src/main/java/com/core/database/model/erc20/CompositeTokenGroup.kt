@@ -3,6 +3,8 @@ package com.core.database.model.erc20
 import androidx.room.Embedded
 import androidx.room.Relation
 import com.core.model.TokenAsset
+import com.core.model.TokenAssetWithPrice
+import com.core.model.TokenGroupAsset
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -89,21 +91,4 @@ fun CompositeTokenGroup.toExternalModel() = TokenGroupAsset(
     tokens = tokens.map { it.toExternalModel() },
     chainIds = chainIds,
     activeChainIds = activeChainIds
-)
-
-/**
- * External model for UI layer consumption.
- */
-data class TokenGroupAsset(
-    val groupId: String,
-    val symbol: String,
-    val name: String,
-    val totalBalance: Double,
-    val formattedBalance: String,
-    val activeChains: Int,
-    val totalChains: Int,
-    val logoUrl: String?,
-    val tokens: List<TokenAsset>,
-    val chainIds: List<Int>,
-    val activeChainIds: List<Int>
 )

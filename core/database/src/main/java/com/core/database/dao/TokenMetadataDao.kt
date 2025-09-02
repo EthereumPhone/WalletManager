@@ -27,5 +27,11 @@ interface TokenMetadataDao {
     fun getTokenMetadata(chainId: Int): Flow<List<TokenMetadataEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun upsertTokensMetadata(tokenMetadata: List<TokenMetadataEntity>)
+    suspend fun upsertTokensMetadata(tokenMetadata: List<TokenMetadataEntity>)
+    
+    @Query("SELECT COUNT(*) FROM token_metadata WHERE groupId IS NOT NULL")
+    suspend fun getTokenCount(): Int
+    
+    @Query("SELECT * FROM token_metadata WHERE groupId IS NULL")
+    suspend fun getTokensWithoutGroup(): List<TokenMetadataEntity>
 }

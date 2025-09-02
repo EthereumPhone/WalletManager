@@ -31,7 +31,7 @@ import com.core.database.util.RawContractConverter
         TokenGroupEntity::class,
         TokenBridgeEntity::class
     ],
-    version = 3,  // Updated for token grouping feature
+    version = 4,  // Updated for pre-populated database support
     exportSchema = true
 )
 

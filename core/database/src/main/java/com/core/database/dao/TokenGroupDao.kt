@@ -7,11 +7,19 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.core.database.model.erc20.CompositeTokenGroup
+import com.core.database.model.erc20.CompositeTokenGroupWithExchange
+import com.core.database.model.erc20.CompositeTokenWithExchange
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenBridgeEntity
 import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 @Dao
 interface TokenGroupDao {
@@ -95,4 +103,157 @@ interface TokenGroupDao {
             updateTokenGroupId(token.contractAddress, token.chainId, group.groupId)
         }
     }
+    
+    /**
+     * Get a token with its balance and latest exchange rate.
+     * This is more efficient than loading all exchange history.
+     */
+    @Query("""
+        SELECT 
+            tm.*,
+            tb.*,
+            te.id as exchange_id,
+            te.address as exchange_address,
+            te.symbol as exchange_symbol,
+            te.chainId as exchange_chainId,
+            te.currency as exchange_currency,
+            te.value as exchange_value,
+            te.timestamp as exchange_timestamp
+        FROM token_metadata tm
+        LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
+            AND tm.chainId = tb.chainId
+        LEFT JOIN (
+            SELECT * FROM token_exchange te1
+            WHERE te1.timestamp = (
+                SELECT MAX(te2.timestamp)
+                FROM token_exchange te2
+                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
+                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
+            )
+        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
+            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
+        WHERE tm.contractAddress = :contractAddress AND tm.chainId = :chainId
+    """)
+    suspend fun getTokenWithLatestExchange(contractAddress: String, chainId: Int): CompositeTokenWithExchange?
+    
+    /**
+     * Get all tokens in a group with their latest exchange rates.
+     */
+    @Query("""
+        SELECT 
+            tm.*,
+            tb.*,
+            te.id as exchange_id,
+            te.address as exchange_address,
+            te.symbol as exchange_symbol,
+            te.chainId as exchange_chainId,
+            te.currency as exchange_currency,
+            te.value as exchange_value,
+            te.timestamp as exchange_timestamp
+        FROM token_metadata tm
+        LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
+            AND tm.chainId = tb.chainId
+        LEFT JOIN (
+            SELECT * FROM token_exchange te1
+            WHERE te1.timestamp = (
+                SELECT MAX(te2.timestamp)
+                FROM token_exchange te2
+                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
+                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
+            )
+        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
+            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
+        WHERE tm.groupId = :groupId
+    """)
+    suspend fun getTokensInGroupWithLatestExchange(groupId: String): List<CompositeTokenWithExchange>
+    
+    /**
+     * Get all tokens in a group with their latest exchange rates as a Flow.
+     */
+    @Query("""
+        SELECT 
+            tm.*,
+            tb.*,
+            te.id as exchange_id,
+            te.address as exchange_address,
+            te.symbol as exchange_symbol,
+            te.chainId as exchange_chainId,
+            te.currency as exchange_currency,
+            te.value as exchange_value,
+            te.timestamp as exchange_timestamp
+        FROM token_metadata tm
+        LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
+            AND tm.chainId = tb.chainId
+        LEFT JOIN (
+            SELECT * FROM token_exchange te1
+            WHERE te1.timestamp = (
+                SELECT MAX(te2.timestamp)
+                FROM token_exchange te2
+                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
+                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
+            )
+        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
+            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
+        WHERE tm.groupId = :groupId
+    """)
+    fun observeAllTokensInGroupWithLatestExchange(groupId: String): Flow<List<CompositeTokenWithExchange>>
+
+
+
+    /**
+     * Get all token groups with their tokens and latest exchange rates.
+     * This provides complete data including prices in a single query.
+     */
+    @Transaction
+    suspend fun getAllTokenGroupsWithExchange(): List<CompositeTokenGroupWithExchange> {
+        val groups = getAllCompositeTokenGroupsSync()
+        return groups.map { group ->
+            val tokensWithExchange = getTokensInGroupWithLatestExchange(group.tokenGroup.groupId)
+            CompositeTokenGroupWithExchange(
+                tokenGroup = group.tokenGroup,
+                tokensWithExchange = tokensWithExchange
+            )
+        }
+    }
+    
+    /**
+     * Get active token groups (with balances) including latest exchange rates.
+     */
+    @Transaction
+    suspend fun getActiveTokenGroupsWithExchange(): List<CompositeTokenGroupWithExchange> {
+        val groups = getActiveCompositeTokenGroups().first()
+        return groups.map { group ->
+            val tokensWithExchange = getTokensInGroupWithLatestExchange(group.tokenGroup.groupId)
+            CompositeTokenGroupWithExchange(
+                tokenGroup = group.tokenGroup,
+                tokensWithExchange = tokensWithExchange
+            )
+        }
+    }
+    
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Transaction
+    fun observeAllActiveTokenGroupsWithExchange(): Flow<List<CompositeTokenGroupWithExchange>> {
+        return getActiveCompositeTokenGroups().flatMapLatest { groups ->
+            if (groups.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                // Create a Flow for each group that combines the group with its tokens
+                val groupFlows = groups.map { group ->
+                    observeAllTokensInGroupWithLatestExchange(group.tokenGroup.groupId).map { tokensWithExchange ->
+                        CompositeTokenGroupWithExchange(
+                            tokenGroup = group.tokenGroup,
+                            tokensWithExchange = tokensWithExchange
+                        )
+                    }
+                }
+                
+                // Combine all group flows into a single Flow
+                combine(groupFlows) { it.toList() }
+            }
+        }
+    }
+
+
 }

@@ -135,7 +135,7 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(listOf(contractAddress)).first()
                     tokens.filter { it.chainId == chainId }.forEach { token ->
                         // Fetch the latest price for this token
-                        val latestExchange = tokenExchangeDao.getLatestExchange(token.symbol).first()
+                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(token.contractAddress, token.chainId)
                         val priceValue = latestExchange?.value ?: 0.0
                         
                         cursor.addRow(
@@ -162,7 +162,7 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(chainId).first()
                     tokens.forEach { token ->
                         // Fetch the latest price for this token
-                        val latestExchange = tokenExchangeDao.getLatestExchange(token.symbol).first()
+                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(token.contractAddress, token.chainId)
                         val priceValue = latestExchange?.value ?: 0.0
                         
                         cursor.addRow(

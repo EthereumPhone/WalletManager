@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
+import com.core.model.TokenGroupAssetOverview
 import com.core.terminalsdk.ReflectiveLedManager
 import com.core.ui.showCustomToast
 import com.core.ui.showDgenToast
@@ -78,7 +79,6 @@ class HomeViewModel @Inject constructor(
     private val tokenExchangeRepository: TokenExchangeRepository,
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val transferRepository: TransferRepository,
-    private val getAllTokensUsecase: GetAllTokensUsecase,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val walletSDK: WalletSDK?,
     @ApplicationContext private val context: Context,
@@ -110,29 +110,10 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    val tokenData = tokenExchangeRepository.getExchanges()
-        .map { exchanges ->
-            exchanges.groupBy { it.symbol }
-                .map { (symbol, exchangeList) ->
-                    // Get the most recent exchange rate for each symbol
-                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
-                    TokenData(
-                        symbol = symbol,
-                        prices = listOf(
-                            Price(
-                                currency = latestExchange?.currency ?: "",
-                                value = latestExchange?.value?.toString() ?: "0.0",
-                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
-                            )
-                        )
-                    )
-                }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+
+
+    val groupedTokenAssetState: StateFlow<GroupedAssetsUiState> =
+
 
 
     val tokenAssetState: StateFlow<AssetsUiState> =
@@ -471,6 +452,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+}
+
+
+sealed interface GroupedAssetsUiState {
+    object Loading : GroupedAssetsUiState
+
+    object Error: GroupedAssetsUiState
+
+    object Empty: GroupedAssetsUiState
+
+    data class Success(
+        val assets: List<TokenGroupAssetOverview>
+    )
 }
 
 sealed interface AssetsUiState {

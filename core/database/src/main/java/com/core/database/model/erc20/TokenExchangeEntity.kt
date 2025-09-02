@@ -2,6 +2,7 @@ package com.core.database.model.erc20
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.core.model.TokenExchange
 import kotlinx.datetime.Instant
 
 @Entity(tableName = "token_exchange")
@@ -14,4 +15,13 @@ data class TokenExchangeEntity(
     val currency: String,
     val value: Double, // this value always relates to 1 unit of the token. FI: 1 eth = x usd
     val timestamp: Instant
+)
+
+fun TokenExchangeEntity.asExternalModel(): TokenExchange = TokenExchange(
+    address = address,
+    symbol =  symbol,
+    chainId = chainId,
+    currency = currency,
+    value = value,
+    timestamp = timestamp
 )

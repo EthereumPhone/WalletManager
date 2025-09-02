@@ -35,7 +35,6 @@ import com.core.terminalsdk.TerminalLEDController
 import com.core.terminalsdk.TerminalSDK
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
-import com.workers.work.SeedUniswapTokensWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,14 +81,11 @@ class MainActivity() : ComponentActivity() {
         val now = System.currentTimeMillis()
         val lastRefresh = prefs.getLong(KEY_LAST_REFRESH_TIME, 0L)
         if (now - lastRefresh >= REFRESH_INTERVAL_MS) {
-            val seedUniswapTokensWork = SeedUniswapTokensWorker.startSeedUniswapTokensWork()
             val seedNetworkBalanceWork = SeedTokensWorker.startSeedNetworkBalanceWork()
             
 
             WorkManager.getInstance(applicationContext)
-                .beginWith(seedUniswapTokensWork)
-                .then(seedNetworkBalanceWork)
-                .enqueue()
+                .enqueue(seedNetworkBalanceWork)
 
             prefs.edit().putLong(KEY_LAST_REFRESH_TIME, now).apply()
         }

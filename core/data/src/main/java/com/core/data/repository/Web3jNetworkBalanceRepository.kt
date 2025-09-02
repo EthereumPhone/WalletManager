@@ -10,6 +10,7 @@ import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenBalance
 import com.core.model.TokenAsset
+import com.core.model.TokenGroupAssetOverview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -74,6 +75,30 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     )
                 }
             }
+
+    override fun getGroupedNetworkTokensOverview(): Flow<List<TokenGroupAssetOverview>> =
+        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
+            .map { items ->
+                val grouped = items.groupBy { it.chainId == 137 }
+
+                grouped.map { (isPolygon, assets) ->
+                    val name = if(isPolygon) "MATIC" else "ETH"
+                    val sum = assets.sumOf { it.tokenBalance}
+
+                    TokenGroupAssetOverview(
+                        groupId = if (isPolygon) "137" else "1",
+                        symbol = name,
+                        name = name,
+                        totalBalance = sum.toDouble(),
+                        formattedBalance = formatSmallBalance(sum.toDouble()).toString(),
+                        logoUrl = if (isPolygon) "MATIC" else "ETH",
+                        totalFiatBalance = null,
+                        formattedFiatBalance = null,
+                        exchangeCurrency = "USD"
+                    )
+                }
+            }
+
 
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
         tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))

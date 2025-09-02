@@ -186,7 +186,7 @@ class OwnedTokenContentProvider : ContentProvider() {
 
     private fun addRow(cursor: MatrixCursor, rawBalance: BigDecimal, meta: com.core.database.model.erc20.TokenMetadataEntity) {
         val displayBalance = rawBalance.movePointLeft(meta.decimals)
-        val latestExchange = runBlocking { tokenExchangeDao.getLatestExchange(meta.symbol).first() }
+        val latestExchange = runBlocking { tokenExchangeDao.getLatestExchangeByAddressAndChain(meta.contractAddress, meta.chainId)  }
         val priceValue = latestExchange?.value ?: 0.0
         val chainsList = computeChains(meta.symbol)
 

@@ -5,11 +5,15 @@ import com.core.data.model.dto.TokenAddress
 import com.core.data.remote.TokenPriceDataSource
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.model.erc20.TokenExchangeEntity
+import com.core.database.model.erc20.asExternalModel
+import com.core.database.model.erc20.asExternalModule
+import com.core.database.model.erc20.toExternalModel
 import com.core.model.TokenExchange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import okio.IOException
 import java.math.BigDecimal
@@ -22,14 +26,23 @@ class DefaultExchangeRepository @Inject constructor(
     private val tokenBalanceRepository: TokenBalanceRepository,
     private val tokenMetadataRepository: TokenMetadataRepository
 ): TokenExchangeRepository {
-    override fun getLatestExchange(symbol: String): Flow<TokenExchange?> =
-        exchangeDao.getLatestExchange(symbol)
 
-    override fun getLatestExchangeByAddress(address: String): Flow<TokenExchange?> =
-        exchangeDao.getLatestExchangeByAddress(address)
+    override fun observeLatestExchangeByAddressAndChain(
+        address: String,
+        chainId: Int
+    ): Flow<TokenExchange?> = exchangeDao.observeLatestExchangeByAddressAndChain(address, chainId)
+        .map { it?.asExternalModel() }
 
-    override fun getHistoricalExchanges(symbol: String): Flow<List<TokenExchange>> =
-        exchangeDao.getHistoricalExchange(symbol)
+
+    override fun observeLatestExchangeByAddress(address: String): Flow<TokenExchange?> =
+        exchangeDao.observeLatestExchangeByAddress(address)
+            .map { it?.asExternalModel() }
+
+
+
+    override fun getHistoricalExchanges(symbol: String): Flow<List<TokenExchange>> {
+        TODO()
+    }
 
     /**
      * Fetches token prices by their addresses with proper batching.
@@ -323,11 +336,4 @@ class DefaultExchangeRepository @Inject constructor(
             }
         }
     }
-
-    override fun getExchanges(): Flow<List<TokenExchange>> {
-        Log.d("DBSTUFF","getExchange executed")
-        return exchangeDao.getExchanges()
-    }
-
-
 }

@@ -334,30 +334,6 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    val tokenData = tokenExchangeRepository.getExchanges()
-        .map { exchanges ->
-            exchanges.groupBy { it.symbol }
-                .map { (symbol, exchangeList) ->
-                    // Get the most recent exchange rate for each symbol
-                    val latestExchange = exchangeList.maxByOrNull { it.timestamp }
-                    TokenData(
-                        symbol = symbol,
-                        prices = listOf(
-                            Price(
-                                currency = latestExchange?.currency ?: "",
-                                value = latestExchange?.value?.toString() ?: "0.0",
-                                lastUpdatedAt = latestExchange?.timestamp?.toString() ?: ""
-                            )
-                        )
-                    )
-                }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
     fun loadSymbol(symbol: List<String>) {
         viewModelScope.launch {
             try {
@@ -658,62 +634,6 @@ class SendViewModel @Inject constructor(
         val bd = BigDecimal(balance)
         val rounded = bd.setScale(precision, BigDecimal.ROUND_HALF_UP)
         return rounded.toDouble()
-    }
-
-    fun convertDollarToToken(dollarAmount: String, tokenSymbol: String) {
-        viewModelScope.launch {
-            try {
-                val dollarValue = dollarAmount.toDoubleOrNull() ?: return@launch
-                
-                // Determine the correct symbol that has a price feed. For network-coins the on-chain "symbol" may be the
-                // network name (e.g. "BASE") rather than the underlying currency symbol (ETH). We remap those cases here
-                // so that we always query the price API with a symbol that exists.
-                val lookupSymbol = when(tokenSymbol.uppercase()) {
-                    "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
-                    "POLYGON" -> "MATIC" // Polygon network gas token is MATIC
-                    else -> tokenSymbol.uppercase()
-                }
-
-                // Fetch the latest USD price for the token
-                tokenExchangeRepository.getLatestExchange(lookupSymbol)
-                    .first()
-                    ?.let { exchange ->
-                        // exchange.value should represent the USD price for ONE unit of the given token. 
-                        // On some chains the Alchemy price API returns the price for 1 **gwei** (1e-9 of the token) instead of one full token,
-                        // which leads to extremely small USD values (and therefore an unrealistically large token amount).
-                        // If we detect such a case (price < 10 USD for typical network coins like ETH) we correct it by scaling with 1e9.
-                        val networkCoinsNeedingFix = setOf("ETH", "MATIC", "OP", "ARB", "BNB", "AVAX")
-                        val correctedPrice = if (exchange.value < 10 && tokenSymbol.uppercase() in networkCoinsNeedingFix) {
-                            // The API probably returned price for 1 gwei – convert to full-token price
-                            exchange.value * 1_000_000_000
-                        } else {
-                            exchange.value
-                        }
-
-                        val tokenAmount = dollarValue / correctedPrice
-                        
-                        // Formatiere das Ergebnis
-                        val decimalFormat = DecimalFormat("#.######")
-                        val formattedAmount = decimalFormat.format(tokenAmount)
-
-                        val realTokenLogo = when(tokenSymbol.uppercase()) {
-                            "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
-                            "POLYGON" -> "MATIC"
-                            else -> tokenSymbol
-                        }
-                        
-                        // Update den amount Wert
-                        updateAmount(formattedAmount)
-                    }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showDgenToast(
-                        context,
-                        "Error at calculation: ${e.message}",
-                    )
-                }
-            }
-        }
     }
 
     /**

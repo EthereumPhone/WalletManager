@@ -193,7 +193,6 @@ fun SendRoute2(
     val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
     //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
-    val tokenData by viewModel.tokenData.collectAsState()
 
     // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
     var hasHandledInitialResume by remember { mutableStateOf(false) }
@@ -259,9 +258,6 @@ fun SendRoute2(
         sendTransaction = viewModel::send,
         updateSelectedAsset = viewModel::updateSelectedAsset,
         tokenId = tokenId,
-        tokenData = tokenData,
-        loadSymbol = viewModel::loadSymbol,
-        convertDollarToToken = viewModel::convertDollarToToken,
         qrScannerTriggered = qrScannerTriggered,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         sendTransactionTriggered = sendTransactionTriggered,
@@ -291,9 +287,6 @@ fun SendScreen2(
     onBackClick: () -> Unit,
     initialAddress: String?,
     tokenId: String?,
-    tokenData:  List<TokenData>,
-    loadSymbol: (List<String>) -> Unit,
-    convertDollarToToken: (String, String) -> Unit,
     qrScannerTriggered: Boolean,
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,

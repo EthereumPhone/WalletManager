@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
-import android.widget.Toast
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,17 +17,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
-import com.core.ui.showCustomToast
-import com.core.ui.util.dgenOcean
-import com.core.ui.util.dgenTurqoise
-import androidx.compose.ui.text.font.FontWeight
 import com.core.terminalsdk.ReflectiveLedPattern
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
-import com.core.ui.util.PitagonsSans
-import androidx.work.WorkManager
-import com.workers.work.SeedTokensWorker
-import com.workers.work.SeedUniswapTokensWorker
+
 
 @HiltViewModel
 class ReceiveViewModel @Inject constructor(
