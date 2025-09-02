@@ -8,44 +8,7 @@ import kotlinx.serialization.json.Json
 import java.util.UUID
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class TokenJson(
-    val chainId: Int,
-    val address: String,
-    val name: String,
-    val symbol: String,
-    val decimals: Int,
-    val logoURI: String? = null,
-    val extensions: Extensions? = null
-)
 
-@Serializable
-data class Extensions(
-    val bridgeInfo: Map<String, BridgeTarget>? = null
-)
-
-@Serializable
-data class BridgeTarget(
-    val tokenAddress: String
-)
-
-private data class BridgeRelationship(
-    val sourceChain: Int,
-    val sourceAddress: String,
-    val targetChain: Int,
-    val targetAddress: String,
-    val sourceToken: TokenJson
-)
-
-private data class TokenGroup(
-    val id: String,
-    val canonicalChain: Int,
-    val canonicalAddress: String,
-    val symbol: String,
-    val name: String,
-    val tokens: MutableSet<Pair<Int, String>>,
-    val bridges: MutableList<BridgeRelationship>
-)
 
 class UniswapTokenSeederHelper(
     private val context: Context,
@@ -63,7 +26,15 @@ class UniswapTokenSeederHelper(
             43114 to "avalanche.json",
             8453 to "base.json",
             56 to "bnb.json",
-            // ... add all chains
+            42220 to "celo.json",
+            81457 to "blast.json",
+            7777777 to "zora.json",
+            480 to "worldchain.json",
+            324 to "zksync.json",
+            // Test networks
+            5 to "goerli.json",
+            80001 to "mumbai.json",
+            11155111 to "sepolia.json"
         )
 
         val allTokens = mutableMapOf<Pair<Int, String>, TokenJson>()

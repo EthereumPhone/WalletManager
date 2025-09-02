@@ -19,7 +19,8 @@ data class TokenMetadataDto(
 
 fun TokenMetadataDto.asEntity(
     contractAddress: String,
-    chainId: Int
+    chainId: Int,
+    groupId: String? = null
 ): TokenMetadataEntity {
     return TokenMetadataEntity(
         contractAddress = contractAddress.lowercase(),
@@ -27,6 +28,7 @@ fun TokenMetadataDto.asEntity(
         decimals = decimals,
         symbol = symbol,
         chainId = chainId,
-        logo = logo
+        logo = logo,
+        groupId = groupId
     )
 }

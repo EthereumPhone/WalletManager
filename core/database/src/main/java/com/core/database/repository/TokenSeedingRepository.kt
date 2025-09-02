@@ -1,6 +1,7 @@
 package com.core.database.repository
 
 import android.content.Context
+import com.core.database.WmDatabase
 import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.util.UniswapTokenSeederHelper
@@ -12,14 +13,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Repository to handle token seeding for existing installations.
- * This is only needed for users upgrading from version 3 to 4.
+ * Repository to handle token seeding.
+ * Can be used both with dependency injection and direct instantiation.
  */
 @Singleton
 class TokenSeedingRepository @Inject constructor(
     private val context: Context,
     private val tokenGroupDao: TokenGroupDao,
-    private val tokenMetadataDao: TokenMetadataDao
+    private val tokenMetadataDao: TokenMetadataDao,
 ) {
     companion object {
         private const val PREF_NAME = "token_seeding_prefs"
@@ -27,6 +28,11 @@ class TokenSeedingRepository @Inject constructor(
     }
     
     private val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    
+    /**
+     * Alternative constructor that takes context only and gets DAOs from database instance.
+     * This is used when called from DatabaseCallbacks where we can't use dependency injection.
+     */
     
     /**
      * Checks if token seeding is needed for this installation
@@ -38,7 +44,12 @@ class TokenSeedingRepository @Inject constructor(
         }
         
         // Check if we have any tokens with group IDs (indicates seeding was done)
-        val hasGroupedTokens = tokenMetadataDao.getTokenCount() > 0
+        val hasGroupedTokens = try {
+            tokenMetadataDao.getTokenCount() > 0
+        } catch (e: Exception) {
+            // If we can't query, assume we need seeding
+            true
+        }
         
         if (hasGroupedTokens) {
             // Mark as complete if we already have tokens
@@ -50,9 +61,27 @@ class TokenSeedingRepository @Inject constructor(
     }
     
     /**
-     * Seeds tokens if needed for existing installations
+     * Seeds tokens if needed - simplified version for callback usage
      */
-    suspend fun seedTokensIfNeeded(): Flow<SeedingStatus> = flow {
+    suspend fun seedTokensIfNeeded() {
+        if (!isSeedingNeeded()) {
+            return
+        }
+        
+        val seeder = UniswapTokenSeederHelper(
+            context = context,
+            tokenGroupDao = tokenGroupDao,
+            tokenMetadataDao = tokenMetadataDao
+        )
+        
+        seeder.seedTokens()
+        markSeedingComplete()
+    }
+    
+    /**
+     * Seeds tokens if needed with status flow
+     */
+    suspend fun seedTokensWithStatus(): Flow<SeedingStatus> = flow {
         if (!isSeedingNeeded()) {
             emit(SeedingStatus.NotNeeded)
             return@flow
@@ -100,3 +129,4 @@ sealed class SeedingStatus {
     object Complete : SeedingStatus()
     data class Error(val message: String) : SeedingStatus()
 }
+

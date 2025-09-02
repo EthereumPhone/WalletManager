@@ -210,7 +210,7 @@ fun TokenCardCarousel(
                         IdleView(
                             amount = item.totalBalance,
                             tokenName = item.symbol,
-                            fiatAmount = item.totalFiatBalance!!,
+                            fiatAmount = item.totalFiatBalance ?: 0.0,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
                             navigateToSend = {
 

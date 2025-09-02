@@ -1,96 +1,89 @@
 package com.core.database
 
 import android.content.Context
-import android.content.SharedPreferences
+import android.util.Log
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.core.database.dao.TokenGroupDao
-import com.core.database.dao.TokenMetadataDao
-import com.core.database.util.UniswapTokenSeederHelper
+import com.core.database.util.TokenSeedingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * Database callbacks for handling token seeding in existing installations
+ * Database callbacks for handling token seeding
  */
 object DatabaseCallbacks {
     
+    private const val TAG = "DatabaseCallbacks"
     private const val PREF_NAME = "wm_database_prefs"
-    private const val KEY_TOKENS_SEEDED = "tokens_seeded_v1"
+    private const val KEY_TOKENS_SEEDED = "tokens_seeded_v4"
     
     /**
-     * Callback that seeds Uniswap tokens for existing installations.
-     * This runs only once when the database is opened for the first time after the update.
+     * Creates a callback that seeds tokens on database creation or migration.
+     * This uses a context-based approach to handle the seeding properly.
      */
-    val TOKEN_SEEDING_CALLBACK = object : RoomDatabase.Callback() {
-        override fun onOpen(db: SupportSQLiteDatabase) {
-            super.onOpen(db)
-            
-            // This will need to be injected properly in your actual implementation
-            // For now, showing the pattern
-            CoroutineScope(Dispatchers.IO).launch {
-                seedTokensIfNeeded(db)
+    fun createTokenSeedingCallback(context: Context): RoomDatabase.Callback {
+        return object : RoomDatabase.Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                super.onCreate(db)
+                Log.d(TAG, "Database created, seeding tokens...")
+                
+                // Seed tokens immediately on creation
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        // Clear the seeding flag to ensure we seed fresh
+                        resetSeedingFlag(context)
+                        
+                        TokenSeedingHelper.seedTokensDirectly(context, db)
+                        markSeedingComplete(context)
+                        Log.d(TAG, "Token seeding completed successfully on creation")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error seeding tokens on creation", e)
+                    }
+                }
             }
-        }
-    }
-    
-    /**
-     * Seeds tokens if they haven't been seeded yet for existing installations
-     */
-    private suspend fun seedTokensIfNeeded(db: SupportSQLiteDatabase) {
-        // Note: In a real implementation, you'll need to properly inject these dependencies
-        // This is a simplified example showing the pattern
-        
-        // You would need to access the context and DAOs here
-        // Typically through dependency injection
-        
-        // Check if we've already seeded the tokens
-        // val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        // if (!prefs.getBoolean(KEY_TOKENS_SEEDED, false)) {
-        //     val seeder = UniswapTokenSeederHelper(
-        //         context = context,
-        //         tokenGroupDao = tokenGroupDao,
-        //         tokenMetadataDao = tokenMetadataDao
-        //     )
-        //     
-        //     seeder.seedTokens()
-        //     
-        //     // Mark as seeded
-        //     prefs.edit().putBoolean(KEY_TOKENS_SEEDED, true).apply()
-        // }
-    }
-    
-    /**
-     * Alternative approach using a provider pattern for dependency injection
-     */
-    class CallbackProvider(
-        private val context: Context,
-        private val tokenGroupDao: TokenGroupDao,
-        private val tokenMetadataDao: TokenMetadataDao
-    ) {
-        fun createCallback(): RoomDatabase.Callback {
-            return object : RoomDatabase.Callback() {
-                override fun onOpen(db: SupportSQLiteDatabase) {
-                    super.onOpen(db)
-                    
-                    CoroutineScope(Dispatchers.IO).launch {
+            
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                
+                // Check if we need to seed tokens (for migrations or incomplete seeding)
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
                         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                        
+                        // Check if we've already seeded tokens
                         if (!prefs.getBoolean(KEY_TOKENS_SEEDED, false)) {
-                            val seeder = UniswapTokenSeederHelper(
-                                context = context,
-                                tokenGroupDao = tokenGroupDao,
-                                tokenMetadataDao = tokenMetadataDao
-                            )
+                            Log.d(TAG, "Tokens not seeded, starting token seeding...")
                             
-                            seeder.seedTokens()
+                            TokenSeedingHelper.seedTokensDirectly(context, db)
+                            markSeedingComplete(context)
                             
-                            // Mark as seeded
-                            prefs.edit().putBoolean(KEY_TOKENS_SEEDED, true).apply()
+                            Log.d(TAG, "Token seeding completed successfully")
+                        } else {
+                            Log.d(TAG, "Tokens already seeded, skipping")
                         }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error seeding tokens", e)
+                        // Don't crash the app if seeding fails
                     }
                 }
             }
         }
+    }
+    
+    /**
+     * Marks token seeding as complete
+     */
+    private fun markSeedingComplete(context: Context) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_TOKENS_SEEDED, true).apply()
+    }
+    
+    /**
+     * Resets the seeding flag (useful for testing)
+     */
+    fun resetSeedingFlag(context: Context) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(KEY_TOKENS_SEEDED).apply()
     }
 }

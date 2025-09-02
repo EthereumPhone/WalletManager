@@ -5,8 +5,11 @@ import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.util.chainToApiKey
+import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenBridgeEntity
+import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModel
 import com.core.database.model.erc20.asExternalModule
@@ -18,10 +21,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 class AlchemyTokenMetadataRepository @Inject constructor(
     private val tokenMetadataDao: TokenMetadataDao,
+    private val tokenGroupDao: TokenGroupDao,
     private val tokenMetadataApi: TokenMetadataApi
 ): TokenMetadataRepository {
     override fun getTokensMetadata(): Flow<List<TokenMetadata>> =
@@ -52,7 +57,9 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         val apiKey = chainToApiKey(network.chainName)
 
         withContext(Dispatchers.IO) {
+            val tokenGroups = mutableListOf<TokenGroupEntity>()
             val metadataList = contractAddresses.mapNotNull { address ->
+
                 try {
                     Log.d("refreshTokensMetadata", address)
                     val response = tokenMetadataApi
@@ -60,11 +67,27 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                             "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                             TokenMetadataRequestBody(params = listOf(address))
                         )
+                    
+                    // Generate group ID for this token
+                    val groupId = generateGroupId(chainId, address)
+                    
+                    // Create token group entity
+                    val tokenGroup = TokenGroupEntity(
+                        groupId = groupId,
+                        canonicalChainId = chainId,
+                        canonicalAddress = address.lowercase(),
+                        symbol = response.result.symbol,
+                        name = response.result.name
+                    )
+                    tokenGroups.add(tokenGroup)
+                    
+                    // Create token metadata with group ID
                     response.result.asEntity(
                         contractAddress = address,
-                        chainId = chainId
+                        chainId = chainId,
+                        groupId = groupId
                     )
-                } catch (e: com.squareup.moshi.JsonDataException) {
+                } catch (e: JsonDataException) {
                     // This happens when the API returns an error object instead of result
                     Log.w("refreshTokensMetadata", "Token metadata not found for $address: ${e.message}")
                     null
@@ -73,7 +96,16 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                     null
                 }
             }
+
+            // Insert token groups first (in case of foreign key constraints)
+            if (tokenGroups.isNotEmpty()) {
+                tokenGroupDao.upsertTokenGroups(tokenGroups)
+            }
+            
+            // Then insert token metadata
             tokenMetadataDao.upsertTokensMetadata(metadataList)
+
+
         }
     }
 
@@ -81,6 +113,7 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         val apiKey = chainToApiKey(network.chainName)
 
         withContext(Dispatchers.IO) {
+            val tokenGroups = mutableListOf<TokenGroupEntity>()
             val metadataList = contractAddresses.mapNotNull { address ->
                 try {
                     val response = tokenMetadataApi
@@ -88,11 +121,27 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                             "https://${network.chainName}.g.alchemy.com/v2/$apiKey",
                             TokenMetadataRequestBody(params = listOf(address))
                         )
+                    
+                    // Generate group ID for this token
+                    val groupId = generateGroupId(network.chainId, address)
+                    
+                    // Create token group entity
+                    val tokenGroup = TokenGroupEntity(
+                        groupId = groupId,
+                        canonicalChainId = network.chainId,
+                        canonicalAddress = address.lowercase(),
+                        symbol = response.result.symbol,
+                        name = response.result.name
+                    )
+                    tokenGroups.add(tokenGroup)
+                    
+                    // Create token metadata with group ID
                     response.result.asEntity(
                         contractAddress = address,
-                        chainId = network.chainId
+                        chainId = network.chainId,
+                        groupId = groupId
                     )
-                } catch (e: com.squareup.moshi.JsonDataException) {
+                } catch (e: JsonDataException) {
                     // This happens when the API returns an error object instead of result
                     Log.w("refreshTokensMetadataByNetwork", "Token metadata not found for $address: ${e.message}")
                     null
@@ -101,6 +150,13 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                     null
                 }
             }
+            
+            // Insert token groups first (in case of foreign key constraints)
+            if (tokenGroups.isNotEmpty()) {
+                tokenGroupDao.upsertTokenGroups(tokenGroups)
+            }
+            
+            // Then insert token metadata
             tokenMetadataDao.upsertTokensMetadata(metadataList)
         }
     }
@@ -108,4 +164,19 @@ class AlchemyTokenMetadataRepository @Inject constructor(
 
     override suspend fun insertTokenMetadata(tokensMetadata: List<TokenMetadataEntity>) = tokenMetadataDao.upsertTokensMetadata(tokensMetadata)
 
+    /**
+     * Generate a group ID for a token.
+     * Following the same pattern as TokenSeedingHelper:
+     * - For mainnet (chainId = 1), use "mainnet_<address>"
+     * - For other chains, use "group_<uuid>"
+     */
+    private fun generateGroupId(chainId: Int, address: String): String {
+        val network = NetworkChain.getNetworkByChainId(chainId)?.chainName  ?: "group"
+
+        return if (chainId == 1) {
+            "mainnet_${address.lowercase()}"
+        } else {
+            "${network.lowercase()}_${UUID.nameUUIDFromBytes("${chainId}_${address}".toByteArray())}"
+        }
+    }
 }

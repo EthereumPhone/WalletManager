@@ -37,20 +37,10 @@ object DatabaseModule {
             .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
             .addTypeConverter(BigDecimalTypeConverter())
             .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
-            
-        // Check if database already exists (for existing installations)
-        val dbFile = context.getDatabasePath("wm-database")
-        if (!dbFile.exists()) {
-            // For new installations, use pre-populated database
-            builder.createFromAsset("database/wm_database.db")
-        } else {
-            // For existing installations, we'll handle token seeding via migration
-            // or a callback if needed
-            builder.addCallback(DatabaseCallbacks.TOKEN_SEEDING_CALLBACK)
-        }
-        
-        // Uncomment for development/testing if you want to start fresh:
-        // builder.fallbackToDestructiveMigration()
+            // Add callback for token seeding on database creation/open
+            .addCallback(DatabaseCallbacks.createTokenSeedingCallback(context))
+            // Enable destructive migration - this will recreate the database and seed fresh data
+            .fallbackToDestructiveMigration()
         
         return builder.build()
     }
