@@ -4,8 +4,10 @@ import com.core.data.repository.AlchemyTokenBalanceRepository
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.DefaultExchangeRepository
+import com.core.data.repository.DefaultGroupedTokenRepository
 import com.core.data.repository.EnsRepository
 import com.core.data.repository.EnsRepositoryImpl
+import com.core.data.repository.GroupedTokenRepository
 import com.core.data.repository.TokenExchangeRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.ProtoUserDataRepository
@@ -80,4 +82,9 @@ interface RepositoryModule {
     fun bindsEnsRepository(
         ensRepository: EnsRepositoryImpl
     ): EnsRepository
+
+    @Binds
+    fun bindsGroupedTokenRepository(
+        groupedTokenRepository: DefaultGroupedTokenRepository
+    ): GroupedTokenRepository
 }

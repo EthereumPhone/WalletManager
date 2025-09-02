@@ -109,8 +109,7 @@ internal fun HomeRoute2(
     sendViewModel: SendViewModel = hiltViewModel()
 ) {
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
-    val assetsUiState: AssetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
-    val selectedTokenUiState: SelectedTokenUiState by sendViewModel.selectedAssetUiState.collectAsStateWithLifecycle()
+    val groupedAssetsUiState: GroupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
     val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
@@ -167,18 +166,16 @@ internal fun HomeRoute2(
 
     HomeScreen2(
         userData = walletDataUiState,
-        assetsUiState = assetsUiState,
+        groupedAssetsUiState = groupedAssetsUiState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToLog = navigateToLog,
         navigateToReceive = navigateToReceive,
-        selectedTokenUiState = selectedTokenUiState,
         selectedTokenId = selectedTokenId,
         setSelectedTokenId = sendViewModel::updateSelectedTokenId,
         isOffline = isOffline,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
-        loadSymbol = {}, // not needed anymore
         getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
         navigateToPayMaster = navigateToPayMaster,
@@ -192,17 +189,15 @@ internal fun HomeRoute2(
 @Composable
 fun HomeScreen2(
     userData: WalletDataUiState,
-    assetsUiState: AssetsUiState,
+    groupedAssetsUiState: GroupedAssetsUiState,
     navigateToSwap: () -> Unit,
     navigateToSend: (address: String, tokenId: String ) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
-    selectedTokenUiState: SelectedTokenUiState,
     selectedTokenId: State<String>,
     setSelectedTokenId: (String) -> Unit,
     isOffline: Boolean,
-    loadSymbol: (List<String>) -> Unit,
     hasTransfer: Boolean,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -214,7 +209,7 @@ fun HomeScreen2(
     SideEffect {
         Log.d("RECOMPOSE", "HomeScreen2 recomposed")
         Log.d("RECOMPOSE", "HomeScreen2 - userData: $userData")
-        Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${assetsUiState::class.simpleName}")
+        Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${groupedAssetsUiState::class.simpleName}")
         Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
         Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
     }
@@ -267,14 +262,14 @@ fun HomeScreen2(
         ) {
 
             AnimatedContent(
-                targetState = assetsUiState,
+                targetState = groupedAssetsUiState,
                 contentKey = { state ->
                     // Provide a stable key based on the *type* of state
                     when (state) {
-                        is AssetsUiState.Success -> "SuccessState"
-                        is AssetsUiState.Empty -> "EmptyState"
-                        is AssetsUiState.Error -> "ErrorState"
-                        is AssetsUiState.Loading -> "LoadingState"
+                        is GroupedAssetsUiState.Success -> "SuccessState"
+                        is GroupedAssetsUiState.Empty -> "EmptyState"
+                        is GroupedAssetsUiState.Error -> "ErrorState"
+                        is GroupedAssetsUiState.Loading -> "LoadingState"
                     }
                 },
                 transitionSpec = {
@@ -284,12 +279,12 @@ fun HomeScreen2(
                 },
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content Assets"
-            ) { assetState ->
+            ) { groupedAssetsState ->
                 // Log state changes
                 SideEffect {
                     Log.d(
                         "RECOMPOSE",
-                        "AnimatedContent - assetState changed to: ${assetState::class.simpleName}"
+                        "AnimatedContent - assetState changed to: ${groupedAssetsState::class.simpleName}"
                     )
                 }
 
@@ -299,43 +294,41 @@ fun HomeScreen2(
                         primaryColor = primaryColor
                     )
                 } else {
-                    when(assetState){
-                        is AssetsUiState.Empty -> {
+                    when(groupedAssetsState){
+                        is GroupedAssetsUiState.Empty -> {
                             EmptyHomeScreen(
                                 gifEnabledLoader = gifEnabledLoader,
                                 primaryColor = primaryColor
                             )
                             Log.d("DEBUG","AssetsUiState.EMPTY")
                         }
-                        is AssetsUiState.Error -> {
+                        is GroupedAssetsUiState.Error -> {
                             Log.d("DEBUG","AssetsUiState.ERROR")
                             ErrorHomeScreen(
                                 gifEnabledLoader = gifEnabledLoader,
                                 primaryColor = primaryColor
                             )
                         }
-                        is AssetsUiState.Loading -> {
+                        is GroupedAssetsUiState.Loading -> {
                             Log.d("DEBUG","AssetsUiState.LOADING")
                             LoadingHomeScreen(
                                 primaryColor = primaryColor,
                                 secondaryColor = secondaryColor,
                             )
                         }
-                        is AssetsUiState.Success -> {
+                        is GroupedAssetsUiState.Success -> {
                             Log.d("DEBUG","AssetsUiState.SUCCESS")
                             Log.d(
                                 "RECOMPOSE",
-                                "Success state - assets count: ${assetState.assets.size}"
+                                "Success state - assets count: ${groupedAssetsState.assets.size}"
                             )
                             HomeScreenContent(
-                                areAssetsVisible = assetState.assets.isNotEmpty() ,
+                                areAssetsVisible = groupedAssetsState.assets.isNotEmpty() ,
                                 primaryContent = {
                                     TokenCardCarousel(
                                         modifier = Modifier.padding(bottom = 24.dp),
-                                        assets = assetState.assets,
-                                        loadSymbol = loadSymbol,
+                                        assets = groupedAssetsState.assets,
                                         navigateToSend = navigateToSend,
-                                        selectedTokenUiState = selectedTokenUiState,
                                         setSelectedToken = setSelectedTokenId,
                                         primaryColor = primaryColor,
                                         secondaryColor = secondaryColor

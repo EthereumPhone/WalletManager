@@ -14,7 +14,6 @@ import androidx.navigation.navOptions
 import com.core.data.repository.SendRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.util.NetworkMonitor
-import com.core.model.CurrentState
 import kotlinx.coroutines.CoroutineScope
 import com.example.assets.navigation.assetRoute
 import com.example.assets.navigation.navigateToAsset

@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.compose.ui.text.font.FontWeight
+import com.core.data.repository.DEFAULT_EXCLUDE_LIST
 import com.core.model.TokenGroupAssetOverview
 import com.core.terminalsdk.ReflectiveLedManager
 import com.core.ui.showCustomToast
@@ -113,58 +114,20 @@ class HomeViewModel @Inject constructor(
 
 
     val groupedTokenAssetState: StateFlow<GroupedAssetsUiState> =
-
-
-
-    val tokenAssetState: StateFlow<AssetsUiState> =
-        combine(getAllGroupedTokensUsecase(), tokenData) { tokens, exchangeRates ->
-            val exchangeRateMap = exchangeRates.associateBy { it.symbol }
-
-            val tokensWithPrices = tokens.map { tokenAsset ->
-                val priceInfo = exchangeRateMap[tokenAsset.symbol]?.prices?.firstOrNull()
-                TokenAssetWithPrice(
-                    address = tokenAsset.address,
-                    name = tokenAsset.name,
-                    symbol = tokenAsset.symbol,
-                    decimals = tokenAsset.decimals,
-                    balance = tokenAsset.balance,
-                    fiatAmount = priceInfo?.value?.toDoubleOrNull()?.times(tokenAsset.balance) ?: 0.0,
-                    chainId = tokenAsset.chainId,
-                    logoUrl = tokenAsset.logoUrl,
-                    swappable = tokenAsset.swappable,
-                )
-            }
-
-            val filteredTokens = tokensWithPrices
-                .filter { it.balance > 0 }
-                .filter { token -> // Filter out tokens with URLs in their names or symbols
-                    val name = token.name.lowercase()
-                    val symbol = token.symbol.lowercase()
-
-                    val urlPatterns = listOf(
-                        "http://", "https://", "www.",
-                        ".com", ".io", ".org", ".net", ".xyz",
-                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
-                    )
-
-                    val containsNoUrlPatterns = urlPatterns.none { pattern ->
-                        name.contains(pattern) || symbol.contains(pattern)
-                    }
-                    containsNoUrlPatterns
-                }
-                .sortedBy { it.fiatAmount }
-
-            if (filteredTokens.isEmpty()) {
-                AssetsUiState.Empty
+        getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST).map {
+            if (it.isEmpty()) {
+                GroupedAssetsUiState.Empty
             } else {
-                AssetsUiState.Success(filteredTokens)
+                GroupedAssetsUiState.Success(it)
             }
+
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetsUiState.Loading
+            initialValue = GroupedAssetsUiState.Loading
         )
+
 
     val hasTransfers: StateFlow<Boolean> = flow {
         while (true) {
@@ -464,7 +427,7 @@ sealed interface GroupedAssetsUiState {
 
     data class Success(
         val assets: List<TokenGroupAssetOverview>
-    )
+    ) : GroupedAssetsUiState
 }
 
 sealed interface AssetsUiState {

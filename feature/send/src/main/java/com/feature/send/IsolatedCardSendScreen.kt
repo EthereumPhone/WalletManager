@@ -1151,7 +1151,7 @@ fun SendScreen2(
                                                 primaryColor = primaryColor
                                             )
 
-                                            val valueString = remember(availableBalance, useDollarAmount, selectedToken, tokenData) {
+                                            val valueString = remember(availableBalance, useDollarAmount, selectedToken) {
                                                 if (useDollarAmount) {
                                                     if (availableBalance > 0) {
                                                         val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedToken) {
@@ -1165,8 +1165,8 @@ fun SendScreen2(
                                                             }
                                                             else -> "ETH"
                                                         }
-                                                        val currentPrice = tokenData.find { it.symbol.equals(tokenSymbolForPriceLookup, ignoreCase = true) }
-                                                            ?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                        //TODO: CHANGE WITH REAL
+                                                        val currentPrice = 12.2
 
                                                         if (currentPrice != null && currentPrice > 0) {
                                                             (availableBalance * currentPrice).formatWithSuffix(maxDecimals = 2)
@@ -1365,14 +1365,13 @@ fun SendScreen2(
                                                     else -> "ETH"
                                                 }
 
-                                                convertDollarToToken(dollarAmount.text.removePrefix("$"), tokenSymbol)
 
                                                 // Calculate the converted token amount for validation
                                                 try {
                                                     val dollarValue = dollarAmount.text.removePrefix("$").toDoubleOrNull() ?: 0.0
-                                                    val currentPrice = tokenData.find {
-                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
-                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+
+                                                    // TODO: CHANGE TO REAL
+                                                    val currentPrice = 12.3
 
                                                     if (currentPrice != null && currentPrice > 0) {
                                                         convertedTokenAmount = (dollarValue / currentPrice).toString()
@@ -1406,9 +1405,8 @@ fun SendScreen2(
                                                         else -> "ETH"
                                                     }
 
-                                                    val currentPrice = tokenData.find {
-                                                        it.symbol.equals(tokenSymbol, ignoreCase = true)
-                                                    }?.prices?.firstOrNull()?.value?.toDoubleOrNull()
+                                                    //TODO: CHANGE TO REAL ONE
+                                                    val currentPrice = 12.3
 
                                                     if (currentPrice != null && currentPrice > 0) {
                                                         val dollarValue = availableBalance * currentPrice

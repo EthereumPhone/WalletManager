@@ -44,6 +44,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.core.model.TokenAssetWithPrice
+import com.core.model.TokenGroupAssetOverview
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -53,9 +54,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("RestrictedApi")
 @Composable
 fun TokenCardCarousel(
-    assets: List<TokenAssetWithPrice>,
-    loadSymbol: (List<String>) -> Unit,
-    selectedTokenUiState: SelectedTokenUiState,
+    assets: List<TokenGroupAssetOverview>,
     navigateToSend: (address: String, tokenId: String) -> Unit,
     setSelectedToken: (String) -> Unit,
     primaryColor: Color,
@@ -83,26 +82,18 @@ fun TokenCardCarousel(
     }
 
     val coroutineScope = rememberCoroutineScope()
-    val listofTokenSymbol = remember { mutableListOf<String>() }
     var scrollJob by remember { mutableStateOf<Job?>(null) }
 
-    Log.d("TokenCardCarousel", "Recomposing. autoScrollDone: $autoScrollDone. Assets: ${assets.size}. Selected: $selectedTokenUiState. Saved: $savedScrollIndex @ $savedScrollOffset. UserScrolling: $isUserScrolling")
 
-    LaunchedEffect(assets, selectedTokenUiState) {
-        Log.d("TokenCardCarousel", "Effect: Assets/SelectedToken changed. Assets: ${assets.size}, autoScrollDone: $autoScrollDone, Selected: $selectedTokenUiState")
+    LaunchedEffect(assets) {
+        Log.d("TokenCardCarousel", "Effect: Assets/SelectedToken changed. Assets: ${assets.size}, autoScrollDone: $autoScrollDone")
         if (assets.isNotEmpty()) {
             if (!autoScrollDone) {
                 autoScrollDone = true
                 Log.d("TokenCardCarousel", "Attempting auto-scroll, autoScrollDone set to true immediately.")
                 scrollJob?.cancel()
                 isUserScrolling = false
-                val targetToken = when (selectedTokenUiState) {
-                    is SelectedTokenUiState.Unselected -> assets.lastOrNull()
-                    is SelectedTokenUiState.Selected -> {
-                        assets.find { it.address == selectedTokenUiState.tokenAsset.address && it.chainId == selectedTokenUiState.tokenAsset.chainId }
-                            ?: assets.lastOrNull()
-                    }
-                }
+                val targetToken = assets.lastOrNull()
 
                 targetToken?.let { token ->
                     val targetIndex = assets.indexOf(token)
@@ -113,7 +104,6 @@ fun TokenCardCarousel(
                             savedScrollIndex = targetIndex
                             savedScrollOffset = 0
                             Log.d("ScrollSave", "Auto-scroll COMPLETED & SAVED. New saved: index=$savedScrollIndex, offset=$savedScrollOffset.")
-                            setSelectedToken(token.address)
                         }
                     } else {
                         Log.d("TokenCardCarousel", "Auto-scroll target token not found in assets.")
@@ -121,21 +111,6 @@ fun TokenCardCarousel(
                 } ?: run {
                     Log.d("TokenCardCarousel", "No target token for auto-scroll.")
                 }
-            }
-
-            listofTokenSymbol.clear()
-            assets.forEach { asset ->
-                val symbolToAdd = when (asset.symbol.lowercase()) {
-                    "base", "arbitrum", "mainnet", "polygon", "sepolia", "optimism", "zora" -> "ETH"
-                    else -> asset.symbol
-                }
-                if (!listofTokenSymbol.contains(symbolToAdd)) {
-                    listofTokenSymbol.add(symbolToAdd)
-                }
-            }
-            if (listofTokenSymbol.isNotEmpty()) {
-                Log.d("TokenCardCarousel", "Loading symbols: $listofTokenSymbol")
-                loadSymbol(listofTokenSymbol.distinct())
             }
         }
     }
@@ -179,16 +154,15 @@ fun TokenCardCarousel(
         verticalArrangement = Arrangement.spacedBy(overlap-32.dp),
         contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp)
     ) {
-        itemsIndexed(assets, key = { _, asset -> asset.address + "_" + asset.chainId }) { index, item ->
+        itemsIndexed(assets, key = { _, asset -> asset.groupId}) { index, item ->
             val rotX: Float by animateFloatAsState ( -25f , label = "rotX")
 
             val firstVisibleIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
             val isFirstCard = index == firstVisibleIndex
 
-            LaunchedEffect(isFirstCard, item.address, listState.isScrollInProgress) {
+            LaunchedEffect(isFirstCard, item.groupId, listState.isScrollInProgress) {
                 if (isFirstCard && !listState.isScrollInProgress && !isUserScrolling) {
                     Log.d("FirstCard", "Card $index (${item.symbol}) is first & settled. setSelectedToken.")
-                    setSelectedToken(item.address)
                 }
             }
 
@@ -234,14 +208,16 @@ fun TokenCardCarousel(
                         },
                     frontSide = {
                         IdleView(
-                            amount = item.balance,
+                            amount = item.totalBalance,
                             tokenName = item.symbol,
-                            fiatAmount = item.fiatAmount,
+                            fiatAmount = item.totalFiatBalance!!,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
                             navigateToSend = {
-                                navigateToSend(item.address, item.address)
+
+                                //TODO FIX NAVIGATION
+                                //navigateToSend(item.address, item.address)
                             },
-                            enableSend = item.balance > 0,
+                            enableSend = item.totalBalance > 0,
                             primaryColor = primaryColor,
                         )
                     },

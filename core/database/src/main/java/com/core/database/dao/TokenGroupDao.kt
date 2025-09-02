@@ -233,7 +233,6 @@ interface TokenGroupDao {
     
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    @Transaction
     fun observeAllActiveTokenGroupsWithExchange(): Flow<List<CompositeTokenGroupWithExchange>> {
         return getActiveCompositeTokenGroups().flatMapLatest { groups ->
             if (groups.isEmpty()) {
