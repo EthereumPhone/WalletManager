@@ -279,6 +279,10 @@ class HomeViewModel @Inject constructor(
 
 
     fun refreshAllBalances() {
+
+        /*
+
+
         viewModelScope.launch {
             _refreshState.value = true
             try {
@@ -302,6 +306,8 @@ class HomeViewModel @Inject constructor(
                 _refreshState.value = false
             }
         }
+
+         */
     }
 
     /**

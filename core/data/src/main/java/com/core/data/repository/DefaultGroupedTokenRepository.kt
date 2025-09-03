@@ -39,7 +39,7 @@ class DefaultGroupedTokenRepository @Inject constructor(
                         formattedBalance = it.formattedTotalBalance,
                         totalFiatBalance = it.totalBalanceInUsd,
                         formattedFiatBalance = it.formattedUsdBalance,
-                        exchangeCurrency = "USD",
+                        exchangeCurrency = "usd",
                     )
                 }
         }

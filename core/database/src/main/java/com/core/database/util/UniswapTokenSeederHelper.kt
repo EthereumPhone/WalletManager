@@ -139,13 +139,7 @@ class UniswapTokenSeederHelper(
     }
 
     private fun generateGroupId(token: TokenJson): String {
-        // Use a deterministic ID based on mainnet address if available,
-        // otherwise use chain+address hash
-        return if (token.chainId == 1) {
-            "mainnet_${token.address.lowercase()}"
-        } else {
-            "group_${UUID.nameUUIDFromBytes("${token.chainId}_${token.address}".toByteArray())}"
-        }
+        return "${token.chainId}_${token.address.lowercase()}"
     }
 
     private suspend fun insertTokenGroups(

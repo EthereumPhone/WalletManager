@@ -481,10 +481,7 @@ object TokenSeedingHelper {
     }
     
     private fun generateGroupId(token: TokenJson): String {
-        return if (token.chainId == 1) {
-            "mainnet_${token.address.lowercase()}"
-        } else {
-            "group_${UUID.nameUUIDFromBytes("${token.chainId}_${token.address}".toByteArray())}"
-        }
+        return "${token.chainId}_${token.address.lowercase()}"
+
     }
 }

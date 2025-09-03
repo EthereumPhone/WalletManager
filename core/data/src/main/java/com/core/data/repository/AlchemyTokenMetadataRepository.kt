@@ -171,12 +171,6 @@ class AlchemyTokenMetadataRepository @Inject constructor(
      * - For other chains, use "group_<uuid>"
      */
     private fun generateGroupId(chainId: Int, address: String): String {
-        val network = NetworkChain.getNetworkByChainId(chainId)?.chainName  ?: "group"
-
-        return if (chainId == 1) {
-            "mainnet_${address.lowercase()}"
-        } else {
-            "${network.lowercase()}_${UUID.nameUUIDFromBytes("${chainId}_${address}".toByteArray())}"
-        }
+        return "${chainId}_${address.lowercase()}"
     }
 }
