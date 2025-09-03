@@ -27,6 +27,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 
+private val WORKERLOG: String = "SEED_WORKER"
+
 @HiltWorker
 class SeedTokensWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
@@ -56,7 +58,11 @@ class SeedTokensWorker @AssistedInject constructor(
             
             // fetch ens and exchange rate
             coroutineScope {
+
                 launch { resolveEnsForTransfers() }
+
+                Log.d(WORKERLOG, "fetching prices")
+
                 launch { exchangeRepository.fetchAllExchanges() }
             }
 

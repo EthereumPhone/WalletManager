@@ -108,7 +108,7 @@ data class CompositeTokenGroupWithExchange(
     val totalBalanceInUsd: Double?
         get() {
             val exchangeRate = latestExchangeEntity?.value
-            return if (exchangeRate != null && latestExchangeEntity?.currency == "USD") {
+            return if (exchangeRate != null && latestExchangeEntity?.currency == "usd") {
                 totalBalance.toDouble() * exchangeRate
             } else {
                 // Try to sum individual USD values if available

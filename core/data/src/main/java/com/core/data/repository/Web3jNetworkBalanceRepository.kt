@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameter
@@ -83,55 +84,38 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getGroupedNetworkTokensOverview(): Flow<List<TokenGroupAssetOverview>> =
-        tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
-            .flatMapConcat { items ->
-                flow {
-                    val grouped = items.groupBy { it.chainId == 137 }
-                    
-                    val overviews = grouped.map { (isPolygon, assets) ->
-                        val symbol = if(isPolygon) "MATIC" else "ETH"
-                        val sum = assets.sumOf { it.tokenBalance }
-                        val totalBalance = sum.toDouble()
+        // Combine token balances with exchange rate changes to ensure proper Flow updates
+        combine(
+            tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() }),
+            tokenExchangeDao.getExchangeBySymbolFlow("ETH", "usd"),
+            tokenExchangeDao.getExchangeBySymbolFlow("MATIC", "usd")
+        ) { items, ethExchange, maticExchange ->
+            val grouped = items.groupBy { it.chainId == 137 }
+            
+            grouped.map { (isPolygon, assets) ->
+                val symbol = if(isPolygon) "MATIC" else "ETH"
+                val sum = assets.sumOf { it.tokenBalance }
+                val totalBalance = sum.toDouble()
 
-                        try {
-                            // Fetch exchange rate from database
-                            val exchangeEntity = tokenExchangeDao.getExchangeBySymbol(symbol, "usd")
-                            val exchangeRate = exchangeEntity?.value ?: 0.0
+                val exchangeEntity = if (isPolygon) maticExchange else ethExchange
+                val exchangeRate = exchangeEntity?.value ?: 0.0
 
-                            // Calculate fiat balance
-                            val totalFiatBalance = if (exchangeRate > 0) totalBalance * exchangeRate else 0.0
+                // Calculate fiat balance
+                val totalFiatBalance = if (exchangeRate > 0) totalBalance * exchangeRate else 0.0
 
-                            TokenGroupAssetOverview(
-                                groupId = if (isPolygon) "137" else "1",
-                                symbol = symbol,
-                                name = symbol,
-                                totalBalance = totalBalance,
-                                formattedBalance = formatSmallBalance(totalBalance).toString(),
-                                logoUrl = symbol,
-                                totalFiatBalance = totalFiatBalance,
-                                formattedFiatBalance = String.format("%.2f", totalFiatBalance),
-                                exchangeCurrency = "usd"
-                            )
-                        } catch (e: Exception) {
-                            Log.e("Web3jNetworkBalanceRepository", "Error fetching exchange rate for $symbol", e)
-                            // Return with null fiat values if exchange rate fetch fails
-                            TokenGroupAssetOverview(
-                                groupId = if (isPolygon) "137" else "1",
-                                symbol = symbol,
-                                name = symbol,
-                                totalBalance = totalBalance,
-                                formattedBalance = formatSmallBalance(totalBalance).toString(),
-                                logoUrl = symbol,
-                                totalFiatBalance = null,
-                                formattedFiatBalance = null,
-                                exchangeCurrency = "usd"
-                            )
-                        }
-                    }
-                    
-                    emit(overviews.filter { it.totalBalance != 0.0 })
-                }
-            }
+                TokenGroupAssetOverview(
+                    groupId = if (isPolygon) "137" else "1",
+                    symbol = symbol,
+                    name = symbol,
+                    totalBalance = totalBalance,
+                    formattedBalance = formatSmallBalance(totalBalance).toString(),
+                    logoUrl = symbol,
+                    totalFiatBalance = if (exchangeRate > 0) totalFiatBalance else null,
+                    formattedFiatBalance = if (exchangeRate > 0) String.format("%.2f", totalFiatBalance) else null,
+                    exchangeCurrency = "usd"
+                )
+            }.filter { it.totalBalance != 0.0 }
+        }
 
 
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =

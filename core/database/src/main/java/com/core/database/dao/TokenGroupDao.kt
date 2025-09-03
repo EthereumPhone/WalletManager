@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 
 @Dao
 interface TokenGroupDao {
@@ -169,34 +170,30 @@ interface TokenGroupDao {
     
     /**
      * Get all tokens in a group with their latest exchange rates as a Flow.
+     * This implementation uses a simpler approach for better Room Flow invalidation.
      */
-    @Query("""
-        SELECT 
-            tm.*,
-            tb.*,
-            te.id as exchange_id,
-            te.address as exchange_address,
-            te.symbol as exchange_symbol,
-            te.chainId as exchange_chainId,
-            te.currency as exchange_currency,
-            te.value as exchange_value,
-            te.timestamp as exchange_timestamp
-        FROM token_metadata tm
-        LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
-            AND tm.chainId = tb.chainId
-        LEFT JOIN (
-            SELECT * FROM token_exchange te1
-            WHERE te1.timestamp = (
-                SELECT MAX(te2.timestamp)
-                FROM token_exchange te2
-                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
-                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
-            )
-        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
-            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
-        WHERE tm.groupId = :groupId
-    """)
-    fun observeAllTokensInGroupWithLatestExchange(groupId: String): Flow<List<CompositeTokenWithExchange>>
+    @Transaction
+    suspend fun observeAllTokensInGroupWithLatestExchangeImpl(groupId: String): List<CompositeTokenWithExchange> {
+        return getTokensInGroupWithLatestExchange(groupId)
+    }
+    
+    /**
+     * Observable wrapper that combines token data with exchange rate changes.
+     * This ensures proper Flow emission when exchange rates are updated.
+     */
+    fun observeAllTokensInGroupWithLatestExchange(groupId: String): Flow<List<CompositeTokenWithExchange>> {
+        return combine(
+            getTokensInGroup(groupId),
+            observeExchangeTableChanges()
+        ) { _, _ ->
+            groupId
+        }.flatMapLatest { 
+            flow {
+                // Whenever either tokens or exchange rates change, fetch the latest data
+                emit(observeAllTokensInGroupWithLatestExchangeImpl(groupId))
+            }
+        }
+    }
 
 
 
@@ -232,9 +229,21 @@ interface TokenGroupDao {
     }
     
 
+    /**
+     * Observe token exchanges to ensure Flow emission when exchange rates change
+     */
+    @Query("SELECT COUNT(*) FROM token_exchange")
+    fun observeExchangeTableChanges(): Flow<Int>
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeAllActiveTokenGroupsWithExchange(): Flow<List<CompositeTokenGroupWithExchange>> {
-        return getActiveCompositeTokenGroups().flatMapLatest { groups ->
+        // Combine the active groups flow with exchange table changes to ensure proper invalidation
+        return combine(
+            getActiveCompositeTokenGroups(),
+            observeExchangeTableChanges()
+        ) { groups, _ ->
+            groups
+        }.flatMapLatest { groups ->
             if (groups.isEmpty()) {
                 flowOf(emptyList())
             } else {
