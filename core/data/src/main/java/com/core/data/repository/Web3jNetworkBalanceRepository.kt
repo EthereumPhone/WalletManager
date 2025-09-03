@@ -95,7 +95,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
 
                         try {
                             // Fetch exchange rate from database
-                            val exchangeEntity = tokenExchangeDao.getExchangeBySymbol(symbol, "USD")
+                            val exchangeEntity = tokenExchangeDao.getExchangeBySymbol(symbol, "usd")
                             val exchangeRate = exchangeEntity?.value ?: 0.0
 
                             // Calculate fiat balance
@@ -110,7 +110,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                                 logoUrl = symbol,
                                 totalFiatBalance = totalFiatBalance,
                                 formattedFiatBalance = String.format("%.2f", totalFiatBalance),
-                                exchangeCurrency = "USD"
+                                exchangeCurrency = "usd"
                             )
                         } catch (e: Exception) {
                             Log.e("Web3jNetworkBalanceRepository", "Error fetching exchange rate for $symbol", e)
@@ -124,12 +124,12 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                                 logoUrl = symbol,
                                 totalFiatBalance = null,
                                 formattedFiatBalance = null,
-                                exchangeCurrency = "USD"
+                                exchangeCurrency = "usd"
                             )
                         }
                     }
                     
-                    emit(overviews)
+                    emit(overviews.filter { it.totalBalance != 0.0 })
                 }
             }
 
