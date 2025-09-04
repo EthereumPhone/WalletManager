@@ -35,7 +35,7 @@ data class CompositeTokenWithExchange(
                 ?.toDouble() ?: 0.0
             val exchangeRate = latestExchangeEntity?.value
             
-            return if (exchangeRate != null && latestExchangeEntity?.currency == "USD") {
+            return if (exchangeRate != null && latestExchangeEntity?.currency == "usd") {
                 balance * exchangeRate
             } else {
                 null

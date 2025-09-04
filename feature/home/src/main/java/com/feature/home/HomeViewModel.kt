@@ -74,7 +74,6 @@ import com.core.terminalsdk.ReflectiveLedPattern
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
-    private val updateTokensByNetworkUseCase: UpdateTokensByNetworkUseCase,
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val tokenExchangeRepository: TokenExchangeRepository,

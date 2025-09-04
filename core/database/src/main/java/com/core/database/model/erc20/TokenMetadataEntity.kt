@@ -8,6 +8,7 @@ import com.core.model.TokenMetadata
 
 @Entity(
     tableName = "token_metadata",
+    primaryKeys = ["contractAddress", "chainId"],
     foreignKeys = [
         ForeignKey(
             entity = TokenGroupEntity::class,
@@ -17,18 +18,16 @@ import com.core.model.TokenMetadata
         )
     ],
     indices = [
-        Index(value = ["groupId"]),
-        Index(value = ["chainId", "contractAddress"], unique = true)
+        Index(value = ["groupId"])
     ]
 )
 data class TokenMetadataEntity(
-    @PrimaryKey
     val contractAddress: String,
+    val chainId: Int,
     val decimals: Int,
     val name: String,
     val symbol: String,
     val logo: String?,
-    val chainId: Int,
     val swappable: Boolean = false,
     val groupId: String? = null
 )

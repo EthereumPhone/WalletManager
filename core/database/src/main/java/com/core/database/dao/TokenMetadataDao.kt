@@ -14,6 +14,12 @@ interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata")
     fun getTokensMetadata(): Flow<List<TokenMetadataEntity>>
 
+    @Query("""
+        SELECT * FROM token_metadata
+        WHERE contractAddress = :address AND :chainId
+    """)
+    suspend fun getTokenMetadataByAddressChainId(address: String, chainId: String): TokenMetadataEntity?
+
     @Query("SELECT * FROM token_metadata WHERE symbol == :symbol")
     fun getTokensMetadata(symbol: String): Flow<List<TokenMetadataEntity>>
 
@@ -23,10 +29,11 @@ interface TokenMetadataDao {
     @Query("SELECT * FROM token_metadata WHERE contractAddress IN (:contractAddresses)")
     fun getTokenMetadata(contractAddresses: List<String>): Flow<List<TokenMetadataEntity>>
 
+
     @Query("SELECT * FROM token_metadata WHERE chainId = :chainId")
     fun getTokenMetadata(chainId: Int): Flow<List<TokenMetadataEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Upsert
     suspend fun upsertTokensMetadata(tokenMetadata: List<TokenMetadataEntity>)
     
     @Query("SELECT COUNT(*) FROM token_metadata WHERE groupId IS NOT NULL")

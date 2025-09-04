@@ -34,4 +34,22 @@ interface TokenBalanceDao {
 
     @Upsert
     fun upsertTokenBalances(tokenBalance: List<TokenBalanceEntity>)
+    
+    @Query("""
+        SELECT tb.* 
+        FROM token_balance tb
+        LEFT JOIN token_metadata tm 
+        ON tb.contractAddress = tm.contractAddress AND tb.chainId = tm.chainId
+        WHERE tm.contractAddress IS NULL
+    """)
+    suspend fun getTokenBalancesWithoutMetadata(): List<TokenBalanceEntity>
+    
+    @Query("""
+        SELECT tb.* 
+        FROM token_balance tb
+        LEFT JOIN token_metadata tm 
+        ON tb.contractAddress = tm.contractAddress AND tb.chainId = tm.chainId
+        WHERE tm.contractAddress IS NULL
+    """)
+    fun observeTokenBalancesWithoutMetadataFlow(): Flow<List<TokenBalanceEntity>>
 }

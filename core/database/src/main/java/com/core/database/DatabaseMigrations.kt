@@ -94,13 +94,84 @@ internal object DatabaseMigrations {
     }
     
     /**
+     * Migration from version 4 to 5:
+     * - Changes primary key of token_metadata from contractAddress to composite (contractAddress, chainId)
+     * - This fixes the issue where tokens with same address on different chains were conflicting
+     */
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // 1. Create new table with correct primary key structure
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS token_metadata_new (
+                    contractAddress TEXT NOT NULL,
+                    chainId INTEGER NOT NULL,
+                    decimals INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    logo TEXT,
+                    swappable INTEGER NOT NULL DEFAULT 0,
+                    groupId TEXT,
+                    PRIMARY KEY(contractAddress, chainId),
+                    FOREIGN KEY(groupId) REFERENCES token_group(groupId) ON DELETE SET NULL
+                )
+            """)
+            
+            // 2. Create index on the new table
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_token_metadata_new_groupId ON token_metadata_new(groupId)")
+            
+            // 3. Copy data from old table to new table
+            database.execSQL("""
+                INSERT INTO token_metadata_new (contractAddress, chainId, decimals, name, symbol, logo, swappable, groupId)
+                SELECT contractAddress, chainId, decimals, name, symbol, logo, swappable, groupId
+                FROM token_metadata
+            """)
+            
+            // 4. Drop the old table
+            database.execSQL("DROP TABLE token_metadata")
+            
+            // 5. Rename the new table to the original name
+            database.execSQL("ALTER TABLE token_metadata_new RENAME TO token_metadata")
+        }
+    }
+    
+    /**
+     * Migration from version 5 to 6:
+     * - Adds unique index to token_exchange table to prevent duplicate entries
+     */
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // First, drop the old index if it exists (in case of re-migration)
+            database.execSQL("DROP INDEX IF EXISTS index_token_exchange_address_chainId_currency_timestamp")
+            
+            // Clean up duplicate exchange rates - keep only the latest one per token/currency
+            database.execSQL("""
+                DELETE FROM token_exchange 
+                WHERE id NOT IN (
+                    SELECT MAX(id) 
+                    FROM token_exchange 
+                    GROUP BY address, chainId, currency
+                )
+            """)
+            
+            // Create unique index to prevent duplicate exchange rate entries
+            // We only need one exchange rate per token per currency
+            database.execSQL("""
+                CREATE UNIQUE INDEX IF NOT EXISTS index_token_exchange_address_chainId_currency 
+                ON token_exchange(address, chainId, currency)
+            """)
+        }
+    }
+    
+    /**
      * All migrations for the database.
      * Add new migrations here as the schema evolves.
      */
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_2_3,
-        MIGRATION_3_4
-        // Future migrations will be added here: MIGRATION_4_5, etc.
+        MIGRATION_3_4,
+        MIGRATION_4_5,
+        MIGRATION_5_6
+        // Future migrations will be added here: MIGRATION_6_7, etc.
     )
     
     /**

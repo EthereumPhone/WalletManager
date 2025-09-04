@@ -35,9 +35,13 @@ import com.core.terminalsdk.TerminalLEDController
 import com.core.terminalsdk.TerminalSDK
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.workers.work.SeedTokensWorker
+import com.workers.work.UpdateTokensWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
@@ -51,7 +55,9 @@ class MainActivity() : ComponentActivity() {
     companion object {
         private const val PREFS_NAME = "welcome_prefs"
         private const val KEY_LAST_REFRESH_TIME = "lastRefreshTime"
+        private const val KEY_RESUME_COUNT = "resumeCount"
         private const val REFRESH_INTERVAL_MS = 90_000L // 1.5 minutes
+        private const val UPDATE_INTERVAL_MS = 90_000L // 1.5 minutes for token updates
     }
 
 
@@ -75,6 +81,8 @@ class MainActivity() : ComponentActivity() {
     val viewModel: MainActivityViewModel by viewModels()
 
     val coroutineScope = CoroutineScope(Dispatchers.IO)
+    
+    private var updateJob: Job? = null
 
     private fun seedDataIfAllowed() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -89,6 +97,29 @@ class MainActivity() : ComponentActivity() {
 
             prefs.edit().putLong(KEY_LAST_REFRESH_TIME, now).apply()
         }
+    }
+    
+    private fun startPeriodicTokenUpdates() {
+        // Cancel any existing job
+        updateJob?.cancel()
+        
+        // Start a new coroutine job that runs every 1.5 minutes
+        updateJob = coroutineScope.launch {
+            while (isActive) {
+                // Queue the update work
+                val updateWork = UpdateTokensWorker.createUpdateWork()
+                WorkManager.getInstance(applicationContext)
+                    .enqueue(updateWork)
+                
+                // Wait for 1.5 minutes before next update
+                delay(UPDATE_INTERVAL_MS)
+            }
+        }
+    }
+    
+    private fun stopPeriodicTokenUpdates() {
+        updateJob?.cancel()
+        updateJob = null
     }
 
 
@@ -167,6 +198,9 @@ class MainActivity() : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        
+        // Stop periodic token updates when app is paused
+        stopPeriodicTokenUpdates()
 
         coroutineScope.launch {
             withContext(Dispatchers.IO) {
@@ -184,15 +218,30 @@ class MainActivity() : ComponentActivity() {
         super.onResume()
         viewModel.onAppResumed()
 
-        seedDataIfAllowed() // rate-limited
-        SystemColorManager.refresh(this)
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val resumeCount = prefs.getInt(KEY_RESUME_COUNT, 0) + 1
+        prefs.edit().putInt(KEY_RESUME_COUNT, resumeCount).apply()
 
+        if (resumeCount == 1) {
+            // First onResume - only run SeedTokensWorker
+            seedDataIfAllowed() // rate-limited
+        } else {
+            // Second onResume onwards - run UpdateTokensWorker immediately and start periodic updates
+            val updateWork = UpdateTokensWorker.createUpdateWork()
+            WorkManager.getInstance(applicationContext)
+                .enqueue(updateWork)
+                
+            startPeriodicTokenUpdates()
+        }
+        
+        SystemColorManager.refresh(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
-        // Stop the periodic update
+        // Stop the periodic updates
+        stopPeriodicTokenUpdates()
         walletAddressUpdater.stopPeriodicUpdate()
         // Synchronously destroy the touch handler to ensure immediate cleanup
         terminalSDK?.destroyTouchHandlerSync()

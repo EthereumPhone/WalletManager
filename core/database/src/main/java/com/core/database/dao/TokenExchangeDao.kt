@@ -12,10 +12,10 @@ import kotlinx.datetime.Instant
 
 @Dao
 interface TokenExchangeDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertTokenExchange(tokenExchange: TokenExchangeEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertAll(tokenExchanges: List<TokenExchangeEntity>)
 
     @Query("SELECT * FROM token_exchange WHERE symbol = :symbol AND currency = :currency ORDER BY timestamp DESC LIMIT 1")
@@ -104,7 +104,7 @@ interface TokenExchangeDao {
         currency: String = "USD"
     ): TokenExchangeEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertAllExchanges(exchangeEntities: List<TokenExchangeEntity>)
 
 }

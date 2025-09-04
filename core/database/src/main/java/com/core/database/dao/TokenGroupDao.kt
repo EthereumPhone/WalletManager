@@ -124,15 +124,13 @@ interface TokenGroupDao {
         LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
             AND tm.chainId = tb.chainId
         LEFT JOIN (
-            SELECT * FROM token_exchange te1
-            WHERE te1.timestamp = (
-                SELECT MAX(te2.timestamp)
-                FROM token_exchange te2
-                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
-                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
+            SELECT te1.* FROM token_exchange te1
+            WHERE te1.id = (
+                SELECT MAX(id) 
+                FROM token_exchange 
+                WHERE address = :contractAddress AND chainId = :chainId
             )
-        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
-            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
+        ) te ON te.address = tm.contractAddress AND te.chainId = tm.chainId
         WHERE tm.contractAddress = :contractAddress AND tm.chainId = :chainId
     """)
     suspend fun getTokenWithLatestExchange(contractAddress: String, chainId: Int): CompositeTokenWithExchange?
@@ -155,15 +153,14 @@ interface TokenGroupDao {
         LEFT JOIN token_balance tb ON tm.contractAddress = tb.contractAddress 
             AND tm.chainId = tb.chainId
         LEFT JOIN (
-            SELECT * FROM token_exchange te1
-            WHERE te1.timestamp = (
-                SELECT MAX(te2.timestamp)
-                FROM token_exchange te2
-                WHERE (te2.address = te1.address OR (te2.address IS NULL AND te2.symbol = te1.symbol))
-                    AND (te2.chainId = te1.chainId OR te2.chainId IS NULL)
+            SELECT te1.* FROM token_exchange te1
+            WHERE te1.id IN (
+                SELECT MAX(id) 
+                FROM token_exchange 
+                WHERE address IS NOT NULL 
+                GROUP BY address, chainId
             )
-        ) te ON (te.address = tm.contractAddress OR (te.address IS NULL AND te.symbol = tm.symbol))
-            AND (te.chainId = tm.chainId OR te.chainId IS NULL)
+        ) te ON te.address = tm.contractAddress AND te.chainId = tm.chainId
         WHERE tm.groupId = :groupId
     """)
     suspend fun getTokensInGroupWithLatestExchange(groupId: String): List<CompositeTokenWithExchange>

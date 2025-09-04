@@ -1,11 +1,20 @@
 package com.core.database.model.erc20
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.core.model.TokenExchange
 import kotlinx.datetime.Instant
 
-@Entity(tableName = "token_exchange")
+@Entity(
+    tableName = "token_exchange",
+    indices = [
+        Index(
+            value = ["address", "chainId", "currency"],
+            unique = true
+        )
+    ]
+)
 data class TokenExchangeEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,

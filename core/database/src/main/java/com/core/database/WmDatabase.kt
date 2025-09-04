@@ -31,7 +31,7 @@ import com.core.database.util.RawContractConverter
         TokenGroupEntity::class,
         TokenBridgeEntity::class
     ],
-    version = 4,  // Updated for pre-populated database support
+    version = 6,  // Updated to add unique constraint on token_exchange
     exportSchema = true
 )
 
