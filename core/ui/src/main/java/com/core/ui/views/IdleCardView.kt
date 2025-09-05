@@ -216,13 +216,18 @@ fun IdleView(
                     )
                 }
 
+                val price = if (fiatAmount == 0.0 ) {
+                    "N/A"
+                } else if (fiatAmount < 0.01 && fiatAmount != 0.0) {
+                    "‹ $0.01"
+                } else {
+                    "$" + decimalFormat.format(fiatAmount)
+
+                }
+
 
                 Text(
-                    text = if (fiatAmount < 0.01 && fiatAmount > 0) {
-                        "‹ $0.01"
-                    } else {
-                        "$" + decimalFormat.format(fiatAmount)
-                    },
+                    text = price,
                     style = TextStyle(
                         fontFamily = PitagonsSans,
                         color = dgenWhite,
@@ -323,6 +328,34 @@ fun IdlePreview(){
                 amount = 0.13,
                 tokenName = "USDCaaaaaaaaaaaaaaaaaaaaaa",
                 fiatAmount = 209.47,
+                icon = "",//R.drawable.placeholer_icon_5.toString()
+                navigateToSend = { },
+                enableSend = false,
+                primaryColor = Color.Red,
+            )
+        },
+        primaryColor = Color.Red,
+        secondaryColor = Color.Blue
+    )
+
+
+
+}
+
+@Preview(
+    widthDp = 447,
+    heightDp = 447,
+)
+@Composable
+fun IdlePreviewEmtpy(){
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        frontSide = {
+            IdleView(
+                amount = 0.13,
+                tokenName = "USDCaaaaaaaaaaaaaaaaaaaaaa",
+                fiatAmount = 0.0,
                 icon = "",//R.drawable.placeholer_icon_5.toString()
                 navigateToSend = { },
                 enableSend = false,
