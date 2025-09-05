@@ -17,6 +17,12 @@ interface TokenBalanceDao {
     @Query("SELECT * FROM token_balance WHERE contractAddress IN (:contractAddresses)")
     fun getTokenBalances(contractAddresses: List<String>): Flow<List<TokenBalanceEntity>>
 
+    @Query(" SELECT * FROM token_balance WHERE tokenBalance > 0")
+    fun observeTokensWithBalance(): Flow<List<TokenBalanceEntity>>
+
+    @Query(" SELECT * FROM token_balance WHERE tokenBalance > 0")
+    suspend fun getTokensWithBalance(): List<TokenBalanceEntity>
+
     @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
     fun getTokenBalances(chainId: Int): Flow<List<TokenBalanceEntity>>
 

@@ -3,11 +3,14 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.model.dto.TokenAddress
 import com.core.data.remote.TokenPriceDataSource
+import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenExchangeDao
+import com.core.database.dao.TokenGroupDao
 import com.core.database.model.erc20.TokenExchangeEntity
 import com.core.database.model.erc20.asExternalModel
 import com.core.database.model.erc20.asExternalModule
 import com.core.database.model.erc20.toExternalModel
+import com.core.model.NetworkChain
 import com.core.model.TokenExchange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -24,7 +27,10 @@ class DefaultExchangeRepository @Inject constructor(
     private val tokenPriceDataSource: TokenPriceDataSource,
     private val exchangeDao: TokenExchangeDao,
     private val tokenBalanceRepository: TokenBalanceRepository,
-    private val tokenMetadataRepository: TokenMetadataRepository
+    private val groupedTokenRepository: GroupedTokenRepository,
+    private val tokenBalanceDao: TokenBalanceDao,
+    private val tokenMetadataRepository: TokenMetadataRepository,
+    private val tokenGroupDao: TokenGroupDao
 ): TokenExchangeRepository {
 
     override fun observeLatestExchangeByAddressAndChain(
@@ -121,6 +127,7 @@ class DefaultExchangeRepository @Inject constructor(
                 }
 
                 if (entities.isNotEmpty()) {
+
                     exchangeDao.insertAllExchanges(entities)
                 }
 
@@ -197,77 +204,89 @@ class DefaultExchangeRepository @Inject constructor(
 
 
     override suspend fun fetchAllExchanges() {
-        // Get the latest token balances
-        val allBalances = tokenBalanceRepository.getTokensBalances().first()
+        try {
+            // Get all active token groups (groups with balance > 0)
+            val activeTokenGroups = tokenGroupDao.getActiveTokenGroupsWithExchange()
+                .filterNot { item ->
+                    DEFAULT_EXCLUDE_LIST.any { snippet ->
+                        item.tokenGroup.name.contains(snippet, ignoreCase = true) ||
+                                item.tokenGroup.symbol.contains(snippet, ignoreCase = true)
+                    }
+                }
 
-        // Filter for balances > 0
-        val balancesWithSufficientAmount = allBalances
-            .filter { it.tokenBalance > BigDecimal.ZERO }
-
-        if (balancesWithSufficientAmount.isEmpty()) {
-            Log.d("fetchAllExchanges", "No token balances greater than zero found.")
-            return
-        }
-
-        // Separate network currencies from ERC20 tokens
-        val (networkCurrencies, erc20Tokens) = balancesWithSufficientAmount.partition {
-            !it.contractAddress.startsWith("0x")
-        }
-
-        // Handle network currencies using symbol-based fetching
-        val networkSymbols = networkCurrencies.mapNotNull { balance ->
-            val chainId = balance.contractAddress.toIntOrNull()
-            when (chainId) {
-                137 -> "MATIC"    // Polygon
-                else -> "ETH"      // All other chains use ETH
-            }
-        }.distinct()
-
-        // Handle ERC20 tokens using address-based fetching
-        val addressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
-        
-        if (erc20Tokens.isNotEmpty()) {
-            // Refresh metadata for all chains
-            val chainIds = erc20Tokens.map { it.chainId }.distinct()
-            chainIds.forEach { chainId ->
-                val addressesForChain = erc20Tokens.filter { it.chainId == chainId }.map { it.contractAddress }
-                tokenMetadataRepository.refreshTokensMetadata(addressesForChain, chainId)
-            }
-
-            // Get metadata for all ERC20 tokens
-            val contractAddresses = erc20Tokens.map { it.contractAddress }
-            val metadataList = tokenMetadataRepository.getTokensMetadata(contractAddresses).first()
-
-            // Create address entries with metadata
-            for (metadata in metadataList) {
-                addressesWithMetadata.add(
-                    TokenAddressWithMetadata(
-                        address = metadata.contractAddress,
-                        chainId = metadata.chainId,
-                        symbol = metadata.symbol
-                    )
-                )
-            }
-        }
-
-        // Fetch prices for native tokens using symbol-based API
-        if (networkSymbols.isNotEmpty()) {
-            Log.d("fetchAllExchanges", "Fetching native token prices for symbols: ${networkSymbols.joinToString()}")
+            val tokenAddressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
             
-            // API has a 25 symbol limit per call, so chunk if necessary
-            networkSymbols.chunked(25).forEach { chunk ->
-                try {
-                    fetchExchangeBySymbols(chunk)
-                } catch (e: IOException) {
-                    Log.e("fetchAllExchanges", "Error fetching exchange data for native tokens ${chunk.joinToString()}", e)
+            for (tokenGroup in activeTokenGroups) {
+                // Skip native tokens (ETH and MATIC) - we'll handle them separately
+                if (tokenGroup.tokenGroup.symbol == "ETH" || tokenGroup.tokenGroup.symbol == "MATIC") {
+                    continue
+                }
+                
+                // For each token group, we only need to fetch the price once
+                // Since all tokens in a group share the same price, we can use any representative token
+                // Choose the token with the highest balance or the canonical one
+                val representativeToken = tokenGroup.tokensWithExchange
+                    .filter { it.tokenBalanceEntity?.tokenBalance?.compareTo(BigDecimal.ZERO) == 1 }
+                    .maxByOrNull { it.tokenBalanceEntity?.tokenBalance ?: BigDecimal.ZERO }
+                    ?: tokenGroup.tokensWithExchange.firstOrNull { 
+                        it.tokenMetadataEntity.chainId == tokenGroup.tokenGroup.canonicalChainId 
+                    }
+                    ?: tokenGroup.tokensWithExchange.firstOrNull()
+                
+                representativeToken?.let { token ->
+                    tokenAddressesWithMetadata.add(
+                        TokenAddressWithMetadata(
+                            address = token.tokenMetadataEntity.contractAddress,
+                            chainId = token.tokenMetadataEntity.chainId,
+                            symbol = token.tokenMetadataEntity.symbol
+                        )
+                    )
                 }
             }
-        }
-
-        // Fetch prices for ERC20 tokens using address-based API
-        if (addressesWithMetadata.isNotEmpty()) {
-            Log.d("fetchAllExchanges", "Fetching ERC20 token prices for ${addressesWithMetadata.size} addresses")
-            fetchExchangeByAddressesBatch(addressesWithMetadata)
+            
+            // Get network currencies that have balance
+            val networkBalances = tokenBalanceDao.getTokensWithBalance()
+                .filter { balance ->
+                    // Check if this is a native token address
+                    NetworkChain.getAllNetworkChains().any { chain ->
+                        balance.contractAddress == chain.chainId.toString() ||
+                        balance.contractAddress == "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" ||
+                        (balance.contractAddress == "0x0000000000000000000000000000000000001010" && chain.chainId == 137)
+                    }
+                }
+            
+            // Determine which native currencies to fetch by symbol
+            val nativeCurrencySymbols = mutableSetOf<String>()
+            
+            for (balance in networkBalances) {
+                when {
+                    balance.chainId == 137 || balance.contractAddress == "0x0000000000000000000000000000000000001010" -> {
+                        nativeCurrencySymbols.add("MATIC")
+                    }
+                    else -> {
+                        nativeCurrencySymbols.add("ETH")
+                    }
+                }
+            }
+            
+            // Fetch native currencies by symbol
+            if (nativeCurrencySymbols.isNotEmpty()) {
+                Log.d("DefaultExchangeRepository", "Fetching native currency exchanges for: $nativeCurrencySymbols")
+                fetchExchangeBySymbols(nativeCurrencySymbols.toList())
+            }
+            
+            // Fetch ERC20 tokens by address/chainId with proper batching
+            if (tokenAddressesWithMetadata.isNotEmpty()) {
+                Log.d("DefaultExchangeRepository", "Fetching exchanges for ${tokenAddressesWithMetadata.size} ERC20 tokens by address")
+                fetchExchangeByAddressesBatch(tokenAddressesWithMetadata)
+            }
+            
+            if (nativeCurrencySymbols.isEmpty() && tokenAddressesWithMetadata.isEmpty()) {
+                Log.d("DefaultExchangeRepository", "No tokens with balance found, skipping exchange fetch")
+            }
+            
+        } catch (e: Exception) {
+            Log.e("DefaultExchangeRepository", "Error in fetchAllExchanges", e)
         }
     }
 

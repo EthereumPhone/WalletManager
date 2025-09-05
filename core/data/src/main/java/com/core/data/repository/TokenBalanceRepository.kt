@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 interface TokenBalanceRepository {
     fun getTokens(): Flow<List<TokenAsset>>
     fun observeBalancesWithoutMetadata(): Flow<List<TokenBalanceEntity>>
+
+
     fun getCombinedTokens(): Flow<List<TokenAsset>>
     fun getTokensBalances(): Flow<List<TokenBalance>>
     fun getTokensBalances(contractAddresses: List<String>): Flow<List<TokenBalance>>

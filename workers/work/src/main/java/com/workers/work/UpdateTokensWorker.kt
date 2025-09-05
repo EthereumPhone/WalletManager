@@ -179,7 +179,9 @@ class UpdateTokensWorker @AssistedInject constructor(
                 groupedByChain.forEach { (chainId, tokens) ->
                     launch {
                         try {
-                            val addresses = tokens.map { it.contractAddress }
+                            val addresses = tokens
+                                .filter { it.chainId.toString() != it.contractAddress }
+                                .map { it.contractAddress }
                             Log.d(TAG, "Fetching metadata for ${addresses.size} tokens on chain $chainId")
                             tokenMetadataRepository.refreshTokensMetadata(addresses, chainId)
                         } catch (e: Exception) {
