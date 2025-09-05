@@ -92,11 +92,11 @@ fun WmNavHost(
                 navigateToSwap = {
                     navController.navigateToSwap()
                 },
-                navigateToSend = { address, tokenId ->
+                navigateToSend = { groupId ->
                     coroutineScope.launch(Dispatchers.IO) {
                         terminalSDK?.finishScreen()
                     }
-                    navController.navigateToSend(address= address, tokenId =tokenId)
+                    navController.navigateToSend(groupId=groupId)
                 },
                 navigateToLog = { it ->
                     coroutineScope.launch(Dispatchers.IO) {

@@ -2,10 +2,8 @@ package com.feature.send
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
-import android.widget.Space
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedContent
@@ -13,7 +11,6 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -35,7 +32,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,24 +53,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextAlign
-import com.core.model.TokenAsset
-import com.core.model.TokenData
 import com.core.ui.DgenLoadingMatrix
 import com.core.ui.util.dgenBlack
-import com.core.ui.util.dgenGray
 import com.core.ui.util.dgenGreen
 import com.core.ui.util.dgenOrche
 import com.core.ui.util.dgenRed
-import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import com.feature.send.ui.SelectableCarousel
 import com.feature.send.ui.TextToggle
 import com.feature.send.ui.TransactionStatusOverlay
 import com.feature.send.ui.TransactionStatus
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.core.ui.DgenBasicTextfield
@@ -90,7 +79,6 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
-import android.widget.Toast
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Spacer
@@ -101,16 +89,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.core.data.util.chainToApiKey
-import com.core.ui.showCustomToast
-import com.core.ui.util.dgenGunMetal
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.feature.send.ui.CustomCaptureActivity
-import org.kethereum.eip137.model.ENSName
-import org.kethereum.ens.ENS
-import org.kethereum.ens.isPotentialENSDomain
-import org.kethereum.rpc.HttpEthereumRPC
 import org.web3j.crypto.WalletUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -130,12 +109,11 @@ import com.core.ui.util.SystemColorManager
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import com.core.ui.util.label_fontSize
-import com.core.ui.util.largeEnterDuration
-import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.smallDuration
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import com.core.model.TokenAssetWithPrice
 import com.core.ui.showDgenToast
 import com.core.ui.util.pulseOpacity
 import com.core.ui.util.TokenLogoFallback
@@ -143,7 +121,7 @@ import java.math.BigDecimal
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
-private object TransactionTiming {
+object TransactionTiming {
     // How long to show the SUCCESS overlay before starting navigation (in milliseconds)
     const val SUCCESS_DISPLAY_DURATION = 4000L // 4 seconds to enjoy the success
     
@@ -172,26 +150,18 @@ fun SendRoute2(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     initialAddress: String?,
-    tokenId: String?,
+    groupId: String?,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
-    viewModel: SendViewModel = hiltViewModel(),
-
-    ) {
-    val currentNetwork by viewModel.currentChain.collectAsStateWithLifecycle(initialValue = "loading")
-    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
+    viewModel: SendViewModel = hiltViewModel()
+) {
     val amount by viewModel.amount.collectAsStateWithLifecycle()
-    val toAddress by viewModel.toAddress.collectAsStateWithLifecycle(initialValue = initialAddress ?: "")
-    //val assets by viewModel.tokensAssetState.collectAsStateWithLifecycle()
+    val toAddress by viewModel.recipientUiState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
-
-
-    val selectedTokenId = viewModel.selectedTokenIdFlow.collectAsState()
-    //val tokenId by viewModel.tokenIdFlow.collectAsState()
 
 
     // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
@@ -248,16 +218,14 @@ fun SendRoute2(
             isNavigatingBack = true
             onBackClick()
         },
-        toAddress = toAddress,
+        recipientUiState = toAddress,
         amount = amount,
-        walletDataUiState = walletDataUiState,
         assets = assetsUiState,
         selectedToken = selectedToken,
         onAmountChange = viewModel::updateAmount,
         onToAddressChanged = viewModel::updateToAddress,
         sendTransaction = viewModel::send,
-        updateSelectedAsset = viewModel::updateSelectedAsset,
-        tokenId = tokenId,
+        updateSelectedAsset = viewModel::changeSelectedAsset,
         qrScannerTriggered = qrScannerTriggered,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         sendTransactionTriggered = sendTransactionTriggered,
@@ -275,18 +243,16 @@ fun SendRoute2(
 @Composable
 fun SendScreen2(
     modifier: Modifier = Modifier,
-    toAddress: String,
+    recipientUiState: RecipientUiState,
     amount: String,
-    walletDataUiState: WalletDataUiState,
     assets: AssetsUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (() -> Unit) -> Unit,
-    updateSelectedAsset: (TokenAsset) -> Unit,
+    updateSelectedAsset: (TokenAssetWithPrice) -> Unit,
     selectedToken: SelectedTokenUiState,
     onBackClick: () -> Unit,
     initialAddress: String?,
-    tokenId: String?,
     qrScannerTriggered: Boolean,
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
@@ -296,98 +262,13 @@ fun SendScreen2(
     transactionStatus: TransactionStatus?,
     clearTransactionStatus: () -> Unit,
     setMaxAmount: (BigDecimal, Int) -> Unit,
-){
-    // Check if a token was preselected via navigation (non-native token)
-    val tokenPreselected = remember(tokenId, assets) {
-        if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
-            // Check if we can find a token with this address that's not a native token
-            val foundToken = assets.assets.firstOrNull {
-                it.address.equals(tokenId, ignoreCase = true)
-            }
-            // Return true if found and it's not a native token (ERC20)
-            foundToken != null && foundToken.address != foundToken.chainId.toString()
-        } else {
-            false
-        }
-    }
-
+) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
-    // Set the selected asset when the screen loads with a tokenId
-    LaunchedEffect(tokenId, assets) {
-        if (tokenId != null && tokenId.isNotEmpty() && assets is AssetsUiState.Success) {
-            Log.d("SendScreen2", "Looking for token with address: $tokenId")
-            Log.d("SendScreen2", "Available assets: ${assets.assets.size}")
-            
-            // First try to find exact match by address
-            var token = assets.assets.firstOrNull {
-                it.address.equals(tokenId, ignoreCase = true)
-            }
-            
-            // If not found and it looks like WETH address, try to find WETH on the appropriate chain
-            if (token == null) {
-                val tokenIdLower = tokenId.lowercase()
-                
-                // Check for known WETH addresses on different chains
-                val wethChainId = when {
-                    tokenIdLower.startsWith("0x4200000000000000000000000000000000000006") -> {
-                        Log.d("SendScreen2", "Base WETH address detected")
-                        8453 // Base
-                    }
-                    tokenIdLower.startsWith("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") -> {
-                        Log.d("SendScreen2", "Mainnet WETH address detected")
-                        1 // Mainnet
-                    }
-                    else -> null
-                }
-                
-                if (wethChainId != null) {
-                    // Try to find WETH on the specific chain
-                    token = assets.assets.firstOrNull {
-                        it.symbol.equals("WETH", ignoreCase = true) && 
-                        it.chainId == wethChainId && 
-                        it.balance > 0
-                    }
-                    
-                    // If no WETH on the specific chain, fall back to any WETH with balance
-                    if (token == null) {
-                        Log.d("SendScreen2", "No WETH on chain $wethChainId found, looking for any WETH token with balance")
-                token = assets.assets.firstOrNull {
-                    it.symbol.equals("WETH", ignoreCase = true) && it.balance > 0
-                        }
-                    }
-                }
-            }
-            
-            // If still not found, log available tokens for debugging
-            if (token == null) {
-                Log.w("SendScreen2", "Token not found! Looking for: $tokenId")
-                assets.assets.forEach { asset ->
-                    if (asset.symbol.contains("WETH", ignoreCase = true) || 
-                        asset.address.contains("420000000000", ignoreCase = true)) {
-                        Log.d("SendScreen2", "Potential match - Symbol: ${asset.symbol}, Address: ${asset.address}, Chain: ${asset.chainId}, Balance: ${asset.balance}")
-                    }
-                }
-            }
-            
-            // Log all WETH tokens in assets for debugging
-            Log.d("SendScreen2", "=== ALL WETH TOKENS IN ASSETS ===")
-            assets.assets.filter { it.symbol.equals("WETH", ignoreCase = true) }.forEach { weth ->
-                Log.d("SendScreen2", "WETH: chainId=${weth.chainId}, address=${weth.address}, balance=${weth.balance}")
-            }
-            Log.d("SendScreen2", "=================================")
-            
-            token?.let {
-                updateSelectedAsset(it)
-                Log.d("SendScreen2", "Selected asset set to: ${it.symbol} on chain ${it.chainId} with address ${it.address}")
-            } ?: run {
-                Log.e("SendScreen2", "Failed to find and select token with address: $tokenId")
-            }
-        }
-    }
+
 
     // Monitor transaction status for auto-dismiss of FAILURE state
     LaunchedEffect(transactionStatus) {
@@ -425,7 +306,6 @@ fun SendScreen2(
         Log.d("SendScreen", "=== TRANSACTION STATUS HANDLING ENDED ===")
     }
 
-    var dollarAmount by remember { mutableStateOf(TextFieldValue("")) }
     var useDollarAmount by remember { mutableStateOf(false) }
     
     // TextFieldValue for amount, for keeping Cursor-Position
@@ -441,78 +321,11 @@ fun SendScreen2(
     
     // TextFieldValue for toAddress, for keeping Cursor-Position
     var toAddressFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-    
-    // Synchronize toAddressFieldValue with toAddress from ViewModel
-    LaunchedEffect(toAddress) {
-        // Only update if the text is different (avoids cursor reset)
-        if (toAddress != toAddressFieldValue.text) {
-            toAddressFieldValue = TextFieldValue(toAddress)
-        }
-    }
+
     
     // Variables for error handling
     var isAmountError by remember { mutableStateOf(false) }
     var convertedTokenAmount by remember { mutableStateOf("") }
-    
-    // ENS Resolution State
-    var isResolvingENS by remember { mutableStateOf(false) }
-    var ensError by remember { mutableStateOf<String?>(null) }
-    
-    // ENS Resolution
-    LaunchedEffect(toAddressFieldValue.text) {
-        val address = toAddressFieldValue.text
-        if (address.endsWith(".eth") && ENSName(address.lowercase()).isPotentialENSDomain()) {
-            isResolvingENS = true
-            ensError = null
-            
-            try {
-                withContext(Dispatchers.IO) {
-                    val ens = ENS(
-                        HttpEthereumRPC(
-                            "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
-                        )
-                    )
-                    val ensAddr = ens.getAddress(ENSName(address.lowercase()))
-                    
-                    withContext(Dispatchers.Main) {
-                        ensAddr?.let { resolvedAddress ->
-                            // Update the address in ViewModel with the resolved address
-                            onToAddressChanged(resolvedAddress.hex)
-                            // Don't update toAddressFieldValue here to keep the ENS name visible
-                        } ?: run {
-                            ensError = "ENS name not found"
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                ensError = "Failed to resolve ENS: ${e.message}"
-            } finally {
-                isResolvingENS = false
-            }
-        } else {
-            isResolvingENS = false
-            ensError = null
-        }
-    }
-    
-    // Load exchange rates for selected token
-    /*
-    LaunchedEffect(selectedToken) {
-        when (selectedToken) {
-            is SelectedTokenUiState.Selected -> {
-                val symbols = listOf(
-                    selectedToken.tokenAsset.symbol.uppercase(),
-                    "ETH" // Also load ETH for comparison purposes
-                )
-                loadSymbol(symbols)
-            }
-            else -> {
-                // Load ETH exchange rate when no token is selected
-                loadSymbol(listOf("ETH"))
-            }
-        }
-    }
-     */
 
 
     //Loader for GIF
@@ -571,7 +384,7 @@ fun SendScreen2(
         }
     }
 
-    //Variabel for animating the max button
+    //Variable for animating the max button
     var setMax by remember { mutableStateOf(false) }
     var isMaxAmount by remember { mutableStateOf(false) }  // Track if MAX was used
     val maxAlpha by animateFloatAsState(
@@ -683,173 +496,19 @@ fun SendScreen2(
                     }
                 }
                 is AssetsUiState.Success -> {
-                    
-                    // Selected chain state
-                    var selectedChainIndex by remember { mutableStateOf(0) }
-                    
-                    // Get available chains
-                    val availableChains = remember(selectedToken, assetsUiState.assets) {
-                        when (selectedToken) {
-                            is SelectedTokenUiState.Selected -> {
-                                // For selected tokens, find all chains where user has balance of this specific token
-                                val selectedTokenAddress = selectedToken.tokenAsset.address
-                                val selectedTokenSymbol = selectedToken.tokenAsset.symbol
-                                
-                                Log.d("SendScreen2", "Finding chains for token: ${selectedTokenSymbol} (${selectedTokenAddress})")
-                                
-                                val chainsWithThisTokenBalance = if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
-                                    // For native tokens, find chains where user has native token balance
-                                    assetsUiState.assets
-                                        .filter { asset ->
-                                            // Find native tokens with balance > 0
-                                            asset.address == asset.chainId.toString() &&
-                                            asset.balance > 0.0
-                                        }
-                                        .map { it.chainId }
-                                        .distinct()
-                                } else {
-                                    // For ERC20 tokens (including WETH), find chains where user has this specific token with balance > 0
-                                    // WETH on different chains have different addresses, so we match by symbol
-                                    val tokenMatches = assetsUiState.assets
-                                        .filter { asset ->
-                                            // Match by symbol for WETH, or by exact address for other tokens
-                                            asset.address != asset.chainId.toString() && // Must be ERC20
-                                            (
-                                                // For WETH, match by symbol
-                                                (selectedTokenSymbol.equals("WETH", ignoreCase = true) && 
-                                                 asset.symbol.equals("WETH", ignoreCase = true)) ||
-                                                // For other tokens, match by symbol or address
-                                                asset.symbol.equals(selectedTokenSymbol, ignoreCase = true) ||
-                                                asset.address.equals(selectedTokenAddress, ignoreCase = true)
-                                            )
-                                            // Note: Removed balance > 0 requirement to show all chains where token exists
-                                        }
-                                    
-                                    Log.d("SendScreen2", "Found ${tokenMatches.size} matching tokens across chains")
-                                    tokenMatches.forEach { 
-                                        Log.d("SendScreen2", "  - ${it.symbol} on chain ${it.chainId}: ${it.balance}")
-                                    }
-                                    
-                                    tokenMatches.map { it.chainId }.distinct()
-                                }
-                                
-                                val chains = chainsWithThisTokenBalance.mapNotNull { chainId ->
-                                    when (chainId) {
-                                        1 -> "main"
-                                        11155111 -> "sepolia"
-                                        10 -> "op"
-                                        137 -> "pol"
-                                        42161 -> "arb"
-                                        8453 -> "base"
-                                        7777777 -> "zora"
-                                        else -> null
-                                    }
-                                }
-                                
-                                Log.d("SendScreen2", "Available chains: $chains")
-                                chains
-                            }
-                            else -> {
-                                // If no token is selected, show only chains that have native tokens with balance > 0
-                                val chainsWithNativeTokenBalance = assetsUiState.assets
-                                    .filter { asset ->
-                                        // Find native tokens with balance > 0
-                                        asset.address == asset.chainId.toString() &&
-                                        asset.balance > 0.0
-                                    }
-                                    .map { it.chainId }
-                                    .distinct()
-                                
-                                chainsWithNativeTokenBalance.mapNotNull { chainId ->
-                                    when (chainId) {
-                                        1 -> "main"
-                                        11155111 -> "sepolia"
-                                        10 -> "op"
-                                        137 -> "pol"
-                                        42161 -> "arb"
-                                        8453 -> "base"
-                                        7777777 -> "zora"
-                                        else -> null
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Get selected chain ID based on selected chain
-                    val selectedChainId = remember(selectedChainIndex, availableChains) {
-                        val selectedChainName = availableChains.getOrNull(selectedChainIndex)
-                        when (selectedChainName) {
-                            "main" -> 1
-                            "sepolia" -> 11155111
-                            "op" -> 10
-                            "pol" -> 137
-                            "arb" -> 42161
-                            "base" -> 8453
-                            "zora" -> 7777777
-                            else -> null
-                        }
-                    }
-                    
-                    // Get available balance based on selected chain
-                    val availableBalance = remember(selectedToken, selectedChainId, assetsUiState.assets) {
-                        selectedChainId?.let { chainId ->
-                            when (selectedToken) {
-                                is SelectedTokenUiState.Selected -> {
-                                    // Check if it's a native token
-                                    if (selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()) {
-                                        // For native tokens, find the matching native token on the selected chain
-                                        assetsUiState.assets
-                                            .firstOrNull { asset -> 
-                                                asset.chainId == chainId && 
-                                                asset.address == chainId.toString()
-                                            }?.balance ?: 0.0
-                                    } else {
-                                        // For ERC20 tokens, find by symbol match
-                                        val tokenSymbol = selectedToken.tokenAsset.symbol
-                                        assetsUiState.assets
-                                            .firstOrNull { asset -> 
-                                                asset.chainId == chainId &&
-                                                asset.symbol.equals(tokenSymbol, ignoreCase = true)
-                                            }?.balance ?: 0.0
-                                    }
-                                }
-                                else -> {
-                                    // When no token is selected, get the native token balance for the selected chain
-                                    assetsUiState.assets
-                                        .firstOrNull { asset ->
-                                            asset.chainId == chainId && 
-                                            asset.address == chainId.toString()
-                                        }?.balance ?: 0.0
-                                }
-                            }
-                        } ?: 0.0
-                    }
-                    
+
+                    val availableChains = assetsUiState.assets.map { it.chainId }
+
+
                     // Validate Address
-                    val isValidAddress = remember(toAddress, toAddressFieldValue.text, isResolvingENS, ensError) {
+                    val isValidAddress = remember(recipientUiState, toAddressFieldValue.text, isResolvingENS, ensError) {
                         when {
-                            toAddress.isEmpty() -> false
-                            toAddressFieldValue.text.endsWith(".eth") -> !isResolvingENS && ensError == null && toAddress.isNotEmpty()
-                            else -> WalletUtils.isValidAddress(toAddress)
+                            recipientUiState.isEmpty() -> false
+                            toAddressFieldValue.text.endsWith(".eth") -> !isResolvingENS && ensError == null && recipientUiState.isNotEmpty()
+                            else -> WalletUtils.isValidAddress(recipientUiState)
                         }
                     }
-                    
-                    // Validate Amount
-                    LaunchedEffect(amount, dollarAmount.text, useDollarAmount, convertedTokenAmount, availableBalance, isMaxAmount) {
-                        if (isMaxAmount) {
-                            // If MAX was used, don't show error
-                            isAmountError = false
-                        } else if (useDollarAmount) {
-                            // If dollar input is active, check token amount
-                            val tokenAmount = convertedTokenAmount.toDoubleOrNull() ?: 0.0
-                            isAmountError = tokenAmount > availableBalance
-                        } else {
-                            // If token input is active, check token amount directly
-                            val tokenAmount = amount.toDoubleOrNull() ?: 0.0
-                            isAmountError = tokenAmount > availableBalance
-                        }
-                    }
+
 
                     // Handle send transaction trigger from ViewModel
                     LaunchedEffect(sendTransactionTriggered) {
@@ -860,7 +519,7 @@ fun SendScreen2(
                             Log.d("SendScreen", "Amount error: $isAmountError, Max amount: $isMaxAmount")
                             Log.d("SendScreen", "Valid address: $isValidAddress")
                             Log.d("SendScreen", "Selected token: $selectedToken")
-                            Log.d("SendScreen", "To address: ${toAddress}")
+                            Log.d("SendScreen", "To address: ${recipientUiState}")
                             Log.d("SendScreen", "Amount: ${amount}")
                             
                             // Use the same validation logic as the removed button
@@ -873,7 +532,7 @@ fun SendScreen2(
                                         showDgenToast(context,"Insufficient balance")
                                         showFailedMatrix()
                                     }
-                                    toAddress.isEmpty() -> {
+                                    recipientUiState.isEmpty() -> {
                                         Log.w("SendScreen", "Error: Enter target address")
                                         showDgenToast(context,"Enter target address")
                                         showFailedMatrix()

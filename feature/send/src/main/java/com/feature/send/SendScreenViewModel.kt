@@ -5,8 +5,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
@@ -26,37 +24,33 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
+import com.core.data.repository.GroupedTokenRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenExchangeRepository
-import com.core.domain.GetSwapTokens
-import com.core.domain.GetAllTokensUsecase
-import com.core.model.Price
-import com.core.model.TokenData
 import com.core.model.UserData
 import com.core.terminalsdk.TerminalSDK
-import com.core.ui.showCustomToast
-import com.core.ui.util.dgenOcean
-import com.core.ui.util.dgenTurqoise
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import java.math.BigDecimal
 import java.text.DecimalFormat
-import kotlin.collections.filter
-import kotlin.collections.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.feature.send.ui.TransactionStatus
 import com.core.data.util.chainIdToBundler
+import com.core.data.util.chainToApiKey
+import com.core.model.TokenAssetWithPrice
 import com.core.terminalsdk.ReflectiveLedPattern
-import com.core.ui.showDgenToast
-import com.core.ui.util.PitagonsSans
-import com.core.ui.util.extraLargeExitDuration
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.HttpEthereumRPC
+import kotlin.collections.first
 
 enum class TransactionStatus {
     PENDING,
@@ -69,104 +63,80 @@ sealed interface TxCompleteUiState {
     object Complete: TxCompleteUiState
 }
 
+
+private const val GROUP_NAV_ARGUMENT = "groupId"
+private const val ADDRESS_NAV_ARGUMENT = "address"
+
 @HiltViewModel
 class SendViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
-    private val getAllTokensUsecase: GetAllTokensUsecase,
     private val tokenExchangeRepository: TokenExchangeRepository,
+    private val groupedTokenRepository: GroupedTokenRepository,
     private val sendRepository: SendRepository,
-    private val getSwapTokens: GetSwapTokens,
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi,
     private val terminalSDK: TerminalSDK?,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val context: Context
-): ViewModel()
-{
+): ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            val assetState = tokenAssetState.first { it !is AssetsUiState.Loading }
+            if (assetState is AssetsUiState.Success) {
+                val assets = assetState.assets
+
+                when {
+                    assets.size == 1 -> {
+                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(assets.first())
+                    }
+                    assets.size > 1 -> {
+                        val sortedByChainId = assets.minByOrNull { it.chainId }!!
+                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(sortedByChainId)
+                    }
+                    else -> _selectedAssetUiState.value = SelectedTokenUiState.Unselected
+                }
+            }
+        }
+    }
+
+    val groupId: String = savedStateHandle[GROUP_NAV_ARGUMENT] ?: ""
+    val address: String = savedStateHandle[ADDRESS_NAV_ARGUMENT] ?: ""
 
 
-    val currentChain: Flow<String> = userDataRepository.userData.map { it.walletNetwork }
+    private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
+    val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
 
-    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
-        WalletDataUiState.Success(it)
-    }.stateIn(
-        scope = viewModelScope,
-        initialValue = WalletDataUiState.Loading,
-        started = SharingStarted.WhileSubscribed(5_000)
-    )
-
-
-    val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
-
-    private val _toAddress = MutableStateFlow(
-        savedStateHandle.get<String>(ADDRESS_QUERY) ?: ""
-    )
-    val toAddress: StateFlow<String> = _toAddress
-
-    private val _amount = MutableStateFlow(
-        savedStateHandle.get<String>(AMOUNT) ?: ""
-    )
+    private val _amount = MutableStateFlow(savedStateHandle.get<String>(AMOUNT) ?: "")
     val amount: StateFlow<String> = _amount
 
-    private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
-    val selectedAssetUiState = _selectedAssetUiState.asStateFlow()
-
-    /*val tokenAssetState: StateFlow<AssetUiState> =
-        networkBalanceRepository.getNetworksBalance()
-            .map { balances ->
-                val netWorkAssets = balances.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
-                    TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name.lowercase(),
-                        name = name.lowercase(),
-                        balance = it.tokenBalance.toDouble(),
-                        decimals = 18
-                    )
-                }
-                .sortedByDescending { it.balance }
-
-                AssetUiState.Success(netWorkAssets)
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = AssetUiState.Loading
-            )*/
-    val tokenAssetState: StateFlow<AssetsUiState> = getAllTokensUsecase()
-        .map { tokens ->
-            val filteredTokens = tokens
-                //.filter { it.balance > 0 }
-                .filter { token -> // Filter out tokens with URLs in their names or symbols
-                    val name = token.name.lowercase()
-                    val symbol = token.symbol.lowercase()
-
-                    val urlPatterns = listOf(
-                        "http://", "https://", "www.",
-                        ".com", ".io", ".org", ".net", ".xyz",
-                        "/", "t.me", "telegram", "twitter", "discord", "t.ly"
-                    )
-
-                    val containsNoUrlPatterns = urlPatterns.none { pattern ->
-                        name.contains(pattern) || symbol.contains(pattern)
-                    }
-                    containsNoUrlPatterns
-                }
-
-            if (filteredTokens.isEmpty()) {
-                AssetsUiState.Empty
-            } else {
-                AssetsUiState.Success(filteredTokens)
-            }
-
-        }
+    val tokenAssetState: StateFlow<AssetsUiState> =
+        groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId).map {
+            if (it.isEmpty()) AssetsUiState.Empty
+            else AssetsUiState.Success(it)
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AssetsUiState.Loading
         )
+
+    private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
+    val selectedAssetUiState: StateFlow<SelectedTokenUiState> = _selectedAssetUiState.asStateFlow()
+
+
+    fun changeSelectedAsset(tokenAsset: TokenAssetWithPrice) {
+        val current = _selectedAssetUiState.value
+        if (current is SelectedTokenUiState.Selected &&
+            current.tokenAsset.address == tokenAsset.address &&
+            current.tokenAsset.chainId == tokenAsset.chainId
+        ) {
+            _selectedAssetUiState.value = SelectedTokenUiState.Unselected
+        } else {
+            _selectedAssetUiState.value = SelectedTokenUiState.Selected(tokenAsset)
+        }
+    }
 
 
 
@@ -187,40 +157,31 @@ class SendViewModel @Inject constructor(
     private val _transactionStatus = MutableStateFlow<TransactionStatus?>(null)
     val transactionStatus: StateFlow<TransactionStatus?> = _transactionStatus.asStateFlow()
 
-    companion object {
-        private const val SELECTED_TOKEN_ID = "selected_token"
-    }
-
-    // Use a StateFlow, MutableStateFlow, LiveData, or mutableStateOf as desired
-    private val _selectedTokenIdFlow = MutableStateFlow(
-        // Retrieve the initial value from the SavedStateHandle (or default)
-        savedStateHandle.get<String>(SELECTED_TOKEN_ID) ?: ""
-    )
-    val selectedTokenIdFlow = _selectedTokenIdFlow.asStateFlow()
-
-    /**
-     * Update the user input in both the in-memory Flow and the SavedStateHandle
-     */
-    fun updateSelectedTokenId(newValue: String) {
-        _selectedTokenIdFlow.value = newValue
-        savedStateHandle[SELECTED_TOKEN_ID] = newValue
-    }
-
 
     fun send(callback: () -> Unit) {
         viewModelScope.launch {
-            val selectedAsset = _selectedAssetUiState.value
+            val selectedAsset = selectedAssetUiState.value
             Log.d("SendViewModel", "=== SEND TRANSACTION STARTED ===")
             Log.d("SendViewModel", "Selected asset: $selectedAsset")
             Log.d("SendViewModel", "Amount: ${amount.value}")
-            Log.d("SendViewModel", "To address: ${toAddress.value}")
+            Log.d("SendViewModel", "To address: ${recipientUiState.value}")
             
             _transactionStatus.value = TransactionStatus.PENDING
             Log.d("SendViewModel", "Status set to PENDING")
 
             if(selectedAsset is SelectedTokenUiState.Selected) {
                 try {
-                    val asset = selectedAsset.tokenAsset
+                    val asset = TokenAsset(
+                        address = selectedAsset.tokenAsset.address,
+                        chainId = selectedAsset.tokenAsset.chainId,
+                        symbol = selectedAsset.tokenAsset.symbol,
+                        name = selectedAsset.tokenAsset.name,
+                        balance = selectedAsset.tokenAsset.balance,
+                        decimals = selectedAsset.tokenAsset.decimals,
+                        logoUrl = "",
+                        swappable = false
+                    )
+                    
                     val amountDouble = amount.value.toDouble()
                     Log.d("SendViewModel", "Processing transaction for ${asset.symbol} on chain ${asset.chainId}")
                     
@@ -233,14 +194,14 @@ class SendViewModel @Inject constructor(
                             selectedAsset.tokenAsset.chainId,
                             asset,
                             amountDouble,
-                            toAddress.value
+                            recipientUiState.value.recipientAddress
                         )
                         Log.d("SendViewModel", "ERC20 transfer method completed")
                     } else {
                         Log.d("SendViewModel", "Sending native ETH")
                         sendRepository.transferEth(
                             chainId = selectedAsset.tokenAsset.chainId,
-                            toAddress = toAddress.value,
+                            toAddress = recipientUiState.value.recipientAddress,
                             data = "",
                             value = amount.value
                         )
@@ -307,16 +268,42 @@ class SendViewModel @Inject constructor(
 
 
     fun updateToAddress(address: String) {
-        _toAddress.value = address
+        _recipientUiState.update { it.copy(address) }
     }
 
     fun updateAmount(amount: String) {
         _amount.value = amount
     }
 
-    fun updateSelectedAsset(tokenAsset: TokenAsset) {
-        _selectedAssetUiState.update {
-            SelectedTokenUiState.Selected(tokenAsset)
+    fun resolveEns() {
+        viewModelScope.launch {
+            val address = recipientUiState.value.recipientAddress.lowercase()
+
+            if (address.endsWith(".eth") && ENSName(address).isPotentialENSDomain()) {
+                _recipientUiState.update { it.copy(isResolving = true, ensError = "") }
+
+                try {
+                    val resolvedAddress = withContext(Dispatchers.IO) {
+                        val ens = ENS(
+                            HttpEthereumRPC(
+                                "https://eth-mainnet.g.alchemy.com/v2/${chainToApiKey("eth-mainnet")}"
+                            )
+                        )
+                        ens.getAddress(ENSName(address))
+                    }
+
+                    if (resolvedAddress != null) {
+                        _recipientUiState.update { it.copy(recipientAddress = resolvedAddress.hex) }
+                    } else {
+                        _recipientUiState.update { it.copy(ensError = "ENS name not found") }
+                    }
+                } catch (e: Exception) {
+                    Log.e("SendViewModel", "Failed to resolve ENS", e)
+                    _recipientUiState.update { it.copy(ensError = "Failed to resolve ENS") }
+                } finally {
+                    _recipientUiState.update { it.copy(isResolving = false) }
+                }
+            }
         }
     }
 
@@ -334,49 +321,7 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    fun loadSymbol(symbol: List<String>) {
-        viewModelScope.launch {
-            try {
-                tokenExchangeRepository.fetchExchangeBySymbols(symbol)
-            } catch (e: Exception) {
-                // handle error
-            }
-        }
-    }
-
-    // 1) Get the itemId directly as a value:
-//    val tokenId: String = savedStateHandle["tokenId"] ?: ""
-
-    // OR 2) Expose it as a StateFlow:
-     val tokenIdFlow: StateFlow<String> =
-         savedStateHandle.getStateFlow("tokenId", "")
-
-    init {
-        // Initialize selected asset if tokenId is available
-        viewModelScope.launch {
-            /*
-            tokenIdFlow.collect { tokenId ->
-                Log.d("SendViewModel", "TokenId from navigation: $tokenId")
-                if (tokenId.isNotEmpty()) {
-                    tokenAssetState.collect { assetState ->
-                        if (assetState is AssetUiState.Success) {
-                            Log.d("SendViewModel", "Assets available: ${assetState.assets.size}")
-                            val token = assetState.assets.find { it.address == tokenId }
-                            Log.d("SendViewModel", "Found token: ${token?.symbol}")
-                            token?.let {
-                                updateSelectedAsset(it)
-                                Log.d("SendViewModel", "Updated selected asset to: ${it.symbol}")
-                            }
-                        }
-                    }
-                }
-            }
-             */
-
-
-        }
-    }
-
+    
     /**
      * Function to trigger QR scanner from secondary screen
      */
@@ -729,7 +674,7 @@ class SendViewModel @Inject constructor(
 
 sealed interface SelectedTokenUiState {
     object Unselected: SelectedTokenUiState
-    data class Selected(val tokenAsset: TokenAsset): SelectedTokenUiState
+    data class Selected(val tokenAsset: TokenAssetWithPrice): SelectedTokenUiState
 }
 
 sealed interface AssetsUiState {
@@ -737,7 +682,7 @@ sealed interface AssetsUiState {
     object Error : AssetsUiState
     object Empty : AssetsUiState
     data class Success(
-        val assets: List<TokenAsset>
+        val assets: List<TokenAssetWithPrice>
     ) : AssetsUiState
 }
 
@@ -745,6 +690,18 @@ sealed interface WalletDataUiState {
     object Loading: WalletDataUiState
     data class Success(val userData: UserData): WalletDataUiState
 }
+
+data class RecipientUiState(
+    val recipientAddress: String = "",
+    val isResolving: Boolean = false,
+    val ensError: String = "",
+)
+
+data class AmountUiState(
+    val amount: String = "",
+    val fiatAmount: String = ""
+)
+
 
 private const val SEARCH_QUERY = "searchQuery"
 private const val ADDRESS_QUERY = "addressQuery"

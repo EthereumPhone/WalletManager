@@ -55,8 +55,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TokenCardCarousel(
     assets: List<TokenGroupAssetOverview>,
-    navigateToSend: (address: String, tokenId: String) -> Unit,
-    setSelectedToken: (String) -> Unit,
+    navigateToSend: (groupId: String) -> Unit,
     primaryColor: Color,
     secondaryColor: Color,
     modifier: Modifier = Modifier,
@@ -212,11 +211,7 @@ fun TokenCardCarousel(
                             tokenName = item.symbol,
                             fiatAmount = item.totalFiatBalance ?: 0.0,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
-                            navigateToSend = {
-
-                                //TODO FIX NAVIGATION
-                                //navigateToSend(item.address, item.address)
-                            },
+                            navigateToSend = { navigateToSend(item.groupId) },
                             enableSend = item.totalBalance > 0,
                             primaryColor = primaryColor,
                         )

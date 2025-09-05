@@ -34,7 +34,7 @@ data class TokenGroupAsset(
 /**
  * External model with price information for UI layer consumption.
  */
-data class TokenGroupAssetWithPrice(
+data class TokenGroupAssetWithExchange(
     val groupId: String,
     val symbol: String,
     val name: String,

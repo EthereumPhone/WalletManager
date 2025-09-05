@@ -27,10 +27,9 @@ const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
 
 fun NavController.navigateToSend(
     address: String = "",
-    tokenId: String = "",
+    groupId: String = "",
 ) {
-
-    val route = "send_route?address=$address&tokenId=$tokenId"
+    val route = "send_route?address=$address&groupId=$groupId"
 
     this.navigate(route) {
         popUpTo("home_route") {
@@ -59,7 +58,7 @@ fun NavGraphBuilder.sendScreen(
                 type = NavType.StringType
                 defaultValue = ""
             },
-            navArgument("tokenId") {
+            navArgument("groupId") {
                 type = NavType.StringType
                 defaultValue = ""
             }
@@ -92,7 +91,7 @@ fun NavGraphBuilder.sendScreen(
         }
     ) { backStackEntry ->
         val address = backStackEntry.arguments?.getString("address")
-        val tokenId = backStackEntry.arguments?.getString("tokenId")
+        val groupId = backStackEntry.arguments?.getString("groupId")
 
         SendRoute2(
             onBackClick = {
@@ -109,7 +108,7 @@ fun NavGraphBuilder.sendScreen(
                 reflectiveLedPattern?.clear()
             },
             initialAddress = address,
-            tokenId = tokenId,
+            groupId = groupId,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = this@composable,
         )

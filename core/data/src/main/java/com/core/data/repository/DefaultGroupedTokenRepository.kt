@@ -1,9 +1,11 @@
 package com.core.data.repository
 
 import com.core.database.dao.TokenGroupDao
+import com.core.database.model.erc20.toExternalModelWithPrice
+import com.core.model.TokenAssetWithPrice
 import com.core.model.TokenGroupAsset
 import com.core.model.TokenGroupAssetOverview
-import com.core.model.TokenGroupAssetWithPrice
+import com.core.model.TokenGroupAssetWithExchange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -42,16 +44,17 @@ class DefaultGroupedTokenRepository @Inject constructor(
                         exchangeCurrency = "usd",
                     )
                 }
-        }
+            }
 
 
     override fun observeGroupedTokens(): Flow<List<TokenGroupAsset>> {
         TODO("Not yet implemented")
     }
 
-    override fun observeGroupedTokensWithExchange(): Flow<List<TokenGroupAssetWithPrice>> {
-        TODO("Not yet implemented")
-    }
+    override fun observeAllTokensWithPriceInGroup(groupId: String): Flow<List<TokenAssetWithPrice>> =
+        tokenGroupDao.observeAllTokensInGroupWithLatestExchange(groupId).map { tokens ->
+            tokens.map { it.toExternalModelWithPrice() }
+        }
 }
 
 

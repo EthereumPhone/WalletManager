@@ -434,16 +434,6 @@ sealed interface GroupedAssetsUiState {
         val assets: List<TokenGroupAssetOverview>
     ) : GroupedAssetsUiState
 }
-
-sealed interface AssetsUiState {
-    object Loading : AssetsUiState
-    object Error : AssetsUiState
-    object Empty : AssetsUiState
-    data class Success(
-        val assets: List<TokenAssetWithPrice>
-    ) : AssetsUiState
-}
-
 sealed interface WalletDataUiState {
     object Loading : WalletDataUiState
     data class Success(val userData: UserData) : WalletDataUiState

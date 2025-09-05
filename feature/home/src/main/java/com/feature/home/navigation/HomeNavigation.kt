@@ -24,7 +24,7 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.homeGraph(
     sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
-    navigateToSend: (address: String, tokenId: String ) -> Unit,
+    navigateToSend: (groupId: String) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,

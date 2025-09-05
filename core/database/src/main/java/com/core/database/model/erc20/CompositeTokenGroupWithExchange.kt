@@ -1,9 +1,7 @@
 package com.core.database.model.erc20
 
 import androidx.room.Embedded
-import androidx.room.Relation
-import com.core.model.TokenAssetWithPrice
-import com.core.model.TokenGroupAssetWithPrice
+import com.core.model.TokenGroupAssetWithExchange
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -133,7 +131,7 @@ data class CompositeTokenGroupWithExchange(
 /**
  * Extension function to convert to an external model with price information.
  */
-fun CompositeTokenGroupWithExchange.toExternalModelWithPrice() = TokenGroupAssetWithPrice(
+fun CompositeTokenGroupWithExchange.toExternalModelWithPrice() = TokenGroupAssetWithExchange(
     groupId = tokenGroup.groupId,
     symbol = tokenGroup.symbol,
     name = tokenGroup.name,

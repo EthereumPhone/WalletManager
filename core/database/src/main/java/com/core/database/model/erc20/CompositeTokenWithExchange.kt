@@ -17,7 +17,6 @@ data class CompositeTokenWithExchange(
     @Embedded(prefix = "exchange_")
     val latestExchangeEntity: TokenExchangeEntity? = null
 ) {
-    // Delegate properties for easier access
     val tokenMetadataEntity: TokenMetadataEntity
         get() = compositeToken.tokenMetadataEntity
     

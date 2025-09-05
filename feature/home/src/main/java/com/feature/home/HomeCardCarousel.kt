@@ -99,7 +99,7 @@ import kotlin.reflect.KSuspendFunction1
 internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
-    navigateToSend: (address: String, tokenId: String ) -> Unit,
+    navigateToSend: (groupId: String) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
@@ -191,7 +191,7 @@ fun HomeScreen2(
     userData: WalletDataUiState,
     groupedAssetsUiState: GroupedAssetsUiState,
     navigateToSwap: () -> Unit,
-    navigateToSend: (address: String, tokenId: String ) -> Unit,
+    navigateToSend: (groupId: String) -> Unit,
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
@@ -329,7 +329,6 @@ fun HomeScreen2(
                                         modifier = Modifier.padding(bottom = 24.dp),
                                         assets = groupedAssetsState.assets,
                                         navigateToSend = navigateToSend,
-                                        setSelectedToken = setSelectedTokenId,
                                         primaryColor = primaryColor,
                                         secondaryColor = secondaryColor
                                     )
