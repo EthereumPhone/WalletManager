@@ -89,11 +89,27 @@ class SendViewModel @Inject constructor(
 
                 when {
                     assets.size == 1 -> {
-                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(assets.first())
+                        val asset = assets.first()
+
+                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(asset)
+                        _amountUiState.update { it.copy(
+                            maxAmount = asset.balance,
+                            formattedMaxAmount = asset.balance.toString(),
+                            maxFiatAmount = asset.fiatAmount,
+                            formattedMaxFiatAmount = asset.fiatAmount.toString()
+                        ) }
                     }
                     assets.size > 1 -> {
                         val sortedByChainId = assets.minByOrNull { it.chainId }!!
                         _selectedAssetUiState.value = SelectedTokenUiState.Selected(sortedByChainId)
+
+                        _amountUiState.update { it.copy(
+                            maxAmount = sortedByChainId.balance,
+                            formattedMaxAmount = sortedByChainId.balance.toString(),
+                            maxFiatAmount = sortedByChainId.fiatAmount,
+                            formattedMaxFiatAmount = sortedByChainId.fiatAmount.toString()
+
+                        ) }
                     }
                     else -> _selectedAssetUiState.value = SelectedTokenUiState.Unselected
                 }
@@ -108,8 +124,19 @@ class SendViewModel @Inject constructor(
     private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
     val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
 
-    private val _amount = MutableStateFlow(savedStateHandle.get<String>(AMOUNT) ?: "")
-    val amount: StateFlow<String> = _amount
+
+
+    private val _amountUiState = MutableStateFlow<AmountUiState>(AmountUiState(
+        0.0,
+        "",
+        currentAmount = "",
+        maxFiatAmount = 0.0,
+        formattedMaxFiatAmount = "",
+        currentFiatAmount = "",
+        useMaxAmount = false
+    ))
+    val amountUiState = _amountUiState
+
 
     val tokenAssetState: StateFlow<AssetsUiState> =
         groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId).map {
@@ -163,7 +190,7 @@ class SendViewModel @Inject constructor(
             val selectedAsset = selectedAssetUiState.value
             Log.d("SendViewModel", "=== SEND TRANSACTION STARTED ===")
             Log.d("SendViewModel", "Selected asset: $selectedAsset")
-            Log.d("SendViewModel", "Amount: ${amount.value}")
+            Log.d("SendViewModel", "Amount: ${amountUiState.value}")
             Log.d("SendViewModel", "To address: ${recipientUiState.value}")
             
             _transactionStatus.value = TransactionStatus.PENDING
@@ -182,7 +209,7 @@ class SendViewModel @Inject constructor(
                         swappable = false
                     )
                     
-                    val amountDouble = amount.value.toDouble()
+                    val amountDouble = amountUiState.value.currentAmount.toDouble()
                     Log.d("SendViewModel", "Processing transaction for ${asset.symbol} on chain ${asset.chainId}")
                     
                     // Clear previous transaction hash
@@ -203,7 +230,7 @@ class SendViewModel @Inject constructor(
                             chainId = selectedAsset.tokenAsset.chainId,
                             toAddress = recipientUiState.value.recipientAddress,
                             data = "",
-                            value = amount.value
+                            value = amountUiState.value.currentAmount
                         )
                         Log.d("SendViewModel", "ETH transfer method completed")
                     }
@@ -272,7 +299,7 @@ class SendViewModel @Inject constructor(
     }
 
     fun updateAmount(amount: String) {
-        _amount.value = amount
+
     }
 
     fun resolveEns() {
@@ -307,11 +334,7 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    fun updateQuery(query: String) {
-        savedStateHandle[SEARCH_QUERY] = query
-    }
-
-    fun setMaxAmount(maxamount: BigDecimal, chainId: Int){
+    fun setMaxAmount(maxamount: BigDecimal, chainId: Int) {
         viewModelScope.launch {
 
             val decimalFormat = DecimalFormat("#.#####")
@@ -698,8 +721,13 @@ data class RecipientUiState(
 )
 
 data class AmountUiState(
-    val amount: String = "",
-    val fiatAmount: String = ""
+    val maxAmount: Double,
+    val formattedMaxAmount: String,
+    val currentAmount: String,
+    val maxFiatAmount: Double,
+    val formattedMaxFiatAmount: String,
+    val currentFiatAmount: String,
+    val useMaxAmount: Boolean = false
 )
 
 

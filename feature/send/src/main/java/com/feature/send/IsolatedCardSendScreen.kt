@@ -155,7 +155,7 @@ fun SendRoute2(
     animatedContentScope: AnimatedContentScope,
     viewModel: SendViewModel = hiltViewModel()
 ) {
-    val amount by viewModel.amount.collectAsStateWithLifecycle()
+    val amountUiState by viewModel.amountUiState.collectAsStateWithLifecycle()
     val toAddress by viewModel.recipientUiState.collectAsStateWithLifecycle()
     val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
     val selectedToken by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
@@ -212,16 +212,15 @@ fun SendRoute2(
     }
 
     SendScreen2(
-        initialAddress = initialAddress,
         modifier = Modifier,
         onBackClick = {
             isNavigatingBack = true
             onBackClick()
         },
         recipientUiState = toAddress,
-        amount = amount,
-        assets = assetsUiState,
-        selectedToken = selectedToken,
+        amountUiState = amountUiState,
+        assetsUiState = assetsUiState,
+        selectedTokenUiState = selectedToken,
         onAmountChange = viewModel::updateAmount,
         onToAddressChanged = viewModel::updateToAddress,
         sendTransaction = viewModel::send,
@@ -244,15 +243,14 @@ fun SendRoute2(
 fun SendScreen2(
     modifier: Modifier = Modifier,
     recipientUiState: RecipientUiState,
-    amount: String,
-    assets: AssetsUiState,
+    amountUiState: AmountUiState,
+    assetsUiState: AssetsUiState,
+    selectedTokenUiState: SelectedTokenUiState,
     onAmountChange: (String) -> Unit,
     onToAddressChanged: (String) -> Unit,
     sendTransaction: (() -> Unit) -> Unit,
     updateSelectedAsset: (TokenAssetWithPrice) -> Unit,
-    selectedToken: SelectedTokenUiState,
     onBackClick: () -> Unit,
-    initialAddress: String?,
     qrScannerTriggered: Boolean,
     resetQrScannerTrigger: () -> Unit,
     sendTransactionTriggered: Boolean,
@@ -263,6 +261,12 @@ fun SendScreen2(
     clearTransactionStatus: () -> Unit,
     setMaxAmount: (BigDecimal, Int) -> Unit,
 ) {
+
+    /*
+
+     */
+
+
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val view = LocalView.current
@@ -307,25 +311,6 @@ fun SendScreen2(
     }
 
     var useDollarAmount by remember { mutableStateOf(false) }
-    
-    // TextFieldValue for amount, for keeping Cursor-Position
-    var amountFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-    
-    // Synchronize amountFieldValue with amount from ViewModel
-    LaunchedEffect(amount) {
-        // only update if text is different (avoids cursor reset)
-        if (amount != amountFieldValue.text) {
-            amountFieldValue = TextFieldValue(amount)
-        }
-    }
-    
-    // TextFieldValue for toAddress, for keeping Cursor-Position
-    var toAddressFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-
-    
-    // Variables for error handling
-    var isAmountError by remember { mutableStateOf(false) }
-    var convertedTokenAmount by remember { mutableStateOf("") }
 
 
     //Loader for GIF
@@ -432,7 +417,7 @@ fun SendScreen2(
         )
 
         AnimatedContent(
-            assets,
+            assetsUiState,
             transitionSpec = {
                 fadeIn(
                     animationSpec = tween(extraLargeEnterDuration)
@@ -518,12 +503,12 @@ fun SendScreen2(
                             Log.d("SendScreen", "Validating transaction parameters...")
                             Log.d("SendScreen", "Amount error: $isAmountError, Max amount: $isMaxAmount")
                             Log.d("SendScreen", "Valid address: $isValidAddress")
-                            Log.d("SendScreen", "Selected token: $selectedToken")
+                            Log.d("SendScreen", "Selected token: $selectedTokenUiState")
                             Log.d("SendScreen", "To address: ${recipientUiState}")
-                            Log.d("SendScreen", "Amount: ${amount}")
+                            Log.d("SendScreen", "Amount: ${amountUiState}")
                             
                             // Use the same validation logic as the removed button
-                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedTokenUiState == SelectedTokenUiState.Unselected) {
                                 Log.w("SendScreen", "🔴 Validation failed, showing error message")
                                 // Show specific error messages
                                 when {
@@ -551,7 +536,7 @@ fun SendScreen2(
                                         showDgenToast(context,"Invalid address format")
                                         showFailedMatrix()
                                     }
-                                    selectedToken == SelectedTokenUiState.Unselected -> {
+                                    selectedTokenUiState == SelectedTokenUiState.Unselected -> {
                                         Log.w("SendScreen", "Error: Select a chain")
                                         showDgenToast(context,"Select a chain")
                                         showFailedMatrix()
@@ -561,7 +546,7 @@ fun SendScreen2(
                                 Log.d("SendScreen", "✅ Validation passed, proceeding with transaction")
                                 // Get current amounts and token symbol
                                 val currentDollarAmount = if (useDollarAmount) dollarAmount.text else ""
-                                val currentTokenAmount = if (!useDollarAmount) amount else ""
+                                val currentTokenAmount = if (!useDollarAmount) amountUiState else ""
                                 
                                 if (currentDollarAmount.isEmpty() && currentTokenAmount.isEmpty()) {
                                     Log.w("SendScreen", "Error: No amount specified")
@@ -634,9 +619,9 @@ fun SendScreen2(
                                         )
 
                                         // Show token logo based on selectedToken
-                                        when (selectedToken) {
+                                        when (selectedTokenUiState) {
                                             is SelectedTokenUiState.Selected -> {
-                                                val token = selectedToken.tokenAsset
+                                                val token = selectedTokenUiState.tokenAsset
 
                                                 // Token Logo with fallback support
                                                 val fallbackLogo = TokenLogoFallback.getFallbackLogo(token.symbol)
@@ -779,9 +764,9 @@ fun SendScreen2(
                                         ){
                                             TextToggle(
                                                 Modifier.offset(x = 2.dp, y=2.dp),
-                                                when (selectedToken) {
+                                                when (selectedTokenUiState) {
                                                     is SelectedTokenUiState.Selected -> {
-                                                        when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                        when (selectedTokenUiState.tokenAsset.symbol.uppercase()) {
                                                             "MAINNET" -> "ETH"
                                                             "OPTIMISM" -> "ETH"
                                                             "ARBITRUM" -> "ETH"
@@ -789,7 +774,7 @@ fun SendScreen2(
                                                             "SEPOLIA" -> "ETH"
                                                             "BASE" -> "ETH"
                                                             "ZORA" -> "ETH"
-                                                            else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                            else -> selectedTokenUiState.tokenAsset.symbol.uppercase()
                                                         }
                                                     }
                                                     else -> "ETH"
@@ -810,10 +795,10 @@ fun SendScreen2(
                                                 primaryColor = primaryColor
                                             )
 
-                                            val valueString = remember(availableBalance, useDollarAmount, selectedToken) {
+                                            val valueString = remember(availableBalance, useDollarAmount, selectedTokenUiState) {
                                                 if (useDollarAmount) {
                                                     if (availableBalance > 0) {
-                                                        val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedToken) {
+                                                        val tokenSymbolForPriceLookup = when (val currentSelectedToken = selectedTokenUiState) {
                                                             is SelectedTokenUiState.Selected -> {
                                                                 val assetSymbolUpper = currentSelectedToken.tokenAsset.symbol.uppercase()
                                                                 when (assetSymbolUpper) {
@@ -1009,16 +994,16 @@ fun SendScreen2(
                                         }
 
 
-                                        LaunchedEffect(dollarAmount.text, useDollarAmount, selectedToken) {
+                                        LaunchedEffect(dollarAmount.text, useDollarAmount, selectedTokenUiState) {
                                             if (useDollarAmount && dollarAmount.text.isNotEmpty()) {
                                                 delay(500)
 
-                                                val tokenSymbol = when (selectedToken) {
+                                                val tokenSymbol = when (selectedTokenUiState) {
                                                     is SelectedTokenUiState.Selected -> {
-                                                        when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                        when (selectedTokenUiState.tokenAsset.symbol.uppercase()) {
                                                             "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
                                                             "POLYGON" -> "MATIC"
-                                                            else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                            else -> selectedTokenUiState.tokenAsset.symbol.uppercase()
                                                         }
                                                     }
                                                     else -> "ETH"
@@ -1046,19 +1031,19 @@ fun SendScreen2(
                                         }
 
                                         // Add LaunchedEffect for MAX functionality
-                                        LaunchedEffect(setMax, availableBalance, selectedToken, useDollarAmount) {
+                                        LaunchedEffect(setMax, availableBalance, selectedTokenUiState, useDollarAmount) {
                                             if (setMax && availableBalance > 0) {
                                                 isMaxAmount = true  // Set flag when MAX is used
                                                 val formattedBalance = String.format("%.6f", availableBalance).trimEnd('0').trimEnd('.')
 
                                                 if (useDollarAmount) {
                                                     // Calculate dollar value from token balance
-                                                    val tokenSymbol = when (selectedToken) {
+                                                    val tokenSymbol = when (selectedTokenUiState) {
                                                         is SelectedTokenUiState.Selected -> {
-                                                            when (selectedToken.tokenAsset.symbol.uppercase()) {
+                                                            when (selectedTokenUiState.tokenAsset.symbol.uppercase()) {
                                                                 "MAINNET", "OPTIMISM", "ARBITRUM", "SEPOLIA", "BASE", "ZORA" -> "ETH"
                                                                 "POLYGON" -> "MATIC"
-                                                                else -> selectedToken.tokenAsset.symbol.uppercase()
+                                                                else -> selectedTokenUiState.tokenAsset.symbol.uppercase()
                                                             }
                                                         }
                                                         else -> "ETH"
@@ -1078,9 +1063,9 @@ fun SendScreen2(
                                                     }
                                                 } else {
                                                     // For native tokens, use setMaxAmount to calculate gas-adjusted amount
-                                                    val isNativeToken = when (selectedToken) {
+                                                    val isNativeToken = when (selectedTokenUiState) {
                                                         is SelectedTokenUiState.Selected -> {
-                                                            selectedToken.tokenAsset.address == selectedToken.tokenAsset.chainId.toString()
+                                                            selectedTokenUiState.tokenAsset.address == selectedTokenUiState.tokenAsset.chainId.toString()
                                                         }
                                                         else -> true // Default to native if nothing selected
                                                     }
@@ -1109,11 +1094,11 @@ fun SendScreen2(
                                     // REMOVED - Already defined above before availableBalance
                                     
                                     // Set the initial chain  based on the selected token
-                                    LaunchedEffect(selectedToken, availableChains) {
-                                        when (selectedToken) {
+                                    LaunchedEffect(selectedTokenUiState, availableChains) {
+                                        when (selectedTokenUiState) {
                                             is SelectedTokenUiState.Selected -> {
                                                 // If a token is already selected, find its chain index
-                                                val tokenChainName = when (selectedToken.tokenAsset.chainId) {
+                                                val tokenChainName = when (selectedTokenUiState.tokenAsset.chainId) {
                                                     1 -> "main"
                                                     11155111 -> "sepolia"
                                                     10 -> "op"
@@ -1158,8 +1143,8 @@ fun SendScreen2(
                                     }
 
                                     // Ensure a token is selected when a chain is already chosen (initial load)
-                                    LaunchedEffect(selectedChainIndex, selectedToken) {
-                                        if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
+                                    LaunchedEffect(selectedChainIndex, selectedTokenUiState) {
+                                        if (!tokenPreselected && selectedTokenUiState == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
                                             val selectedChainName = availableChains.getOrNull(selectedChainIndex)
                                             val selectedChainId = when (selectedChainName) {
                                                 "main" -> 1
@@ -1214,7 +1199,7 @@ fun SendScreen2(
                                                     Log.d("SendScreen2", "Selected chain: $selectedChainName -> chainId: $selectedChainId")
                                                     
                                                     selectedChainId?.let { chainId ->
-                                                        when (selectedToken) {
+                                                        when (selectedTokenUiState) {
                                                             // If no token is selected, select the native token
                                                             is SelectedTokenUiState.Unselected -> {
                                                                 if (!tokenPreselected) {
@@ -1229,7 +1214,7 @@ fun SendScreen2(
                                                             }
                                                             // If a token is selected, check if it's native or ERC20
                                                             is SelectedTokenUiState.Selected -> {
-                                                                val currentToken = selectedToken.tokenAsset
+                                                                val currentToken = selectedTokenUiState.tokenAsset
                                                                 // If current token is native, switch to the native token of the new chain
                                                                 if (currentToken.address == currentToken.chainId.toString()) {
                                                                     val nativeToken = assetsUiState.assets.firstOrNull { asset ->
@@ -1344,7 +1329,7 @@ fun SendScreen2(
                                     isAnyFieldFocused= remember { mutableStateOf(false) },
                                     onEditDone = {},
                                     view = view
-                                ){
+                                ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
