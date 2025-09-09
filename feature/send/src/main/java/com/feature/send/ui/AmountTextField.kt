@@ -48,7 +48,7 @@ import com.feature.send.SelectedAssetUiState
 fun AmountTextField(
     selectedAssetUiState: SelectedAssetUiState,
     amountUiState: AmountUiState,
-    onAmountChange: (String) -> Unit,
+    onAmountChange: (String, Boolean) -> Unit,
     onMaxClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
@@ -60,6 +60,22 @@ fun AmountTextField(
         targetValue = if (amountUiState.useMaxAmount) 1f else pulseOpacity,
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
+
+
+
+    val amount = if (toggleFiat) {
+        amountUiState.currentFiatAmount
+    } else {
+        amountUiState.currentAmount
+    }
+
+    // trick to keep cursor in correct position
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(amount)) }
+    LaunchedEffect(amount) {
+        if (textFieldValue.text != amount) {
+            textFieldValue = textFieldValue.copy(text = amount)
+        }
+    }
 
 
     Row(
@@ -80,6 +96,12 @@ fun AmountTextField(
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+
+
+
+
+
                 // currency toggle
                 TextToggle(
                     Modifier.offset(x = 2.dp, y=2.dp),
@@ -88,7 +110,11 @@ fun AmountTextField(
                         SelectedAssetUiState.Unselected -> "ETH"
                     },
                     "$",
-                    onToggle = { toggleFiat = !toggleFiat },
+                    onToggle = {
+                        toggleFiat = !toggleFiat
+
+                        onAmountChange("", toggleFiat)
+                               },
                     value = toggleFiat,
                     primaryColor = primaryColor
                 )
@@ -120,19 +146,7 @@ fun AmountTextField(
             }
 
 
-            val amount = if (toggleFiat) {
-                amountUiState.currentFiatAmount
-            } else {
-                amountUiState.currentAmount
-            }
 
-            // trick to keep cursor in correct position
-            var textFieldValue by remember { mutableStateOf(TextFieldValue(amount)) }
-            LaunchedEffect(amount) {
-                if (textFieldValue.text != amount) {
-                    textFieldValue = textFieldValue.copy(text = amount)
-                }
-            }
 
             // amount TextField
             DgenBasicTextfield(
@@ -140,7 +154,7 @@ fun AmountTextField(
                 onValueChange={ new ->
                     if (new.text.matches("^\\d*\\.?\\d*$".toRegex())) {
                         textFieldValue = new
-                        onAmountChange(new.text)
+                        onAmountChange(new.text, toggleFiat)
                     }
                 },
                 maxLines = 1,
@@ -222,7 +236,7 @@ fun AmountTextFieldPreview() {
     AmountTextField(
         selectedAssetUiState,
         amount,
-        {},
+        {} as (String, Boolean) -> Unit,
         {}
     )
 }
@@ -257,7 +271,7 @@ fun AmountTextFieldFiatPreview() {
     AmountTextField(
         selectedAssetUiState,
         amount,
-        {},
+        {} as (String, Boolean) -> Unit,
         {}
     )
 }

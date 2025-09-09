@@ -56,7 +56,8 @@ fun SendRoute(
         assetsUiState = assetsUiState,
         selectedAssetUiState = selectedAssetUiState,
         onNetworkSelected = viewModel::changeSelectedAsset,
-        onAmountChange = {},
+        onAmountChange = viewModel::updateAmount,
+        maxAmountClicked = viewModel::setMaxAmount,
         onRecipientChange = viewModel::updateAddress,
         onBackClick = onBackClick
     )
@@ -72,7 +73,8 @@ fun SendScreen(
     assetsUiState: AssetsUiState,
     selectedAssetUiState: SelectedAssetUiState,
     onNetworkSelected: (Int) -> Unit,
-    onAmountChange: (String) -> Unit,
+    onAmountChange: (String, Boolean) -> Unit,
+    maxAmountClicked: () -> Unit,
     onRecipientChange: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -121,7 +123,7 @@ fun SendScreen(
                 selectedAssetUiState= selectedAssetUiState,
                 amountUiState = amountUiState,
                 onAmountChange = onAmountChange,
-                onMaxClick = {}
+                onMaxClick = maxAmountClicked
             )
 
             NetworkSelector(
@@ -205,6 +207,7 @@ fun PreviewSendScreen() {
         assetsUiState,
         selectedAssetUiState,
         {},
+        {} as (String, Boolean) -> Unit,
         {},
         {},
         {}

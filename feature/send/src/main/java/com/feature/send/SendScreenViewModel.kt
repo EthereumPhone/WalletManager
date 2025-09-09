@@ -51,6 +51,7 @@ import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS
 import org.kethereum.ens.isPotentialENSDomain
 import org.kethereum.rpc.HttpEthereumRPC
+import kotlin.String
 import kotlin.collections.first
 
 enum class TransactionStatus {
@@ -109,8 +110,10 @@ class SendViewModel @Inject constructor(
                         _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
                         _amountUiState.update { it.copy(
                             maxAmount = asset.balance,
+                            currentAmount = "",
                             formattedMaxAmount = asset.balance.formatWithSuffix(),
                             maxFiatAmount = asset.fiatAmount,
+                            currentFiatAmount = "",
                             formattedMaxFiatAmount = asset.fiatAmount.formatWithSuffix(2)
                         ) }
                     }
@@ -120,9 +123,9 @@ class SendViewModel @Inject constructor(
 
                         _amountUiState.update { it.copy(
                             maxAmount = sortedByChainId.balance,
-                            formattedMaxAmount = sortedByChainId.balance.toString(),
+                            formattedMaxAmount = sortedByChainId.balance.formatWithSuffix(),
                             maxFiatAmount = sortedByChainId.fiatAmount,
-                            formattedMaxFiatAmount = sortedByChainId.fiatAmount.toString()
+                            formattedMaxFiatAmount = sortedByChainId.fiatAmount.formatWithSuffix(2)
 
                         ) }
                     }
@@ -171,6 +174,16 @@ class SendViewModel @Inject constructor(
             //_selectedAssetUiState.value = SelectedAssetUiState.Unselected
         } else {
             _selectedAssetUiState.value = SelectedAssetUiState.Selected(selected)
+
+            _amountUiState.update { it.copy(
+                maxAmount = selected.balance,
+                formattedMaxAmount = selected.balance.formatWithSuffix(),
+                maxFiatAmount = selected.fiatAmount,
+                formattedMaxFiatAmount = selected.fiatAmount.formatWithSuffix(2),
+                currentAmount = "",
+                currentFiatAmount = "",
+                useMaxAmount = false
+            ) }
         }
     }
 
@@ -308,8 +321,14 @@ class SendViewModel @Inject constructor(
         resolveEns()
     }
 
-    fun updateAmount(amount: String) {
-
+    fun updateAmount(amount: String, isFiat: Boolean) {
+        _amountUiState.update {
+            it.copy(
+                currentAmount = if (isFiat) "" else amount,
+                currentFiatAmount = if (isFiat) amount else "",
+                useMaxAmount = false
+            )
+        }
     }
 
     private fun resolveEns() {
@@ -344,13 +363,21 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    fun setMaxAmount(maxamount: BigDecimal, chainId: Int) {
+    fun setMaxAmount() {
         viewModelScope.launch {
 
-            val decimalFormat = DecimalFormat("#.#####")
-            val test = sendRepository.maxAllowedSend(maxamount,chainId)
+            val maxAmount = _amountUiState.value.maxAmount.toBigDecimal()
+            val chainId = (_selectedAssetUiState.value as SelectedAssetUiState.Selected).tokenAsset.chainId
 
-            updateAmount(decimalFormat.format(test.toDouble()))
+            val amount = sendRepository.maxAllowedSend(maxAmount,chainId)
+
+            _amountUiState.update {
+                it.copy(
+                    currentAmount = amount,
+                    currentFiatAmount = it.formattedMaxFiatAmount,
+                    useMaxAmount = true
+                )
+            }
         }
     }
 
