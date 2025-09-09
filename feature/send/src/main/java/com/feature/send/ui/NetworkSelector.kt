@@ -60,9 +60,7 @@ fun NetworkSelector(
     }
 
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
+        modifier = modifier,
         state = listState,
         flingBehavior = remember {
             object : FlingBehavior {

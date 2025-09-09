@@ -45,8 +45,8 @@ fun SendHeader(
     }
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
     ) {
         Text(
@@ -95,7 +95,7 @@ fun SendHeader(
                 letterSpacing = 0.sp,
                 textDecoration = TextDecoration.None
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.weight(1f)
         )
 
         // back icon

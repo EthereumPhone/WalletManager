@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -104,9 +106,11 @@ fun SendScreen(
         )
 
 
-        Column {
+        Column(
+            Modifier.padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 12.dp),
+        ) {
             SendHeader(
-                modifier = Modifier,
+                modifier = Modifier.padding(bottom = 48.dp),
                 assetsUiState = assetsUiState,
                 onBackClick
             )
@@ -119,7 +123,10 @@ fun SendScreen(
             )
 
             NetworkSelector(
-                modifier = Modifier,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .weight(1f),
                 itemWidth = 65.dp,
                 itemHeight = 65.dp,
                 assetsUiState = assetsUiState,
@@ -137,7 +144,7 @@ fun SendScreen(
     }
 }
 
-@Preview
+@Preview(device = "spec:width=720px,height=720px,dpi=240")
 @Composable
 fun PreviewSendScreen() {
     val amountUiState = AmountUiState(
