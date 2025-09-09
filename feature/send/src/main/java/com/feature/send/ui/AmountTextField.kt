@@ -180,9 +180,13 @@ fun AmountTextField(
 }
 
 private fun isValidAmount(amountUiState: AmountUiState, toggleFiat: Boolean): Boolean {
+
+
     return if (toggleFiat) {
+        if(amountUiState.currentFiatAmount.isEmpty()) return true
         amountUiState.currentFiatAmount.toDouble() <= amountUiState.maxFiatAmount
     } else {
+        if(amountUiState.currentAmount.isEmpty()) return true
         amountUiState.currentAmount.toDouble() <= amountUiState.maxAmount
     }
 }

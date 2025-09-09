@@ -107,7 +107,7 @@ fun NetworkSelector(
                             )
 
                             Text(
-                                text = item.symbol,
+                                text = networkNameResolver(item.chainId),
                                 style = TextStyle(
                                     fontFamily = SpaceMono,
                                     fontWeight = FontWeight.SemiBold,
@@ -138,3 +138,14 @@ private fun networkSymbolResolver(chainId: Int): Int {
     }
 }
 
+private fun networkNameResolver(chainId: Int): String {
+    return when(chainId) {
+        1 -> "MAIN"
+        10 -> "OP"
+        137 -> "POL"
+        8453 -> "BASE"
+        42161 -> "ARB"
+        7777777 -> "ZORA"
+        else -> "MAINNET" //TODO change to something different?
+    }
+}

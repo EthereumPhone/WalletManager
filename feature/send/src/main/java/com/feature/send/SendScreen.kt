@@ -57,6 +57,7 @@ fun SendRoute(
         selectedAssetUiState = selectedAssetUiState,
         onNetworkSelected = viewModel::changeSelectedAsset,
         onAmountChange = {},
+        onRecipientChange = viewModel::updateAddress,
         onBackClick = onBackClick
     )
 
@@ -72,6 +73,7 @@ fun SendScreen(
     selectedAssetUiState: SelectedAssetUiState,
     onNetworkSelected: (Int) -> Unit,
     onAmountChange: (String) -> Unit,
+    onRecipientChange: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
@@ -138,7 +140,7 @@ fun SendScreen(
 
             RecipientSection(
                 recipientUiState = recipientUiState,
-                onContentChanged = {}
+                onContentChanged = onRecipientChange
             )
         }
     }
@@ -202,6 +204,7 @@ fun PreviewSendScreen() {
         recipientUiState,
         assetsUiState,
         selectedAssetUiState,
+        {},
         {},
         {},
         {}

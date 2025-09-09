@@ -128,9 +128,16 @@ interface TokenGroupDao {
             WHERE te1.id = (
                 SELECT MAX(id) 
                 FROM token_exchange 
-                WHERE address = :contractAddress AND chainId = :chainId
+                WHERE (address = :contractAddress AND chainId = :chainId)
+                   OR (address IS NULL AND symbol = (SELECT symbol FROM token_metadata WHERE contractAddress = :contractAddress AND chainId = :chainId))
             )
-        ) te ON te.address = tm.contractAddress AND te.chainId = tm.chainId
+        ) te ON (
+            -- Join by address for ERC20 tokens
+            (te.address = tm.contractAddress AND te.chainId = tm.chainId) 
+            OR 
+            -- Join by symbol for native tokens (where address is null)
+            (te.address IS NULL AND te.symbol = tm.symbol)
+        )
         WHERE tm.contractAddress = :contractAddress AND tm.chainId = :chainId
     """)
     suspend fun getTokenWithLatestExchange(contractAddress: String, chainId: Int): CompositeTokenWithExchange?
@@ -157,10 +164,15 @@ interface TokenGroupDao {
             WHERE te1.id IN (
                 SELECT MAX(id) 
                 FROM token_exchange 
-                WHERE address IS NOT NULL 
-                GROUP BY address, chainId
+                GROUP BY COALESCE(address, symbol), COALESCE(chainId, -1)
             )
-        ) te ON te.address = tm.contractAddress AND te.chainId = tm.chainId
+        ) te ON (
+            -- Join by address for ERC20 tokens
+            (te.address = tm.contractAddress AND te.chainId = tm.chainId) 
+            OR 
+            -- Join by symbol for native tokens (where address is null)
+            (te.address IS NULL AND te.symbol = tm.symbol)
+        )
         WHERE tm.groupId = :groupId
     """)
     suspend fun getTokensInGroupWithLatestExchange(groupId: String): List<CompositeTokenWithExchange>

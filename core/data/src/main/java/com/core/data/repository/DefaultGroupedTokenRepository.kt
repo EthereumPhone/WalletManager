@@ -68,6 +68,13 @@ class DefaultGroupedTokenRepository @Inject constructor(
                     val metadata = token.tokenMetadataEntity
                     val balance = token.tokenBalanceEntity?.tokenBalance?.toDouble() ?: 0.0
                     
+                    // Log exchange rate info for debugging
+                    if (groupId.startsWith("network_")) {
+                        Log.d("DefaultGroupedTokenRepository", 
+                            "Network token ${metadata.symbol} on chain ${metadata.chainId}: " +
+                            "balance=$balance, exchange=${token.latestExchangeEntity?.value}")
+                    }
+
                     TokenAssetWithPrice(
                         address = metadata.contractAddress,
                         chainId = metadata.chainId,

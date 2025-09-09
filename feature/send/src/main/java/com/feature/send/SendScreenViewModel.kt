@@ -39,6 +39,7 @@ import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.model.TokenAssetWithPrice
 import com.core.terminalsdk.ReflectiveLedPattern
+import com.core.ui.util.formatWithSuffix
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -108,9 +109,9 @@ class SendViewModel @Inject constructor(
                         _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
                         _amountUiState.update { it.copy(
                             maxAmount = asset.balance,
-                            formattedMaxAmount = asset.balance.toString(),
+                            formattedMaxAmount = asset.balance.formatWithSuffix(),
                             maxFiatAmount = asset.fiatAmount,
-                            formattedMaxFiatAmount = asset.fiatAmount.toString()
+                            formattedMaxFiatAmount = asset.fiatAmount.formatWithSuffix(2)
                         ) }
                     }
                     assets.size > 1 -> {
@@ -166,7 +167,8 @@ class SendViewModel @Inject constructor(
         if (current is SelectedAssetUiState.Selected &&
             current.tokenAsset.chainId == selected.chainId
         ) {
-            _selectedAssetUiState.value = SelectedAssetUiState.Unselected
+            // disable de-selection for now
+            //_selectedAssetUiState.value = SelectedAssetUiState.Unselected
         } else {
             _selectedAssetUiState.value = SelectedAssetUiState.Selected(selected)
         }
@@ -301,15 +303,16 @@ class SendViewModel @Inject constructor(
     }
 
 
-    fun updateToAddress(address: String) {
+    fun updateAddress(address: String) {
         _recipientUiState.update { it.copy(address) }
+        resolveEns()
     }
 
     fun updateAmount(amount: String) {
 
     }
 
-    fun resolveEns() {
+    private fun resolveEns() {
         viewModelScope.launch {
             val address = recipientUiState.value.recipientAddress.lowercase()
 
@@ -730,11 +733,11 @@ data class RecipientUiState(
 data class AmountUiState(
     val maxAmount: Double,
     val formattedMaxAmount: String,
-    val currentAmount: String = "0",
+    val currentAmount: String = "",
     val maxFiatAmount: Double,
     val formattedMaxFiatAmount: String,
-    val currentFiatAmount: String,
-    val useMaxAmount: Boolean = false
+    val currentFiatAmount: String = "",
+    val useMaxAmount: Boolean = false,
 )
 
 
