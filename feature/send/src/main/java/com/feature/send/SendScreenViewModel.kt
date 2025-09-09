@@ -80,10 +80,24 @@ class SendViewModel @Inject constructor(
     private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val context: Context
 ): ViewModel() {
+    val groupId: String = savedStateHandle[GROUP_NAV_ARGUMENT] ?: ""
+    val address: String = savedStateHandle[ADDRESS_NAV_ARGUMENT] ?: ""
+
+
+    val assetsUiState: StateFlow<AssetsUiState> =
+        groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId).map {
+            if (it.isEmpty()) AssetsUiState.Empty
+            else AssetsUiState.Success(it)
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AssetsUiState.Loading
+            )
 
     init {
         viewModelScope.launch {
-            val assetState = tokenAssetState.first { it !is AssetsUiState.Loading }
+            val assetState = assetsUiState.first { it !is AssetsUiState.Loading }
             if (assetState is AssetsUiState.Success) {
                 val assets = assetState.assets
 
@@ -91,7 +105,7 @@ class SendViewModel @Inject constructor(
                     assets.size == 1 -> {
                         val asset = assets.first()
 
-                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(asset)
+                        _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
                         _amountUiState.update { it.copy(
                             maxAmount = asset.balance,
                             formattedMaxAmount = asset.balance.toString(),
@@ -101,7 +115,7 @@ class SendViewModel @Inject constructor(
                     }
                     assets.size > 1 -> {
                         val sortedByChainId = assets.minByOrNull { it.chainId }!!
-                        _selectedAssetUiState.value = SelectedTokenUiState.Selected(sortedByChainId)
+                        _selectedAssetUiState.value = SelectedAssetUiState.Selected(sortedByChainId)
 
                         _amountUiState.update { it.copy(
                             maxAmount = sortedByChainId.balance,
@@ -111,14 +125,13 @@ class SendViewModel @Inject constructor(
 
                         ) }
                     }
-                    else -> _selectedAssetUiState.value = SelectedTokenUiState.Unselected
+                    else -> _selectedAssetUiState.value = SelectedAssetUiState.Unselected
                 }
             }
         }
     }
 
-    val groupId: String = savedStateHandle[GROUP_NAV_ARGUMENT] ?: ""
-    val address: String = savedStateHandle[ADDRESS_NAV_ARGUMENT] ?: ""
+
 
 
     private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
@@ -128,40 +141,34 @@ class SendViewModel @Inject constructor(
 
     private val _amountUiState = MutableStateFlow<AmountUiState>(AmountUiState(
         0.0,
-        "",
-        currentAmount = "",
+        "0.0",
+        currentAmount = "0.0",
         maxFiatAmount = 0.0,
-        formattedMaxFiatAmount = "",
-        currentFiatAmount = "",
+        formattedMaxFiatAmount = "0.0",
+        currentFiatAmount = "0.0",
         useMaxAmount = false
     ))
     val amountUiState = _amountUiState
 
 
-    val tokenAssetState: StateFlow<AssetsUiState> =
-        groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId).map {
-            if (it.isEmpty()) AssetsUiState.Empty
-            else AssetsUiState.Success(it)
-    }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AssetsUiState.Loading
-        )
-
-    private val _selectedAssetUiState = MutableStateFlow<SelectedTokenUiState>(SelectedTokenUiState.Unselected)
-    val selectedAssetUiState: StateFlow<SelectedTokenUiState> = _selectedAssetUiState.asStateFlow()
 
 
-    fun changeSelectedAsset(tokenAsset: TokenAssetWithPrice) {
+    private val _selectedAssetUiState = MutableStateFlow<SelectedAssetUiState>(SelectedAssetUiState.Unselected)
+    val selectedAssetUiState: StateFlow<SelectedAssetUiState> = _selectedAssetUiState.asStateFlow()
+
+
+    fun changeSelectedAsset(chainId: Int) {
+
+        val selected = (assetsUiState.value as AssetsUiState.Success)
+            .assets.first { it.chainId == chainId }
+
         val current = _selectedAssetUiState.value
-        if (current is SelectedTokenUiState.Selected &&
-            current.tokenAsset.address == tokenAsset.address &&
-            current.tokenAsset.chainId == tokenAsset.chainId
+        if (current is SelectedAssetUiState.Selected &&
+            current.tokenAsset.chainId == selected.chainId
         ) {
-            _selectedAssetUiState.value = SelectedTokenUiState.Unselected
+            _selectedAssetUiState.value = SelectedAssetUiState.Unselected
         } else {
-            _selectedAssetUiState.value = SelectedTokenUiState.Selected(tokenAsset)
+            _selectedAssetUiState.value = SelectedAssetUiState.Selected(selected)
         }
     }
 
@@ -196,7 +203,7 @@ class SendViewModel @Inject constructor(
             _transactionStatus.value = TransactionStatus.PENDING
             Log.d("SendViewModel", "Status set to PENDING")
 
-            if(selectedAsset is SelectedTokenUiState.Selected) {
+            if(selectedAsset is SelectedAssetUiState.Selected) {
                 try {
                     val asset = TokenAsset(
                         address = selectedAsset.tokenAsset.address,
@@ -695,9 +702,9 @@ class SendViewModel @Inject constructor(
 }
 
 
-sealed interface SelectedTokenUiState {
-    object Unselected: SelectedTokenUiState
-    data class Selected(val tokenAsset: TokenAssetWithPrice): SelectedTokenUiState
+sealed interface SelectedAssetUiState {
+    object Unselected: SelectedAssetUiState
+    data class Selected(val tokenAsset: TokenAssetWithPrice): SelectedAssetUiState
 }
 
 sealed interface AssetsUiState {
@@ -723,7 +730,7 @@ data class RecipientUiState(
 data class AmountUiState(
     val maxAmount: Double,
     val formattedMaxAmount: String,
-    val currentAmount: String,
+    val currentAmount: String = "0",
     val maxFiatAmount: Double,
     val formattedMaxFiatAmount: String,
     val currentFiatAmount: String,

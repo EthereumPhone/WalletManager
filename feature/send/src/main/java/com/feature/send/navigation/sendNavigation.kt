@@ -19,9 +19,10 @@ import androidx.navigation.navDeepLink
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.largeExitDuration
+import com.feature.send.SendRoute
 import com.feature.send.SendRoute2
 
-const val sendRoute = "send_route?address={address}&tokenId={tokenId}"
+const val sendRoute = "send_route?address={address}&groupId={groupId}"
 const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
 
 
@@ -93,7 +94,7 @@ fun NavGraphBuilder.sendScreen(
         val address = backStackEntry.arguments?.getString("address")
         val groupId = backStackEntry.arguments?.getString("groupId")
 
-        SendRoute2(
+        SendRoute(
             onBackClick = {
                 if (!address.isNullOrEmpty()) {
                     // Navigate to the home screen explicitly if opened via a deep link
@@ -107,10 +108,8 @@ fun NavGraphBuilder.sendScreen(
                 }
                 reflectiveLedPattern?.clear()
             },
-            initialAddress = address,
-            groupId = groupId,
-            sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = this@composable,
+            //sharedTransitionScope = sharedTransitionScope,
+            //animatedContentScope = this@composable,
         )
     }
 }

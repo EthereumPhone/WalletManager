@@ -1,43 +1,202 @@
 package com.feature.send
 
+import android.os.Build.VERSION.SDK_INT
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import com.core.model.TokenAssetWithPrice
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.pulseOpacity
+import com.feature.send.ui.AmountTextField
+import com.feature.send.ui.NetworkSelector
+import com.feature.send.ui.RecipientSection
+import com.feature.send.ui.SendHeader
 
 
 @Composable
-fun sendRoute(
+fun SendRoute(
     onBackClick: () -> Unit,
     viewModel: SendViewModel = hiltViewModel()
 ) {
 
     val amountUiState by viewModel.amountUiState.collectAsStateWithLifecycle()
     val recipientUiState by viewModel.recipientUiState.collectAsStateWithLifecycle()
-    val assetsUiState by viewModel.tokenAssetState.collectAsStateWithLifecycle()
+    val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
     val selectedAssetUiState by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
 
-    sendScreen(
-        amountUiState,
-        recipientUiState,
-        selectedAssetUiState
+    SendScreen(
+        amountUiState = amountUiState,
+        recipientUiState = recipientUiState,
+        assetsUiState = assetsUiState,
+        selectedAssetUiState = selectedAssetUiState,
+        onNetworkSelected = viewModel::changeSelectedAsset,
+        onAmountChange = {},
+        onBackClick = onBackClick
     )
 
 }
 
 
 
-
-fun sendScreen(
+@Composable
+fun SendScreen(
     amountUiState: AmountUiState,
     recipientUiState: RecipientUiState,
-    selectedAssetUiState: SelectedTokenUiState
+    assetsUiState: AssetsUiState,
+    selectedAssetUiState: SelectedAssetUiState,
+    onNetworkSelected: (Int) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onBackClick: () -> Unit
 ) {
+    val primaryColor = SystemColorManager.primaryColor
+    val context = LocalContext.current
+
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if ( SDK_INT >= 28 ) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(dgenBlack)
+            .statusBarsPadding()
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .alpha(pulseOpacity)
+                .offset(x = 250.dp, y = 20.dp)
+                .scale(1.3f)
+                .aspectRatio(1f),
+            imageLoader = gifEnabledLoader,
+            model = R.drawable.globe_wireframe,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(primaryColor)
+        )
+
+
+        Column {
+            SendHeader(
+                modifier = Modifier,
+                assetsUiState = assetsUiState,
+                onBackClick
+            )
+
+            AmountTextField(
+                selectedAssetUiState= selectedAssetUiState,
+                amountUiState = amountUiState,
+                onAmountChange = onAmountChange,
+                onMaxClick = {}
+            )
+
+            NetworkSelector(
+                modifier = Modifier,
+                itemWidth = 65.dp,
+                itemHeight = 65.dp,
+                assetsUiState = assetsUiState,
+                selectedAssetUiState = selectedAssetUiState,
+                onNetworkSelected = onNetworkSelected
+            )
 
 
 
+            RecipientSection(
+                recipientUiState = recipientUiState,
+                onContentChanged = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewSendScreen() {
+    val amountUiState = AmountUiState(
+        maxAmount = 100.0,
+        maxFiatAmount = 100.0,
+        formattedMaxAmount = "100",
+        currentAmount = "12.1",
+        formattedMaxFiatAmount = "100",
+        currentFiatAmount = "12.1",
+        useMaxAmount = false,
+    )
+
+    val recipientUiState = RecipientUiState()
+
+    val assetsUiState = AssetsUiState.Success(
+        listOf(
+            TokenAssetWithPrice(
+                address = "0x0123",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 100.0,
+                decimals = 16,
+                swappable = true,
+                fiatAmount = 100.0
+            ),
+            TokenAssetWithPrice(
+                address = "0x0123",
+                chainId = 137,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 100.0,
+                decimals = 16,
+                swappable = true,
+                fiatAmount = 100.0
+            )
+        )
+    )
+
+    val selectedAssetUiState = SelectedAssetUiState.Selected(
+        TokenAssetWithPrice(
+            address = "0x0123",
+            chainId = 1,
+            symbol = "ETH",
+            name = "Ethereum",
+            balance = 100.0,
+            decimals = 16,
+            swappable = true,
+            fiatAmount = 100.0
+        )
+    )
+
+    SendScreen(
+        amountUiState,
+        recipientUiState,
+        assetsUiState,
+        selectedAssetUiState,
+        {},
+        {},
+        {}
+    )
 }

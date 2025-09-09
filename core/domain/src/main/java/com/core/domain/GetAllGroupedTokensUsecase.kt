@@ -19,7 +19,9 @@ class GetAllGroupedTokensUsecase @Inject constructor(
             groupedTokenRepository.observeGroupedTokensOverview(filterList),
             networkBalanceRepository.getGroupedNetworkTokensOverview()
         ) { erc20, network ->
-            (erc20 + network)
+            // Combine lists and remove duplicates based on groupId
+            val allTokens = erc20 + network
+            allTokens.distinctBy { it.groupId }
         }
 
 }

@@ -1,0 +1,142 @@
+package com.feature.send.ui
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.core.ui.util.SpaceMono
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.lazerCore
+import com.feature.send.AssetsUiState
+import com.feature.send.R
+import com.feature.send.SelectedAssetUiState
+import kotlin.text.uppercase
+
+@Composable
+fun NetworkSelector(
+    modifier: Modifier,
+    itemWidth: Dp = 200.dp,
+    itemHeight: Dp = 150.dp,
+    assetsUiState: AssetsUiState,
+    selectedAssetUiState: SelectedAssetUiState,
+    onNetworkSelected: (chainId: Int) -> Unit
+) {
+
+    val listState = rememberLazyListState()
+
+    val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
+    val selectedAsset = when(selectedAssetUiState) {
+        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.chainId
+        SelectedAssetUiState.Unselected -> 0
+    }
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        state = listState,
+        flingBehavior = remember {
+            object : FlingBehavior {
+                override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                    return 0f
+                }
+            }
+        },
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        when(assetsUiState) {
+
+            is AssetsUiState.Success -> {
+                itemsIndexed(assetsUiState.assets) { index, item ->
+                    val isSelected = item.chainId == selectedAsset
+
+                    Card(
+                        shape = RoundedCornerShape(0.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) primaryColor else secondaryColor
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier
+                            .width(itemWidth)
+                            .height(itemHeight)
+                            .clickable { onNetworkSelected(item.chainId) }
+                    ) {
+                        Column(
+                            modifier = Modifier.fillParentMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            val imageModifier = Modifier
+                                .size(34.dp)
+                                .then(
+                                    if (primaryColor == lazerCore && item.chainId == 8453) Modifier.border(1.dp, secondaryColor, CircleShape)
+                                    else Modifier
+                                )
+
+                            Image(
+                                painter = painterResource(networkSymbolResolver(item.chainId)),
+                                modifier = imageModifier,
+                                contentDescription = item.symbol
+                            )
+
+                            Text(
+                                text = item.symbol,
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp
+                                ),
+                                color = if (isSelected) secondaryColor
+                                else primaryColor
+                            )
+
+                        }
+                    }
+                }
+            }
+            else -> {}
+        }
+    }
+}
+
+private fun networkSymbolResolver(chainId: Int): Int {
+    return when(chainId) {
+        1 -> R.drawable.mainnet
+        10 -> R.drawable.optimism
+        137 -> R.drawable.polygon
+        8453 -> R.drawable.base_square
+        42161 -> R.drawable.arbitrum
+        7777777 -> R.drawable.zorb
+        else -> R.drawable.mainnet //TODO change to something different?
+    }
+}
+

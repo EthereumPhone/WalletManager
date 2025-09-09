@@ -2,15 +2,10 @@ package com.feature.home.ui
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,15 +18,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.zIndex
-import com.core.model.TokenAsset
-import com.core.model.TokenData
-import com.core.model.TokenMetadata
 import com.core.ui.Card
 import com.core.ui.views.IdleView
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.smallDuration
-import com.feature.send.SelectedTokenUiState
-import kotlin.collections.find
 import kotlin.math.abs
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -43,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.core.model.TokenAssetWithPrice
 import com.core.model.TokenGroupAssetOverview
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.Job

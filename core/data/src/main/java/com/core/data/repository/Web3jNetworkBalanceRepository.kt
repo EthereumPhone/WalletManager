@@ -5,8 +5,12 @@ import com.core.data.remote.NetworkBalanceApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenExchangeDao
+import com.core.database.dao.TokenGroupDao
+import com.core.database.dao.TokenMetadataDao
 import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenGroupEntity
+import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenBalance
@@ -42,6 +46,8 @@ import javax.inject.Inject
 class Web3jNetworkBalanceRepository @Inject constructor(
     private val networkBalanceApi: NetworkBalanceApi,
     private val tokenBalanceDao: TokenBalanceDao,
+    private val tokenGroupDao: TokenGroupDao,
+    private val tokenMetadataDao: TokenMetadataDao,
     private val tokenExchangeRepository: DefaultExchangeRepository,
     private val tokenExchangeDao: TokenExchangeDao
 ): NetworkBalanceRepository {
@@ -71,7 +77,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     val sum = assets.sumOf { it.tokenBalance}
 
                     TokenAsset(
-                        address = if (isPolygon) "137" else "1",
+                        address = if (isPolygon) "network_matic" else "network_eth",
                         chainId = if (isPolygon) 137 else 1,
                         symbol = name,
                         name = name,
@@ -92,7 +98,9 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         ) { items, ethExchange, maticExchange ->
             val grouped = items.groupBy { it.chainId == 137 }
             
-            grouped.map { (isPolygon, assets) ->
+            grouped.mapNotNull { (isPolygon, assets) ->
+                if (assets.isEmpty()) return@mapNotNull null
+                
                 val symbol = if(isPolygon) "MATIC" else "ETH"
                 val sum = assets.sumOf { it.tokenBalance }
                 val totalBalance = sum.toDouble()
@@ -104,7 +112,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                 val totalFiatBalance = if (exchangeRate > 0) totalBalance * exchangeRate else 0.0
 
                 TokenGroupAssetOverview(
-                    groupId = if (isPolygon) "137" else "1",
+                    groupId = if (isPolygon) "network_matic" else "network_eth",
                     symbol = symbol,
                     name = symbol,
                     totalBalance = totalBalance,
@@ -133,7 +141,76 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         }
 
         withContext(Dispatchers.IO) {
+            // First, create all token groups and metadata
+            val tokenGroups = mutableListOf<TokenGroupEntity>()
+            val tokenMetadata = mutableListOf<TokenMetadataEntity>()
+            
+            // Group ETH and MATIC separately
+            val ethNetworks = networks.filter { it.chainId != 137 }
+            val maticNetwork = networks.find { it.chainId == 137 }
+            
+            // Create ETH group if we have any ETH networks
+            if (ethNetworks.isNotEmpty()) {
+                tokenGroups.add(
+                    TokenGroupEntity(
+                        groupId = "network_eth",
+                        canonicalChainId = 1,
+                        canonicalAddress = "1",
+                        symbol = "ETH",
+                        name = "ETH"
+                    )
+                )
+                
+                // Create metadata for each ETH network
+                ethNetworks.forEach { network ->
+                    tokenMetadata.add(
+                        TokenMetadataEntity(
+                            contractAddress = network.chainId.toString(),
+                            chainId = network.chainId,
+                            decimals = 18,
+                            name = "ETH",
+                            symbol = "ETH",
+                            logo = "ETH",
+                            swappable = true,
+                            groupId = "network_eth"
+                        )
+                    )
+                }
+            }
+            
+            // Create MATIC group if we have MATIC network
+            if (maticNetwork != null) {
+                tokenGroups.add(
+                    TokenGroupEntity(
+                        groupId = "network_matic",
+                        canonicalChainId = 137,
+                        canonicalAddress = "137",
+                        symbol = "MATIC",
+                        name = "MATIC"
+                    )
+                )
+                
+                tokenMetadata.add(
+                    TokenMetadataEntity(
+                        contractAddress = "137",
+                        chainId = 137,
+                        decimals = 18,
+                        name = "MATIC",
+                        symbol = "MATIC",
+                        logo = "MATIC",
+                        swappable = true,
+                        groupId = "network_matic"
+                    )
+                )
+            }
+            
+            // Insert token groups and metadata before updating balances
+            if (tokenGroups.isNotEmpty()) {
+                tokenGroupDao.upsertTokenGroups(tokenGroups)
+                tokenMetadataDao.upsertTokensMetadata(tokenMetadata)
+            }
 
+            // Then update balances
             networks.map {
                 if(it.chainId != 7777777) {
                     async {
@@ -142,6 +219,7 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                                 toAddress,
                                 "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
                             )
+                        
                         tokenBalanceDao.upsertTokenBalances(
                             listOf(
                                 TokenBalanceEntity(
@@ -168,7 +246,6 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                         )
                     )
                 }
-
             }
         }
     }
@@ -177,6 +254,35 @@ class Web3jNetworkBalanceRepository @Inject constructor(
         val network = NetworkChain.getNetworkByChainId(chainId)
 
         withContext(Dispatchers.IO) {
+            // Create token group and metadata for network token
+            val isPolygon = chainId == 137
+            val symbol = if (isPolygon) "MATIC" else "ETH"
+            val groupId = if (isPolygon) "network_matic" else "network_eth"
+            
+            val tokenGroup = TokenGroupEntity(
+                groupId = groupId,
+                canonicalChainId = if (isPolygon) 137 else 1,
+                canonicalAddress = if (isPolygon) "137" else "1",
+                symbol = symbol,
+                name = symbol
+            )
+            
+            val tokenMetadata = TokenMetadataEntity(
+                contractAddress = chainId.toString(),
+                chainId = chainId,
+                decimals = 18,
+                name = symbol,
+                symbol = symbol,
+                logo = symbol,
+                swappable = true,
+                groupId = groupId
+            )
+            
+            // Insert token group and metadata
+            tokenGroupDao.upsertTokenGroup(tokenGroup)
+            tokenMetadataDao.upsertTokensMetadata(listOf(tokenMetadata))
+            
+            // Update balance
             async {
                 val newNetworkBalance = networkBalanceApi
                     .getNetworkCurrency(
@@ -193,6 +299,8 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     )
                 )
             }
+
+
         }
     }
 }

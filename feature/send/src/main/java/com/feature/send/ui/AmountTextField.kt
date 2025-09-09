@@ -41,12 +41,12 @@ import com.core.ui.util.dgenWhite
 import com.core.ui.util.pulseOpacity
 import com.core.ui.util.smallDuration
 import com.feature.send.AmountUiState
-import com.feature.send.SelectedTokenUiState
+import com.feature.send.SelectedAssetUiState
 
 
 @Composable
 fun AmountTextField(
-    selectedTokenUiState: SelectedTokenUiState,
+    selectedAssetUiState: SelectedAssetUiState,
     amountUiState: AmountUiState,
     onAmountChange: (String) -> Unit,
     onMaxClick: () -> Unit
@@ -83,9 +83,9 @@ fun AmountTextField(
                 // currency toggle
                 TextToggle(
                     Modifier.offset(x = 2.dp, y=2.dp),
-                    when(selectedTokenUiState) {
-                        is SelectedTokenUiState.Selected -> selectedTokenUiState.tokenAsset.symbol.uppercase()
-                        SelectedTokenUiState.Unselected -> "ETH"
+                    when(selectedAssetUiState) {
+                        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.uppercase()
+                        SelectedAssetUiState.Unselected -> "ETH"
                     },
                     "$",
                     onToggle = { toggleFiat = !toggleFiat },
@@ -162,7 +162,6 @@ fun AmountTextField(
                             ),
                         )
                     }
-
                 },
                 textStyle = TextStyle(
                     fontFamily = PitagonsSans,
@@ -202,7 +201,7 @@ fun AmountTextFieldPreview() {
         ""
     )
 
-    val selectedTokenUiState = SelectedTokenUiState.Selected(
+    val selectedAssetUiState = SelectedAssetUiState.Selected(
         TokenAssetWithPrice(
             address = "",
             chainId = 1,
@@ -217,7 +216,7 @@ fun AmountTextFieldPreview() {
     )
 
     AmountTextField(
-        selectedTokenUiState,
+        selectedAssetUiState,
         amount,
         {},
         {}
@@ -237,7 +236,7 @@ fun AmountTextFieldFiatPreview() {
         true
     )
 
-    val selectedTokenUiState = SelectedTokenUiState.Selected(
+    val selectedAssetUiState = SelectedAssetUiState.Selected(
         TokenAssetWithPrice(
             address = "",
             chainId = 1,
@@ -252,7 +251,7 @@ fun AmountTextFieldFiatPreview() {
     )
 
     AmountTextField(
-        selectedTokenUiState,
+        selectedAssetUiState,
         amount,
         {},
         {}

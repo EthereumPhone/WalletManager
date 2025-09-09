@@ -59,20 +59,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.core.ui.util.SystemColorManager
-import com.feature.send.SelectedTokenUiState
 import com.feature.send.SendViewModel
-import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.core.terminalsdk.ReflectiveLedManager
 import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.R
 import com.core.ui.initializeFontMap
-import com.core.ui.showCustomToast
-import com.core.ui.util.dgenGunMetal
-import com.core.ui.util.dgenRed
-import com.core.ui.util.dgenWhite
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
@@ -88,7 +81,6 @@ import com.core.ui.util.pulseOpacity
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
-import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KSuspendFunction1
 
@@ -106,12 +98,10 @@ internal fun HomeRoute2(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     viewModel: HomeViewModel = hiltViewModel(),
-    sendViewModel: SendViewModel = hiltViewModel()
 ) {
     val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val groupedAssetsUiState: GroupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
-    val selectedTokenId = sendViewModel.selectedTokenIdFlow.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -171,8 +161,6 @@ internal fun HomeRoute2(
         navigateToSend = navigateToSend,
         navigateToLog = navigateToLog,
         navigateToReceive = navigateToReceive,
-        selectedTokenId = selectedTokenId,
-        setSelectedTokenId = sendViewModel::updateSelectedTokenId,
         isOffline = isOffline,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
@@ -195,8 +183,7 @@ fun HomeScreen2(
     navigateToLog: (String) -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
-    selectedTokenId: State<String>,
-    setSelectedTokenId: (String) -> Unit,
+    //selectedTokenId: State<String>,
     isOffline: Boolean,
     hasTransfer: Boolean,
     sharedTransitionScope: SharedTransitionScope,
@@ -414,7 +401,7 @@ fun HomeScreen2(
                             message = "No internet connection!",
                         )
                     } else {
-                        navigateToLog(selectedTokenId.value)
+                        //navigateToLog(selectedTokenId.value)
                         //navigateToSend(selectedTokenId.value,selectedTokenId.value)
                     }
                 },

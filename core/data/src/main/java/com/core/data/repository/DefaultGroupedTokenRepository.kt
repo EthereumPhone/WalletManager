@@ -9,6 +9,7 @@ import com.core.model.TokenGroupAssetWithExchange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import android.util.Log
 
 class DefaultGroupedTokenRepository @Inject constructor(
     val tokenGroupDao: TokenGroupDao
@@ -16,8 +17,11 @@ class DefaultGroupedTokenRepository @Inject constructor(
     override fun observeGroupedTokensOverview(filterList: List<String>?): Flow<List<TokenGroupAssetOverview>> =
         tokenGroupDao.observeAllActiveTokenGroupsWithExchange()
             .map { groups ->
+                // First filter out network tokens (those with groupIds starting with "network_")
+                val nonNetworkGroups = groups.filter { !it.tokenGroup.groupId.startsWith("network_") }
+                
                 val filteredGroups = if (!filterList.isNullOrEmpty()) {
-                    groups.filter { token -> // Filter out tokens with URLs in their names or symbols
+                    nonNetworkGroups.filter { token -> // Filter out tokens with URLs in their names or symbols
                         val name = token.tokenGroup.name
                         val symbol = token.tokenGroup.symbol
 
@@ -27,7 +31,7 @@ class DefaultGroupedTokenRepository @Inject constructor(
                         containsNoUrlPatterns
                     }
                 } else {
-                    groups
+                    nonNetworkGroups
                 }
 
 
@@ -51,10 +55,47 @@ class DefaultGroupedTokenRepository @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override fun observeAllTokensWithPriceInGroup(groupId: String): Flow<List<TokenAssetWithPrice>> =
-        tokenGroupDao.observeAllTokensInGroupWithLatestExchange(groupId).map { tokens ->
-            tokens.map { it.toExternalModelWithPrice() }
+    override fun observeAllTokensWithPriceInGroup(groupId: String): Flow<List<TokenAssetWithPrice>> {
+        // Return empty flow if groupId is empty
+        if (groupId.isEmpty()) {
+            return kotlinx.coroutines.flow.flowOf(emptyList())
         }
+        
+        return tokenGroupDao.observeAllTokensInGroupWithLatestExchange(groupId).map { tokens ->
+            val mappedTokens = if (groupId.startsWith("network_")) {
+                // For network tokens, balance is already in ETH/MATIC units, not wei
+                tokens.map { token ->
+                    val metadata = token.tokenMetadataEntity
+                    val balance = token.tokenBalanceEntity?.tokenBalance?.toDouble() ?: 0.0
+                    
+                    TokenAssetWithPrice(
+                        address = metadata.contractAddress,
+                        chainId = metadata.chainId,
+                        symbol = metadata.symbol,
+                        name = metadata.name,
+                        balance = balance, // Already in ETH/MATIC units
+                        decimals = metadata.decimals,
+                        logoUrl = metadata.logo,
+                        swappable = metadata.swappable,
+                        fiatAmount = if (token.latestExchangeEntity != null) {
+                            balance * token.latestExchangeEntity!!.value
+                        } else {
+                            0.0
+                        }
+                    )
+                }
+            } else {
+                tokens.map { it.toExternalModelWithPrice() }
+            }
+            
+            // Filter network tokens to only show chains with balance
+            if (groupId.startsWith("network_")) {
+                mappedTokens.filter { it.balance > 0 }
+            } else {
+                mappedTokens
+            }
+        }
+    }
 }
 
 
