@@ -232,13 +232,7 @@ fun SendScreen(
             colorFilter = ColorFilter.tint(primaryColor)
         )
 
-        TransactionStatusOverlay(
-            status = transactionStatus,
-            gifLoader = gifEnabledLoader,
-            onDismiss = { clearTransactionStatus() },
-            primaryColor = primaryColor,
-            secondaryColor = secondaryColor
-        )
+
 
 
         Column(
@@ -276,6 +270,14 @@ fun SendScreen(
                 onContentChanged = onRecipientChange
             )
         }
+
+        TransactionStatusOverlay(
+            status = transactionStatus,
+            gifLoader = gifEnabledLoader,
+            onDismiss = { clearTransactionStatus() },
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
+        )
     }
 
 
