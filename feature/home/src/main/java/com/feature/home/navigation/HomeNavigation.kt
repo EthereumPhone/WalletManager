@@ -25,7 +25,7 @@ fun NavGraphBuilder.homeGraph(
     sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
-    navigateToLog: (String) -> Unit,
+    navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
     nestedGraphs: NavGraphBuilder.() -> Unit,

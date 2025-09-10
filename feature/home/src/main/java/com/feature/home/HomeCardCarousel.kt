@@ -92,7 +92,7 @@ internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
-    navigateToLog: (String) -> Unit,
+    navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
@@ -180,7 +180,7 @@ fun HomeScreen2(
     groupedAssetsUiState: GroupedAssetsUiState,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
-    navigateToLog: (String) -> Unit,
+    navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
     //selectedTokenId: State<String>,
@@ -401,7 +401,7 @@ fun HomeScreen2(
                             message = "No internet connection!",
                         )
                     } else {
-                        //navigateToLog(selectedTokenId.value)
+                        navigateToLog()
                         //navigateToSend(selectedTokenId.value,selectedTokenId.value)
                     }
                 },
