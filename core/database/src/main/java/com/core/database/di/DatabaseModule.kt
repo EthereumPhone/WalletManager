@@ -1,6 +1,7 @@
 package com.core.database.di
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import com.core.database.DatabaseCallbacks
 import com.core.database.DatabaseMigrations
@@ -28,6 +29,22 @@ object DatabaseModule {
         @ApplicationContext context: Context,
         moshi: Moshi
     ): WmDatabase {
+        return try {
+            // First attempt: try to build with migrations
+            buildDatabase(context, moshi, withMigrations = true)
+        } catch (e: Exception) {
+            Log.e("DatabaseModule", "Failed to migrate database, deleting and recreating", e)
+            // If migration fails, delete the database and recreate it
+            context.deleteDatabase("wm-database")
+            buildDatabase(context, moshi, withMigrations = false)
+        }
+    }
+    
+    private fun buildDatabase(
+        context: Context,
+        moshi: Moshi,
+        withMigrations: Boolean
+    ): WmDatabase {
         val builder = Room.databaseBuilder(
             context,
             WmDatabase::class.java,
@@ -36,13 +53,20 @@ object DatabaseModule {
             .addTypeConverter(Erc1155MetadataConverter(MoshiJsonConverter(moshi)))
             .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
             .addTypeConverter(BigDecimalTypeConverter())
-            .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+            
+        if (withMigrations) {
+            builder.addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+        }
+        
+        return builder
             // Add callback for token seeding on database creation/open
             .addCallback(DatabaseCallbacks.createTokenSeedingCallback(context))
-            // Enable destructive migration - this will recreate the database and seed fresh data
+            // Enable destructive migration as fallback
             .fallbackToDestructiveMigration()
-        
-        return builder.build()
+            .fallbackToDestructiveMigrationOnDowngrade()
+            // Explicitly handle problematic versions
+            .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5)
+            .build()
     }
 
 }

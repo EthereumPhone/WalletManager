@@ -135,11 +135,15 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(listOf(contractAddress)).first()
                     tokens.filter { it.chainId == chainId }.forEach { token ->
                         // Fetch the latest price for this token
-                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(token.contractAddress, token.chainId)
+                        // Using the new suspend function signature
+                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(
+                            address = token.contractAddress,
+                            chainId = token.chainId
+                        )
                         val priceValue = latestExchange?.value ?: 0.0
                         
                         cursor.addRow(
-                            arrayOf(
+                            arrayOf<Any?>(
                                 token.contractAddress,
                                 token.decimals,
                                 token.name,
@@ -162,11 +166,15 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(chainId).first()
                     tokens.forEach { token ->
                         // Fetch the latest price for this token
-                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(token.contractAddress, token.chainId)
+                        // Using the new suspend function signature
+                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(
+                            address = token.contractAddress,
+                            chainId = token.chainId
+                        )
                         val priceValue = latestExchange?.value ?: 0.0
                         
                         cursor.addRow(
-                            arrayOf(
+                            arrayOf<Any?>(
                                 token.contractAddress,
                                 token.decimals,
                                 token.name,
