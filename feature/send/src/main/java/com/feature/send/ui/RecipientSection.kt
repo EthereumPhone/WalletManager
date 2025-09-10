@@ -20,6 +20,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,7 +60,11 @@ fun RecipientSection(
         var textFieldValue by remember { mutableStateOf(TextFieldValue(recipientUiState.recipientAddress)) }
         LaunchedEffect(recipientUiState) {
             if (textFieldValue.text != recipientUiState.recipientAddress) {
-                textFieldValue = textFieldValue.copy(text = recipientUiState.recipientAddress)
+                // Move cursor to end when text changes (e.g., after ENS resolution)
+                textFieldValue = TextFieldValue(
+                    text = recipientUiState.recipientAddress,
+                    selection = TextRange(recipientUiState.recipientAddress.length)
+                )
             }
         }
 
