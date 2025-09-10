@@ -93,7 +93,11 @@ class MainActivity() : ComponentActivity() {
             
 
             WorkManager.getInstance(applicationContext)
-                .enqueue(seedNetworkBalanceWork)
+                .enqueueUniqueWork(
+                    com.workers.work.SeedTokensWorker.SEED_WORK_NAME,
+                    ExistingWorkPolicy.KEEP,
+                    seedNetworkBalanceWork
+                )
 
             prefs.edit().putLong(KEY_LAST_REFRESH_TIME, now).apply()
         }
@@ -109,7 +113,11 @@ class MainActivity() : ComponentActivity() {
                 // Queue the update work
                 val updateWork = UpdateTokensWorker.createUpdateWork()
                 WorkManager.getInstance(applicationContext)
-                    .enqueue(updateWork)
+                    .enqueueUniqueWork(
+                        com.workers.work.UpdateTokensWorker.UPDATE_WORK_NAME,
+                        ExistingWorkPolicy.KEEP,
+                        updateWork
+                    )
                 
                 // Wait for 1.5 minutes before next update
                 delay(UPDATE_INTERVAL_MS)

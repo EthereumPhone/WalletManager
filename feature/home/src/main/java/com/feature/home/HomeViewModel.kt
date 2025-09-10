@@ -117,15 +117,8 @@ class HomeViewModel @Inject constructor(
             if (it.isEmpty()) {
                 GroupedAssetsUiState.Empty
             } else {
-                it.forEach { oldAssets ->
-                    println("oldAssets: $oldAssets")
-                }
                 // Sort assets by totalFiatBalance in descending order (highest value first)
                 val sortedAssets = it.sortedBy { asset -> asset.totalFiatBalance ?: 0.0 }
-
-                sortedAssets.forEach { doneAssets ->
-                    println("doneAssets: $doneAssets")
-                }
                 GroupedAssetsUiState.Success(sortedAssets)
             }
 

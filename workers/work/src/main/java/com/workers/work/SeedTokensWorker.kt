@@ -7,6 +7,8 @@ import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import androidx.work.WorkerParameters
 import com.core.data.remote.EnsApi
 import com.core.data.repository.EnsRepository
@@ -42,18 +44,16 @@ class SeedTokensWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        while (userDataRepository.userData.first().walletAddress == "") {
-            // just wait
-        }
-
-        val address = userDataRepository.userData.first()
-        Log.d("Worker Debug", address.walletAddress)
+        // Wait until a non-blank wallet address is available (suspends without busy-waiting)
+        val userData = userDataRepository.userData.first { it.walletAddress.isNotBlank() }
+        val address = userData.walletAddress
+        Log.d("Worker Debug", address)
 
         try {
             coroutineScope {
                 // First, refresh transfers and update tokens
-                launch { transferRepository.refreshTransfers(address.walletAddress) }
-                launch { updateTokenUseCase(address.walletAddress) }
+                launch { transferRepository.refreshTransfers(address) }
+                launch { updateTokenUseCase(address) }
             }
             
             // fetch ens and exchange rate
@@ -129,9 +129,16 @@ class SeedTokensWorker @AssistedInject constructor(
     
     companion object {
 
+        const val SEED_WORK_NAME = "seed_tokens_work"
+
         fun startSeedNetworkBalanceWork() =
             OneTimeWorkRequestBuilder<SeedTokensWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
             .build()
 

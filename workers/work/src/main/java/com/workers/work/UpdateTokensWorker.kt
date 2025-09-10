@@ -6,6 +6,8 @@ import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import androidx.work.WorkerParameters
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
@@ -45,6 +47,11 @@ class UpdateTokensWorker @AssistedInject constructor(
         fun createUpdateWork() =
             OneTimeWorkRequestBuilder<UpdateTokensWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .build()
     }
@@ -54,7 +61,8 @@ class UpdateTokensWorker @AssistedInject constructor(
         return@withContext try {
             Log.d(TAG, "Starting token update work")
             
-            val address = userDataRepository.userData.first().walletAddress
+            // Wait until a non-blank wallet address is available (suspends, no busy-wait)
+            val address = userDataRepository.userData.first { it.walletAddress.isNotBlank() }.walletAddress
             
             // Use supervisorScope to handle individual failures without cancelling other operations
             supervisorScope {
