@@ -96,7 +96,12 @@ fun NetworkSelector(
                             val imageModifier = Modifier
                                 .size(34.dp)
                                 .then(
-                                    if (primaryColor == lazerCore && item.chainId == 8453) Modifier.border(1.dp, secondaryColor, CircleShape)
+                                    if (primaryColor == lazerCore && item.chainId == 8453) {
+                                        Modifier.border(
+                                            1.dp, secondaryColor,
+                                            RoundedCornerShape(2.dp)
+                                        )
+                                    }
                                     else Modifier
                                 )
 
