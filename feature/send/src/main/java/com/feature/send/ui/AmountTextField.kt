@@ -107,7 +107,7 @@ fun AmountTextField(
                 TextToggle(
                     Modifier.offset(x = 2.dp, y=4.dp),
                     when(selectedAssetUiState) {
-                        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.uppercase()
+                        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.overflowWithEllipses(8).uppercase()
                         SelectedAssetUiState.Unselected -> "ETH"
                     },
                     "$",
@@ -258,7 +258,7 @@ fun AmountTextFieldFiatPreview() {
         TokenAssetWithPrice(
             address = "",
             chainId = 1,
-            symbol = "USDC",
+            symbol = "USDCCCCCCCCCCCCC",
             name = "USDCoin",
             balance = 13.3,
             decimals = 16,
