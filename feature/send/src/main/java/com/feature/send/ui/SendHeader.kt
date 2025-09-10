@@ -86,7 +86,7 @@ fun SendHeader(
         )
 
         Text(
-            text = symbol,
+            text = symbol.overflowWithEllipses(10),
             style = TextStyle(
                 fontFamily = SpaceMono,
                 color = primaryColor,
@@ -115,6 +115,15 @@ fun SendHeader(
     }
 }
 
+
+
+fun String.overflowWithEllipses(amount: Int = 10): String {
+    if (this.length > amount) {
+        return this.take(amount) + "..."
+    }
+
+    return this
+}
 
 @Preview
 @Composable
