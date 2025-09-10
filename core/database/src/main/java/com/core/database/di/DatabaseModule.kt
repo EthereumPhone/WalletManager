@@ -64,8 +64,8 @@ object DatabaseModule {
             // Enable destructive migration as fallback
             .fallbackToDestructiveMigration()
             .fallbackToDestructiveMigrationOnDowngrade()
-            // Explicitly handle problematic versions
-            .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5)
+            // Only use destructive migration for version 1 (no migration path from 1 to 2)
+            .fallbackToDestructiveMigrationFrom(1)
             .build()
     }
 
