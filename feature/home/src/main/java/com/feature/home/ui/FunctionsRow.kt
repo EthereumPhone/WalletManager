@@ -1,6 +1,5 @@
 package com.feature.home.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.core.ui.WmIconButton
+import com.core.ui.util.debouncedClickable
 import org.ethosmobile.components.library.core.ethOSIconButton
 
 @Composable
@@ -26,12 +26,12 @@ internal fun FunctionsRow(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Box(
-            modifier = Modifier.clickable {
+            modifier = Modifier.debouncedClickable {
                 navigateToSend()
             }
         ) {
             ethOSIconButton(
-                onClick = { navigateToSend() },
+                onClick = { }, // Empty since Box handles the click
                 icon = Icons.Rounded.NorthEast,
                 contentDescription = "Send"
             )
@@ -39,24 +39,24 @@ internal fun FunctionsRow(
 
 
         Box(
-            modifier = Modifier.clickable {
+            modifier = Modifier.debouncedClickable {
                 navigateToReceive()
             }
         ) {
             ethOSIconButton(
-                onClick = { navigateToReceive() },
+                onClick = { }, // Empty since Box handles the click
                 icon = Icons.Rounded.ArrowDownward,
                 contentDescription = "Receive"
             )
         }
 
         Box(
-            modifier = Modifier.clickable {
+            modifier = Modifier.debouncedClickable {
                 navigateToBuy()
             }
         ) {
             ethOSIconButton(
-                onClick = { navigateToBuy() },
+                onClick = { }, // Empty since Box handles the click
                 icon = Icons.Rounded.SwapVert,
                 contentDescription = "Swap"
             )

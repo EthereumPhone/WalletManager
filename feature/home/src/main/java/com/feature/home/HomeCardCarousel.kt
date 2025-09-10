@@ -78,10 +78,10 @@ import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import com.core.ui.util.neonOpacity
 import com.core.ui.util.pulseOpacity
+import com.core.ui.util.rememberDebouncedClickHandler
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
 import com.feature.home.ui.TokenCardCarousel
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KSuspendFunction1
 
 
@@ -206,14 +206,7 @@ fun HomeScreen2(
     val uriHandler = LocalUriHandler.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val lastClickTime = remember { AtomicLong(0) }
-    fun onDebouncedClick(action: () -> Unit) {
-        val now = System.currentTimeMillis()
-        if (now - lastClickTime.get() > 1000L) {
-            lastClickTime.set(now)
-            action()
-        }
-    }
+    val debouncedClickHandler = rememberDebouncedClickHandler()
 
     val gifEnabledLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -406,12 +399,12 @@ fun HomeScreen2(
                     }
                 },
                 navigateToReceive = {
-                    onDebouncedClick {
+                    debouncedClickHandler {
                         navigateToReceive()
                     }
                 },
                 navigateToBuy = {
-                    onDebouncedClick {
+                    debouncedClickHandler {
                         try {
                             val intent = Intent().apply {
                                 setClassName(

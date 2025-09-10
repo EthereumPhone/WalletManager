@@ -25,6 +25,7 @@ import com.core.ui.HeaderBar
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.TokenLogoFallback
+import com.core.ui.util.rememberDebouncedClickHandler
 import com.feature.send.AssetsUiState
 import com.feature.send.R
 
@@ -35,6 +36,7 @@ fun SendHeader(
     onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
+    val debouncedClickHandler = rememberDebouncedClickHandler()
 
     val (iconUrl, symbol) = when(assetsUiState) {
         is AssetsUiState.Success -> {
@@ -101,7 +103,7 @@ fun SendHeader(
         // back icon
         IconButton(
             modifier = Modifier.size(56.dp),
-            onClick = { onBackClick() }
+            onClick = { debouncedClickHandler(onBackClick) }
         ) {
             Box(modifier = Modifier.size(56.dp)) {
                 Icon(

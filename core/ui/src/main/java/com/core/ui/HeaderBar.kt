@@ -18,9 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +32,7 @@ import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.mediumExitDuration
+import com.core.ui.util.rememberDebouncedClickHandler
 
 @Composable
 fun HeaderBar(
@@ -44,10 +43,7 @@ fun HeaderBar(
     primaryColor: Color,
     onClick: () -> Unit = {}
 ){
-    // Debouncing-State für das Verhindern von mehrfachen schnellen Klicks
-    var lastClickTime by remember { mutableLongStateOf(0L) }
-    val debounceDelay = 500L // 500ms Verzögerung zwischen Klicks
-
+    val debouncedClickHandler = rememberDebouncedClickHandler(intervalMillis = 500L)
 
     Row (
         modifier = modifier
@@ -83,13 +79,7 @@ fun HeaderBar(
             exit  = fadeOut(tween(mediumExitDuration))
         ) {
             IconButton(modifier = Modifier.size(56.dp),
-                onClick = {
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastClickTime >= debounceDelay) {
-                        lastClickTime = currentTime
-                        onClick()
-                    }
-                }) {
+                onClick = { debouncedClickHandler(onClick) }) {
                 Box(modifier = Modifier.size(56.dp)) {
                     Icon(
                         modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
