@@ -1,6 +1,7 @@
 package com.core.database.di
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.room.Room
 import com.core.database.DatabaseCallbacks
@@ -20,6 +21,29 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+    
+    /**
+     * Gets the current version of the database by querying the room_master_table
+     */
+    private fun getCurrentDatabaseVersion(context: Context): Int {
+        val dbPath = context.getDatabasePath("wm-database").absolutePath
+        val db = SQLiteDatabase.openDatabase(
+            dbPath,
+            null,
+            SQLiteDatabase.OPEN_READONLY
+        )
+        
+        return db.use {
+            val cursor = it.rawQuery("PRAGMA user_version", null)
+            cursor.use { c ->
+                if (c.moveToFirst()) {
+                    c.getInt(0)
+                } else {
+                    0
+                }
+            }
+        }
+    }
 
     @Provides
     @Singleton
@@ -27,12 +51,30 @@ object DatabaseModule {
         @ApplicationContext context: Context,
         moshi: Moshi
     ): WmDatabase {
+        // Check if database exists and needs migration
+        val dbFile = context.getDatabasePath("wm-database")
+        if (dbFile.exists()) {
+            try {
+                // Check the current database version
+                val currentVersion = getCurrentDatabaseVersion(context)
+                Log.d("DatabaseModule", "Current database version: $currentVersion")
+                
+                // If database is at version 2-5, delete it to force recreation
+                if (currentVersion in 2..5) {
+                    Log.w("DatabaseModule", "Database at version $currentVersion, deleting for clean migration to version 6")
+                    context.deleteDatabase("wm-database")
+                }
+            } catch (e: Exception) {
+                Log.e("DatabaseModule", "Error checking database version, will attempt normal migration", e)
+            }
+        }
+        
         return try {
-            // First attempt: try to build the database
+            // Build the database
             buildDatabase(context, moshi)
         } catch (e: Exception) {
-            Log.e("DatabaseModule", "Failed to migrate database, deleting and recreating", e)
-            // If migration fails, delete the database and recreate it
+            Log.e("DatabaseModule", "Failed to build database, deleting and recreating", e)
+            // If any error occurs, delete the database and recreate it
             context.deleteDatabase("wm-database")
             buildDatabase(context, moshi)
         }
