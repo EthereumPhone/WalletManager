@@ -4,9 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.room.Room
 import com.core.database.DatabaseCallbacks
-import com.core.database.DatabaseMigrations
 import com.core.database.WmDatabase
-import com.core.database.dao.EnsDao
 import com.core.database.util.BigDecimalTypeConverter
 import com.core.database.util.Erc1155MetadataConverter
 import com.core.database.util.MoshiJsonConverter
@@ -30,20 +28,19 @@ object DatabaseModule {
         moshi: Moshi
     ): WmDatabase {
         return try {
-            // First attempt: try to build with migrations
-            buildDatabase(context, moshi, withMigrations = true)
+            // First attempt: try to build the database
+            buildDatabase(context, moshi)
         } catch (e: Exception) {
             Log.e("DatabaseModule", "Failed to migrate database, deleting and recreating", e)
             // If migration fails, delete the database and recreate it
             context.deleteDatabase("wm-database")
-            buildDatabase(context, moshi, withMigrations = false)
+            buildDatabase(context, moshi)
         }
     }
     
     private fun buildDatabase(
         context: Context,
-        moshi: Moshi,
-        withMigrations: Boolean
+        moshi: Moshi
     ): WmDatabase {
         val builder = Room.databaseBuilder(
             context,
@@ -54,18 +51,17 @@ object DatabaseModule {
             .addTypeConverter(RawContractConverter(MoshiJsonConverter(moshi)))
             .addTypeConverter(BigDecimalTypeConverter())
             
-        if (withMigrations) {
-            builder.addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
-        }
+        // Don't add any migrations - we want destructive migration for all versions
+        // if (withMigrations) {
+        //     builder.addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+        // }
         
         return builder
             // Add callback for token seeding on database creation/open
             .addCallback(DatabaseCallbacks.createTokenSeedingCallback(context))
-            // Enable destructive migration as fallback
+            // Enable destructive migration as fallback for all versions
             .fallbackToDestructiveMigration()
             .fallbackToDestructiveMigrationOnDowngrade()
-            // Use destructive migration for versions 1-5 to handle schema mismatches
-            .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5)
             .build()
     }
 
