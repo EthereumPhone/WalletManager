@@ -17,7 +17,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -167,104 +170,115 @@ fun DgenBasicTextfield(
             }
         }
 
-        BasicTextField(
-            value = value,
-            onValueChange = { newValue ->
-                // Apply max length restriction
-                if (newValue.text.length <= maxLength) {
-                    onValueChange(newValue)
-                }
-            },
-            textStyle = textStyle,
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (scrollHorizontally) {
-                        Modifier.horizontalScroll(scrollState)
-                    } else {
-                        Modifier.verticalScroll(scrollState)
-                    }
-                )
-                .drawBehind {
-                    if (isFocused){
-                        textLayoutResult
-                            ?.takeIf { value.selection.collapsed }
-                            ?.let { tlr ->
-                                val rect = tlr.getCursorRect(value.selection.start)
-                                
-                                if (scrollHorizontally) {
-                                    // Calculate cursor position adjusted for horizontal scroll
-                                    val cursorX = rect.left - scrollState.value
-                                    val cursorY = rect.top
-                                    
-                                    // Use the actual line height from the text layout for cursor height
-                                    val actualCursorHeight = rect.height
-                                    
-                                    // Draw cursor at the correct horizontal position
-                                    drawRect(
-                                        color = cursorColor.copy(alpha = blinkAlpha),
-                                        topLeft = Offset(cursorX, cursorY),
-                                        size = Size(cursorWidth.toPx(), actualCursorHeight)
-                                    )
-                                } else {
-                                    // Calculate cursor position adjusted for vertical scroll
-                                    val lineHeight = with(density) { textStyle.fontSize.toPx() }
-                                    val currentLine = (rect.top / lineHeight).toInt()
-                                    
-                                    // Determine if cursor should be fixed at bottom
-                                    val cursorY = if (maxLines != Int.MAX_VALUE && currentLine >= maxLines - 1) {
-                                        // Fix cursor on the last visible line when max lines is reached
-                                        val fixedY = (maxLines - 1) * lineHeight
-                                        fixedY - scrollState.value
-                                    } else {
-                                        // Use normal cursor position for lines within max
-                                        rect.top - scrollState.value
-                                    }
-                                    
-                                    val cursorX = rect.left
-                                    val actualCursorHeight = rect.height
-                                    
-                                    // Draw cursor at the correct vertical position
-                                    drawRect(
-                                        color = cursorColor.copy(alpha = blinkAlpha),
-                                        topLeft = Offset(cursorX, cursorY),
-                                        size = Size(cursorWidth.toPx(), actualCursorHeight)
-                                    )
-                                }
-                            }
-                    }
-                }
-                .onFocusChanged { 
-                    isFocused = it.isFocused 
-                    isAnyFieldFocused.value = it.isFocused
-                    onFocusChanged?.invoke(it.isFocused)
-                },
-            visualTransformation = visualTransformation,
-            cursorBrush = SolidColor(Color.Unspecified),
-            onTextLayout = { layoutResult ->
-                textLayoutResult = layoutResult
-            },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                autoCorrectEnabled = autoCorrectEnabled,
-                imeAction = ImeAction.Done,
-                keyboardType = keyboardtype
-            ),
-            keyboardActions = KeyboardActions(
-                onGo = {
-                    isFocused = true
-                },
-                onDone = {
-                    focusManager.clearFocus()
-                    isFocused = false
-                }
-            ),
-            singleLine = false,
-            minLines = minLines,
-            maxLines = maxLines,
-            enabled = enabled,
-            readOnly = readOnly,
-            interactionSource = interactionSource
+        val customSelectionColors = TextSelectionColors(
+            handleColor = Color.Transparent, // hide the tear icon
+            backgroundColor = Color.Transparent // optional: remove highlight background
         )
+
+        CompositionLocalProvider(
+            LocalTextSelectionColors provides customSelectionColors
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = { newValue ->
+                    // Apply max length restriction
+                    if (newValue.text.length <= maxLength) {
+                        onValueChange(newValue)
+                    }
+                },
+                textStyle = textStyle,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (scrollHorizontally) {
+                            Modifier.horizontalScroll(scrollState)
+                        } else {
+                            Modifier.verticalScroll(scrollState)
+                        }
+                    )
+                    .drawBehind {
+                        if (isFocused){
+                            textLayoutResult
+                                ?.takeIf { value.selection.collapsed }
+                                ?.let { tlr ->
+                                    val rect = tlr.getCursorRect(value.selection.start)
+
+                                    if (scrollHorizontally) {
+                                        // Calculate cursor position adjusted for horizontal scroll
+                                        val cursorX = rect.left - scrollState.value
+                                        val cursorY = rect.top
+
+                                        // Use the actual line height from the text layout for cursor height
+                                        val actualCursorHeight = rect.height
+
+                                        // Draw cursor at the correct horizontal position
+                                        drawRect(
+                                            color = cursorColor.copy(alpha = blinkAlpha),
+                                            topLeft = Offset(cursorX, cursorY),
+                                            size = Size(cursorWidth.toPx(), actualCursorHeight)
+                                        )
+                                    } else {
+                                        // Calculate cursor position adjusted for vertical scroll
+                                        val lineHeight = with(density) { textStyle.fontSize.toPx() }
+                                        val currentLine = (rect.top / lineHeight).toInt()
+
+                                        // Determine if cursor should be fixed at bottom
+                                        val cursorY = if (maxLines != Int.MAX_VALUE && currentLine >= maxLines - 1) {
+                                            // Fix cursor on the last visible line when max lines is reached
+                                            val fixedY = (maxLines - 1) * lineHeight
+                                            fixedY - scrollState.value
+                                        } else {
+                                            // Use normal cursor position for lines within max
+                                            rect.top - scrollState.value
+                                        }
+
+                                        val cursorX = rect.left
+                                        val actualCursorHeight = rect.height
+
+                                        // Draw cursor at the correct vertical position
+                                        drawRect(
+                                            color = cursorColor.copy(alpha = blinkAlpha),
+                                            topLeft = Offset(cursorX, cursorY),
+                                            size = Size(cursorWidth.toPx(), actualCursorHeight)
+                                        )
+                                    }
+                                }
+                        }
+                    }
+                    .onFocusChanged {
+                        isFocused = it.isFocused
+                        isAnyFieldFocused.value = it.isFocused
+                        onFocusChanged?.invoke(it.isFocused)
+                    },
+                visualTransformation = visualTransformation,
+                cursorBrush = SolidColor(Color.Unspecified),
+                onTextLayout = { layoutResult ->
+                    textLayoutResult = layoutResult
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    autoCorrectEnabled = autoCorrectEnabled,
+                    imeAction = ImeAction.Done,
+                    keyboardType = keyboardtype
+                ),
+                keyboardActions = KeyboardActions(
+                    onGo = {
+                        isFocused = true
+                    },
+                    onDone = {
+                        focusManager.clearFocus()
+                        isFocused = false
+                    }
+                ),
+                singleLine = false,
+                minLines = minLines,
+                maxLines = maxLines,
+                enabled = enabled,
+                readOnly = readOnly,
+                interactionSource = interactionSource
+            )
+        }
+
+
     }
 
 }
