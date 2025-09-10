@@ -107,15 +107,16 @@ fun AmountTextField(
                 TextToggle(
                     Modifier.offset(x = 2.dp, y=4.dp),
                     when(selectedAssetUiState) {
-                        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.overflowWithEllipses(8).uppercase()
+                        is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.take(5).uppercase()
                         SelectedAssetUiState.Unselected -> "ETH"
                     },
                     "$",
                     onToggle = {
-                        toggleFiat = !toggleFiat
-
-                        onAmountChange("", toggleFiat)
-                               },
+                        // only allow switching if fiat amount is present
+                        if (amountUiState.maxFiatAmount != 0.0) {
+                            toggleFiat = !toggleFiat
+                            onAmountChange("", toggleFiat)
+                        } },
                     value = toggleFiat,
                     primaryColor = primaryColor
                 )

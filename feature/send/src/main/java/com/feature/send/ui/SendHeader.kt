@@ -41,7 +41,7 @@ fun SendHeader(
             val asset = assetsUiState.assets.first()
             asset.logoUrl to asset.symbol
         }
-        else -> "" to "ETH"
+        else -> "" to ""
     }
 
     Row(
@@ -86,7 +86,7 @@ fun SendHeader(
         )
 
         Text(
-            text = symbol.overflowWithEllipses(10),
+            text = symbol.overflowWithEllipses(10).uppercase(),
             style = TextStyle(
                 fontFamily = SpaceMono,
                 color = primaryColor,
