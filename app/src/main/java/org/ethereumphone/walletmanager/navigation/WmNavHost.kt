@@ -98,11 +98,11 @@ fun WmNavHost(
                     }
                     navController.navigateToSend(groupId=groupId)
                 },
-                navigateToLog = { it ->
+                navigateToLog = {
                     coroutineScope.launch(Dispatchers.IO) {
                         terminalSDK?.finishScreen()
                     }
-                    navController.navigateToTransaction(tokenId = it)
+                    navController.navigateToTransaction()
                 },
                 navigateToReceive = {
                     coroutineScope.launch(Dispatchers.IO) {
