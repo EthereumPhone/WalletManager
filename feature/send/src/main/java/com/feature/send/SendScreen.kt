@@ -1,6 +1,9 @@
 package com.feature.send
 
+import android.Manifest
 import android.os.Build.VERSION.SDK_INT
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,8 +16,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
@@ -24,6 +31,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -37,6 +47,12 @@ import com.feature.send.ui.AmountTextField
 import com.feature.send.ui.NetworkSelector
 import com.feature.send.ui.RecipientSection
 import com.feature.send.ui.SendHeader
+import com.feature.send.ui.TransactionStatusOverlay
+import com.feature.send.ui.TransactionStatus
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.journeyapps.barcodescanner.ScanContract
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -54,35 +70,130 @@ fun SendRoute(
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
 
 
+
+    // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, transactionStatus) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Skip the very first ON_RESUME that occurs when the screen is opened for the first time
+                    if (!hasHandledInitialResume) {
+                        hasHandledInitialResume = true
+                    } else if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
+                        // Only call onScreenOpenedAfterResume on subsequent resumes when no transaction is running
+                        println("SendScreen2: ON_RESUME - calling onScreenOpenedAfterResume() ETHOSDEBUG")
+                        viewModel.onScreenOpenedAfterResume()
+                    }
+                }
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Display QR code on secondary screen only when the actual send screen content appears
+    LaunchedEffect(assetsUiState, transactionStatus) {
+        // Display QR code only when assets are loaded and there is no active transaction status
+        if (assetsUiState is AssetsUiState.Success && transactionStatus == null) {
+            viewModel.onScreenOpened()
+        }
+    }
+
+    // Track if user is navigating back to home
+    var isNavigatingBack by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onScreenClosed(clearLed = !isNavigatingBack)
+        }
+    }
+
+    LaunchedEffect(transactionStatus) {
+        Log.d("SendScreen", "=== TRANSACTION STATUS CHANGED ===")
+        Log.d("SendScreen", "New transactionStatus: $transactionStatus")
+
+        when (transactionStatus) {
+            TransactionStatus.SUCCESS -> {
+                Log.d("SendScreen", "🟢 SUCCESS status detected - transaction successful")
+                delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
+                onBackClick()
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                viewModel.clearTransactionStatus()
+            }
+            TransactionStatus.FAILURE -> {
+                Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
+                // Display failure overlay for a reasonable duration to acknowledge the error
+                delay(TransactionTiming.FAILURE_DISPLAY_DURATION)
+                Log.d("SendScreen", "${TransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, starting fade navigation")
+
+                // Start navigation while overlay is still visible for smooth fade effect
+                onBackClick()
+
+                // Keep overlay visible during fade transition for seamless experience
+                delay(TransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SendScreen", "Fade transition complete, clearing overlay")
+                viewModel.clearTransactionStatus()
+            }
+            else -> {
+                Log.d("SendScreen", "Other status: $transactionStatus - no auto-navigation")
+            }
+        }
+        Log.d("SendScreen", "=== TRANSACTION STATUS HANDLING ENDED ===")
+    }
+
+
+
+
     SendScreen(
         amountUiState = amountUiState,
         recipientUiState = recipientUiState,
         assetsUiState = assetsUiState,
         selectedAssetUiState = selectedAssetUiState,
+        transactionStatus = transactionStatus,
+        qrScannerTriggered = qrScannerTriggered,
         onNetworkSelected = viewModel::changeSelectedAsset,
         onAmountChange = viewModel::updateAmount,
         maxAmountClicked = viewModel::setMaxAmount,
         onRecipientChange = viewModel::updateAddress,
+        clearTransactionStatus = viewModel::clearTransactionStatus,
+        resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         onBackClick = onBackClick
     )
-
 }
 
 
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SendScreen(
     amountUiState: AmountUiState,
     recipientUiState: RecipientUiState,
     assetsUiState: AssetsUiState,
     selectedAssetUiState: SelectedAssetUiState,
+    transactionStatus: TransactionStatus?, // TODO: Change this
+    qrScannerTriggered: Boolean, // TODO: Change this
     onNetworkSelected: (Int) -> Unit,
     onAmountChange: (String, Boolean) -> Unit,
     maxAmountClicked: () -> Unit,
     onRecipientChange: (String) -> Unit,
+    clearTransactionStatus: () -> Unit,
+    resetQrScannerTrigger: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
+
+
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
     val context = LocalContext.current
@@ -121,6 +232,14 @@ fun SendScreen(
             colorFilter = ColorFilter.tint(primaryColor)
         )
 
+        TransactionStatusOverlay(
+            status = transactionStatus,
+            gifLoader = gifEnabledLoader,
+            onDismiss = { clearTransactionStatus() },
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor
+        )
+
 
         Column(
             Modifier.padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 12.dp),
@@ -156,6 +275,55 @@ fun SendScreen(
                 recipientUiState = recipientUiState,
                 onContentChanged = onRecipientChange
             )
+        }
+    }
+
+
+    val barCodeLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            Log.d("QRScanner", "Scan result received: ${result.contents}")
+            if(result.contents == null) {
+                // Optional: Handle cancelled scan
+                Log.d("QRScanner", "Scan was cancelled or no content found")
+            } else {
+                // Parse Ethereum URI according to EIP-681 spec
+                // Format: ethereum:<address>[@<chain_id>][?<parameters>]
+                val cleanAddress = parseEthereumUri(result.contents)
+                Log.d("QRScanner", "Extracted address: $cleanAddress")
+                onRecipientChange(cleanAddress)
+            }
+        }
+    )
+
+    val scanningPermissionsToRequest = listOf(
+        Manifest.permission.CAMERA
+    )
+
+    val multiplePermissionsState = rememberMultiplePermissionsState(
+        permissions = scanningPermissionsToRequest
+    )
+
+    // Handle QR scanner trigger from ViewModel
+    LaunchedEffect(qrScannerTriggered) {
+        if (qrScannerTriggered) {
+            if (multiplePermissionsState.allPermissionsGranted) {
+                showCamera(barCodeLauncher)
+            } else {
+                multiplePermissionsState.launchMultiplePermissionRequest()
+            }
+            resetQrScannerTrigger()
+        }
+    }
+
+    LaunchedEffect(qrScannerTriggered) {
+        if (qrScannerTriggered) {
+            if (multiplePermissionsState.allPermissionsGranted) {
+                showCamera(barCodeLauncher)
+            } else {
+                multiplePermissionsState.launchMultiplePermissionRequest()
+            }
+            resetQrScannerTrigger()
         }
     }
 }
@@ -218,8 +386,12 @@ fun PreviewSendScreen() {
         recipientUiState,
         assetsUiState,
         selectedAssetUiState,
+        null,
+        false,
         {},
-        {} as (String, Boolean) -> Unit,
+        {x,y ->},
+        {},
+        {},
         {},
         {},
         {}

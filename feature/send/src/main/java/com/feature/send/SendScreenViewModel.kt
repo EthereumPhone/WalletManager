@@ -421,21 +421,17 @@ class SendViewModel @Inject constructor(
                 val result = terminalSDK?.isAvailable() == false
                 println("TerminalSDK isAvailable: $result")
 
-                if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.displayQRCode(
-                        onQrCode = {
-                            Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
-                            triggerQrScanner()
-                        },
-                        sendTx = {
-                            Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
-                            triggerSendTransaction()
-                        }
-                    )
-                    Log.d("SendViewModel", "QR code displayed on secondary screen")
-                } else {
-                    Log.w("SendViewModel", "TerminalSDK not available")
-                }
+                terminalSDK?.displayQRCode(
+                    onQrCode = {
+                        Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
+                        triggerQrScanner()
+                    },
+                    sendTx = {
+                        Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
+                        send() {}
+                    }
+                )
+                Log.d("SendViewModel", "QR code displayed on secondary screen")
             } catch (e: Exception) {
                 Log.e("SendViewModel", "Error displaying QR code", e)
             }
@@ -460,7 +456,7 @@ class SendViewModel @Inject constructor(
                         },
                         sendTx = {
                             Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
-                            triggerSendTransaction()
+                            send() {}
                         }
                     )
                     Log.d("SendViewModel", "QR code displayed on secondary screen")
