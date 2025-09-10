@@ -373,7 +373,7 @@ class SendViewModel @Inject constructor(
 
             _amountUiState.update {
                 it.copy(
-                    currentAmount = amount,
+                    currentAmount = amount.toDouble().formatWithSuffix(),
                     currentFiatAmount = it.formattedMaxFiatAmount,
                     useMaxAmount = true
                 )

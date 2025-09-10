@@ -4,6 +4,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,10 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,13 +58,10 @@ fun AmountTextField(
     val secondaryColor = SystemColorManager.secondaryColor
     var toggleFiat by remember { mutableStateOf(false) }
 
-
     val maxAlpha by animateFloatAsState(
         targetValue = if (amountUiState.useMaxAmount) 1f else pulseOpacity,
         animationSpec = tween(smallDuration,easing = FastOutLinearInEasing),
     )
-
-
 
     val amount = if (toggleFiat) {
         amountUiState.currentFiatAmount
@@ -73,7 +73,11 @@ fun AmountTextField(
     var textFieldValue by remember { mutableStateOf(TextFieldValue(amount)) }
     LaunchedEffect(amount) {
         if (textFieldValue.text != amount) {
-            textFieldValue = textFieldValue.copy(text = amount)
+            // Set cursor to end of text when amount changes (e.g., when MAX is clicked)
+            textFieldValue = TextFieldValue(
+                text = amount,
+                selection = TextRange(amount.length)
+            )
         }
     }
 
@@ -91,20 +95,17 @@ fun AmountTextField(
             .padding(end = 8.dp)
         )
 
-        Column {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-
-
-
-
-
                 // currency toggle
                 TextToggle(
-                    Modifier.offset(x = 2.dp, y=2.dp),
+                    Modifier.offset(x = 2.dp, y=4.dp),
                     when(selectedAssetUiState) {
                         is SelectedAssetUiState.Selected -> selectedAssetUiState.tokenAsset.symbol.uppercase()
                         SelectedAssetUiState.Unselected -> "ETH"
@@ -118,7 +119,6 @@ fun AmountTextField(
                     value = toggleFiat,
                     primaryColor = primaryColor
                 )
-
 
                 // max amount
                 val maxAmount = if (toggleFiat) {
@@ -137,22 +137,20 @@ fun AmountTextField(
                     color = primaryColor.copy(maxAlpha),
                     modifier = Modifier
                         .offset(y = 2.dp)
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                onMaxClick()
-                            }
+                        .clickable {
+                            onMaxClick()
                         }
                 )
             }
-
-
-
 
             // amount TextField
             DgenBasicTextfield(
                 value = textFieldValue,
                 onValueChange={ new ->
-                    if (new.text.matches("^\\d*\\.?\\d*$".toRegex())) {
+
+                    if(new.text == textFieldValue.text) {
+                        textFieldValue = new
+                    } else if (new.text.matches("^\\d*\\.?\\d*$".toRegex())) {
                         textFieldValue = new
                         onAmountChange(new.text, toggleFiat)
                     }
@@ -161,21 +159,17 @@ fun AmountTextField(
                 maxLength = 15,
                 cursorColor = primaryColor,
                 placeholder = {
-                    Row (
-                        horizontalArrangement = Arrangement.Start
-                    ){
-                        Text(
-                            modifier = Modifier,
-                            text = "0.0", // Static placeholder
-                            style = TextStyle(
-                                fontFamily = PitagonsSans,
-                                color = dgenWhite.copy(alpha = pulseOpacity),
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 42.sp,
-                                textAlign = TextAlign.Start
-                            ),
+                    Text(
+                        modifier = Modifier,
+                        text = "0.0", // Static placeholder
+                        style = TextStyle(
+                            fontFamily = PitagonsSans,
+                            color = dgenWhite.copy(alpha = pulseOpacity),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 42.sp,
+                            textAlign = TextAlign.Start,
                         )
-                    }
+                    )
                 },
                 textStyle = TextStyle(
                     fontFamily = PitagonsSans,
@@ -195,6 +189,7 @@ fun AmountTextField(
 
 private fun isValidAmount(amountUiState: AmountUiState, toggleFiat: Boolean): Boolean {
 
+    if (amountUiState.useMaxAmount) return true
 
     return if (toggleFiat) {
         if(amountUiState.currentFiatAmount.isEmpty()) return true
@@ -236,22 +231,27 @@ fun AmountTextFieldPreview() {
     AmountTextField(
         selectedAssetUiState,
         amount,
-        {} as (String, Boolean) -> Unit,
-        {}
+        { x, y ->
+
+        },
+        {},
     )
 }
 
 @Preview
 @Composable
 fun AmountTextFieldFiatPreview() {
+
+
+
     val amount = AmountUiState(
-        0.0,
-        "123",
+        72.0,
+        "72",
         "123",
         0.0,
         "",
         "",
-        true
+        false
     )
 
     val selectedAssetUiState = SelectedAssetUiState.Selected(
@@ -271,7 +271,9 @@ fun AmountTextFieldFiatPreview() {
     AmountTextField(
         selectedAssetUiState,
         amount,
-        {} as (String, Boolean) -> Unit,
-        {}
+        { x, y ->
+
+        },
+        {},
     )
 }
