@@ -176,6 +176,7 @@ fun IdleView(
                                             .clip(RoundedCornerShape(95)),
                                         contentScale = ContentScale.Crop,
                                         painter = painterResource(R.drawable.placeholer_icon_5),
+                                        colorFilter = ColorFilter.tint(primaryColor),
                                         contentDescription = "Token placeholder"
                                     )
                                 }
@@ -183,6 +184,10 @@ fun IdleView(
                         }
                         // Handle URL icons (either from API or fallback)
                         else -> {
+
+
+                            val shouldTint = effectiveIcon.isEmpty()
+
                             AsyncImage(
                                 modifier = Modifier
                                     .padding(bottom = 2.dp)
@@ -193,7 +198,8 @@ fun IdleView(
                                 model = effectiveIcon,
                                 contentDescription = tokenName,
                                 placeholder = painterResource(R.drawable.placeholer_icon_5),
-                                error = painterResource(R.drawable.placeholer_icon_5)
+                                error = painterResource(R.drawable.placeholer_icon_5),
+                                colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
                             )
                         }
                     }

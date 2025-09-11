@@ -3,7 +3,6 @@ package com.feature.send.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -21,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.core.ui.HeaderBar
+import androidx.compose.ui.graphics.ColorFilter
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.TokenLogoFallback
@@ -69,7 +68,7 @@ fun SendHeader(
             if (fallback is TokenLogoFallback.LogoSource.Url) fallback.url else ""
         } else iconUrl
 
-        val placeHolder = if (fallback is TokenLogoFallback.LogoSource.LocalResource) {
+        val placeHolderImage = if (fallback is TokenLogoFallback.LogoSource.LocalResource) {
             when(symbol.uppercase()) {
                 "ETH" -> R.drawable.mainnet
                 "MATIC" -> R.drawable.polygon
@@ -77,14 +76,17 @@ fun SendHeader(
             }
         } else R.drawable.placeholer_icon_5
 
+        val shouldTint = placeHolderImage == R.drawable.placeholer_icon_5 && icon.isNullOrEmpty()
+
         AsyncImage(
             model = icon,
             contentDescription = symbol,
             modifier = Modifier
                 .size(28.dp)
                 .clip(CircleShape),
-            placeholder = painterResource(placeHolder),
-            error = painterResource(placeHolder)
+            placeholder = painterResource(placeHolderImage),
+            error = painterResource(placeHolderImage),
+            colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
         )
 
         Text(
