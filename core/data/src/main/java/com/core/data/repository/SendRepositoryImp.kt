@@ -78,13 +78,17 @@ class SendRepositoryImp @Inject constructor(
             val amountDouble = value.replace(",",".").toDouble()
             
             val finalAmountDouble = if (currentBalance != null) {
-                // Convert the UI amount to wei
-                val amountInWei = BigDecimal(amountDouble).multiply(BigDecimal.TEN.pow(18))
+                // IMPORTANT: Network tokens (ETH/MATIC) are stored in ETH units in the database, NOT wei!
+                // This is different from ERC20 tokens which are stored in their smallest unit
+                val balanceInEth = currentBalance.tokenBalance
+                
+                // Compare the requested amount with the balance (both in ETH)
+                val requestedAmount = BigDecimal(amountDouble)
                 
                 // If the amount exceeds the database balance, use the exact database balance
-                if (amountInWei > currentBalance.tokenBalance) {
-                    // Convert the exact database balance back to ETH
-                    currentBalance.tokenBalance.divide(BigDecimal.TEN.pow(18)).toDouble()
+                if (requestedAmount > balanceInEth) {
+                    val adjustedAmount = balanceInEth.toDouble()
+                    adjustedAmount
                 } else {
                     amountDouble
                 }
@@ -117,9 +121,12 @@ class SendRepositoryImp @Inject constructor(
             // If the transaction was successful (we got a valid bundler tx hash)
             if (res.isNotEmpty() && res != "error" && res != "decline") {
                 if (currentBalance != null) {
-                    // Use the final amount in wei for balance update
-                    val finalAmountInWei = BigDecimal(finalAmountDouble).multiply(BigDecimal.TEN.pow(18))
-                    val newBalance = currentBalance.tokenBalance - finalAmountInWei
+                    // IMPORTANT: Network tokens are stored in ETH units, not wei!
+                    // So we deduct the amount in ETH, not wei
+                    // TODO: This doesn't account for gas fees, which are also deducted by the walletSDK
+                    // The actual balance will be lower than this due to gas fees
+                    val finalAmountInEth = BigDecimal(finalAmountDouble)
+                    val newBalance = currentBalance.tokenBalance - finalAmountInEth
 
                     val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
                     tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
@@ -127,6 +134,7 @@ class SendRepositoryImp @Inject constructor(
 
                 // Insert provisional transfer entry so the UI can display it immediately
                 val fromAddress = walletSDK.getAddress()
+                
                 val transferEntity = TransferEntity(
                     uniqueId = "temp_${res}",
                     asset = "ETH",
@@ -144,7 +152,7 @@ class SendRepositoryImp @Inject constructor(
                     ),
                     toaddress = toAddress,
                     tokenId = chainId.toString(),
-                    value = amountDouble,
+                    value = finalAmountDouble,  // FIX: Use finalAmountDouble instead of amountDouble
                     blockTimestamp = Clock.System.now(),
                     userIsSender = true
                 )

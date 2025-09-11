@@ -68,6 +68,7 @@ fun SendRoute(
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
+    val shouldDismissKeyboard by viewModel.shouldDismissKeyboard.collectAsStateWithLifecycle()
 
 
 
@@ -161,12 +162,14 @@ fun SendRoute(
         selectedAssetUiState = selectedAssetUiState,
         transactionStatus = transactionStatus,
         qrScannerTriggered = qrScannerTriggered,
+        shouldDismissKeyboard = shouldDismissKeyboard,
         onNetworkSelected = viewModel::changeSelectedAsset,
         onAmountChange = viewModel::updateAmount,
         maxAmountClicked = viewModel::setMaxAmount,
         onRecipientChange = viewModel::updateAddress,
         clearTransactionStatus = viewModel::clearTransactionStatus,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
+        onKeyboardDismissed = viewModel::onKeyboardDismissed,
         onBackClick = onBackClick
     )
 }
@@ -182,12 +185,14 @@ fun SendScreen(
     selectedAssetUiState: SelectedAssetUiState,
     transactionStatus: TransactionStatus?, // TODO: Change this
     qrScannerTriggered: Boolean, // TODO: Change this
+    shouldDismissKeyboard: Boolean,
     onNetworkSelected: (Int) -> Unit,
     onAmountChange: (String, Boolean) -> Unit,
     maxAmountClicked: () -> Unit,
     onRecipientChange: (String) -> Unit,
     clearTransactionStatus: () -> Unit,
     resetQrScannerTrigger: () -> Unit,
+    onKeyboardDismissed: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
@@ -267,7 +272,9 @@ fun SendScreen(
 
             RecipientSection(
                 recipientUiState = recipientUiState,
-                onContentChanged = onRecipientChange
+                onContentChanged = onRecipientChange,
+                shouldDismissKeyboard = shouldDismissKeyboard,
+                onKeyboardDismissed = onKeyboardDismissed
             )
         }
 
@@ -384,18 +391,20 @@ fun PreviewSendScreen() {
     )
 
     SendScreen(
-        amountUiState,
-        recipientUiState,
-        assetsUiState,
-        selectedAssetUiState,
-        null,
-        false,
-        {},
-        {x,y ->},
-        {},
-        {},
-        {},
-        {},
-        {}
+        amountUiState = amountUiState,
+        recipientUiState = recipientUiState,
+        assetsUiState = assetsUiState,
+        selectedAssetUiState = selectedAssetUiState,
+        transactionStatus = null,
+        qrScannerTriggered = false,
+        shouldDismissKeyboard = false,
+        onNetworkSelected = {},
+        onAmountChange = {_,_ ->},
+        maxAmountClicked = {},
+        onRecipientChange = {},
+        clearTransactionStatus = {},
+        resetQrScannerTrigger = {},
+        onKeyboardDismissed = {},
+        onBackClick = {}
     )
 }
