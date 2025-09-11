@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace 'org.ethereumphone.walletmanager'
-    compileSdk 34
+    compileSdk 35
 
     buildFeatures {
         compose = true
@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId "org.ethereumphone.walletmanager"
         minSdk 34
-        targetSdk 34
+        targetSdk 35
         versionCode 62
         versionName versionCode.toString()
 
@@ -74,6 +74,7 @@ dependencies {
 
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.profileinstaller
+    implementation libs.androidx.lifecycle.process
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit
