@@ -74,6 +74,12 @@ class TransactionViewModel @Inject constructor(
     private val _refreshState: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
+    init {
+        // Fetch new transactions when the user navigates to the log screen
+        Log.d("TransactionViewModel", "Initializing TransactionViewModel - fetching new transactions")
+        refreshData()
+    }
+
     fun refreshData() {
         Log.d("refresh Started", "update started")
 
