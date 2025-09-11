@@ -74,6 +74,7 @@ dependencies {
 
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.profileinstaller
+    implementation libs.androidx.lifecycle.process
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit
