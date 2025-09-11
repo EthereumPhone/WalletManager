@@ -19,7 +19,7 @@ android {
         applicationId "org.ethereumphone.walletmanager"
         minSdk 34
         targetSdk 35
-        versionCode 62
+        versionCode 70
         versionName versionCode.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -74,7 +74,6 @@ dependencies {
 
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.profileinstaller
-    implementation libs.androidx.lifecycle.process
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit

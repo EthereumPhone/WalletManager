@@ -72,6 +72,7 @@ fun SendRoute2(
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
+    val shouldDismissKeyboard by viewModel.shouldDismissKeyboard.collectAsStateWithLifecycle()
 
 
     // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
@@ -145,6 +146,8 @@ fun SendRoute2(
         clearTransactionStatus = viewModel::clearTransactionStatus,
         showFailedMatrix = viewModel::showFailedMatrix,
         showSuccessMatrix = viewModel::showSuccessMatrix,
+        shouldDismissKeyboard = shouldDismissKeyboard,
+        onKeyboardDismissed = viewModel::onKeyboardDismissed,
         //setMaxAmount = viewModel::setMaxAmount
     )
 }
@@ -171,6 +174,8 @@ fun SendScreen2(
     showSuccessMatrix: () -> Unit,
     transactionStatus: TransactionStatus?,
     clearTransactionStatus: () -> Unit,
+    shouldDismissKeyboard: Boolean,
+    onKeyboardDismissed: () -> Unit,
     //setMaxAmount: (BigDecimal, Int) -> Unit,
 ) {
 
@@ -397,6 +402,17 @@ fun SendScreen2(
 
                     val availableChains = assetsUiState.assets.map { it.chainId }
 
+                    // Extract ENS state from recipientUiState
+                    val isResolvingENS = recipientUiState.isResolving
+                    val ensError = recipientUiState.ensError.takeIf { it.isNotEmpty() }
+                    
+                    // Clear keyboard when ViewModel indicates it should be dismissed
+                    LaunchedEffect(shouldDismissKeyboard) {
+                        if (shouldDismissKeyboard) {
+                            focusManager.clearFocus()
+                            onKeyboardDismissed()
+                        }
+                    }
 
                     // Validate Address
                     val isValidAddress = remember(recipientUiState, toAddressFieldValue.text, isResolvingENS, ensError) {

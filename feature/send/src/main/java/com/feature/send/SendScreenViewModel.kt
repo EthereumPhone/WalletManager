@@ -140,6 +140,10 @@ class SendViewModel @Inject constructor(
 
     private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
     val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
+    
+    // Keyboard dismissal state - triggered when ENS resolution succeeds
+    private val _shouldDismissKeyboard = MutableStateFlow(false)
+    val shouldDismissKeyboard: StateFlow<Boolean> = _shouldDismissKeyboard.asStateFlow()
 
 
 
@@ -231,7 +235,41 @@ class SendViewModel @Inject constructor(
                         swappable = false
                     )
                     
-                    val amountDouble = amountUiState.value.currentAmount.toDouble()
+                    // Calculate the actual amount to send
+                    val amountToSend: String
+                    val amountDouble: Double
+                    
+                    if (amountUiState.value.currentAmount.isNotEmpty()) {
+                        // User entered crypto amount directly
+                        amountToSend = amountUiState.value.currentAmount
+                        amountDouble = amountToSend.toDouble()
+                        Log.d("SendViewModel", "Using crypto amount: $amountToSend")
+                    } else if (amountUiState.value.currentFiatAmount.isNotEmpty()) {
+                        // User entered fiat amount, need to convert to crypto
+                        val fiatAmount = amountUiState.value.currentFiatAmount.toDouble()
+                        
+                        // Calculate price per token
+                        val pricePerToken = if (selectedAsset.tokenAsset.balance > 0) {
+                            selectedAsset.tokenAsset.fiatAmount / selectedAsset.tokenAsset.balance
+                        } else {
+                            0.0
+                        }
+                        
+                        // Convert fiat to crypto amount
+                        amountDouble = if (pricePerToken > 0) {
+                            fiatAmount / pricePerToken
+                        } else {
+                            0.0
+                        }
+                        amountToSend = amountDouble.toString()
+                        
+                        Log.d("SendViewModel", "Converting fiat amount: $$fiatAmount to crypto: $amountToSend (price per token: $$pricePerToken)")
+                    } else {
+                        // No amount entered
+                        Log.e("SendViewModel", "No amount entered for transaction")
+                        throw IllegalArgumentException("No amount specified for transaction")
+                    }
+                    
                     Log.d("SendViewModel", "Processing transaction for ${asset.symbol} on chain ${asset.chainId}")
                     
                     // Clear previous transaction hash
@@ -252,7 +290,7 @@ class SendViewModel @Inject constructor(
                             chainId = selectedAsset.tokenAsset.chainId,
                             toAddress = recipientUiState.value.recipientAddress,
                             data = "",
-                            value = amountUiState.value.currentAmount
+                            value = amountToSend
                         )
                         Log.d("SendViewModel", "ETH transfer method completed")
                     }
@@ -320,6 +358,11 @@ class SendViewModel @Inject constructor(
         _recipientUiState.update { it.copy(address) }
         resolveEns()
     }
+    
+    fun onKeyboardDismissed() {
+        // Reset the keyboard dismissal state after it has been consumed
+        _shouldDismissKeyboard.value = false
+    }
 
     fun updateAmount(amount: String, isFiat: Boolean) {
         _amountUiState.update {
@@ -350,6 +393,8 @@ class SendViewModel @Inject constructor(
 
                     if (resolvedAddress != null) {
                         _recipientUiState.update { it.copy(recipientAddress = resolvedAddress.hex) }
+                        // Trigger keyboard dismissal on successful ENS resolution
+                        _shouldDismissKeyboard.value = true
                     } else {
                         _recipientUiState.update { it.copy(ensError = "ENS name not found") }
                     }
