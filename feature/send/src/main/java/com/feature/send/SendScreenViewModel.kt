@@ -486,14 +486,13 @@ class SendViewModel @Inject constructor(
     fun onScreenOpenedAfterResume() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
-                delay(2000)
+                delay(500)
                 if (terminalSDK?.isAvailable() == true) {
-                    while(terminalSDK.isScreenOn() != true) {
+                    while(!terminalSDK.isScreenOn()) {
                         Log.d("SendViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
-                        delay(500)
+                        delay(200)
                     }
 
-                    reflectiveLedPattern?.displayArrowUp()
                     terminalSDK.displayQRCode(
                         onQrCode = {
                             Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
@@ -504,6 +503,7 @@ class SendViewModel @Inject constructor(
                             send() {}
                         }
                     )
+                    reflectiveLedPattern?.displayArrowUp()
                     Log.d("SendViewModel", "QR code displayed on secondary screen")
                 } else {
                     Log.w("SendViewModel", "TerminalSDK not available")
