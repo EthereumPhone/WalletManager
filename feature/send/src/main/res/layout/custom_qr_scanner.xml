@@ -21,12 +21,12 @@
         android:layout_height="32dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="18dp"
-        android:layout_marginRight="12dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginRight="24dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Back"
-        android:scaleType="centerInside"
-        android:src="@drawable/baseline_close_24"
+        android:scaleType="center"
+        android:src="@drawable/close_32px"
         android:tint="#BFD6EA" />
 
     <!-- Info Text -->
