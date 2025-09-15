@@ -3,6 +3,7 @@ package com.feature.send
 import android.Manifest
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +45,7 @@ import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.pulseOpacity
 import com.feature.send.ui.AmountTextField
+import com.feature.send.ui.CustomCaptureActivity
 import com.feature.send.ui.NetworkSelector
 import com.feature.send.ui.RecipientSection
 import com.feature.send.ui.SendHeader
@@ -52,6 +54,8 @@ import com.feature.send.ui.TransactionStatus
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 
 
@@ -408,3 +412,59 @@ fun PreviewSendScreen() {
         onBackClick = {}
     )
 }
+
+
+//TODO: Move all this stuff under this line to a move appropriate context
+fun parseEthereumUri(uri: String): String {
+    // Parse Ethereum URI according to EIP-681 spec
+    // Format: ethereum:<address>[@<chain_id>][?<parameters>]
+    // Examples:
+    // ethereum:0x1234567890123456789012345678901234567890
+    // ethereum:0x1234567890123456789012345678901234567890@0x1
+    // ethereum:0x1234567890123456789012345678901234567890@0x1?value=1000000000000000000
+
+    var cleanUri = uri.trim()
+
+    // Remove ethereum: prefix if present
+    if (cleanUri.startsWith("ethereum:", ignoreCase = true)) {
+        cleanUri = cleanUri.removePrefix("ethereum:")
+    }
+
+    // Split by @ to remove chain ID (e.g., @0x1)
+    val addressPart = cleanUri.split("@").firstOrNull() ?: cleanUri
+
+    // Split by ? to remove query parameters
+    val finalAddress = addressPart.split("?").firstOrNull() ?: addressPart
+
+    return finalAddress.trim()
+}
+
+fun showCamera(
+    cameraLauncher: ManagedActivityResultLauncher<ScanOptions?, ScanIntentResult?>
+) {
+    try {
+        val options = ScanOptions()
+        // Verwende die neue CustomCaptureActivity
+        options.setCaptureActivity(CustomCaptureActivity::class.java)
+        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        options.setPrompt("") // Kein Prompt, da wir unseren eigenen Text haben
+        options.setCameraId(0)
+        options.setBeepEnabled(false)
+        options.setOrientationLocked(true) // Portrait only
+        cameraLauncher.launch(options)
+    } catch (e: Exception) {
+        Log.e("QRScanner", "Error launching camera: ${e.message}", e)
+    }
+}
+
+object TransactionTiming {
+    // How long to show the SUCCESS overlay before starting navigation (in milliseconds)
+    const val SUCCESS_DISPLAY_DURATION = 4000L // 4 seconds to enjoy the success
+
+    // How long to show the FAILURE overlay before starting navigation (in milliseconds)
+    const val FAILURE_DISPLAY_DURATION = 2500L // 2.5 seconds for failure state
+
+    // Delay between starting navigation and clearing the overlay for smooth fade transition (in milliseconds)
+    const val FADE_TRANSITION_DURATION = 1000L // 1 second fade overlap
+}
+

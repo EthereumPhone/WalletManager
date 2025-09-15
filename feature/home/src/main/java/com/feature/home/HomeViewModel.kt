@@ -334,6 +334,8 @@ class HomeViewModel @Inject constructor(
 
 
     fun showResumeChad(color: String) {
+
+        /*
         val reflectiveLedManager = ReflectiveLedManager()
 
         viewModelScope.launch {
@@ -345,6 +347,7 @@ class HomeViewModel @Inject constructor(
             delay(135)
             reflectiveLedPattern?.displayChad(color)
         }
+         */
     }
 
     fun showWelcomeBack() {
@@ -415,13 +418,6 @@ class HomeViewModel @Inject constructor(
             reflectiveLedPattern?.displayPlus()
         }
     }
-
-    fun clearMatrix(){
-        viewModelScope.launch {
-            //reflectiveLedPattern?.clear()
-        }
-    }
-
 }
 
 

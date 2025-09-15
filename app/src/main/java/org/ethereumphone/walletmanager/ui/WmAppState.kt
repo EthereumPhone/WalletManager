@@ -3,6 +3,8 @@ package org.ethereumphone.walletmanager.ui
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavDestination
@@ -23,6 +25,7 @@ import com.example.transactions.navigation.transactionRoute
 import com.feature.home.navigation.homeRoute
 import com.feature.home.navigation.navigateToHome
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -31,26 +34,21 @@ import org.ethereumphone.walletmanager.utils.Screen
 @Composable
 fun rememberWmAppState(
     networkMonitor: NetworkMonitor,
-    sendRepository: SendRepository,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     navController: NavHostController = rememberNavController()
 ): WmAppState {
     return remember(
         networkMonitor,
         navController,
-        sendRepository,
         coroutineScope
     ) {
         WmAppState(
             navController,
             networkMonitor,
             coroutineScope,
-            sendRepository
         )
     }
 }
-
-
 
 
 @Stable
@@ -58,29 +56,24 @@ class WmAppState(
     val navController: NavHostController,
     networkMonitor: NetworkMonitor,
     coroutineScope: CoroutineScope,
-    val sendRepository: SendRepository
 ) {
 
-    val currentTransaction = sendRepository.currentTransactionHash
-        .map {
-            Log.d("My hash", it)
-            it
-        }
-        .stateIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = "",
-            )
+    private val previousDestination = mutableStateOf<NavDestination?>(null)
 
-    val currentChainId = sendRepository.currentTransactionChainId
-        .stateIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = 0,
-        )
     val currentDestination: NavDestination?
-        @Composable get() = navController
-            .currentBackStackEntryAsState().value?.destination
+    @Composable get() {
+        // Collect the currentBackStackEntryFlow as a state
+        val currentEntry = navController.currentBackStackEntryFlow
+            .distinctUntilChanged()
+            .collectAsState(initial = null)
+
+        // Fallback to previousDestination if currentEntry is null
+        return currentEntry.value?.destination.also { destination ->
+            if (destination != null) {
+                previousDestination.value = destination
+            }
+        } ?: previousDestination.value
+    }
 
 
     val isOffline = networkMonitor.isOnline
@@ -90,39 +83,4 @@ class WmAppState(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false,
         )
-
-    fun restoreState() {
-        sendRepository.restoreState()
-    }
-
-
-//    fun navigateToTopLevelDestination(topLevelDestination: Screen) {
-//        // Check if the current route is the start destination or opened via a deep link
-//        val isStartOrDeepLink = navController.currentBackStackEntry?.destination?.route == navController.graph.startDestinationRoute || navController.previousBackStackEntry == null
-//
-//        val topLevelNavOptions = navOptions {
-//            popUpTo(navController.graph.findStartDestination().id) {
-//                saveState = true
-//            }
-//            launchSingleTop = true
-//            restoreState = true
-//        }
-//
-//        if (topLevelDestination.route == homeRoute && !isStartOrDeepLink) {
-//            navController.popBackStack(homeRoute, inclusive = false)
-//        } else {
-//            when (topLevelDestination.route) {
-//                homeRoute -> {
-//                    if (isStartOrDeepLink) {
-//                        // If we are at start destination or deep link, simply navigate to home
-//                        navController.navigate(homeRoute)
-//                    } else {
-//                        navController.navigateToHome(topLevelNavOptions)
-//                    }
-//                }
-//                assetRoute -> navController.navigateToAsset(topLevelNavOptions)
-//                transactionRoute -> navController.navigateToTransaction(topLevelNavOptions)
-//            }
-//        }
-//    }
 }

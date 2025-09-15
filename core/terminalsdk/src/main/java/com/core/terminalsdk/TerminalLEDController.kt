@@ -81,14 +81,17 @@ object TerminalLEDController {
     }
 
 
-    @JvmStatic
-    fun getColorHex(): String {
-        return getSystemColorHex()!!
+    fun displayPlusPattern() {
+        updateSystemColor()
+        ledPattern?.displayPlus(systemColorHex)
     }
 
 
 
-
+    @JvmStatic
+    fun getColorHex(): String {
+        return getSystemColorHex()!!
+    }
 
     
     /**

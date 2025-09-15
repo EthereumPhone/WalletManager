@@ -20,7 +20,6 @@ import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.largeExitDuration
 import com.feature.send.SendRoute
-import com.feature.send.SendRoute2
 
 const val sendRoute = "send_route?address={address}&groupId={groupId}"
 const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"

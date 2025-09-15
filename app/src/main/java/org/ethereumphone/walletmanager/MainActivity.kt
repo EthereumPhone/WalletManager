@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
 import com.core.ui.util.SystemColorManager
+import org.ethereumphone.walletmanager.ui.rememberWmAppState
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -50,8 +51,6 @@ class MainActivity() : ComponentActivity() {
     @Inject
     lateinit var networkMonitor: NetworkMonitor
 
-    @Inject
-    lateinit var sendRepository: SendRepository
 
     @Inject
     @JvmField
@@ -87,7 +86,6 @@ class MainActivity() : ComponentActivity() {
         walletAddressUpdater.startPeriodicUpdate()
 
         setContent {
-            // theme
             val systemUiController = rememberSystemUiController()
             systemUiController.setStatusBarColor(
                 darkIcons = false,
@@ -98,9 +96,13 @@ class MainActivity() : ComponentActivity() {
                 color = background
             )
 
+            val appState = rememberWmAppState(networkMonitor = networkMonitor)
+
+
             WmApp(
+                appState = appState,
+                viewModel = viewModel,
                 networkMonitor = networkMonitor,
-                sendRepository = sendRepository,
                 terminalSDK = terminalSDK,
                 reflectiveLedPattern = reflectiveLedPattern
             )
@@ -124,9 +126,8 @@ class MainActivity() : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.onAppResumed()
-        
         SystemColorManager.refresh(this)
+        viewModel.onAppResumed()
     }
 
     override fun onDestroy() {
@@ -135,8 +136,6 @@ class MainActivity() : ComponentActivity() {
         walletAddressUpdater.stopPeriodicUpdate()
         // Synchronously destroy the touch handler to ensure immediate cleanup
         terminalSDK?.destroyTouchHandlerSync()
-
-        //reflectiveLedPattern?.clear()
 
     }
 

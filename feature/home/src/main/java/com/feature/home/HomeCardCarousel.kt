@@ -130,9 +130,9 @@ internal fun HomeRoute2(
                     val color = TerminalLEDController.getColorHex()
                     viewModel.showResumeChad(color)
                     coroutineScope.launch {
-                        TerminalLEDController.displayChadPattern()
+                        //TerminalLEDController.displayChadPattern()
                     }
-                    TerminalLEDController.displayChadPattern()
+                    //TerminalLEDController.displayChadPattern()
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     // Don't cleanup here - just log the event

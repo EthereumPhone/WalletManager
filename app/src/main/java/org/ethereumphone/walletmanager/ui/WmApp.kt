@@ -31,7 +31,6 @@ import com.core.designsystem.theme.background
 import com.core.designsystem.theme.secondary
 import org.ethereumphone.walletmanager.navigation.WmNavHost
 import org.ethereumphone.walletmanager.utils.Screen
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.data.repository.SendRepository
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
@@ -41,61 +40,25 @@ import org.ethosmobile.components.library.core.ethOSSnackbarHost
 import org.ethosmobile.components.library.utils.SnackbarState
 import org.ethosmobile.components.library.utils.rememberSnackbarDelegate
 import androidx.compose.foundation.layout.fillMaxSize
+import org.ethereumphone.walletmanager.MainActivityViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WmApp(
+    appState: WmAppState,
+    viewModel: MainActivityViewModel,
     networkMonitor: NetworkMonitor,
-    sendRepository: SendRepository,
-    appState: WmAppState = rememberWmAppState(
-        networkMonitor,
-        sendRepository
-    ),
     terminalSDK: TerminalSDK?,
     reflectiveLedPattern: ReflectiveLedPattern?
 ) {
 
-    val scope = rememberCoroutineScope()
-    val hostState = remember { SnackbarHostState() }
-    val snackbarHostState = rememberSnackbarDelegate(hostState,scope)
 
-    val isOffline by appState.isOffline.collectAsStateWithLifecycle()
+    val currentRoute = appState.currentDestination?.route
 
-    //TODO: better state handling
-    val currentTransferHash by appState.currentTransaction.collectAsStateWithLifecycle(initialValue = "")
-    val currentTransferChainId by appState.currentChainId.collectAsStateWithLifecycle(initialValue = 0)
-
-    val transactionSheetState = rememberModalBottomSheetState(true)
-    var showSheet by remember { mutableStateOf(false) }
-
-
-    // If user is not connected to the internet show a snack bar to inform them.
-    val notConnectedMessage = "You aren’t connected to the internet"//"⚠\uFE0F You aren’t connected to the internet"
-    LaunchedEffect(isOffline) {
-        if (isOffline) {
-            println("wm offline")
-
-//            snackbarHostState.showSnackbar(
-//                message = notConnectedMessage,
-//                duration = SnackbarDuration.Indefinite,
-//            )
-            //snackbarHostState.coroutineScope.launch{
-                snackbarHostState.showSnackbar(state = SnackbarState.ERROR, message = notConnectedMessage, duration = SnackbarDuration.Indefinite)
-            //}
-
-        }else{
-            println("wm online")
-            snackbarHostState.snackbarHostState.currentSnackbarData?.dismiss()
-        }
+    LaunchedEffect(currentRoute?.takeIf { it.isNotBlank() }) {
+        viewModel.updateMatrix(currentRoute)
     }
-
-    LaunchedEffect(currentTransferHash) {
-        if (currentTransferHash.isNotEmpty()) {
-            showSheet = true
-        }
-    }
-
 
 
     Scaffold(
@@ -111,9 +74,7 @@ fun WmApp(
     }
 }
 
+@Composable
+internal fun WmApp() {
 
-
-private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: Screen) =
-    this?.hierarchy?.any {
-        it.route?.contains(destination.route, true) ?: false
-    } ?: false
+}

@@ -44,7 +44,6 @@ class ReceiveViewModel @Inject constructor(
      */
     suspend fun onCopyOpened(){
         try{
-            reflectiveLedPattern?.displayArrowDown()
             //check if terminal sdk is available
             if (terminalSDK?.isAvailable() == true) {
 
@@ -98,7 +97,7 @@ class ReceiveViewModel @Inject constructor(
                     terminalSDK.removeCopyAddress()
                     // Only clear LED if explicitly requested
                     if (clearLed) {
-                        reflectiveLedPattern?.clear()
+                        //reflectiveLedPattern?.clear()
                     }
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
