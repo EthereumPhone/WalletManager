@@ -18,48 +18,35 @@ class UniswapTokenSeederHelper(
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun seedTokens() {
-        val chainFiles = mapOf(
-            1 to "mainnet.json",
-            10 to "optimism.json",
-            137 to "polygon.json",
-            42161 to "arbitrum.json",
-            43114 to "avalanche.json",
-            8453 to "base.json",
-            56 to "bnb.json",
-            42220 to "celo.json",
-            81457 to "blast.json",
-            7777777 to "zora.json",
-            480 to "worldchain.json",
-            324 to "zksync.json",
-            // Test networks
-            5 to "goerli.json",
-            80001 to "mumbai.json",
-            11155111 to "sepolia.json"
-        )
+        // Load the single Uniswap token list
+        val tokenList = loadUniswapTokenList()
+        if (tokenList == null) {
+            println("Failed to load Uniswap token list")
+            return
+        }
 
         val allTokens = mutableMapOf<Pair<Int, String>, TokenJson>()
         val bridgeRelationships = mutableListOf<BridgeRelationship>()
 
-        // Load all tokens and collect bridge info
-        chainFiles.forEach { (chainId, fileName) ->
-            val tokens = loadTokensFromFile(fileName)
-            tokens.forEach { token ->
-                val key = chainId to token.address.lowercase()
-                allTokens[key] = token
+        println("Loaded ${tokenList.tokens.size} tokens from Uniswap list")
 
-                // Collect bridge relationships
-                token.extensions?.bridgeInfo?.forEach { (targetChainStr, target) ->
-                    val targetChain = targetChainStr.toIntOrNull() ?: return@forEach
-                    bridgeRelationships.add(
-                        BridgeRelationship(
-                            sourceChain = chainId,
-                            sourceAddress = token.address,
-                            targetChain = targetChain,
-                            targetAddress = target.tokenAddress,
-                            sourceToken = token
-                        )
+        // Process all tokens from the list
+        tokenList.tokens.forEach { token ->
+            val key = token.chainId to token.address.lowercase()
+            allTokens[key] = token
+
+            // Collect bridge relationships
+            token.extensions?.bridgeInfo?.forEach { (targetChainStr, target) ->
+                val targetChain = targetChainStr.toIntOrNull() ?: return@forEach
+                bridgeRelationships.add(
+                    BridgeRelationship(
+                        sourceChain = token.chainId,
+                        sourceAddress = token.address,
+                        targetChain = targetChain,
+                        targetAddress = target.tokenAddress,
+                        sourceToken = token
                     )
-                }
+                )
             }
         }
 
@@ -194,14 +181,19 @@ class UniswapTokenSeederHelper(
         }
     }
 
-    private fun loadTokensFromFile(fileName: String): List<TokenJson> {
-        val resourceId = context.resources.getIdentifier(
-            fileName.removeSuffix(".json"),
-            "raw",
-            context.packageName
-        )
-        return context.resources.openRawResource(resourceId).use { stream ->
-            json.decodeFromString<List<TokenJson>>(stream.readBytes().decodeToString())
+    private fun loadUniswapTokenList(): UniswapTokenList? {
+        return try {
+            val resourceId = context.resources.getIdentifier(
+                "tokens_uniswap_org",
+                "raw",
+                context.packageName
+            )
+            context.resources.openRawResource(resourceId).use { stream ->
+                json.decodeFromString<UniswapTokenList>(stream.readBytes().decodeToString())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }

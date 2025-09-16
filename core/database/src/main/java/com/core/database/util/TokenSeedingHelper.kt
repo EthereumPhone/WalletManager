@@ -11,6 +11,26 @@ import java.util.UUID
 import kotlinx.serialization.Serializable
 
 // Data classes for JSON parsing
+
+// Uniswap token list format
+@Serializable
+data class UniswapTokenList(
+    val name: String,
+    val timestamp: String,
+    val version: Version,
+    val tags: Map<String, String> = emptyMap(),
+    val logoURI: String? = null,
+    val keywords: List<String> = emptyList(),
+    val tokens: List<TokenJson>
+)
+
+@Serializable
+data class Version(
+    val major: Int,
+    val minor: Int,
+    val patch: Int
+)
+
 @Serializable
 data class TokenJson(
     val chainId: Int,
@@ -52,6 +72,36 @@ data class TokenGroup(
 )
 
 
+private class DSU(tokens: Set<Pair<Int, String>>) {
+    private val parent = tokens.associateWith { it }.toMutableMap()
+    private val size = tokens.associateWith { 1 }.toMutableMap()
+
+    fun find(key: Pair<Int, String>): Pair<Int, String> {
+        if (!parent.containsKey(key)) {
+            parent[key] = key
+            size[key] = 1
+            return key
+        }
+        if (parent[key] == key) return key
+        parent[key] = find(parent[key]!!)
+        return parent[key]!!
+    }
+
+    fun union(key1: Pair<Int, String>, key2: Pair<Int, String>) {
+        val root1 = find(key1)
+        val root2 = find(key2)
+        if (root1 != root2) {
+            if (size.getOrDefault(root1, 1) < size.getOrDefault(root2, 1)) {
+                parent[root1] = root2
+                size[root2] = size.getOrDefault(root2, 1) + size.getOrDefault(root1, 1)
+            } else {
+                parent[root2] = root1
+                size[root1] = size.getOrDefault(root1, 1) + size.getOrDefault(root2, 1)
+            }
+        }
+    }
+}
+
 
 object TokenSeedingHelper {
     
@@ -75,54 +125,35 @@ object TokenSeedingHelper {
                 }
             }
             
-            val chainFiles = mapOf(
-                1 to "mainnet.json",
-                10 to "optimism.json",
-                137 to "polygon.json",
-                42161 to "arbitrum.json",
-                43114 to "avalanche.json",
-                8453 to "base.json",
-                56 to "bnb.json",
-                42220 to "celo.json",
-                81457 to "blast.json",
-                7777777 to "zora.json",
-                480 to "worldchain.json",
-                324 to "zksync.json",
-                // Test networks
-                5 to "goerli.json",
-                80001 to "mumbai.json",
-                11155111 to "sepolia.json"
-            )
+            // Load the single Uniswap token list
+            val tokenList = loadUniswapTokenList(context)
+            if (tokenList == null) {
+                Log.e(TAG, "Failed to load Uniswap token list")
+                return@withContext
+            }
             
             val allTokens = mutableMapOf<Pair<Int, String>, TokenJson>()
             val bridgeRelationships = mutableListOf<BridgeRelationship>()
             
-            // Load all tokens
-            chainFiles.forEach { (expectedChainId, fileName) ->
-                val tokens = loadTokensFromFile(context, fileName)
-                tokens.forEach { token ->
-                    // Validate that the token's chainId matches what we expect
-                    if (token.chainId != expectedChainId) {
-                        Log.w(TAG, "Token ${token.symbol} in $fileName has chainId ${token.chainId} but expected $expectedChainId")
-                    }
-                    
-                    // Use the actual chainId from the token, not the expected one
-                    val key = token.chainId to token.address.lowercase()
-                    allTokens[key] = token
-                    
-                    // Collect bridge relationships
-                    token.extensions?.bridgeInfo?.forEach { (targetChainStr, target) ->
-                        val targetChain = targetChainStr.toIntOrNull() ?: return@forEach
-                        bridgeRelationships.add(
-                            BridgeRelationship(
-                                sourceChain = token.chainId, // Use actual chainId from token
-                                sourceAddress = token.address,
-                                targetChain = targetChain,
-                                targetAddress = target.tokenAddress,
-                                sourceToken = token
-                            )
+            Log.d(TAG, "Loaded ${tokenList.tokens.size} tokens from Uniswap list")
+            
+            // Process all tokens from the list
+            tokenList.tokens.forEach { token ->
+                val key = token.chainId to token.address.lowercase()
+                allTokens[key] = token
+                
+                // Collect bridge relationships
+                token.extensions?.bridgeInfo?.forEach { (targetChainStr, target) ->
+                    val targetChain = targetChainStr.toIntOrNull() ?: return@forEach
+                    bridgeRelationships.add(
+                        BridgeRelationship(
+                            sourceChain = token.chainId,
+                            sourceAddress = token.address,
+                            targetChain = targetChain,
+                            targetAddress = target.tokenAddress,
+                            sourceToken = token
                         )
-                    }
+                    )
                 }
             }
 
@@ -394,23 +425,23 @@ object TokenSeedingHelper {
         }
     }
     
-    private fun loadTokensFromFile(context: Context, fileName: String): List<TokenJson> {
+    private fun loadUniswapTokenList(context: Context): UniswapTokenList? {
         return try {
             val resourceId = context.resources.getIdentifier(
-                fileName.removeSuffix(".json"),
+                "tokens_uniswap_org",
                 "raw",
                 context.packageName
             )
             if (resourceId == 0) {
-                Log.w(TAG, "Resource not found: $fileName")
-                return emptyList()
+                Log.w(TAG, "Uniswap token list not found")
+                return null
             }
             context.resources.openRawResource(resourceId).use { stream ->
-                json.decodeFromString<List<TokenJson>>(stream.readBytes().decodeToString())
+                json.decodeFromString<UniswapTokenList>(stream.readBytes().decodeToString())
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading tokens from $fileName", e)
-            emptyList()
+            Log.e(TAG, "Error loading Uniswap token list", e)
+            null
         }
     }
     
@@ -418,66 +449,56 @@ object TokenSeedingHelper {
         allTokens: Map<Pair<Int, String>, TokenJson>,
         bridges: List<BridgeRelationship>
     ): Map<String, TokenGroup> {
-        val groups = mutableMapOf<String, TokenGroup>()
-        val tokenToGroup = mutableMapOf<Pair<Int, String>, String>()
-        
-        // Process bridge relationships
+        val tokenKeys = allTokens.keys
+        val dsu = DSU(tokenKeys)
+
+        // 1. Group by symbol (case-insensitive)
+        val tokensBySymbol = allTokens.values.groupBy { it.symbol.lowercase() }
+        tokensBySymbol.values.forEach { tokensWithSameSymbol ->
+            if (tokensWithSameSymbol.size > 1) {
+                for (i in 0 until tokensWithSameSymbol.size - 1) {
+                    val key1 = tokensWithSameSymbol[i].chainId to tokensWithSameSymbol[i].address.lowercase()
+                    val key2 = tokensWithSameSymbol[i + 1].chainId to tokensWithSameSymbol[i + 1].address.lowercase()
+                    dsu.union(key1, key2)
+                }
+            }
+        }
+
+        // 2. Group by bridge info
         bridges.forEach { bridge ->
             val sourceKey = bridge.sourceChain to bridge.sourceAddress.lowercase()
             val targetKey = bridge.targetChain to bridge.targetAddress.lowercase()
-            
-            val existingGroupId = tokenToGroup[sourceKey] ?: tokenToGroup[targetKey]
-            
-            val groupId = if (existingGroupId != null) {
-                existingGroupId
-            } else {
-                // Create new group ID
-                val canonicalToken = if (bridge.sourceChain == 1) {
-                    bridge.sourceToken
-                } else {
-                    allTokens[targetKey] ?: bridge.sourceToken
-                }
-                generateGroupId(canonicalToken)
-            }
-            
-            tokenToGroup[sourceKey] = groupId
-            tokenToGroup[targetKey] = groupId
-            
-            val group = groups.getOrPut(groupId) {
-                TokenGroup(
-                    id = groupId,
-                    canonicalChain = if (bridge.sourceChain == 1) bridge.sourceChain else bridge.targetChain,
-                    canonicalAddress = if (bridge.sourceChain == 1) bridge.sourceAddress else bridge.targetAddress,
-                    symbol = bridge.sourceToken.symbol,
-                    name = bridge.sourceToken.name,
-                    tokens = mutableSetOf(),
-                    bridges = mutableListOf()
-                )
-            }
-            
-            group.tokens.add(sourceKey)
-            group.tokens.add(targetKey)
-            group.bridges.add(bridge)
+            dsu.union(sourceKey, targetKey)
         }
-        
-        // Add ungrouped tokens
-        allTokens.forEach { (key, token) ->
-            if (!tokenToGroup.containsKey(key)) {
-                val groupId = generateGroupId(token)
-                groups[groupId] = TokenGroup(
-                    id = groupId,
-                    canonicalChain = key.first,
-                    canonicalAddress = key.second,
-                    symbol = token.symbol,
-                    name = token.name,
-                    tokens = mutableSetOf(key),
-                    bridges = mutableListOf()
-                )
-                tokenToGroup[key] = groupId
-            }
+
+        // 3. Create groups from DSU sets
+        val disjointSets = tokenKeys.groupBy { dsu.find(it) }
+        val tokenGroups = mutableMapOf<String, TokenGroup>()
+
+        disjointSets.forEach { (rootKey, tokenSetKeys) ->
+            // Try to find a canonical token from chain 1 (mainnet), otherwise use the root of the set.
+            val canonicalKey = tokenSetKeys.find { it.first == 1 } ?: rootKey
+            val canonicalToken = allTokens[canonicalKey]!!
+
+            val groupId = generateGroupId(canonicalToken)
+
+            val groupBridges = bridges.filter { bridge ->
+                val sourceKey = bridge.sourceChain to bridge.sourceAddress.lowercase()
+                tokenSetKeys.contains(sourceKey)
+            }.toMutableList()
+
+            tokenGroups[groupId] = TokenGroup(
+                id = groupId,
+                canonicalChain = canonicalToken.chainId,
+                canonicalAddress = canonicalToken.address.lowercase(),
+                symbol = canonicalToken.symbol,
+                name = canonicalToken.name,
+                tokens = tokenSetKeys.toMutableSet(),
+                bridges = groupBridges
+            )
         }
-        
-        return groups
+
+        return tokenGroups
     }
     
     private fun generateGroupId(token: TokenJson): String {
