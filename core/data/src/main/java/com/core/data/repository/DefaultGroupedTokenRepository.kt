@@ -55,7 +55,7 @@ class DefaultGroupedTokenRepository @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override fun observeAllTokensWithPriceInGroup(groupId: String): Flow<List<TokenAssetWithPrice>> {
+    override fun observeAllTokensWithPriceInGroup(groupId: String, filterZeroBalance: Boolean): Flow<List<TokenAssetWithPrice>> {
         // Return empty flow if groupId is empty
         if (groupId.isEmpty()) {
             return kotlinx.coroutines.flow.flowOf(emptyList())
@@ -96,7 +96,8 @@ class DefaultGroupedTokenRepository @Inject constructor(
             }
             
             // Filter network tokens to only show chains with balance
-            if (groupId.startsWith("network_")) {
+
+            if (filterZeroBalance) {
                 mappedTokens.filter { it.balance > 0 }
             } else {
                 mappedTokens

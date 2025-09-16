@@ -10,7 +10,7 @@ interface GroupedTokenRepository {
 
     fun observeGroupedTokensOverview(filterList: List<String>?): Flow<List<TokenGroupAssetOverview>>
     fun observeGroupedTokens(): Flow<List<TokenGroupAsset>>
-    fun observeAllTokensWithPriceInGroup(groupId: String): Flow<List<TokenAssetWithPrice>>
+    fun observeAllTokensWithPriceInGroup(groupId: String, filterZeroBalance: Boolean = false): Flow<List<TokenAssetWithPrice>>
 
 
 }

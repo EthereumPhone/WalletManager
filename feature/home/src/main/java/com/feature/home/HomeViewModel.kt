@@ -279,37 +279,7 @@ class HomeViewModel @Inject constructor(
 
 
 
-    fun refreshAllBalances() {
-
-        /*
-
-
-        viewModelScope.launch {
-            _refreshState.value = true
-            try {
-                val userData = userDataRepository.userData.first()
-                val walletAddress = userData.walletAddress
-                val networkChains = NetworkChain.getAllNetworkChains().map { it.chainId }
-
-                // Refresh network balances
-                networkBalanceRepository.refreshNetworkBalance(walletAddress, networkChains)
-
-                // Refresh token balances for each network
-                networkChains.forEach { chainId ->
-                    updateTokensByNetworkUseCase(walletAddress, chainId)
-                }
-
-                tokenExchangeRepository.fetchAllExchanges()
-
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error refreshing balances", e)
-            } finally {
-                _refreshState.value = false
-            }
-        }
-
-         */
-    }
+    fun refreshAllBalances() { }
 
     /**
      * Formats very small balances to show up to 6 decimal places.
@@ -333,22 +303,7 @@ class HomeViewModel @Inject constructor(
     }
 
 
-    fun showResumeChad(color: String) {
-
-        /*
-        val reflectiveLedManager = ReflectiveLedManager()
-
-        viewModelScope.launch {
-            while (reflectiveLedManager.isRunning() == true) {
-                delay(70)
-            }
-
-            // give time to dismiss all leds
-            delay(135)
-            reflectiveLedPattern?.displayChad(color)
-        }
-         */
-    }
+    fun showResumeChad(color: String) { }
 
     fun showWelcomeBack() {
         if (welcomeScreenShownThisSession.getAndSet(true)) {

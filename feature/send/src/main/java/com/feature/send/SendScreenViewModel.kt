@@ -87,7 +87,7 @@ class SendViewModel @Inject constructor(
 
 
     val assetsUiState: StateFlow<AssetsUiState> =
-        groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId).map {
+        groupedTokenRepository.observeAllTokensWithPriceInGroup(groupId, true).map {
             if (it.isEmpty()) AssetsUiState.Empty
             else AssetsUiState.Success(it)
         }
@@ -110,10 +110,8 @@ class SendViewModel @Inject constructor(
                         _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
                         _amountUiState.update { it.copy(
                             maxAmount = asset.balance,
-                            currentAmount = "",
                             formattedMaxAmount = asset.balance.formatWithSuffix(),
                             maxFiatAmount = asset.fiatAmount,
-                            currentFiatAmount = "",
                             formattedMaxFiatAmount = asset.fiatAmount.formatWithSuffix(2)
                         ) }
                     }
@@ -150,10 +148,10 @@ class SendViewModel @Inject constructor(
     private val _amountUiState = MutableStateFlow<AmountUiState>(AmountUiState(
         0.0,
         "0.0",
-        currentAmount = "0.0",
+        currentAmount = "",
         maxFiatAmount = 0.0,
         formattedMaxFiatAmount = "0.0",
-        currentFiatAmount = "0.0",
+        currentFiatAmount = "",
         useMaxAmount = false
     ))
     val amountUiState = _amountUiState
@@ -212,6 +210,10 @@ class SendViewModel @Inject constructor(
 
 
     fun send(callback: () -> Unit) {
+        if (amountUiState.value.currentAmount == ".") return
+        if (amountUiState.value.currentAmount == "0.") return
+        if (amountUiState.value.currentAmount == "") return
+
         viewModelScope.launch {
             val selectedAsset = selectedAssetUiState.value
             Log.d("SendViewModel", "=== SEND TRANSACTION STARTED ===")
@@ -241,8 +243,9 @@ class SendViewModel @Inject constructor(
                     
                     if (amountUiState.value.currentAmount.isNotEmpty()) {
                         // User entered crypto amount directly
+
                         amountToSend = amountUiState.value.currentAmount
-                        amountDouble = amountToSend.toDouble()
+                        amountDouble = removeDots(amountToSend).toDouble()
                         Log.d("SendViewModel", "Using crypto amount: $amountToSend")
                     } else if (amountUiState.value.currentFiatAmount.isNotEmpty()) {
                         // User entered fiat amount, need to convert to crypto
@@ -365,10 +368,15 @@ class SendViewModel @Inject constructor(
     }
 
     fun updateAmount(amount: String, isFiat: Boolean) {
+
+
+        val sanitizedAmount = if (amount == ".") "0."
+            else removeDots(amount)
+
         _amountUiState.update {
             it.copy(
-                currentAmount = if (isFiat) "" else amount,
-                currentFiatAmount = if (isFiat) amount else "",
+                currentAmount = if (isFiat) "" else sanitizedAmount,
+                currentFiatAmount = if (isFiat) sanitizedAmount else "",
                 useMaxAmount = false
             )
         }
@@ -769,7 +777,14 @@ class SendViewModel @Inject constructor(
             }
         }
     }
+}
 
+
+private fun removeDots(s: String): String {
+    val secondDot = s.indexOf('.', s.indexOf('.') + 1) // 2nd dot position
+    return if (secondDot != -1) {
+        s.removeRange(secondDot, secondDot + 1)
+    } else s
 }
 
 

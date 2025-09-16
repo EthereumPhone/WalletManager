@@ -62,6 +62,17 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
+    fun refreshWelcomeMessage() {
+        if (terminalSDK == null) return
+    }
+
+    fun updateTerminal(currentRoute: String?) {
+        if (currentRoute == null) return
+
+
+    }
+
+
     fun updateMatrix(currentRoute: String?) {
         if (currentRoute == null) return
         
@@ -109,7 +120,12 @@ class MainActivityViewModel @Inject constructor(
         super.onCleared()
 
         //TODO: add code to kill any lingering matrix/terminal content
-
+        viewModelScope.launch {
+            terminalSDK?.let {
+                it.destroyTouchHandler()
+                it.resume(it.ID_STATUSBAR)
+            }
+        }
     }
 }
 
@@ -118,3 +134,15 @@ sealed interface MainActivityUiState {
     object Loading : MainActivityUiState
     data class Success(val userData: UserData): MainActivityUiState
 }
+
+
+private val bootMessage = "WELCOME ONBOARD ヽ(•◡•)ノ"
+
+private val welcomeMessages = listOf(
+    "WELCOME BACK  ◕◡◕",
+    "Hey Stranger  ⌐■◡■",
+    "Look Who's Back  ▀̿◡ ̿▀̿ ̿",
+    "Engaging warp drive  ◉◡◉",
+    "Big Brain: Activated  ಠ◡ಠ",
+    "Refueled n ready ⊹⋆☾⋆⊹✧"
+)
