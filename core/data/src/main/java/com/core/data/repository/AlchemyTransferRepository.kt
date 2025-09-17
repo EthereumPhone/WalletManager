@@ -42,6 +42,8 @@ class AlchemyTransferRepository @Inject constructor(
         transferDao.getTransfers(chainId, categories)
             .map { it.map(TransferEntity::asExternalModel) }
 
+    override fun observeTransfersExist(): Flow<Boolean> = transferDao.observeTransfersExist()
+
     override suspend fun refreshTransfers(address: String) = withContext(Dispatchers.IO) {
         val networks = NetworkChain.getAllNetworkChains()
 
