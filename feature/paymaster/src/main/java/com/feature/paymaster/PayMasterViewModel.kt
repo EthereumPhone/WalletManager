@@ -136,6 +136,9 @@ class PayMasterViewModel @Inject constructor(
                         }
                     }
                 }
+                // Keep balance as 0.0 on SDK init failure
+                _balance.value = "0.0"
+                showDgenToast(appContext,"Error: SDK initialization failed. Please try again later.")
             }
         }
     }
@@ -151,7 +154,7 @@ class PayMasterViewModel @Inject constructor(
             val userId = walletSDK?.getAddress() ?: "" // Get address from WalletSDK
             if (userId.isBlank()) {
                 // Handle case where userId is not available
-                _balance.value = "Error: User ID not found"
+                showDgenToast(appContext,"Error: User ID not found")
                 return@withContext null
             }
 
@@ -167,14 +170,14 @@ class PayMasterViewModel @Inject constructor(
                 if (!response.isSuccessful) {
                     // Handle API error
                     val errorBody = response.body?.string()
-                    _balance.value = "Error: API ${response.code} ${errorBody ?: "Unknown error"}"
-                    showDgenToast(context,"Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
+                    // Don't set error to balance, keep it as numeric value
+                    showDgenToast(appContext,"Error: Unable to reach server. Please try again later.")
                     return@withContext null
                 }
 
                 val responseBodyString = response.body?.string()
                 if (responseBodyString == null) {
-                     _balance.value = "Error: Empty API response"
+                    showDgenToast(appContext,"Error: Empty API response")
                     return@withContext null
                 }
 
@@ -183,8 +186,7 @@ class PayMasterViewModel @Inject constructor(
                 val daimoPaymentUrl = apiResponse?.daimoPaymentUrl
 
                 if (daimoPaymentUrl.isNullOrBlank()) {
-                    _balance.value = "Error: Daimo Payment ID not found in response"
-                    showDgenToast(context,"Error: Daimo Payment information missing in response")
+                    showDgenToast(appContext,"Error: Daimo Payment information missing in response")
                     return@withContext null
                 }
                 
@@ -197,8 +199,7 @@ class PayMasterViewModel @Inject constructor(
             if (e is UnknownHostException) {
                 showDgenToast(context,"No internet connection!")
             } else {
-                showDgenToast(context,"Error: ${e.message}")
-                _balance.value = "Error: ${e.message}"
+                showDgenToast(appContext,"Error: Something went wrong. Please try again later.")
             }
             return@withContext null
         }
