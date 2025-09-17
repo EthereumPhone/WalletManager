@@ -13,5 +13,7 @@ interface TransferRepository {
         categories: List<String>
     ): Flow<List<Transfer>>
 
+    fun observeTransfersExist(): Flow<Boolean>
+
     suspend fun refreshTransfers(address: String)
 }

@@ -1,6 +1,9 @@
 package org.ethereumphone.walletmanager
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.UserDataRepository
@@ -8,23 +11,37 @@ import com.core.model.UserData
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalLEDController
 import com.core.terminalsdk.TerminalSDK
+import com.example.transactions.navigation.transactionRoute
+import com.feature.home.navigation.homeRoute
+import com.feature.paymaster.navigation.paymasterRoute
+import com.feature.receive.navigation.receiveRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.nextUp
+import kotlin.random.Random
 
+
+private val LED_UPDATE_DEBOUNCE_MS = 300L
+private val LED_UPDATE_RESUME_MS = 1000L
+
+private const val LAST_NAV_ROUTE = "last_known_route"
+private const val LAST_MESSAGE_INDEX = "last_message_route"
 
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    userDataRepository: UserDataRepository,
+    val userDataRepository: UserDataRepository,
     val terminalSDK: TerminalSDK?,
-    ): ViewModel() {
+    private val savedStateHandle: SavedStateHandle
+): ViewModel() {
 
     val uiState: StateFlow<MainActivityUiState> = userDataRepository.userData.map {
         MainActivityUiState.Success(it)
@@ -34,20 +51,17 @@ class MainActivityViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000)
     )
 
-    /** Keeps track of the last route so we can restore LEDs/terminal after
-     *  the screen turns off and on (Activity pause/resume cycle).
-     */
-    private var lastKnownRoute: String? = null
+    val userData = userDataRepository.userData
+
+    private val lastKnownRoute = savedStateHandle.getStateFlow(LAST_NAV_ROUTE, "")
+    private val lastMessageIndex = savedStateHandle.getStateFlow(LAST_MESSAGE_INDEX, -1)
+
     
     /** Job for debouncing LED updates */
     private var updateMatrixJob: Job? = null
     
     /** Flag to block navigation updates during resume */
     private var isResumingLeds = false
-    
-    /** Minimum delay between LED updates to prevent flickering */
-    private val LED_UPDATE_DEBOUNCE_MS = 300L
-    private val LED_UPDATE_RESUME_MS = 1000L
 
     fun onAppResumed() {
         viewModelScope.launch {
@@ -57,17 +71,40 @@ class MainActivityViewModel @Inject constructor(
             // We have to wait for the systemUI to clear it's animation, or it will cause artifacting
             // once the clear logic is refined, this entire job logic can be removed.
             delay(LED_UPDATE_RESUME_MS)
-            updateMatrixInternal(lastKnownRoute)
+            updateMatrixInternal(lastKnownRoute.value)
+
+            if (lastKnownRoute.value in listOf("", homeRoute)) {
+                refreshWelcomeMessage()
+            } else {
+
+            }
+
             isResumingLeds = false
         }
+
+        // only do this in home scren
     }
 
     fun refreshWelcomeMessage() {
         if (terminalSDK == null) return
+
+        viewModelScope.launch {
+            val text = if(userData.first().isFirstBoot) {
+                userDataRepository.setIsFirstBoot(false)
+                bootMessage
+            } else {
+                val index = Random.nextDistinctInt(welcomeMessages.size - 1, lastMessageIndex.value)
+                welcomeMessages[index].also { savedStateHandle[LAST_MESSAGE_INDEX] = index }
+            }
+
+            terminalSDK.displayBlackText(text)
+
+            delay(2000)
+            terminalSDK.finishScreen()
+        }
     }
 
-    fun updateTerminal(currentRoute: String?) {
-        if (currentRoute == null) return
+    fun updateTerminal() {
 
 
     }
@@ -75,8 +112,10 @@ class MainActivityViewModel @Inject constructor(
 
     fun updateMatrix(currentRoute: String?) {
         if (currentRoute == null) return
-        
-        lastKnownRoute = currentRoute
+
+
+        savedStateHandle[LAST_NAV_ROUTE] = currentRoute
+        println("FUNKY TEST $lastKnownRoute")
         
         if (isResumingLeds) {
             Log.d("LEDREFRESH", "FROM WMAPP (NAVIGATION) - BLOCKED during resume, saved route: $currentRoute")
@@ -98,17 +137,10 @@ class MainActivityViewModel @Inject constructor(
         if (currentRoute == null) return
 
         when (currentRoute) {
-            com.feature.home.navigation.homeRoute ->
-                TerminalLEDController.displayChadPattern()
-
-            com.feature.receive.navigation.receiveRoute ->
-                TerminalLEDController.displayReceivePattern()
-
-            com.example.transactions.navigation.transactionRoute ->
-                TerminalLEDController.displayInfoPattern()
-
-            com.feature.paymaster.navigation.paymasterRoute ->
-                TerminalLEDController.displayPlusPattern()
+            homeRoute -> TerminalLEDController.displayChadPattern()
+            receiveRoute -> TerminalLEDController.displayReceivePattern()
+            transactionRoute -> TerminalLEDController.displayInfoPattern()
+            paymasterRoute -> TerminalLEDController.displayPlusPattern()
 
             else -> {
                 // Default / fallback behaviour
@@ -123,7 +155,7 @@ class MainActivityViewModel @Inject constructor(
         viewModelScope.launch {
             terminalSDK?.let {
                 it.destroyTouchHandler()
-                it.resume(it.ID_STATUSBAR)
+                it.finishScreen()
             }
         }
     }
@@ -133,6 +165,14 @@ class MainActivityViewModel @Inject constructor(
 sealed interface MainActivityUiState {
     object Loading : MainActivityUiState
     data class Success(val userData: UserData): MainActivityUiState
+}
+
+
+fun Random.nextDistinctInt(until: Int, prev: Int): Int {
+    while (true) {
+        val new = this.nextInt(until)
+        if (new != prev) return new
+    }
 }
 
 

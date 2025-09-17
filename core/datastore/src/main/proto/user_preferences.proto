@@ -8,7 +8,7 @@ option java_multiple_files = true;
 message UserPreferences {
     string wallet_address = 1;
     string wallet_network = 2;
-    bool onboarding_completed = 3;
+    bool is_first_boot = 3;
     string preferred_currency = 4;
     repeated string hidden_assets  = 5; // repeated => list
 }

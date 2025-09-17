@@ -23,6 +23,12 @@ interface TransferDao {
     @Query("SELECT * FROM transfer WHERE chainID == :chainId AND category IN (:categories)")
     fun getTransfers(chainId: Int, categories: List<String>): Flow<List<TransferEntity>>
 
+    @Query("SELECT COUNT(*) FROM transfer")
+    fun observeTransferCount(): Flow<Int>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM transfer LIMIT 1)")
+    fun observeTransfersExist(): Flow<Boolean>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertTransfers(transfers: List<TransferEntity>)
 

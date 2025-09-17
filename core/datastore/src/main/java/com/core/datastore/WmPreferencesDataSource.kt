@@ -17,7 +17,7 @@ class WmPreferencesDataSource @Inject constructor(
             UserData(
                 walletAddress = it.walletAddress,
                 walletNetwork = it.walletNetwork,
-                onboardingCompleted = it.onboardingCompleted,
+                isFirstBoot = it.isFirstBoot,
                 preferredCurrency = it.preferredCurrency,
 
             )
@@ -38,10 +38,10 @@ class WmPreferencesDataSource @Inject constructor(
         }
     }
 
-    suspend fun setOnboardingCompleted(completed: Boolean) {
+    suspend fun setIsFirstBoot(isFirstBoot: Boolean) {
         userPreferences.updateData {
             it.copy {
-                this.onboardingCompleted = completed
+                this.isFirstBoot = isFirstBoot
             }
         }
     }

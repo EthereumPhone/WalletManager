@@ -95,10 +95,6 @@ class ReceiveViewModel @Inject constructor(
             try {
                 if (terminalSDK?.isAvailable() == true) {
                     terminalSDK.removeCopyAddress()
-                    // Only clear LED if explicitly requested
-                    if (clearLed) {
-                        //reflectiveLedPattern?.clear()
-                    }
                 } else {
                     Log.w("ReceiveViewModel", "TerminalSDK not available")
                 }

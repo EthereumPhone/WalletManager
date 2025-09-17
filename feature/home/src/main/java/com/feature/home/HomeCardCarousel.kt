@@ -100,76 +100,20 @@ internal fun HomeRoute2(
     animatedContentScope: AnimatedContentScope,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val walletDataUiState: WalletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
     val groupedAssetsUiState: GroupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
-
-    val coroutineScope = rememberCoroutineScope()
-
-    // Track Home screen visibility for periodic updates
-    DisposableEffect(Unit) {
-        viewModel.onHomeScreenVisible()
-        onDispose {
-            viewModel.onHomeScreenHidden()
-        }
-    }
-
-
     val hasTransfer by viewModel.hasTransfers.collectAsState()
-
-    val lifecycle = ProcessLifecycleOwner.get().lifecycle
-    DisposableEffect(lifecycle) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> {
-                    viewModel.showWelcomeBack()
-
-                }
-                Lifecycle.Event.ON_RESUME -> {
-
-                    val color = TerminalLEDController.getColorHex()
-                    viewModel.showResumeChad(color)
-                    coroutineScope.launch {
-                        //TerminalLEDController.displayChadPattern()
-                    }
-                    //TerminalLEDController.displayChadPattern()
-                }
-                Lifecycle.Event.ON_PAUSE -> {
-                    // Don't cleanup here - just log the event
-                    Log.d("CreateEditNoteScreen", "ON_PAUSE: Terminal remains active")
-                }
-                Lifecycle.Event.ON_STOP -> {
-                    viewModel.resetWelcomeScreenFlag()
-                    // Don't cleanup here either - terminal should persist
-                    Log.d("CreateEditNoteScreen", "ON_STOP: Terminal remains active")
-                }
-                else -> {}
-            }
-        }
-
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
-        }
-    }
-
     initializeFontMap(SpaceMono, PitagonsSans)
 
     HomeScreen2(
-        userData = walletDataUiState,
         groupedAssetsUiState = groupedAssetsUiState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
         navigateToLog = navigateToLog,
         navigateToReceive = navigateToReceive,
         isOffline = isOffline,
-        sharedTransitionScope = sharedTransitionScope,
-        animatedContentScope = animatedContentScope,
-        getLink = viewModel::getLink,
         hasTransfer = hasTransfer,
-        navigateToPayMaster = navigateToPayMaster,
-        showPlusMatrix = viewModel::showPlusMatrix
-
+        navigateToPayMaster = navigateToPayMaster
     )
 }
 
@@ -177,35 +121,25 @@ internal fun HomeRoute2(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen2(
-    userData: WalletDataUiState,
     groupedAssetsUiState: GroupedAssetsUiState,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
     navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
-    //selectedTokenId: State<String>,
     isOffline: Boolean,
     hasTransfer: Boolean,
-    sharedTransitionScope: SharedTransitionScope,
-    animatedContentScope: AnimatedContentScope,
-    getLink: KSuspendFunction1<String, String?>,
-    showPlusMatrix: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Log HomeScreen2 recomposition
     SideEffect {
         Log.d("RECOMPOSE", "HomeScreen2 recomposed")
-        Log.d("RECOMPOSE", "HomeScreen2 - userData: $userData")
         Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${groupedAssetsUiState::class.simpleName}")
         Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
         Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
     }
 
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val uriHandler = LocalUriHandler.current
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     val debouncedClickHandler = rememberDebouncedClickHandler()
 
