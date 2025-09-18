@@ -402,7 +402,7 @@ fun SendScreen2(
         Log.d("SendScreen", "New transactionStatus: $transactionStatus")
         
         when (transactionStatus) {
-            TransactionStatus.SUCCESS -> {
+            is TransactionStatus.SUCCESS -> {
                 Log.d("SendScreen", "🟢 SUCCESS status detected - transaction successful")
                 delay(TransactionTiming.SUCCESS_DISPLAY_DURATION)
                 Log.d("SendScreen", "${TransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
@@ -411,8 +411,11 @@ fun SendScreen2(
                 Log.d("SendScreen", "Fade transition complete, clearing overlay")
                 clearTransactionStatus()
             }
-            TransactionStatus.FAILURE -> {
+            is TransactionStatus.FAILURE -> {
                 Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
+                transactionStatus.errorMessage?.let { 
+                    Log.d("SendScreen", "Error message: $it")
+                }
                 // Display failure overlay for a reasonable duration to acknowledge the error
                 delay(TransactionTiming.FAILURE_DISPLAY_DURATION)
                 Log.d("SendScreen", "${TransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, starting fade navigation")
@@ -871,7 +874,7 @@ fun SendScreen2(
                             Log.d("SendScreen", "Amount: ${amount}")
                             
                             // Use the same validation logic as the removed button
-                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken == SelectedTokenUiState.Unselected) {
+                            if ((isAmountError && !isMaxAmount) || !isValidAddress || selectedToken is SelectedTokenUiState.Unselected) {
                                 Log.w("SendScreen", "🔴 Validation failed, showing error message")
                                 // Show specific error messages
                                 when {
@@ -899,7 +902,7 @@ fun SendScreen2(
                                         showDgenToast(context,"Invalid address format")
                                         showFailedMatrix()
                                     }
-                                    selectedToken == SelectedTokenUiState.Unselected -> {
+                                    selectedToken is SelectedTokenUiState.Unselected -> {
                                         Log.w("SendScreen", "Error: Select a chain")
                                         showDgenToast(context,"Select a chain")
                                         showFailedMatrix()
@@ -1509,7 +1512,7 @@ fun SendScreen2(
 
                                     // Ensure a token is selected when a chain is already chosen (initial load)
                                     LaunchedEffect(selectedChainIndex, selectedToken) {
-                                        if (!tokenPreselected && selectedToken == SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
+                                        if (!tokenPreselected && selectedToken is SelectedTokenUiState.Unselected && assetsUiState is AssetsUiState.Success) {
                                             val selectedChainName = availableChains.getOrNull(selectedChainIndex)
                                             val selectedChainId = when (selectedChainName) {
                                                 "main" -> 1
