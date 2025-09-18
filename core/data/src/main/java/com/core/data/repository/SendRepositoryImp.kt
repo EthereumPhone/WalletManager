@@ -15,6 +15,7 @@ import org.web3j.protocol.http.HttpService
 import org.web3j.utils.Convert
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 import javax.inject.Inject
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TransferDao
@@ -74,25 +75,25 @@ class SendRepositoryImp @Inject constructor(
             // Check if the amount exceeds the actual database balance
             val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
             val currentBalance = currentBalances.firstOrNull { it.chainId == chainId }
-            
-            val amountDouble = value.replace(",",".").toDouble()
-            
-            val finalAmountDouble = if (currentBalance != null) {
-                // Convert the UI amount to wei
-                val amountInWei = BigDecimal(amountDouble).multiply(BigDecimal.TEN.pow(18))
-                
-                // If the amount exceeds the database balance, use the exact database balance
-                if (amountInWei > currentBalance.tokenBalance) {
-                    // Convert the exact database balance back to ETH
-                    currentBalance.tokenBalance.divide(BigDecimal.TEN.pow(18)).toDouble()
-                } else {
-                    amountDouble
-                }
+
+            // Use precise conversion: ETH (string) -> WEI (BigDecimal) without floating imprecision
+            val valueNormalized = value.replace(",", ".")
+            val amountWeiNoFraction = BigDecimal(valueNormalized)
+                .movePointRight(18)
+                .setScale(0, RoundingMode.DOWN)
+
+            // If the requested amount exceeds the DB balance, clamp to the DB balance
+            val finalWei: BigDecimal = if (currentBalance != null) {
+                // DB stores native token balance in ETHER → convert to WEI for comparison
+                val dbWei = currentBalance.tokenBalance
+                    .movePointRight(18)
+                    .setScale(0, RoundingMode.DOWN)
+                if (amountWeiNoFraction.compareTo(dbWei) > 0) dbWei else amountWeiNoFraction
             } else {
-                amountDouble
+                amountWeiNoFraction
             }
-            
-            val decimalValue = BigDecimal(finalAmountDouble).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+
+            val decimalValue = finalWei.toPlainString()
 
 
             var ethGasPrice = web3j.ethGasPrice().send().gasPrice
@@ -106,8 +107,8 @@ class SendRepositoryImp @Inject constructor(
                 walletSDK.sendTransaction(
                     toAddress,
                     decimalValue,
-                    data?: "",
-                    BigInteger("120000"),
+                    "",
+                    null,
                     chainId
                 )
             } catch (exception: Exception) {
@@ -117,16 +118,17 @@ class SendRepositoryImp @Inject constructor(
             // If the transaction was successful (we got a valid bundler tx hash)
             if (res.isNotEmpty() && res != "error" && res != "decline") {
                 if (currentBalance != null) {
-                    // Use the final amount in wei for balance update
-                    val finalAmountInWei = BigDecimal(finalAmountDouble).multiply(BigDecimal.TEN.pow(18))
-                    val newBalance = currentBalance.tokenBalance - finalAmountInWei
+                    // Convert the final amount back to ETHER to update the DB (DB stores ETHER for native tokens)
+                    val finalAmountEther = finalWei.movePointLeft(18)
+                    val newBalanceEther = currentBalance.tokenBalance.subtract(finalAmountEther)
 
-                    val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
+                    val updatedBalance = currentBalance.copy(tokenBalance = newBalanceEther)
                     tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
                 }
 
                 // Insert provisional transfer entry so the UI can display it immediately
                 val fromAddress = walletSDK.getAddress()
+                val finalAmountEther = finalWei.movePointLeft(18)
                 val transferEntity = TransferEntity(
                     uniqueId = "temp_${res}",
                     asset = "ETH",
@@ -144,7 +146,7 @@ class SendRepositoryImp @Inject constructor(
                     ),
                     toaddress = toAddress,
                     tokenId = chainId.toString(),
-                    value = amountDouble,
+                    value = finalAmountEther.toDouble(),
                     blockTimestamp = Clock.System.now(),
                     userIsSender = true
                 )
