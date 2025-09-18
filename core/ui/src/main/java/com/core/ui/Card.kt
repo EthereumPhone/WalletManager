@@ -71,50 +71,6 @@ fun Card(
     }
 }
 
-/*──────────────────────── helpers ───────────────────────*/
-
-private fun Modifier.neonBorder(
-    brush: Brush,
-    stroke: Dp,
-    blur: Dp
-) = drawBehind {
-    val strokePx = stroke.toPx()
-    val blurPx   = blur.toPx()
-    val rect     = size.toRect().deflate(strokePx / 2)  // keep inner content crisp
-    // outer glow
-    drawRoundRect(
-        brush   = brush,
-        topLeft = rect.topLeft,
-        size    = rect.size,
-        cornerRadius = CornerRadius(10.dp.toPx()),
-        style   = Stroke(strokePx),
-        alpha   = 0.9f,
-        blendMode = BlendMode.SrcOver
-    )
-    // subtle diffuse
-    drawRoundRect(
-        color   = Color.White,
-        topLeft = rect.topLeft,
-        size    = rect.size,
-        cornerRadius = CornerRadius(10.dp.toPx()),
-        style   = Stroke(strokePx),
-        alpha   = 0.12f,
-        blendMode = BlendMode.SrcOver
-    )
-}
-
-private fun DrawScope.drawGrid(spacing: Dp, color: Color) {
-    val step   = spacing.toPx()
-    val cols   = (size.width  / step).toInt()
-    val rows   = (size.height / step).toInt()
-
-    for (i in 0..cols) drawLine(
-        color, Offset(i * step, 0f), Offset(i * step, size.height), 1f
-    )
-    for (j in 0..rows) drawLine(
-        color, Offset(0f, j * step), Offset(size.width, j * step), 1f
-    )
-}
 
 @Preview
 @Composable
