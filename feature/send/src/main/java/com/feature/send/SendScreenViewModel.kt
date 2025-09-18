@@ -36,7 +36,6 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.feature.send.ui.TransactionStatus
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.model.TokenAssetWithPrice
@@ -48,19 +47,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.update
-import org.kethereum.eip137.model.ENSName
-import org.kethereum.ens.ENS
-import org.kethereum.ens.isPotentialENSDomain
-import org.kethereum.rpc.HttpEthereumRPC
-import kotlin.String
-import kotlin.collections.first
-
-enum class TransactionStatus {
-    PENDING,
-    SUCCESS,
-    FAILURE
-}
+import com.feature.send.ui.TransactionStatus
 
 sealed interface TxCompleteUiState {
     object UnComplete: TxCompleteUiState
@@ -326,8 +313,22 @@ class SendViewModel @Inject constructor(
 
                             reflectiveLedPattern?.displayError()
                             showFailedMatrix()
+                            
+                            // Parse specific error messages
+                            val errorMessage = when {
+                                transactionResult.contains("AA21 didn't pay prefund", ignoreCase = true) -> 
+                                    "Not enough ETH for gas"
+                                transactionResult.contains("insufficient funds", ignoreCase = true) -> 
+                                    "Insufficient funds"
+                                transactionResult.contains("decline", ignoreCase = true) -> 
+                                    "Transaction declined"
+                                transactionResult.contains("error", ignoreCase = true) && transactionResult.length > 10 ->
+                                    "Transaction error occurred"
+                                else -> 
+                                    null // Use default message
+                            }
 
-                            _transactionStatus.value = TransactionStatus.FAILURE
+                            _transactionStatus.value = TransactionStatus.FAILURE(errorMessage)
                         } else {
                             terminalSDK?.displayBlackText("TXN IN ORBIT...")
                             checkTransactionInclusion(
@@ -344,7 +345,7 @@ class SendViewModel @Inject constructor(
                                 } else {
                                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
                                     reflectiveLedPattern?.displayError()
-                                    _transactionStatus.value = TransactionStatus.FAILURE
+                                    _transactionStatus.value = TransactionStatus.FAILURE("Transaction not confirmed")
                                 }
                             }
 
@@ -352,19 +353,29 @@ class SendViewModel @Inject constructor(
                     } else {
                         Log.e("SendViewModel", "🔴 TRANSACTION FAILED - User declined or error before sending")
                         reflectiveLedPattern?.displayError()
-                        _transactionStatus.value = TransactionStatus.FAILURE
+                        _transactionStatus.value = TransactionStatus.FAILURE(if (txResult == "decline") "Transaction declined" else null)
                     }
                 } catch (e: Exception) {
                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Exception caught: ${e.message}", e)
                     Log.e("SendViewModel", "Exception type: ${e.javaClass.simpleName}")
                     reflectiveLedPattern?.displayError()
                     e.printStackTrace()
-                    _transactionStatus.value = TransactionStatus.FAILURE
+                    
+                    // Parse exception message for specific errors
+                    val errorMessage = when {
+                        e.message?.contains("AA21 didn't pay prefund", ignoreCase = true) == true -> 
+                            "Not enough ETH for gas"
+                        e.message?.contains("insufficient funds", ignoreCase = true) == true -> 
+                            "Insufficient funds"
+                        else -> 
+                            null // Use default message
+                    }
+                    _transactionStatus.value = TransactionStatus.FAILURE(errorMessage)
                 }
             } else {
                 Log.e("SendViewModel", "🔴 NO ASSET SELECTED - Transaction failed")
                 reflectiveLedPattern?.displayError()
-                _transactionStatus.value = TransactionStatus.FAILURE
+                _transactionStatus.value = TransactionStatus.FAILURE("No asset selected")
             }
             
             Log.d("SendViewModel", "=== SEND TRANSACTION ENDED ===")

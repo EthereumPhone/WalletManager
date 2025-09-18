@@ -70,10 +70,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
-enum class TransactionStatus {
-    PENDING,
-    SUCCESS,
-    FAILURE
+sealed class TransactionStatus {
+    object PENDING : TransactionStatus()
+    object SUCCESS : TransactionStatus()
+    data class FAILURE(val errorMessage: String? = null) : TransactionStatus()
 }
 
 @Composable
@@ -98,7 +98,7 @@ fun TransactionStatusOverlay(
     // This effect handles the dismissal logic based on our *internal* state.
     // It won't be cancelled prematurely by the external status becoming null.
     LaunchedEffect(displayStatus) {
-        if (displayStatus == TransactionStatus.SUCCESS || displayStatus == TransactionStatus.FAILURE) {
+        if (displayStatus is TransactionStatus.SUCCESS || displayStatus is TransactionStatus.FAILURE) {
             delay(dismissDelay)
             onDismiss()
             displayStatus = null // Hide the overlay after the delay.
@@ -152,9 +152,9 @@ fun TransactionStatusOverlay(
                 )
 
                 val targetColor = when (currentStatus) {
-                    TransactionStatus.PENDING -> dgenTurqoise
-                    TransactionStatus.SUCCESS -> dgenGreen
-                    TransactionStatus.FAILURE -> dgenRed
+                    is TransactionStatus.PENDING -> dgenTurqoise
+                    is TransactionStatus.SUCCESS -> dgenGreen
+                    is TransactionStatus.FAILURE -> dgenRed
                 }
 
                 val animatedBaseColor by animateColorAsState(
@@ -182,26 +182,57 @@ fun TransactionStatusOverlay(
                     },
                     label = "textAnimation"
                 ) { targetStatus ->
-                    val text = when (targetStatus) {
-                        TransactionStatus.PENDING -> "Transaction Pending..."
-                        TransactionStatus.SUCCESS -> "Transaction Confirmed!"
-                        TransactionStatus.FAILURE -> "Transaction Failed"
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        val mainText = when (targetStatus) {
+                            is TransactionStatus.PENDING -> "Transaction Pending..."
+                            is TransactionStatus.SUCCESS -> "Transaction Confirmed!"
+                            is TransactionStatus.FAILURE -> {
+                                // Check if we have a custom error message
+                                if (!targetStatus.errorMessage.isNullOrEmpty()) {
+                                    targetStatus.errorMessage
+                                } else {
+                                    "Transaction Failed"
+                                }
+                            }
+                        }
+                        Text(
+                            text = mainText.uppercase(),
+                            style = TextStyle(
+                                fontFamily = SpaceMono,
+                                color = primaryColor.copy(alpha = blinkingAlpha),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                letterSpacing = 0.sp,
+                                textDecoration = TextDecoration.None,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = 24.dp)
+                        )
+                        
+                        // Add additional help text for gas fee error
+                        if (targetStatus is TransactionStatus.FAILURE && 
+                            targetStatus.errorMessage?.contains("gas", ignoreCase = true) == true) {
+                            Text(
+                                text = "Add ETH to your wallet to pay for gas fees",
+                                style = TextStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = primaryColor.copy(alpha = blinkingAlpha * 0.7f),
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 14.sp,
+                                    letterSpacing = 0.sp,
+                                    textDecoration = TextDecoration.None,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier
+                                    .padding(horizontal = 24.dp)
+                            )
+                        }
                     }
-                    Text(
-                        text = text.uppercase(),
-                        style = TextStyle(
-                            fontFamily = SpaceMono,
-                            color = primaryColor.copy(alpha = blinkingAlpha),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            letterSpacing = 0.sp,
-                            textDecoration = TextDecoration.None,
-                            textAlign = TextAlign.Center
-                        ),
-                        modifier = Modifier
-                            .offset(y = -48.dp)
-                            .padding(horizontal = 24.dp)
-                    )
                 }
             }
         }
