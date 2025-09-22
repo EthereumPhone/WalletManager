@@ -42,7 +42,7 @@ class TerminalSDK(private val context: Context) {
     private val proxy: Any? = mGetInstance.invoke(null)
 
     /* reference to current touch handler */
-    private var miniDisplayTouchHandler: MiniDisplayTouchHandler? = null
+    var miniDisplayTouchHandler: MiniDisplayTouchHandler? = null
 
     private val methodMutex = Mutex()
 
@@ -186,12 +186,6 @@ class TerminalSDK(private val context: Context) {
                 }
             }
         )
-    }
-
-    suspend fun removeCopyAddress() {
-        println("ETHOSDEBUGTERMINAL removeCopyAddress")
-        resume(ID_STATUSBAR)
-        destroyTouchHandler()
     }
 
 
@@ -344,4 +338,11 @@ class TerminalSDK(private val context: Context) {
 }
 
 /* name of the real proxy class */
-private const val PROXY_CLS = "android.os.FreemeProxy" 
+private const val PROXY_CLS = "android.os.FreemeProxy"
+
+
+
+sealed class TerminalSDKWrapper {
+    data class Available(val sdk: TerminalSDK) : TerminalSDKWrapper()
+    object Unavailable : TerminalSDKWrapper()
+}

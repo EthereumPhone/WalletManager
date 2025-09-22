@@ -85,9 +85,7 @@ internal fun ReceiveRoute(
     initializeFontMap(SpaceMono, PitagonsSans)
 
     //opens terminal screen for receive button
-    LaunchedEffect(Unit) {
-        viewModel.onCopyOpened()
-    }
+
 
     var hasHandledInitialResume by remember { mutableStateOf(false) }
 
@@ -171,67 +169,65 @@ fun ReceiveScreen(
     }
 
     val primaryColor = SystemColorManager.primaryColor
-    val secondaryColor = SystemColorManager.secondaryColor
 
+    Column (
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxSize()
+            .background(dgenBlack)
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp)
+        //.padding(horizontal = 32.dp, vertical = 32.dp)
+    ) {
+        HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick, primaryColor = primaryColor)
 
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier
-                .fillMaxSize()
-                .background(dgenBlack)
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp)
-            //.padding(horizontal = 32.dp, vertical = 32.dp)
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.weight(1f)
         ){
-            HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick, primaryColor = primaryColor)
+            Image(
+                painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),
+                contentDescription = "wallet address QR",
+                contentScale = ContentScale.FillBounds,
+                //colorFilter = ColorFilter.tint(dgenRed),
+                modifier = Modifier
+                    .size(150.dp)
+                    .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
+            )
 
-            Column (
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.weight(1f)
-            ){
-                Image(
-                    painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),
-                    contentDescription = "wallet address QR",
-                    contentScale = ContentScale.FillBounds,
-                    //colorFilter = ColorFilter.tint(dgenRed),
-                    modifier = Modifier
-                        .size(150.dp)
-                        .aspectRatio(1f)//.border(2.dp, dgenTurqoise)
-                )
+            Spacer(modifier.height(32.dp))
 
-                Spacer(modifier.height(32.dp))
-
-                Text(
-                    modifier = modifier.width(350.dp),
-                    text = userData.walletAddress,
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        color = dgenWhite,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 24.sp,
-                        lineHeight = 24.sp,
-                        letterSpacing = 1.sp,
-                        textDecoration = TextDecoration.None
-                    )
+            Text(
+                modifier = modifier.width(350.dp),
+                text = userData.walletAddress,
+                style = TextStyle(
+                    fontFamily = PitagonsSans,
+                    color = dgenWhite,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 24.sp,
+                    lineHeight = 24.sp,
+                    letterSpacing = 1.sp,
+                    textDecoration = TextDecoration.None
                 )
-                Spacer(modifier.height(8.dp))
-                Text(
-                    modifier = modifier.width(300.dp),
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        color = primaryColor.copy(neonOpacity),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None,
-                        textAlign = TextAlign.Center
-                    ),
-                    text = "This is your unique wallet address. You can use it to receive any token."
-                )
-            }
+            )
+            Spacer(modifier.height(8.dp))
+            Text(
+                modifier = modifier.width(300.dp),
+                style = TextStyle(
+                    fontFamily = PitagonsSans,
+                    color = primaryColor.copy(neonOpacity),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    letterSpacing = 0.sp,
+                    textDecoration = TextDecoration.None,
+                    textAlign = TextAlign.Center
+                ),
+                text = "This is your unique wallet address. You can use it to receive any token."
+            )
         }
+    }
 }
 
 @Preview

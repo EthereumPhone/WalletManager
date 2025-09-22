@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.repository.TerminalRepository
 import com.core.data.repository.UserDataRepository
 import com.core.model.UserData
 import com.core.terminalsdk.TerminalSDK
@@ -20,13 +21,14 @@ import javax.inject.Inject
 import com.core.terminalsdk.ReflectiveLedPattern
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
+import com.core.data.repository.TerminalEvent
 
 
 @HiltViewModel
 class ReceiveViewModel @Inject constructor(
     userDataRepository: UserDataRepository,
-    private val terminalSDK: TerminalSDK?,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
+    private val terminalRepository: TerminalRepository,
     @ApplicationContext private val appContext: Context,
 ): ViewModel() {
 
@@ -37,67 +39,56 @@ class ReceiveViewModel @Inject constructor(
             initialValue = UserData("","",false, "USD")
         )
 
-    /**
-     * Calls this function when the receive screen is opened
-     *
-     * When opened it displays the copy button
-     */
-    suspend fun onCopyOpened(){
-        try{
-            //check if terminal sdk is available
-            if (terminalSDK?.isAvailable() == true) {
+    init {
+        // Observe terminal events
+        viewModelScope.launch {
+            onCopyOpened()
 
-                terminalSDK.displayCopyAddress {
+            terminalRepository.events.collect { event ->
+
+                if (event == TerminalEvent.CopyTapped) {
                     copyToClipboard(userData.value.walletAddress)
-                    viewModelScope.launch(Dispatchers.Main) {
-                        showDgenToast(
-                            context = appContext,
-                            message = "Address copied!"
-                        )
-                    }
-                    // Removed premature clear to prevent flickering – copyToClipboard handles LED reset
+                    showDgenToast(
+                        context = appContext,
+                        message = "Address copied!"
+                    )
                 }
             }
+        }
+    }
+
+
+
+    /**
+     * Calls this function when the receive screen is opened
+     * When opened it displays the copy button
+     */
+    suspend fun onCopyOpened() {
+        try {
+            // Use TerminalRepository to generate receive screen
+            terminalRepository.generateReceive()
         } catch (e: Exception) {
-            Log.e("ReceiveViewModel", "Error copying address", e)
+            Log.e("ReceiveViewModel", "Error displaying receive screen", e)
         }
     }
 
     fun onScreenOpenedAfterResume() {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch {
             try {
-                delay(2000)
-                if (terminalSDK?.isAvailable() == true) {
-                    while(terminalSDK.isScreenOn() != true) {
-                        Log.d("ReceiveViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
-                        delay(500)
-                    }
-                    terminalSDK.displayCopyAddress {
-                        copyToClipboard(userData.value.walletAddress)
-                        viewModelScope.launch(Dispatchers.Main) {
-                            showDgenToast(
-                                context = appContext,
-                                message = "Address copied!"
-                            )
-                        }
-                    }
-                } else {
-                    Log.w("ReceiveViewModel", "TerminalSDK not available")
-                }
+                // Redraw the terminal content after resume
+                delay(300)
+                terminalRepository.generateReceive()
             } catch (e: Exception) {
-                Log.e("ReceiveViewModel", "Error displaying on secondary screen", e)
+                Log.e("ReceiveViewModel", "Error redrawing receive screen after resume", e)
             }
         }
     }
 
     fun onCopyClosed(clearLed: Boolean = true) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch {
             try {
-                if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.removeCopyAddress()
-                } else {
-                    Log.w("ReceiveViewModel", "TerminalSDK not available")
-                }
+                // Use TerminalRepository to dismiss content
+                terminalRepository.dismissContent()
             } catch (e: Exception) {
                 Log.e("ReceiveViewModel", "Error removing copy terminal screen", e)
             }

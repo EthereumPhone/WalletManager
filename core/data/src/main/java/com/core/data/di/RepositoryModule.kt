@@ -15,6 +15,7 @@ import com.core.data.repository.SendRepository
 import com.core.data.repository.SendRepositoryImp
 import com.core.data.repository.SwapRepository
 import com.core.data.repository.SwapRepositoryImp
+import com.core.data.repository.TerminalRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository

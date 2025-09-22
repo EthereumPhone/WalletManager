@@ -18,6 +18,8 @@ import com.feature.receive.navigation.receiveRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -56,7 +58,6 @@ class MainActivityViewModel @Inject constructor(
     private val lastKnownRoute = savedStateHandle.getStateFlow(LAST_NAV_ROUTE, "")
     private val lastMessageIndex = savedStateHandle.getStateFlow(LAST_MESSAGE_INDEX, -1)
 
-    
     /** Job for debouncing LED updates */
     private var updateMatrixJob: Job? = null
     
@@ -75,8 +76,6 @@ class MainActivityViewModel @Inject constructor(
 
             if (lastKnownRoute.value in listOf("", homeRoute)) {
                 refreshWelcomeMessage()
-            } else {
-
             }
 
             isResumingLeds = false
@@ -99,16 +98,10 @@ class MainActivityViewModel @Inject constructor(
 
             terminalSDK.displayBlackText(text)
 
-            delay(2000)
+            delay(2500)
             terminalSDK.finishScreen()
         }
     }
-
-    fun updateTerminal() {
-
-
-    }
-
 
     fun updateMatrix(currentRoute: String?) {
         if (currentRoute == null) return
@@ -186,3 +179,8 @@ private val welcomeMessages = listOf(
     "Big Brain: Activated  ಠ◡ಠ",
     "Refueled n ready ⊹⋆☾⋆⊹✧"
 )
+
+
+sealed interface UiEvent {
+    data class ShowToast(val message: String) : UiEvent
+}

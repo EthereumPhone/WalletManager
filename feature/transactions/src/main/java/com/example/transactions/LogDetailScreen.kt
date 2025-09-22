@@ -85,8 +85,11 @@ fun DetailLogRoute(
     val transfersUIState by viewModel.transferState.collectAsStateWithLifecycle()
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
 
-    // Track if this is the initial composition
-    var hasHandledInitialComposition by remember { mutableStateOf(false) }
+    // Track if onDetailLogOpened has been called for this txHash
+    var hasCalledForCurrentTx by remember(txHash) { mutableStateOf(false) }
+    
+    // Track if we're returning from background
+    var isReturningFromBackground by remember { mutableStateOf(false) }
     
     // Add navigation state to prevent multiple navigation calls
     var isNavigating by remember { mutableStateOf(false) }
@@ -100,11 +103,13 @@ fun DetailLogRoute(
             }
         }
     }
-    
-    // Call onDetailLogOpened once when the screen is first composed
-    LaunchedEffect(txHash) {
-        viewModel.onDetailLogOpened(txHash)
-        hasHandledInitialComposition = true
+
+    // Call onDetailLogOpened only once when first navigating to this screen
+    LaunchedEffect(Unit) {
+        if (!hasCalledForCurrentTx) {
+            viewModel.onDetailLogOpened(txHash)
+            hasCalledForCurrentTx = true
+        }
     }
 
     // Handle lifecycle events for resume from background
@@ -112,12 +117,15 @@ fun DetailLogRoute(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    isReturningFromBackground = true
+                }
                 Lifecycle.Event.ON_RESUME -> {
-                    // Only re-display LED pattern if this is not the initial composition
-                    // (to avoid double display on first load)
-                    if (hasHandledInitialComposition) {
-                        viewModel.onDetailLogResumed(txHash)
+                    // Only call if we're returning from background (not initial load)
+                    if (isReturningFromBackground && hasCalledForCurrentTx) {
+                        viewModel.onDetailLogResume(txHash)
                     }
+                    isReturningFromBackground = false
                 }
                 else -> {}
             }

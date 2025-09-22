@@ -15,6 +15,7 @@ import com.core.datastore.ExclusionListProtoSerializer
 import com.core.model.NetworkChain
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
+import com.core.terminalsdk.TerminalSDKWrapper
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -68,18 +69,22 @@ object DataModule {
         }
     }
 
-    @Singleton
     @Provides
-    fun provideTerminalSDK(
-        @ApplicationContext context: Context,
-    ): TerminalSDK? {
+    @Singleton
+    fun provideTerminalSDKWrapper(@ApplicationContext context: Context): TerminalSDKWrapper {
         return try {
-            TerminalSDK(
-                context = context
-            )
+            TerminalSDKWrapper.Available(TerminalSDK(context))
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            TerminalSDKWrapper.Unavailable
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideTerminalSDK(terminalSDKWrapper: TerminalSDKWrapper): TerminalSDK? {
+        return when (terminalSDKWrapper) {
+            is TerminalSDKWrapper.Available -> terminalSDKWrapper.sdk
+            TerminalSDKWrapper.Unavailable -> null
         }
     }
 

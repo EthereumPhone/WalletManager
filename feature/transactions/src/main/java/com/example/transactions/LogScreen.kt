@@ -117,26 +117,28 @@ fun LogRoute(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onScreenOpenedAfterResume()
+                viewModel.resumeLogOpened()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            // Don't clear LED if navigating back to home screen
-            viewModel.onLogClosed(clearLed = !isNavigatingBack)
         }
     }
 
     // Handle device back button press
     BackHandler {
         // Use safe navigation to prevent multiple calls
+        viewModel.onLogClosed()
         safeNavigateBack()
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
-        onNavigateBack = safeNavigateBack,
+        onNavigateBack = {
+            viewModel.onLogClosed()
+            safeNavigateBack()
+        },
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
         tokenId = tokenId,
