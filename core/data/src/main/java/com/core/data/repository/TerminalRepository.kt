@@ -112,6 +112,68 @@ class TerminalRepository @Inject constructor(
                 }
             )
         }
+    }
+
+    suspend fun generateTopUp() {
+        sdk?.apply {
+            destroyTouchHandler()
+
+            val layoutRenderer = LayoutRenderer(context)
+            val qrCodeBitmap = layoutRenderer.renderTopUp()
+
+            refresh(qrCodeBitmap, ID_PERSISTENT)
+
+            miniDisplayTouchHandler = MiniDisplayTouchHandler(
+                context,
+                MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                    if (action != MotionEvent.ACTION_DOWN) {
+                        return@OnTouchListener
+                    }
+                    try {
+                        coroutineScope.launch {
+                            _events.emit(TerminalEvent.TopUpTapped)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            )
+        }
+    }
+
+    suspend fun generateSend() {
+        sdk?.apply {
+            println("ETHOSDEBUGTERMINAL displayQRCode")
+            // Clean up any existing touch handler first
+            destroyTouchHandler()
+
+            val layoutRenderer = LayoutRenderer(context)
+            val qrCodeBitmap = layoutRenderer.renderQrOrSend()
+
+            refresh(qrCodeBitmap, ID_PERSISTENT)
+
+            miniDisplayTouchHandler = MiniDisplayTouchHandler(
+                context,
+                MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                    if (action != MotionEvent.ACTION_DOWN) {
+                        return@OnTouchListener
+                    }
+                    try {
+                        coroutineScope.launch {
+                            if (x < 214) {
+                                // QR Code area
+                                _events.emit(TerminalEvent.QrTapped)
+                            } else {
+                                _events.emit(TerminalEvent.SendTapped)
+                            }
+
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            )
+        }
 
     }
 }
@@ -121,6 +183,7 @@ sealed interface TerminalEvent {
     object CopyTapped : TerminalEvent
     object QrTapped: TerminalEvent
     object SendTapped: TerminalEvent
+    object TopUpTapped: TerminalEvent
     object LogTapped: TerminalEvent
     data class LogDetailTapped(val txHash: String = ""): TerminalEvent
 }

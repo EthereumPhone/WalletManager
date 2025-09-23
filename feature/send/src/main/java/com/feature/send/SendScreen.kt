@@ -70,7 +70,6 @@ fun SendRoute(
     val assetsUiState by viewModel.assetsUiState.collectAsStateWithLifecycle()
     val selectedAssetUiState by viewModel.selectedAssetUiState.collectAsStateWithLifecycle()
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
-    val sendTransactionTriggered by viewModel.sendTransactionTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
     val shouldDismissKeyboard by viewModel.shouldDismissKeyboard.collectAsStateWithLifecycle()
 
@@ -100,6 +99,7 @@ fun SendRoute(
         lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
+            viewModel.onSendClosed()
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
@@ -115,11 +115,7 @@ fun SendRoute(
     // Track if user is navigating back to home
     var isNavigatingBack by remember { mutableStateOf(false) }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onScreenClosed(clearLed = !isNavigatingBack)
-        }
-    }
+
 
     LaunchedEffect(transactionStatus) {
         Log.d("SendScreen", "=== TRANSACTION STATUS CHANGED ===")
@@ -175,6 +171,7 @@ fun SendRoute(
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         onKeyboardDismissed = viewModel::onKeyboardDismissed,
         onBackClick = onBackClick
+
     )
 }
 

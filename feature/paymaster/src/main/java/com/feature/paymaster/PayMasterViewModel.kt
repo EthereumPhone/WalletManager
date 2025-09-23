@@ -32,6 +32,8 @@ import javax.inject.Inject
 import java.net.UnknownHostException
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import com.core.data.repository.TerminalEvent
+import com.core.data.repository.TerminalRepository
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.showCustomToast
@@ -52,9 +54,7 @@ data class InitiateBalanceResponse(val daimoPaymentId: String?, val daimoPayment
 class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val walletSDK: WalletSDK?,
-    private val terminalSDK: TerminalSDK?,
-    private val reflectiveLedPattern: ReflectiveLedPattern?,
-    @ApplicationContext private val appContext: Context,
+    private val terminalRepository: TerminalRepository,
 ) : ViewModel() {
 
     private val _topUpAmount = MutableStateFlow(TextFieldValue(""))
@@ -101,7 +101,41 @@ class PayMasterViewModel @Inject constructor(
                 paymasterSDK.queryUpdate() // Query after registration to ensure observer gets it
             } else {
                 _balance.value = "Error: SDK Init failed"
-                showDgenToast(appContext,"Error: SDK initialization failed. Please try again later.")
+                showDgenToast(context,"Error: SDK initialization failed. Please try again later.")
+            }
+
+
+
+
+            terminalRepository.events.collect { event ->
+                if (event == TerminalEvent.TopUpTapped) {
+                    // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
+                    val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
+                    if (cleanAmount.isEmpty()) {
+                        showDgenToast(context, "Top up amount is empty.")
+                        return@collect
+                    }
+
+                    Log.e(
+                        "PayMasterViewModel",
+                        "topUpAmount.value.text: ${topUpAmount.value.text}"
+                    )
+                    val daimoUrl = topUp(topUpAmount.value.text)
+                    if (daimoUrl != null) {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+
+
+                        // Only show success toasts if internet is available and topUp was successful
+                        if (isInternetAvailable()) {
+                            showDgenToast(
+                                context = context,
+                                message = "You added ${topUpAmount.value.text} to your Paymaster."
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -109,7 +143,7 @@ class PayMasterViewModel @Inject constructor(
     suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         // Early exit if there is no internet connection
         if (!isInternetAvailable()) {
-            showDgenToast(appContext,"No internet connection!")
+            showDgenToast(context,"No internet connection!")
             return@withContext null
         }
 
@@ -134,7 +168,7 @@ class PayMasterViewModel @Inject constructor(
                     // Handle API error
                     val errorBody = response.body?.string()
                     _balance.value = "Error: API ${response.code} ${errorBody ?: "Unknown error"}"
-                    showDgenToast(appContext,"Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
+                    showDgenToast(context,"Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
                     return@withContext null
                 }
 
@@ -150,7 +184,7 @@ class PayMasterViewModel @Inject constructor(
 
                 if (daimoPaymentUrl.isNullOrBlank()) {
                     _balance.value = "Error: Daimo Payment ID not found in response"
-                    showDgenToast(appContext,"Error: Daimo Payment information missing in response")
+                    showDgenToast(context,"Error: Daimo Payment information missing in response")
                     return@withContext null
                 }
                 
@@ -161,9 +195,9 @@ class PayMasterViewModel @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             if (e is UnknownHostException) {
-                showDgenToast(appContext,"No internet connection!")
+                showDgenToast(context,"No internet connection!")
             } else {
-                showDgenToast(appContext,"Error: ${e.message}")
+                showDgenToast(context,"Error: ${e.message}")
                 _balance.value = "Error: ${e.message}"
             }
             return@withContext null
@@ -198,106 +232,21 @@ class PayMasterViewModel @Inject constructor(
      * When opened it displays the copy button
      */
     fun onScreenOpenedAfterResume() {
-        viewModelScope.launch(Dispatchers.Main) {
-            try {
-                delay(2000)
-                if (terminalSDK?.isAvailable() == true) {
-                    while (terminalSDK.isScreenOn() != true) {
-                        Log.d(
-                            "PayMasterViewModel",
-                            "ETHOSDEBUG: Waiting for secondary screen to be on..."
-                        )
-                        delay(500)
-                    }
-                    TerminalLEDController.displayChadPattern()
-                    terminalSDK.displayTopUp {
-                        // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
-                        val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
-                        if (cleanAmount.isEmpty()) {
-                            showDgenToast(context, "Top up amount is empty.")
-                            return@displayTopUp
-                        }
-                        viewModelScope.launch(Dispatchers.Main) {
-                            Log.e(
-                                "PayMasterViewModel",
-                                "topUpAmount.value.text: ${topUpAmount.value.text}"
-                            )
-                            val daimoUrl = topUp(topUpAmount.value.text)
-                            if (daimoUrl != null) {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                appContext.startActivity(intent)
-
-                                
-                                // Only show success toasts if internet is available and topUp was successful
-                                if (isInternetAvailable()) {
-                                    showDgenToast(
-                                        context = appContext,
-                                        message = "You added ${topUpAmount.value.text} to your Paymaster."
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("PayMasterViewModel", "Error toppin up", e)
-            }
+        viewModelScope.launch {
+            delay(300)
+            terminalRepository.generateTopUp()
         }
     }
 
-    suspend fun onTopUpOpened(){
-        try{
-            //check if terminal sdk is available
-            reflectiveLedPattern?.displayPlus(getSystemColorHex())
-//            TerminalLEDController.displaySignPattern()
-            if (terminalSDK?.isAvailable() == true) {
-                terminalSDK.displayTopUp {
-                    // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
-                    val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
-                    if (cleanAmount.isEmpty()) {
-                        showDgenToast(appContext,"Top up amount is empty.")
-                        return@displayTopUp
-                    }
-                    viewModelScope.launch(Dispatchers.Main) {
-                        Log.e("PayMasterViewModel", "topUpAmount.value.text: ${topUpAmount.value.text}")
-                        val daimoUrl = topUp(topUpAmount.value.text)
-                        if (daimoUrl != null) {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            appContext.startActivity(intent)
-                            
-                            // Only show success toasts if internet is available and topUp was successful
-                            if (isInternetAvailable()) {
-                                showDgenToast(
-                                    context = appContext,
-                                    message = "You added ${topUpAmount.value.text} to your Paymaster."
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("PayMasterViewModel", "Error toppin up", e)
+    fun onTopUpOpened(){
+        viewModelScope.launch {
+            terminalRepository.generateTopUp()
         }
     }
 
     fun onTopUpClosed(clearLed: Boolean = true) {
-        viewModelScope.launch(Dispatchers.Main) {
-            try {
-                if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.removeTopUp()
-                    // Only clear LED if explicitly requested
-                    if (clearLed) {
-                        reflectiveLedPattern?.clear()
-                    }
-                } else {
-                    Log.w("PayMasterViewModel", "TerminalSDK not available")
-                }
-            } catch (e: Exception) {
-                Log.e("PayMasterViewModel", "Error removing top up terminal screen", e)
-            }
+        viewModelScope.launch {
+            terminalRepository.dismissContent()
         }
     }
 
@@ -305,7 +254,7 @@ class PayMasterViewModel @Inject constructor(
      * Get system accent color as hex string
      */
     private fun getSystemColorHex(): String? {
-        return appContext.let { context ->
+        return context.let { context ->
             val accentInt = android.provider.Settings.Secure.getInt(
                 context.contentResolver,
                 "systemui_accent_color",

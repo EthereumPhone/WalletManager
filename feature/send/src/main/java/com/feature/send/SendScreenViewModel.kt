@@ -26,6 +26,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.core.data.remote.EnsApi
 import com.core.data.repository.GroupedTokenRepository
 import com.core.data.repository.NetworkBalanceRepository
+import com.core.data.repository.TerminalEvent
+import com.core.data.repository.TerminalRepository
 import com.core.data.repository.TokenExchangeRepository
 import com.core.model.UserData
 import com.core.terminalsdk.TerminalSDK
@@ -78,6 +80,7 @@ class SendViewModel @Inject constructor(
     private val sendRepository: SendRepository,
     private val savedStateHandle: SavedStateHandle,
     private val ensApi: EnsApi,
+    private val terminalRepository: TerminalRepository,
     private val terminalSDK: TerminalSDK?,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
     @ApplicationContext private val context: Context
@@ -128,6 +131,17 @@ class SendViewModel @Inject constructor(
                         ) }
                     }
                     else -> _selectedAssetUiState.value = SelectedAssetUiState.Unselected
+                }
+            }
+
+
+
+            terminalRepository.events.collect { event ->
+                if (event == TerminalEvent.SendTapped) {
+                    send()
+                }
+                if (event == TerminalEvent.QrTapped) {
+                    triggerQrScanner()
                 }
             }
         }
@@ -209,7 +223,7 @@ class SendViewModel @Inject constructor(
     val transactionStatus: StateFlow<TransactionStatus?> = _transactionStatus.asStateFlow()
 
 
-    fun send(callback: () -> Unit) {
+    fun send() {
         if (amountUiState.value.currentAmount == ".") return
         if (amountUiState.value.currentAmount == "0.") return
         if (amountUiState.value.currentAmount == "") return
@@ -269,6 +283,7 @@ class SendViewModel @Inject constructor(
                         Log.d("SendViewModel", "Converting fiat amount: $$fiatAmount to crypto: $amountToSend (price per token: $$pricePerToken)")
                     } else {
                         // No amount entered
+                        showFailedMatrix()
                         Log.e("SendViewModel", "No amount entered for transaction")
                         throw IllegalArgumentException("No amount specified for transaction")
                     }
@@ -310,6 +325,7 @@ class SendViewModel @Inject constructor(
                             Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Repository returned: '$transactionResult'")
 
                             reflectiveLedPattern?.displayError()
+                            showFailedMatrix()
 
                             _transactionStatus.value = TransactionStatus.FAILURE
                         } else {
@@ -324,6 +340,7 @@ class SendViewModel @Inject constructor(
                                     viewModelScope.launch {
                                         terminalSDK?.displayBlackText("TXN SUCCESS!")
                                     }
+                                    showSuccessMatrix()
                                 } else {
                                     Log.e("SendViewModel", "🔴 TRANSACTION FAILED - Not included in the blockchain")
                                     reflectiveLedPattern?.displayError()
@@ -352,7 +369,6 @@ class SendViewModel @Inject constructor(
             
             Log.d("SendViewModel", "=== SEND TRANSACTION ENDED ===")
             Log.d("SendViewModel", "Final status - transactionStatus: ${_transactionStatus.value}")
-            callback()
         }
     }
 
@@ -466,86 +482,28 @@ class SendViewModel @Inject constructor(
     /**
      * Call this function when the send screen is opened to display QR code on secondary screen
      */
+
+    fun onSendClosed() {
+        viewModelScope.launch {
+            terminalRepository.dismissContent()
+        }
+    }
     fun onScreenOpened() {
-        viewModelScope.launch(Dispatchers.Main) {
-            try {
-
-                reflectiveLedPattern?.displayArrowUp()
-                val result = terminalSDK?.isAvailable() == false
-                println("TerminalSDK isAvailable: $result")
-
-                terminalSDK?.displayQRCode(
-                    onQrCode = {
-                        Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
-                        triggerQrScanner()
-                    },
-                    sendTx = {
-                        Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
-                        send() {}
-                    }
-                )
-                Log.d("SendViewModel", "QR code displayed on secondary screen")
-            } catch (e: Exception) {
-                Log.e("SendViewModel", "Error displaying QR code", e)
-            }
+        viewModelScope.launch {
+            terminalRepository.generateSend()
+            reflectiveLedPattern?.displayArrowUp()
         }
     }
 
     fun onScreenOpenedAfterResume() {
-        viewModelScope.launch(Dispatchers.Main) {
-            try {
-                delay(500)
-                if (terminalSDK?.isAvailable() == true) {
-                    while(!terminalSDK.isScreenOn()) {
-                        Log.d("SendViewModel", "ETHOSDEBUG: Waiting for secondary screen to be on...")
-                        delay(200)
-                    }
-
-                    terminalSDK.displayQRCode(
-                        onQrCode = {
-                            Log.d("SendViewModel", "QR code touched on secondary screen - triggering QR scanner")
-                            triggerQrScanner()
-                        },
-                        sendTx = {
-                            Log.d("SendViewModel", "Send transaction touched on secondary screen - triggering send transaction")
-                            send() {}
-                        }
-                    )
-                    reflectiveLedPattern?.displayArrowUp()
-                    Log.d("SendViewModel", "QR code displayed on secondary screen")
-                } else {
-                    Log.w("SendViewModel", "TerminalSDK not available")
-                }
-            } catch (e: Exception) {
-                Log.e("SendViewModel", "Error displaying QR code", e)
-            }
+        viewModelScope.launch {
+            delay(300)
+            terminalRepository.generateSend()
+            reflectiveLedPattern?.displayArrowUp()
         }
     }
 
-    /**
-     * Call this function when the send screen is closed/navigated away to remove QR code from secondary screen
-     */
-    fun onScreenClosed(clearLed: Boolean = true) {
-        viewModelScope.launch(Dispatchers.Main) {
-            try {
-                if (terminalSDK?.isAvailable() == true) {
-                    terminalSDK.removeQRCode()
-                    // Only clear LED if explicitly requested
-                    if (clearLed) {
-                        reflectiveLedPattern?.clear()
-                    }
-
-                    Log.d("SendViewModel", "QR code removed from secondary screen")
-                } else {
-                    Log.w("SendViewModel", "TerminalSDK not available")
-                }
-            } catch (e: Exception) {
-                Log.e("SendViewModel", "Error removing QR code", e)
-            }
-        }
-    }
-
-    fun showFailedMatrix(){
+    fun showFailedMatrix() {
         viewModelScope.launch {
             reflectiveLedPattern?.displayError()
             delay(2000)
@@ -554,7 +512,7 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    fun showWarningMatrix(){
+    fun showWarningMatrix() {
         viewModelScope.launch {
             reflectiveLedPattern?.displayWarning()
             delay(2000)
@@ -563,7 +521,7 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    fun showSuccessMatrix(){
+    fun showSuccessMatrix() {
         viewModelScope.launch {
             reflectiveLedPattern?.displayError()
             delay(2000)
