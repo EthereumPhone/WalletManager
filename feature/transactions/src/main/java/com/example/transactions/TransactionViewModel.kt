@@ -79,8 +79,6 @@ class TransactionViewModel @Inject constructor(
         Log.d("TransactionViewModel", "Initializing TransactionViewModel - fetching new transactions")
 
         viewModelScope.launch {
-            //terminalRepository.generateLog()
-
             terminalRepository.events.collect { event ->
 
                 if (event == TerminalEvent.LogTapped) {
@@ -115,11 +113,8 @@ class TransactionViewModel @Inject constructor(
                     }
                 }
             }
-
-
             refreshData()
         }
-
     }
 
     fun refreshData() {

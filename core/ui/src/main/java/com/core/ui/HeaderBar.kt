@@ -29,7 +29,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.ui.util.SpaceMono
-import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.mediumExitDuration
 import com.core.ui.util.rememberDebouncedClickHandler
@@ -43,7 +42,7 @@ fun HeaderBar(
     primaryColor: Color,
     onClick: () -> Unit = {}
 ){
-    val debouncedClickHandler = rememberDebouncedClickHandler(intervalMillis = 500L)
+    val debouncedClickHandler = rememberDebouncedClickHandler()
 
     Row (
         modifier = modifier

@@ -141,7 +141,7 @@ fun HomeScreen2(
 
     val context = LocalContext.current
 
-    val debouncedClickHandler = rememberDebouncedClickHandler()
+    val debouncedClickHandler = rememberDebouncedClickHandler(intervalMillis = 300L)
 
     val gifEnabledLoader = remember(context) {
         ImageLoader.Builder(context)

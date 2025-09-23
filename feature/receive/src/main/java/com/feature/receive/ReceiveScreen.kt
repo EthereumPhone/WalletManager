@@ -74,22 +74,12 @@ internal fun ReceiveRoute(
     onBackClick: () -> Unit
 ) {
     val userData by viewModel.userData.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
-    // Track if user is navigating back to home
-    // Set to false by default to ensure LED is always cleared
-    var isNavigatingBack by remember { mutableStateOf(false) }
-
-
-    //initializes fonts for toast
     initializeFontMap(SpaceMono, PitagonsSans)
-
-    //opens terminal screen for receive button
-
 
     var hasHandledInitialResume by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -108,65 +98,33 @@ internal fun ReceiveRoute(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+            viewModel.onCopyClosed()
 
-    //closes terminal screen for receive button
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onCopyClosed(clearLed = !isNavigatingBack)
         }
     }
     
-    // Handle device back button press
     BackHandler {
-        // Clear LED on back button press as well
-        isNavigatingBack = false
+        viewModel.onCopyClosed()
         onBackClick()
     }
     
     ReceiveScreen(
         userData = userData,
-//        modifier = modifier,
         onBackClick = {
-            // X button press - clear LED
-            isNavigatingBack = false
+            viewModel.onCopyClosed()
             onBackClick()
         },
-        onCopyClick = {
-            silentlyCopyToClipboard(context, userData.walletAddress)
-            //clipboard.setText(AnnotatedString(userData.walletAddress))
-        }
     )
-
-}
-fun silentlyCopyToClipboard(context: Context, text: String) {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clipData = ClipData.newPlainText("text", text)
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        // This flag helps suppress the clipboard overlay on Android 13+
-        clipboardManager.setPrimaryClip(clipData)
-    } else {
-        clipboardManager.setPrimaryClip(clipData)
-    }
-
-    // Optional: Show a toast or some other feedback that doesn't use system UI
-    // Toast.makeText(context, "Text copied", Toast.LENGTH_SHORT).show()
 }
 
 @Composable
 fun ReceiveScreen(
     userData: UserData,
     modifier: Modifier=Modifier,
-    onBackClick: () -> Unit,
-    onCopyClick: () -> Unit,
-
+    onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        SystemColorManager.refresh(context)
-    }
+    LaunchedEffect(Unit) { SystemColorManager.refresh(context) }
 
     val primaryColor = SystemColorManager.primaryColor
 

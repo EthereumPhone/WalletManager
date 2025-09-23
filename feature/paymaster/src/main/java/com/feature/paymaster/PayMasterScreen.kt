@@ -110,29 +110,19 @@ internal fun PayMasterScreenRoute(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.onTopUpClosed(clearLed = !isNavigatingBack)
+            viewModel.onTopUpClosed()
         }
     }
 
-    //closes terminal screen for paymaster button
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onTopUpClosed(clearLed = !isNavigatingBack)
-        }
-    }
-
-    // Handle device back button press
     BackHandler {
-        // Clear LED on back button press as well
-        isNavigatingBack = false
+        viewModel.onTopUpClosed()
         onBackClick()
     }
 
     PayMasterScreen(
         balance = balance,
         onBackClick = {
-            // X button press - clear LED
-            isNavigatingBack = false
+            viewModel.onTopUpClosed()
             onBackClick()
         },
         topUp = viewModel::topUp,

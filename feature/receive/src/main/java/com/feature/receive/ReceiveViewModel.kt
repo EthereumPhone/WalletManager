@@ -84,7 +84,7 @@ class ReceiveViewModel @Inject constructor(
         }
     }
 
-    fun onCopyClosed(clearLed: Boolean = true) {
+    fun onCopyClosed() {
         viewModelScope.launch {
             try {
                 // Use TerminalRepository to dismiss content

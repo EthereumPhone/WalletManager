@@ -50,7 +50,6 @@ fun WmNavHost(
     modifier: Modifier = Modifier,
     startDestination: String = homeGraphRoutePattern,
     terminalSDK: TerminalSDK?,
-    reflectiveLedPattern: ReflectiveLedPattern?
 ) {
     val coroutineScope = rememberCoroutineScope()
     val navController = appState.navController
@@ -61,27 +60,26 @@ fun WmNavHost(
             modifier = modifier,
             enterTransition = { fadeIn(
                 animationSpec = tween(
-                    durationMillis = 500,
+                    durationMillis = 300,
                     easing = FastOutSlowInEasing
                 )
             )
             },
             exitTransition = { fadeOut(
                 animationSpec = tween(
-                    durationMillis = 400,
+                    durationMillis = 300,
                     easing = FastOutSlowInEasing
-                )
-            )
+                ))
             },
             popEnterTransition = {
                 fadeIn(animationSpec = tween(
-                    durationMillis = 500,
+                    durationMillis = 300,
                     easing = FastOutSlowInEasing
                 ))
             },
             popExitTransition = {
                 fadeOut(animationSpec = tween(
-                    durationMillis = 400,
+                    durationMillis = 200,
                     easing = FastOutSlowInEasing
                 ))
             }
@@ -89,36 +87,14 @@ fun WmNavHost(
 
             homeGraph(
                 sharedTransitionScope = this@SharedTransitionLayout,
-                navigateToSwap = {
-                    navController.navigateToSwap()
-                },
-                navigateToSend = { groupId ->
-                    coroutineScope.launch(Dispatchers.IO) {
-                        terminalSDK?.finishScreen()
-                    }
-                    navController.navigateToSend(groupId=groupId)
-                },
-                navigateToLog = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        terminalSDK?.finishScreen()
-                    }
-                    navController.navigateToTransaction()
-                },
-                navigateToReceive = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        terminalSDK?.finishScreen()
-                    }
-                    navController.navigateToReceive()
-                                    },
-                navigateToPayMaster = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        terminalSDK?.finishScreen()
-                    }
-                    navController.navigateToPayMaster()
-                                      },
+                navigateToSwap = navController::navigateToSwap,
+                navigateToSend = navController::navigateToSend,
+                navigateToLog = navController::navigateToTransaction,
+                navigateToReceive = navController::navigateToReceive,
+                navigateToPayMaster = navController::navigateToPayMaster,
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
-                    sendScreen(navController::popBackStack, navController, this@SharedTransitionLayout, reflectiveLedPattern)
+                    sendScreen(navController::popBackStack, navController)
                     receiveScreen(navController::popBackStack)
                     payMasterScreen(navController::popBackStack)
                 }
@@ -126,9 +102,7 @@ fun WmNavHost(
 
             transactionGraph(
                 navigateBack = navController::popBackStack,
-                navigateToDetail = { txHash ->
-                    navController.navigateToTransactionDetail(txHash)
-                }
+                navigateToDetail = navController::navigateToTransactionDetail
             )
         }
     }

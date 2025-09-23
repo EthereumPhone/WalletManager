@@ -69,7 +69,6 @@ fun WmApp(
             // Fill the entire screen without automatic system bar padding
             modifier = Modifier.fillMaxSize(),
             terminalSDK = terminalSDK,
-            reflectiveLedPattern = reflectiveLedPattern
         )
     }
 }

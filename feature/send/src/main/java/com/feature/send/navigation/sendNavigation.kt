@@ -41,9 +41,7 @@ fun NavController.navigateToSend(
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.sendScreen(
     onBackClick: () -> Unit,
-    navController: NavController,
-    sharedTransitionScope: SharedTransitionScope,
-    reflectiveLedPattern: ReflectiveLedPattern?
+    navController: NavController
 ) {
     composable(
         route = sendRoute,
@@ -105,10 +103,7 @@ fun NavGraphBuilder.sendScreen(
                 } else {
                     onBackClick()
                 }
-                reflectiveLedPattern?.clear()
-            },
-            //sharedTransitionScope = sharedTransitionScope,
-            //animatedContentScope = this@composable,
+            }
         )
     }
 }

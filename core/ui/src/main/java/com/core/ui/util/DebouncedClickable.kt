@@ -1,37 +1,17 @@
 package com.core.ui.util
 
+import android.os.SystemClock
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import java.util.concurrent.atomic.AtomicLong
-
-/**
- * Extension function for Modifier that adds debounced click behavior.
- * Prevents multiple rapid clicks from triggering multiple actions.
- * 
- * @param intervalMillis The minimum time interval between clicks in milliseconds
- * @param onClick The action to perform when clicked (after debouncing)
- */
-fun Modifier.debouncedClickable(
-    intervalMillis: Long = 1000L,
-    onClick: () -> Unit
-): Modifier = composed {
-    val lastClickTime = remember { AtomicLong(0) }
-    
-    this.clickable(
-        interactionSource = remember { MutableInteractionSource() },
-        indication = null,
-    ) {
-        val now = System.currentTimeMillis()
-        if (now - lastClickTime.get() > intervalMillis) {
-            lastClickTime.set(now)
-            onClick()
-        }
-    }
-}
 
 /**
  * Composable helper function to create a debounced click handler.
@@ -42,17 +22,15 @@ fun Modifier.debouncedClickable(
  */
 @Composable
 fun rememberDebouncedClickHandler(
-    intervalMillis: Long = 1000L
+    intervalMillis: Long = 300L,
 ): (action: () -> Unit) -> Unit {
-    val lastClickTime = remember { AtomicLong(0) }
-    
-    return remember(intervalMillis) {
-        { action ->
-            val now = System.currentTimeMillis()
-            if (now - lastClickTime.get() > intervalMillis) {
-                lastClickTime.set(now)
-                action()
-            }
+    var lastClickTime by remember { mutableLongStateOf(0L) }
+
+    return { action ->
+        val now = SystemClock.uptimeMillis()
+        if (now - lastClickTime >= intervalMillis) {
+            lastClickTime = now
+            action()
         }
     }
 }
