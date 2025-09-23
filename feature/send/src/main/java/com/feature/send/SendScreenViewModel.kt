@@ -315,18 +315,7 @@ class SendViewModel @Inject constructor(
                             showFailedMatrix()
                             
                             // Parse specific error messages
-                            val errorMessage = when {
-                                transactionResult.contains("AA21 didn't pay prefund", ignoreCase = true) -> 
-                                    "Not enough ETH for gas"
-                                transactionResult.contains("insufficient funds", ignoreCase = true) -> 
-                                    "Insufficient funds"
-                                transactionResult.contains("decline", ignoreCase = true) -> 
-                                    "Transaction declined"
-                                transactionResult.contains("error", ignoreCase = true) && transactionResult.length > 10 ->
-                                    "Transaction error occurred"
-                                else -> 
-                                    null // Use default message
-                            }
+                            val errorMessage = parseAAErrorCode(transactionResult)
 
                             _transactionStatus.value = TransactionStatus.FAILURE(errorMessage)
                         } else {
@@ -362,14 +351,7 @@ class SendViewModel @Inject constructor(
                     e.printStackTrace()
                     
                     // Parse exception message for specific errors
-                    val errorMessage = when {
-                        e.message?.contains("AA21 didn't pay prefund", ignoreCase = true) == true -> 
-                            "Not enough ETH for gas"
-                        e.message?.contains("insufficient funds", ignoreCase = true) == true -> 
-                            "Insufficient funds"
-                        else -> 
-                            null // Use default message
-                    }
+                    val errorMessage = parseAAErrorCode(e.message ?: "")
                     _transactionStatus.value = TransactionStatus.FAILURE(errorMessage)
                 }
             } else {
@@ -671,6 +653,147 @@ class SendViewModel @Inject constructor(
      */
     fun resetTxComplete() {
         _txComplete.value = TxCompleteUiState.UnComplete
+    }
+
+    /**
+     * Parse ERC-4337 EntryPoint v0.6.0 error codes and return user-friendly messages
+     */
+    private fun parseAAErrorCode(errorString: String): String? {
+        return when {
+            // AA1x: Errors during account creation/sender validation
+            errorString.contains("AA10 sender already constructed", ignoreCase = true) || 
+            errorString.contains("AA10", ignoreCase = true) -> 
+                "Account already created"
+                
+            errorString.contains("AA13 initCode failed or OOG", ignoreCase = true) || 
+            errorString.contains("AA13", ignoreCase = true) -> 
+                "Account creation failed"
+                
+            errorString.contains("AA14 initCode must return sender", ignoreCase = true) || 
+            errorString.contains("AA14", ignoreCase = true) -> 
+                "Invalid account factory"
+                
+            errorString.contains("AA15 initCode must create sender", ignoreCase = true) || 
+            errorString.contains("AA15", ignoreCase = true) -> 
+                "Account creation error"
+                
+            // AA2x: Errors during account validation
+            errorString.contains("AA20 account not deployed", ignoreCase = true) || 
+            errorString.contains("AA20", ignoreCase = true) -> 
+                "Account not deployed"
+                
+            errorString.contains("AA21 didn't pay prefund", ignoreCase = true) || 
+            errorString.contains("AA21", ignoreCase = true) -> 
+                "Not enough ETH for gas"
+                
+            errorString.contains("AA22 expired or not due", ignoreCase = true) || 
+            errorString.contains("AA22", ignoreCase = true) -> 
+                "Transaction expired"
+                
+            errorString.contains("AA23 reverted (or OOG)", ignoreCase = true) || 
+            errorString.contains("AA23", ignoreCase = true) -> 
+                "Validation failed"
+                
+            errorString.contains("AA24 signature error", ignoreCase = true) || 
+            errorString.contains("AA24", ignoreCase = true) -> 
+                "Invalid signature"
+                
+            errorString.contains("AA25 invalid account nonce", ignoreCase = true) || 
+            errorString.contains("AA25", ignoreCase = true) -> 
+                "Invalid nonce"
+                
+            // AA3x: Errors during paymaster validation
+            errorString.contains("AA30 paymaster not deployed", ignoreCase = true) || 
+            errorString.contains("AA30", ignoreCase = true) -> 
+                "Paymaster not found"
+                
+            errorString.contains("AA31 paymaster deposit too low", ignoreCase = true) || 
+            errorString.contains("AA31", ignoreCase = true) -> 
+                "Paymaster funds too low"
+                
+            errorString.contains("AA32 paymaster expired", ignoreCase = true) || 
+            errorString.contains("AA32", ignoreCase = true) -> 
+                "Paymaster expired"
+                
+            errorString.contains("AA33 reverted (or OOG)", ignoreCase = true) || 
+            errorString.contains("AA33", ignoreCase = true) -> 
+                "Paymaster rejected"
+                
+            errorString.contains("AA34 signature error", ignoreCase = true) || 
+            errorString.contains("AA34", ignoreCase = true) -> 
+                "Paymaster signature invalid"
+                
+            // AA4x: Errors related to verification gas and execution
+            errorString.contains("AA40 over verificationGasLimit", ignoreCase = true) || 
+            errorString.contains("AA40", ignoreCase = true) -> 
+                "Gas limit exceeded"
+                
+            errorString.contains("AA41 too little verificationGas", ignoreCase = true) || 
+            errorString.contains("AA41", ignoreCase = true) -> 
+                "Verification gas too low"
+                
+            // AA5x: Errors related to gas calculation
+            errorString.contains("AA50 postOp revert", ignoreCase = true) || 
+            errorString.contains("AA50", ignoreCase = true) -> 
+                "Post-operation failed"
+                
+            errorString.contains("AA51 prefund below actualGasCost", ignoreCase = true) || 
+            errorString.contains("AA51", ignoreCase = true) -> 
+                "Insufficient gas payment"
+                
+            // AA9x: Bundler/Validation errors
+            errorString.contains("AA90 invalid beneficiary", ignoreCase = true) || 
+            errorString.contains("AA90", ignoreCase = true) -> 
+                "Invalid beneficiary"
+                
+            errorString.contains("AA91 failed send to beneficiary", ignoreCase = true) || 
+            errorString.contains("AA91", ignoreCase = true) -> 
+                "Payment transfer failed"
+                
+            errorString.contains("AA92 internal call only", ignoreCase = true) || 
+            errorString.contains("AA92", ignoreCase = true) -> 
+                "Invalid call method"
+                
+            errorString.contains("AA93 invalid paymasterAndData", ignoreCase = true) || 
+            errorString.contains("AA93", ignoreCase = true) -> 
+                "Invalid paymaster data"
+                
+            errorString.contains("AA94 gas values overflow", ignoreCase = true) || 
+            errorString.contains("AA94", ignoreCase = true) -> 
+                "Gas calculation error"
+                
+            errorString.contains("AA95 out of gas", ignoreCase = true) || 
+            errorString.contains("AA95", ignoreCase = true) -> 
+                "Transaction out of gas"
+                
+            errorString.contains("AA96 invalid aggregator", ignoreCase = true) || 
+            errorString.contains("AA96", ignoreCase = true) -> 
+                "Invalid signature aggregator"
+                
+            // Other common errors
+            errorString.contains("insufficient funds", ignoreCase = true) -> 
+                "Insufficient funds"
+            errorString.contains("decline", ignoreCase = true) -> 
+                "Transaction declined"
+            errorString.contains("reverted", ignoreCase = true) -> 
+                "Transaction reverted"
+            errorString.contains("gas too low", ignoreCase = true) -> 
+                "Gas limit too low"
+            errorString.contains("nonce too low", ignoreCase = true) -> 
+                "Nonce too low"
+            errorString.contains("replacement transaction underpriced", ignoreCase = true) -> 
+                "Gas price too low"
+            errorString.contains("already known", ignoreCase = true) -> 
+                "Transaction already submitted"
+            errorString.contains("FailedOp", ignoreCase = true) -> 
+                "Operation failed"
+            
+            // Generic error for unrecognized messages
+            errorString.contains("error", ignoreCase = true) && errorString.length > 10 ->
+                "Transaction error occurred"
+                
+            else -> null // Use default message
+        }
     }
 
     fun checkTransactionInclusion(txHash: String, callback: (Boolean) -> Unit) {

@@ -19,7 +19,7 @@ android {
         applicationId "org.ethereumphone.walletmanager"
         minSdk 34
         targetSdk 35
-        versionCode 76
+        versionCode 79
         versionName versionCode.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -90,7 +90,7 @@ dependencies {
     implementation 'org.web3j:core:4.9.4'
 
     // Gson
-    implementation 'com.google.code.gson:gson:2.10'
+    implementation libs.gson
 
     // ENS resolving
     implementation 'com.github.komputing.kethereum:ens:0.85.7'

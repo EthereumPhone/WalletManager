@@ -214,23 +214,44 @@ fun TransactionStatusOverlay(
                                 .padding(horizontal = 24.dp)
                         )
                         
-                        // Add additional help text for gas fee error
-                        if (targetStatus is TransactionStatus.FAILURE && 
-                            targetStatus.errorMessage?.contains("gas", ignoreCase = true) == true) {
-                            Text(
-                                text = "Add ETH to your wallet to pay for gas fees",
-                                style = TextStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = primaryColor.copy(alpha = blinkingAlpha * 0.7f),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 14.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None,
-                                    textAlign = TextAlign.Center
-                                ),
-                                modifier = Modifier
-                                    .padding(horizontal = 24.dp)
-                            )
+                        // Add additional help text based on error type
+                        if (targetStatus is TransactionStatus.FAILURE) {
+                            val helpText = when {
+                                targetStatus.errorMessage?.contains("gas", ignoreCase = true) == true -> 
+                                    "Add ETH to your wallet to pay for gas fees"
+                                targetStatus.errorMessage?.contains("nonce", ignoreCase = true) == true -> 
+                                    "Wait for pending transactions to complete"
+                                targetStatus.errorMessage?.contains("signature", ignoreCase = true) == true -> 
+                                    "Please try signing the transaction again"
+                                targetStatus.errorMessage?.contains("expired", ignoreCase = true) == true -> 
+                                    "Transaction took too long. Please try again"
+                                targetStatus.errorMessage?.contains("insufficient funds", ignoreCase = true) == true -> 
+                                    "Add more funds to your wallet"
+                                targetStatus.errorMessage?.contains("paymaster", ignoreCase = true) == true -> 
+                                    "Sponsorship service unavailable. Try again later"
+                                targetStatus.errorMessage?.contains("account not deployed", ignoreCase = true) == true -> 
+                                    "Your account needs to be activated first"
+                                targetStatus.errorMessage?.contains("throttled", ignoreCase = true) == true -> 
+                                    "Too many requests. Please wait and try again"
+                                else -> null
+                            }
+                            
+                            helpText?.let {
+                                Text(
+                                    text = it,
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = primaryColor.copy(alpha = blinkingAlpha * 0.7f),
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 14.sp,
+                                        letterSpacing = 0.sp,
+                                        textDecoration = TextDecoration.None,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier
+                                        .padding(horizontal = 24.dp)
+                                )
+                            }
                         }
                     }
                 }
