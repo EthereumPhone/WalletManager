@@ -140,6 +140,8 @@ import com.core.ui.showDgenToast
 import com.core.ui.util.pulseOpacity
 import com.core.ui.util.TokenLogoFallback
 import java.math.BigDecimal
+import androidx.compose.material3.FloatingActionButton
+import com.feature.send.BuildConfig
 
 // ===== CONFIGURABLE TRANSACTION OVERLAY DURATIONS =====
 // These constants control the timing of transaction status overlays and navigation
@@ -270,7 +272,8 @@ fun SendRoute2(
         clearTransactionStatus = viewModel::clearTransactionStatus,
         showFailedMatrix = viewModel::showFailedMatrix,
         showSuccessMatrix = viewModel::showSuccessMatrix,
-        setMaxAmount = viewModel::setMaxAmount
+        setMaxAmount = viewModel::setMaxAmount,
+        triggerSendTransaction = viewModel::triggerSendTransaction
     )
 }
 
@@ -303,6 +306,7 @@ fun SendScreen2(
     transactionStatus: TransactionStatus?,
     clearTransactionStatus: () -> Unit,
     setMaxAmount: (BigDecimal, Int) -> Unit,
+    triggerSendTransaction: () -> Unit,
 ){
     // Check if a token was preselected via navigation (non-native token)
     val tokenPreselected = remember(tokenId, assets) {
@@ -781,6 +785,28 @@ fun SendScreen2(
                                         7777777 -> "zora"
                                         else -> null
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // Ensure the carousel defaults to the selected token's chain when available
+                    LaunchedEffect(selectedToken, availableChains) {
+                        if (selectedToken is SelectedTokenUiState.Selected && availableChains.isNotEmpty()) {
+                            val targetCode = when ((selectedToken as SelectedTokenUiState.Selected).tokenAsset.chainId) {
+                                1 -> "main"
+                                11155111 -> "sepolia"
+                                10 -> "op"
+                                137 -> "pol"
+                                42161 -> "arb"
+                                8453 -> "base"
+                                7777777 -> "zora"
+                                else -> null
+                            }
+                            targetCode?.let { code ->
+                                val idx = availableChains.indexOf(code)
+                                if (idx >= 0 && idx != selectedChainIndex) {
+                                    selectedChainIndex = idx
                                 }
                             }
                         }
@@ -1749,6 +1775,31 @@ fun SendScreen2(
             primaryColor = primaryColor,
             secondaryColor = secondaryColor
         )
+        
+        // Debug-only Send button in bottom right corner
+        if (BuildConfig.DEBUG) {
+            FloatingActionButton(
+                onClick = {
+                    Log.d("SendScreen", "Debug send button clicked - triggering send transaction")
+                    triggerSendTransaction()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp),
+                containerColor = primaryColor,
+                contentColor = dgenBlack,
+                content = {
+                    Text(
+                        text = "SEND",
+                        style = TextStyle(
+                            fontFamily = SpaceMono,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            )
+        }
     }
 
 }

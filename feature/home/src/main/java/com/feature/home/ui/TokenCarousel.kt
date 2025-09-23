@@ -239,7 +239,7 @@ fun TokenCardCarousel(
                             fiatAmount = item.fiatAmount,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
                             navigateToSend = {
-                                navigateToSend(item.address, item.address)
+                                navigateToSend("", item.address)
                             },
                             enableSend = item.balance > 0,
                             primaryColor = primaryColor,
