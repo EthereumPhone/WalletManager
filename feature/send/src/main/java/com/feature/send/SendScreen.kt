@@ -3,6 +3,7 @@ package com.feature.send
 import android.Manifest
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
@@ -115,6 +116,11 @@ fun SendRoute(
     // Track if user is navigating back to home
     var isNavigatingBack by remember { mutableStateOf(false) }
 
+    BackHandler {
+        viewModel.onSendClosed()
+        onBackClick()
+    }
+
 
 
     LaunchedEffect(transactionStatus) {
@@ -170,7 +176,10 @@ fun SendRoute(
         clearTransactionStatus = viewModel::clearTransactionStatus,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         onKeyboardDismissed = viewModel::onKeyboardDismissed,
-        onBackClick = onBackClick
+        onBackClick = {
+            viewModel.onSendClosed()
+            onBackClick()
+        }
 
     )
 }

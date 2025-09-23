@@ -88,7 +88,10 @@ fun WmNavHost(
             homeGraph(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 navigateToSwap = navController::navigateToSwap,
-                navigateToSend = navController::navigateToSend,
+
+                navigateToSend = { groupId ->
+                    navController.navigateToSend(groupId=groupId)
+                },
                 navigateToLog = navController::navigateToTransaction,
                 navigateToReceive = navController::navigateToReceive,
                 navigateToPayMaster = navController::navigateToPayMaster,

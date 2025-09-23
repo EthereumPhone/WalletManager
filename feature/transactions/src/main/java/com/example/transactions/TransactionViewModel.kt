@@ -34,6 +34,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.Job
 
 
 @HiltViewModel
@@ -47,12 +48,8 @@ class TransactionViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     ): ViewModel() {
 
-    val userData = userDataRepository.userData
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UserData("","",false, "USD")
-        )
+    // Job to track delayed operations that can be cancelled
+    private var pendingResumeJob: Job? = null
 
     val transferState: StateFlow<TransfersUiState> = getTransfersUseCase()
         .map(TransfersUiState::Success)
@@ -79,10 +76,12 @@ class TransactionViewModel @Inject constructor(
         Log.d("TransactionViewModel", "Initializing TransactionViewModel - fetching new transactions")
 
         viewModelScope.launch {
+            onLogOpened()
+
             terminalRepository.events.collect { event ->
 
                 if (event == TerminalEvent.LogTapped) {
-                    val walletAddress = userData.value.walletAddress
+                    val walletAddress = userDataRepository.userData.first { it.walletAddress != "" }.walletAddress
                     if (walletAddress.isNotBlank()) {
                         val url = "https://blockscan.com/address/$walletAddress"
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
@@ -134,12 +133,15 @@ class TransactionViewModel @Inject constructor(
     }
 
 
-    fun resumeLogOpened(){
-        viewModelScope.launch {
-            delay(500)
+    fun resumeLogOpened() {
+        // Cancel any existing pending job
+        pendingResumeJob?.cancel()
+        
+        // Create a new cancellable job
+        pendingResumeJob = viewModelScope.launch {
+            delay(300)
             terminalRepository.generateLog()
             reflectiveLedPattern?.displayInfo()
-
         }
     }
     fun onLogOpened(){
@@ -166,17 +168,26 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-    fun onDetailLogResume(txHash: String)  {
-        viewModelScope.launch {
+    fun onDetailLogResume(txHash: String) {
+        // Cancel any existing pending job
+        pendingResumeJob?.cancel()
+        
+        // Create a new cancellable job
+        pendingResumeJob = viewModelScope.launch {
             delay(300)
             terminalRepository.generateDetailLog(txHash)
             reflectiveLedPattern?.displayInfo()
-
         }
     }
 
     fun onDetailLogClosed() {
         onLogOpened()
+    }
+    
+    fun cancelPendingOperations() {
+        // Cancel any pending delayed operations
+        pendingResumeJob?.cancel()
+        pendingResumeJob = null
     }
 
 }

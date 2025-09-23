@@ -92,52 +92,57 @@ fun LogRoute(
     val transfersUIState: TransfersUiState by viewModel.transferState.collectAsStateWithLifecycle()
     val refreshState by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val tokenMetadata by viewModel.tokenMetadata.collectAsStateWithLifecycle()
-    val userData by viewModel.userData.collectAsStateWithLifecycle()
 
-    // Track if user is navigating back to home
-    // Set to false by default to ensure LED is always cleared
-    var isNavigatingBack by remember { mutableStateOf(false) }
+    // Track if we're returning from background
+    var isReturningFromBackground by remember { mutableStateOf(false) }
     
-    // Add navigation state to prevent multiple navigation calls
-    var isNavigating by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    
-    // Debounced navigation function
-    val safeNavigateBack: () -> Unit = remember {
-        {
-            if (!isNavigating) {
-                isNavigating = true
-                isNavigatingBack = false
-                navigateBack()
-            }
-        }
-    }
+    // Track if we're navigating away
+    var isNavigatingAway by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.resumeLogOpened()
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Mark that we're going to background (not navigating away)
+                    if (!isNavigatingAway) {
+                        isReturningFromBackground = true
+                    }
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // Only call resumeLogOpened if we're returning from background
+                    // and not in the process of navigating away
+                    if (isReturningFromBackground && !isNavigatingAway) {
+                        viewModel.resumeLogOpened()
+                    }
+                    isReturningFromBackground = false
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            // Cancel any pending operations when disposing
+            viewModel.cancelPendingOperations()
         }
     }
 
     // Handle device back button press
     BackHandler {
-        // Use safe navigation to prevent multiple calls
+        // Mark that we're navigating away
+        isNavigatingAway = true
         viewModel.onLogClosed()
-        safeNavigateBack()
+        navigateBack()
     }
 
     LogScreen(
         transfersUIState = transfersUIState,
         onNavigateBack = {
+            // Mark that we're navigating away
+            isNavigatingAway = true
             viewModel.onLogClosed()
-            safeNavigateBack()
+            navigateBack()
         },
         refreshState = refreshState,
         tokenMetadata = tokenMetadata,
@@ -156,7 +161,6 @@ fun LogScreen(
     refreshState: Boolean,
     tokenId: String?,
     onTransactionClick: (String) -> Unit,
-    //onRefresh: () -> Unit,
 ){
     Log.d("LogScreen", "LogScreen displayed with tokenId: $tokenId")
 

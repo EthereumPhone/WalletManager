@@ -94,11 +94,16 @@ fun DetailLogRoute(
     // Add navigation state to prevent multiple navigation calls
     var isNavigating by remember { mutableStateOf(false) }
     
+    // Track if we're navigating away to prevent resume operations
+    var isNavigatingAway by remember { mutableStateOf(false) }
+    
     // Debounced navigation function with additional protection
     val safeNavigateBack: () -> Unit = remember {
         {
             if (!isNavigating) {
                 isNavigating = true
+                isNavigatingAway = true
+                viewModel.cancelPendingOperations()
                 navigateBack()
             }
         }
@@ -118,11 +123,14 @@ fun DetailLogRoute(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
-                    isReturningFromBackground = true
+                    // Only mark as returning from background if not navigating away
+                    if (!isNavigatingAway) {
+                        isReturningFromBackground = true
+                    }
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    // Only call if we're returning from background (not initial load)
-                    if (isReturningFromBackground && hasCalledForCurrentTx) {
+                    // Only call if we're returning from background (not initial load or navigating away)
+                    if (isReturningFromBackground && hasCalledForCurrentTx && !isNavigatingAway) {
                         viewModel.onDetailLogResume(txHash)
                     }
                     isReturningFromBackground = false
@@ -134,6 +142,7 @@ fun DetailLogRoute(
         
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.cancelPendingOperations()
             viewModel.onDetailLogClosed()
         }
     }
@@ -143,6 +152,9 @@ fun DetailLogRoute(
     
     // Handle device back button press with safe navigation
     BackHandler {
+        isNavigatingAway = true
+        viewModel.cancelPendingOperations()
+        viewModel.onDetailLogClosed()
         safeNavigateBack()
     }
 
