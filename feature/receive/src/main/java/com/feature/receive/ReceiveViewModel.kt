@@ -22,6 +22,7 @@ import com.core.terminalsdk.ReflectiveLedPattern
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
 import com.core.data.repository.TerminalEvent
+import kotlinx.coroutines.Job
 
 
 @HiltViewModel
@@ -31,6 +32,8 @@ class ReceiveViewModel @Inject constructor(
     private val terminalRepository: TerminalRepository,
     @ApplicationContext private val appContext: Context,
 ): ViewModel() {
+
+    private var ledPatternJob: Job? = null
 
     val userData = userDataRepository.userData
         .stateIn(
@@ -85,6 +88,10 @@ class ReceiveViewModel @Inject constructor(
     }
 
     fun onCopyClosed() {
+        // Cancel any pending LED pattern changes
+        ledPatternJob?.cancel()
+        ledPatternJob = null
+        
         viewModelScope.launch {
             try {
                 // Use TerminalRepository to dismiss content
@@ -100,6 +107,9 @@ class ReceiveViewModel @Inject constructor(
      */
     private fun copyToClipboard(text: String) {
         try {
+            // Cancel any existing LED pattern job
+            ledPatternJob?.cancel()
+            
             reflectiveLedPattern?.displayInfo()
             val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("wallet_address", text)
@@ -108,13 +118,20 @@ class ReceiveViewModel @Inject constructor(
             } else {
                 clipboard.setPrimaryClip(clip)
             }
-            viewModelScope.launch {
+            
+            // Store the new job reference
+            ledPatternJob = viewModelScope.launch {
                 delay(2000)
                 reflectiveLedPattern?.displayArrowDown()
             }
         } catch (e: Exception) {
             Log.e("ReceiveViewModel", "Error while copying", e)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ledPatternJob?.cancel()
     }
 
 }
