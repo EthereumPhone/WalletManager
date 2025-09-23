@@ -72,14 +72,15 @@ class TransactionViewModel @Inject constructor(
     val isRefreshing: StateFlow<Boolean> = _refreshState.asStateFlow()
 
     init {
+        onLogOpened()
+
         // Fetch new transactions when the user navigates to the log screen
         Log.d("TransactionViewModel", "Initializing TransactionViewModel - fetching new transactions")
 
+        // Start event collection in a separate coroutine that runs for the lifetime of the ViewModel
         viewModelScope.launch {
-            onLogOpened()
-
+            Log.d("TransactionViewModel", "Starting event collection from terminalRepository")
             terminalRepository.events.collect { event ->
-
                 if (event == TerminalEvent.LogTapped) {
                     val walletAddress = userDataRepository.userData.first { it.walletAddress != "" }.walletAddress
                     if (walletAddress.isNotBlank()) {
@@ -146,7 +147,9 @@ class TransactionViewModel @Inject constructor(
     }
     fun onLogOpened(){
         viewModelScope.launch {
+            Log.d("TransactionViewModel", "onLogOpened() called - generating log terminal")
             terminalRepository.generateLog()
+            Log.d("TransactionViewModel", "Log terminal generation completed")
         }
     }
 
@@ -181,7 +184,11 @@ class TransactionViewModel @Inject constructor(
     }
 
     fun onDetailLogClosed() {
-        onLogOpened()
+        viewModelScope.launch {
+            // Add a small delay to ensure previous handler is cleaned up
+            delay(100)
+            onLogOpened()
+        }
     }
     
     fun cancelPendingOperations() {

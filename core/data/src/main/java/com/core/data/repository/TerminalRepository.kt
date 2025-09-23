@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class TerminalRepository @Inject constructor(
     terminalSDKWrapper: TerminalSDKWrapper,
     @ApplicationContext private val context: Context
@@ -76,10 +78,13 @@ class TerminalRepository @Inject constructor(
                         return@OnTouchListener
                     }
                     try {
+                        Log.d("TerminalRepository", "LogTapped event triggered at coordinates: $x, $y")
                         coroutineScope.launch {
                             _events.emit(TerminalEvent.LogTapped)
+                            Log.d("TerminalRepository", "LogTapped event emitted successfully")
                         }
                     } catch (e: Exception) {
+                        Log.e("TerminalRepository", "Error emitting LogTapped event", e)
                         e.printStackTrace()
                     }
                 }

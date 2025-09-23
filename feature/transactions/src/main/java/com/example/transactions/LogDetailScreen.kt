@@ -98,16 +98,7 @@ fun DetailLogRoute(
     var isNavigatingAway by remember { mutableStateOf(false) }
     
     // Debounced navigation function with additional protection
-    val safeNavigateBack: () -> Unit = remember {
-        {
-            if (!isNavigating) {
-                isNavigating = true
-                isNavigatingAway = true
-                viewModel.cancelPendingOperations()
-                navigateBack()
-            }
-        }
-    }
+
 
     // Call onDetailLogOpened only once when first navigating to this screen
     LaunchedEffect(Unit) {
@@ -142,8 +133,8 @@ fun DetailLogRoute(
         
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.cancelPendingOperations()
             viewModel.onDetailLogClosed()
+            viewModel.cancelPendingOperations()
         }
     }
 
@@ -154,8 +145,7 @@ fun DetailLogRoute(
     BackHandler {
         isNavigatingAway = true
         viewModel.cancelPendingOperations()
-        viewModel.onDetailLogClosed()
-        safeNavigateBack()
+        navigateBack()
     }
 
     when (transfersUIState) {
@@ -174,7 +164,7 @@ fun DetailLogRoute(
                 LogDetailScreen(
                     transfer = transfer,
                     logoUrl = meta?.logo ?: "",
-                    onNavigateBack = safeNavigateBack
+                    onNavigateBack = { navigateBack() }
                 )
             } else {
                 // Handle case where transaction is not found
