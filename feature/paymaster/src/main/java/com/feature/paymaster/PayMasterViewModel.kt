@@ -42,6 +42,8 @@ import com.core.ui.util.dgenWhite
 import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.lazerCore
@@ -80,6 +82,9 @@ class PayMasterViewModel @Inject constructor(
         .build()
 
     val paymasterSDK = PaymasterSDK(context)
+    
+    // Job for periodic balance polling
+    private var balancePollingJob: Job? = null
 
     companion object {
         private const val INITIATE_BALANCE_URL = "https://api.markushaas.com/api/initiate-add-balance"
@@ -109,21 +114,11 @@ class PayMasterViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (paymasterSDK.initialize()) {
-                    paymasterSDK.registerObserver { newBalance ->
-                        _balance.value = newBalance
-                    }
-                    // Initial fetch of balance after registration
-                    val initialBalance = paymasterSDK.getCurrentBalance()
-                    if (initialBalance != null) {
-                        _balance.value = initialBalance
-                    } else {
-                        // If initial balance is null (e.g. error during fetch), query for an update.
-                        // The observer will then pick up the change.
-                        paymasterSDK.queryUpdate()
-                    }
-                    // Also, trigger a query update to ensure we get the latest from backend if needed.
-                    // This is useful if the service starts with a stale value before observer is hit.
-                    paymasterSDK.queryUpdate() // Query after registration to ensure observer gets it
+                    // Initial fetch of balance with query
+                    updateBalanceFromSDK()
+                    
+                    // Start periodic polling every 5 seconds (cache only)
+                    startBalancePolling()
                 } else {
                     // Keep balance as 0.0 on SDK init failure
                     _balance.value = "0.0"
@@ -136,6 +131,63 @@ class PayMasterViewModel @Inject constructor(
                 _balance.value = "0.0"
                 showDgenToast(appContext,"An error occurred. Please try again later.")
             }
+        }
+    }
+    
+    /**
+     * Starts periodic balance polling every 5 seconds
+     */
+    private fun startBalancePolling() {
+        // Cancel any existing polling job
+        balancePollingJob?.cancel()
+        
+        balancePollingJob = viewModelScope.launch {
+            while (isActive) {
+                delay(5000) // Wait 5 seconds
+                // Only get current balance, don't query for updates
+                updateBalanceFromCache()
+            }
+        }
+    }
+    
+    /**
+     * Updates balance from SDK by querying for an update (expensive operation)
+     */
+    private suspend fun updateBalanceFromSDK() {
+        try {
+            // Query for balance update from backend
+            paymasterSDK.queryUpdate()
+            
+            // Get the current balance after query
+            val currentBalance = paymasterSDK.getCurrentBalance()
+            if (currentBalance != null) {
+                _balance.value = currentBalance
+                Log.d("PayMasterViewModel", "Balance updated after query: $currentBalance")
+            } else {
+                Log.w("PayMasterViewModel", "Failed to get current balance after query")
+            }
+        } catch (e: Exception) {
+            Log.e("PayMasterViewModel", "Error updating balance from SDK", e)
+            // Don't show error to user for periodic updates, just log it
+        }
+    }
+    
+    /**
+     * Updates balance from SDK cache without querying backend
+     */
+    private suspend fun updateBalanceFromCache() {
+        try {
+            // Only get current balance from cache, don't query backend
+            val currentBalance = paymasterSDK.getCurrentBalance()
+            if (currentBalance != null) {
+                _balance.value = currentBalance
+                Log.d("PayMasterViewModel", "Balance refreshed from cache: $currentBalance")
+            } else {
+                Log.w("PayMasterViewModel", "Failed to get current balance from cache")
+            }
+        } catch (e: Exception) {
+            Log.e("PayMasterViewModel", "Error getting balance from cache", e)
+            // Don't show error to user for periodic updates, just log it
         }
     }
 
@@ -210,17 +262,29 @@ class PayMasterViewModel @Inject constructor(
 
     fun forceUpdateBalance() {
         viewModelScope.launch {
-            try {
-                paymasterSDK.queryUpdate()
-            } catch (e: Exception) {
-                Log.e("PayMasterViewModel", "Error updating balance", e)
-                // Don't show error to user, just silently fail and keep current balance
-            }
+            updateBalanceFromSDK()
+        }
+    }
+    
+    /**
+     * Called when the screen resumes - queries backend for latest balance
+     */
+    fun onResume() {
+        Log.d("PayMasterViewModel", "onResume - querying backend for balance update")
+        viewModelScope.launch {
+            // Query backend for latest balance on resume
+            updateBalanceFromSDK()
+        }
+        // Restart polling if it was stopped (will only poll cache)
+        if (balancePollingJob?.isActive != true) {
+            startBalancePolling()
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        // Cancel balance polling
+        balancePollingJob?.cancel()
         paymasterSDK.cleanup()
     }
 
