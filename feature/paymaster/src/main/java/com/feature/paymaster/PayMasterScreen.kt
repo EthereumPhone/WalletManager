@@ -96,6 +96,9 @@ internal fun PayMasterScreenRoute(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
+                    // Always update balance on resume
+                    viewModel.onResume()
+                    
                     if (!hasHandledInitialResume) {
                         hasHandledInitialResume = true
                     } else {
