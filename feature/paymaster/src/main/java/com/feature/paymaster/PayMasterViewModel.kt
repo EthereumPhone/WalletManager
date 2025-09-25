@@ -43,6 +43,12 @@ import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.lazerCore
+import com.core.ui.util.terminalCore
+import com.core.ui.util.oceanCore
+import com.core.ui.util.orcheCore
+import com.core.ui.util.gunMetalCore
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)
@@ -78,10 +84,28 @@ class PayMasterViewModel @Inject constructor(
     companion object {
         private const val INITIATE_BALANCE_URL = "https://api.markushaas.com/api/initiate-add-balance"
         private const val DAIMO_APP_ID = "pay-demo" // As per prompt for prototyping
-        private const val DAIMO_CHECKOUT_BASE_URL = "https://pay.daimo.com/checkout"
+        private const val
+                DAIMO_CHECKOUT_BASE_URL = "https://pay.daimo.com/checkout"
+    }
+
+    /**
+     * Get the current color name based on the SystemColorManager's primary color
+     */
+    private fun getCurrentColorName(): String {
+        return when (SystemColorManager.primaryColor) {
+            lazerCore -> "Red"
+            terminalCore -> "Green"
+            oceanCore -> "Aqua"
+            orcheCore -> "Ochre"
+            gunMetalCore -> "Gray"
+            else -> "Red" // Default to Red if no match
+        }
     }
 
     init {
+        // Refresh SystemColorManager to ensure we have the latest colors
+        SystemColorManager.refresh(context)
+        
         viewModelScope.launch {
             try {
                 if (paymasterSDK.initialize()) {
@@ -159,17 +183,18 @@ class PayMasterViewModel @Inject constructor(
 
                 val responseAdapter = moshi.adapter(InitiateBalanceResponse::class.java)
                 val apiResponse = responseAdapter.fromJson(responseBodyString)
-                val daimoPaymentUrl = apiResponse?.daimoPaymentUrl
+                val daimoPaymentId = apiResponse?.daimoPaymentId
 
-                if (daimoPaymentUrl.isNullOrBlank()) {
+                if (daimoPaymentId.isNullOrBlank()) {
                     Log.e("PayMasterViewModel", "Daimo Payment URL missing in response: $responseBodyString")
                     showDgenToast(appContext,"An error occurred. Please try again later.")
                     return@withContext null
                 }
                 
-                // Construct Daimo URL
-                Log.d("PayMasterViewModel", "Successfully obtained Daimo URL: $daimoPaymentUrl")
-                return@withContext daimoPaymentUrl
+                // Construct Daimo URL with color parameter
+                val colorName = getCurrentColorName()
+                Log.d("PayMasterViewModel", "Successfully obtained Daimo URL: $daimoPaymentId with color: $colorName")
+                return@withContext "https://ethos-onramp-hosting.web.app/?payId=$daimoPaymentId&color=$colorName"
             }
         } catch (e: Exception) {
             Log.e("PayMasterViewModel", "Exception during topUp", e)
