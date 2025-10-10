@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 import com.core.model.TokenBalance
 import java.math.BigDecimal
 
-@Entity("token_balance")
+@Entity(
+    tableName = "token_balance",
+    primaryKeys = ["contractAddress", "chainId"]
+)
 data class TokenBalanceEntity(
-    @PrimaryKey
     val contractAddress: String,
     val chainId: Int,
     val tokenBalance: BigDecimal,

@@ -136,13 +136,18 @@ object DatabaseModule {
                 val currentVersion = getCurrentDatabaseVersion(context)
                 Log.d("DatabaseModule", "Current database version: $currentVersion")
                 
-                // If database is at version 2-5, perform complete data clear
-                if (currentVersion in 2..5) {
-                    Log.w("DatabaseModule", "Database at version $currentVersion, performing complete data clear for fresh migration to version 6")
+                // If database is at version 2-6, perform complete data clear
+                if (currentVersion in 2..6) {
+                    Log.w("DatabaseModule", "Database at version $currentVersion, performing complete data clear for fresh migration to version 7")
                     
-                    // Special handling for version 2 -> 6 migration
+                    // Special handling for version 2 -> 7 migration
                     if (currentVersion == 2) {
-                        Log.w("DatabaseModule", "Detected migration from version 2 to 6 - clearing all app storage and cache")
+                        Log.w("DatabaseModule", "Detected migration from version 2 to 7 - clearing all app storage and cache")
+                    }
+                    
+                    // Special handling for version 6 -> 7: TokenBalanceEntity now uses composite primary key
+                    if (currentVersion == 6) {
+                        Log.w("DatabaseModule", "Detected migration from version 6 to 7 - TokenBalanceEntity schema changed to composite primary key, clearing all app data")
                     }
                     
                     // Clear all app data for a completely fresh start

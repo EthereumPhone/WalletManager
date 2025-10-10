@@ -18,16 +18,31 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 /**
- * ContentProvider to share TokenMetadata with other apps.
+ * ContentProvider to share and update TokenMetadata with other apps.
+ * When upserting metadata, a TokenGroup is automatically created/updated.
  * 
  * URI patterns:
  * - content://[authority]/token/[chainId]/[contractAddress] - Get specific token metadata
  * - content://[authority]/tokens/[chainId] - Get all tokens for a chain
+ * - content://[authority]/token - Insert/upsert token metadata
  * 
  * Example usage from other app:
  * ```
+ * // Query
  * val uri = Uri.parse("content://com.walletmanager.tokenmetadata.provider/token/1/0x123...")
  * val cursor = contentResolver.query(uri, null, null, null, null)
+ * 
+ * // Upsert
+ * val values = ContentValues().apply {
+ *     put("contract_address", "0x123...")
+ *     put("chain_id", 1)
+ *     put("decimals", 18)
+ *     put("name", "Token Name")
+ *     put("symbol", "TKN")
+ *     put("logo", "https://...")
+ *     put("swappable", 1)
+ * }
+ * contentResolver.insert(Uri.parse("content://com.walletmanager.tokenmetadata.provider/token"), values)
  * ```
  */
 class TokenMetadataContentProvider : ContentProvider() {
@@ -73,10 +88,12 @@ class TokenMetadataContentProvider : ContentProvider() {
     interface TokenMetadataContentProviderEntryPoint {
         fun tokenMetadataDao(): TokenMetadataDao
         fun tokenExchangeDao(): TokenExchangeDao
+        fun tokenGroupDao(): com.core.database.dao.TokenGroupDao
     }
     
     private lateinit var tokenMetadataDao: TokenMetadataDao
     private lateinit var tokenExchangeDao: TokenExchangeDao
+    private lateinit var tokenGroupDao: com.core.database.dao.TokenGroupDao
     
     /**
      * Get the effective logo URL for a token, checking fallback if needed
@@ -112,6 +129,7 @@ class TokenMetadataContentProvider : ContentProvider() {
         )
         tokenMetadataDao = entryPoint.tokenMetadataDao()
         tokenExchangeDao = entryPoint.tokenExchangeDao()
+        tokenGroupDao = entryPoint.tokenGroupDao()
         
         return true
     }
@@ -204,8 +222,66 @@ class TokenMetadataContentProvider : ContentProvider() {
         }
     }
     
-    // We don't support these operations as this is a read-only provider
-    override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+    override fun insert(uri: Uri, values: ContentValues?): Uri? {
+        values ?: return null
+        
+        try {
+            val contractAddress = values.getAsString(COLUMN_CONTRACT_ADDRESS) ?: return null
+            val chainId = values.getAsInteger(COLUMN_CHAIN_ID) ?: return null
+            val decimals = values.getAsInteger(COLUMN_DECIMALS) ?: return null
+            val name = values.getAsString(COLUMN_NAME) ?: return null
+            val symbol = values.getAsString(COLUMN_SYMBOL) ?: return null
+            val logo = values.getAsString(COLUMN_LOGO)
+            val swappable = values.getAsInteger(COLUMN_SWAPPABLE) ?: 0
+            
+            // Generate group ID using the same pattern as AlchemyTokenMetadataRepository
+            val groupId = generateGroupId(chainId, contractAddress)
+            
+            val tokenMetadataEntity = com.core.database.model.erc20.TokenMetadataEntity(
+                contractAddress = contractAddress,
+                chainId = chainId,
+                decimals = decimals,
+                name = name,
+                symbol = symbol,
+                logo = logo,
+                swappable = swappable == 1,
+                groupId = groupId
+            )
+            
+            // Create TokenGroupEntity
+            val tokenGroupEntity = com.core.database.model.erc20.TokenGroupEntity(
+                groupId = groupId,
+                canonicalChainId = chainId,
+                canonicalAddress = contractAddress.lowercase(),
+                symbol = symbol,
+                name = name
+            )
+            
+            // Perform upsert operations - groups first, then metadata
+            runBlocking {
+                tokenGroupDao.upsertTokenGroups(listOf(tokenGroupEntity))
+                tokenMetadataDao.upsertTokensMetadata(listOf(tokenMetadataEntity))
+            }
+            
+            // Notify observers
+            context?.contentResolver?.notifyChange(uri, null)
+            
+            // Return URI for the inserted/updated item
+            return Uri.parse("$AUTHORITY/token/$chainId/$contractAddress")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+    
+    /**
+     * Generate a group ID for a token.
+     * Following the same pattern as AlchemyTokenMetadataRepository:
+     * Uses format: "{chainId}_{address.lowercase()}"
+     */
+    private fun generateGroupId(chainId: Int, address: String): String {
+        return "${chainId}_${address.lowercase()}"
+    }
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = 0
     override fun update(
         uri: Uri,

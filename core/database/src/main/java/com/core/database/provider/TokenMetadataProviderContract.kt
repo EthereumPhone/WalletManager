@@ -5,11 +5,11 @@ import android.net.Uri
 /**
  * Contract class for TokenMetadataContentProvider.
  * 
- * This class should be copied to the consuming app to easily query token metadata.
+ * This class should be copied to the consuming app to easily query and update token metadata.
  * 
  * Example usage:
  * ```
- * // In your other app, query token metadata:
+ * // Query token metadata:
  * val tokenData = TokenMetadataProviderContract.getTokenMetadata(
  *     context.contentResolver,
  *     chainId = 1,
@@ -19,6 +19,18 @@ import android.net.Uri
  * if (tokenData != null) {
  *     Log.d("Token", "Name: ${tokenData.name}, Symbol: ${tokenData.symbol}")
  * }
+ * 
+ * // Upsert token metadata (automatically creates/updates TokenGroup):
+ * val success = TokenMetadataProviderContract.upsertTokenMetadata(
+ *     context.contentResolver,
+ *     contractAddress = "0x123...",
+ *     chainId = 1,
+ *     decimals = 18,
+ *     name = "My Token",
+ *     symbol = "MTK",
+ *     logo = "https://...",
+ *     swappable = true
+ * )
  * ```
  */
 object TokenMetadataProviderContract {
@@ -68,6 +80,15 @@ object TokenMetadataProviderContract {
         return CONTENT_URI.buildUpon()
             .appendPath("tokens")
             .appendPath(chainId.toString())
+            .build()
+    }
+    
+    /**
+     * Build URI for upsert operations
+     */
+    fun buildUpsertUri(): Uri {
+        return CONTENT_URI.buildUpon()
+            .appendPath("token")
             .build()
     }
     
@@ -128,5 +149,44 @@ object TokenMetadataProviderContract {
             }
             tokens
         } ?: emptyList()
+    }
+    
+    /**
+     * Helper method to upsert token metadata from another app.
+     * This will also automatically create or update the associated TokenGroup.
+     * Returns true if successful, false otherwise.
+     * 
+     * @param contentResolver The ContentResolver to use
+     * @param contractAddress The token's contract address
+     * @param chainId The chain ID where the token exists
+     * @param decimals Number of decimal places
+     * @param name Token name
+     * @param symbol Token symbol (e.g., "ETH", "USDC")
+     * @param logo Optional logo URL
+     * @param swappable Whether the token is swappable (default: false)
+     */
+    fun upsertTokenMetadata(
+        contentResolver: android.content.ContentResolver,
+        contractAddress: String,
+        chainId: Int,
+        decimals: Int,
+        name: String,
+        symbol: String,
+        logo: String? = null,
+        swappable: Boolean = false
+    ): Boolean {
+        val uri = buildUpsertUri()
+        val values = android.content.ContentValues().apply {
+            put(COLUMN_CONTRACT_ADDRESS, contractAddress)
+            put(COLUMN_CHAIN_ID, chainId)
+            put(COLUMN_DECIMALS, decimals)
+            put(COLUMN_NAME, name)
+            put(COLUMN_SYMBOL, symbol)
+            put(COLUMN_LOGO, logo)
+            put(COLUMN_SWAPPABLE, if (swappable) 1 else 0)
+        }
+        
+        val resultUri = contentResolver.insert(uri, values)
+        return resultUri != null
     }
 } 

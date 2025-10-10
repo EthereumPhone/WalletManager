@@ -31,7 +31,7 @@ import com.core.database.util.RawContractConverter
         TokenGroupEntity::class,
         TokenBridgeEntity::class
     ],
-    version = 6,  // Updated to add unique constraint on token_exchange
+    version = 7,  // Updated to use composite primary key (contractAddress + chainId) for TokenBalanceEntity
     exportSchema = true
 )
 

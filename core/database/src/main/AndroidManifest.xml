@@ -3,11 +3,12 @@
     package="com.core.database">
 
     <application>
+        <!-- Content Provider for Token Balance -->
         <provider
-            android:name=".provider.TokenMetadataContentProvider"
-            android:authorities="com.walletmanager.tokenmetadata.provider"
+            android:name=".provider.TokenBalanceContentProvider"
+            android:authorities="com.walletmanager.tokenbalance.provider"
+            android:enabled="true"
             android:exported="true"
-            android:readPermission="com.walletmanager.permission.READ_TOKEN_METADATA"
             android:grantUriPermissions="true" />
     </application>
 
