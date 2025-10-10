@@ -36,7 +36,7 @@ private interface TokenPriceApi {
 }
 
 @JsonClass(generateAdapter = true)
-private data class NetworkResponse<T>(
+data class NetworkResponse<T>(
     val data: T
 )
 

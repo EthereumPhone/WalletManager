@@ -3,31 +3,28 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenMetadataRequestBody
+import com.core.data.remote.RetrofitClankerTokenApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
-import com.core.database.model.erc20.TokenBalanceEntity
-import com.core.database.model.erc20.TokenBridgeEntity
 import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModel
-import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
 import com.core.model.TokenMetadata
 import com.squareup.moshi.JsonDataException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.UUID
 import javax.inject.Inject
 
 class AlchemyTokenMetadataRepository @Inject constructor(
     private val tokenMetadataDao: TokenMetadataDao,
     private val tokenGroupDao: TokenGroupDao,
-    private val tokenMetadataApi: TokenMetadataApi
+    private val tokenMetadataApi: TokenMetadataApi,
+    private val clankerTokenApi: RetrofitClankerTokenApi
 ): TokenMetadataRepository {
     override fun getTokensMetadata(): Flow<List<TokenMetadata>> =
         tokenMetadataDao.getTokensMetadata()
