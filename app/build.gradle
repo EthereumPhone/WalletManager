@@ -75,6 +75,7 @@ dependencies {
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.profileinstaller
     implementation libs.androidx.lifecycle.process
+    implementation libs.volley
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.junit
@@ -153,6 +154,10 @@ dependencies {
     //implementation libs.core.splashscreen
 
     implementation project(path: ':core:terminalsdk')
+
+    // Coil for image loading with IPFS support
+    implementation "io.coil-kt:coil-compose:2.6.0"
+    implementation libs.okhttp
 
 
 }

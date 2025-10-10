@@ -39,10 +39,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.core.ui.Card
 import com.core.ui.R
 import com.core.ui.util.PitagonsSans
@@ -184,10 +187,11 @@ fun IdleView(
                         }
                         // Handle URL icons (either from API or fallback)
                         else -> {
-
-
                             val shouldTint = effectiveIcon.isEmpty()
+                            
+                            Log.d("IdleCardView", "Loading image URL: $effectiveIcon")
 
+                            // AsyncImage will automatically use the ImageLoader from ImageLoaderFactory
                             AsyncImage(
                                 modifier = Modifier
                                     .padding(bottom = 2.dp)
@@ -195,7 +199,18 @@ fun IdleView(
                                     .width(46.dp)
                                     .clip(RoundedCornerShape(95)),
                                 contentScale = ContentScale.Crop,
-                                model = effectiveIcon,
+                                model = ImageRequest.Builder(context)
+                                    .data(effectiveIcon)
+                                    .crossfade(true)
+                                    .listener(
+                                        onSuccess = { _, _ ->
+                                            Log.d("IdleCardView", "Successfully loaded image: $effectiveIcon")
+                                        },
+                                        onError = { _, result ->
+                                            Log.e("IdleCardView", "Failed to load image: $effectiveIcon", result.throwable)
+                                        }
+                                    )
+                                    .build(),
                                 contentDescription = tokenName,
                                 placeholder = painterResource(R.drawable.placeholer_icon_5),
                                 error = painterResource(R.drawable.placeholer_icon_5),

@@ -2,6 +2,8 @@ package com.core.data.di
 
 import android.content.Context
 import android.os.Build
+import androidx.tracing.trace
+import com.core.data.BuildConfig
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
@@ -24,6 +26,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.bouncycastle.util.Fingerprint
@@ -233,6 +236,21 @@ object DataModule {
         ignoreUnknownKeys = true
         isLenient = true
         explicitNulls = false
+    }
+
+    @Provides
+    @Singleton
+    fun okHttpCallFactory(): Call.Factory = trace("NiaOkHttpClient") {
+        OkHttpClient.Builder()
+            .addInterceptor(
+                HttpLoggingInterceptor()
+                    .apply {
+                        if (BuildConfig.DEBUG) {
+                            setLevel(HttpLoggingInterceptor.Level.BODY)
+                        }
+                    },
+            )
+            .build()
     }
 
 

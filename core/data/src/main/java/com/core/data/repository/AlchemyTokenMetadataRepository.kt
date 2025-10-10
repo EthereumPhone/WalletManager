@@ -1,6 +1,7 @@
 package com.core.data.repository
 
 import android.util.Log
+import com.core.data.model.dto.TokenMetadataDto
 import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.data.remote.RetrofitClankerTokenApi
@@ -65,6 +66,45 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                             TokenMetadataRequestBody(params = listOf(address))
                         )
                     
+                    // Check if the response has empty name and symbol, use Clanker API as fallback
+                    val tokenMetadata = if (response.result.name.isBlank() && response.result.symbol.isBlank()) {
+                        Log.d("refreshTokensMetadata", "Empty metadata from Alchemy, trying Clanker API for $address")
+                        try {
+                            val clankerTokens = clankerTokenApi.getClankerTokens(
+                                query = address,
+                                limit = 1,
+                                pageIndex = 1,
+                                startAfter = ""
+                            )
+                            
+                            if (clankerTokens.isNotEmpty()) {
+                                val clankerToken = clankerTokens.first()
+                                Log.d("refreshTokensMetadata", "Found token in Clanker: ${clankerToken.name}")
+
+                                // Replace gateway.pinata.cloud with ipfs.io if present
+                                val logoUrl = clankerToken.imgUrl
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.replace("gateway.pinata.cloud", "ipfs.io")
+
+                                // Create TokenMetadataDto from ClankerToken
+                                TokenMetadataDto(
+                                    name = clankerToken.name,
+                                    symbol = clankerToken.symbol,
+                                    decimals = 18, // Default to 18 decimals for Clanker tokens
+                                    logo = logoUrl
+                                )
+                            } else {
+                                Log.d("refreshTokensMetadata", "No token found in Clanker API for $address")
+                                response.result
+                            }
+                        } catch (e: Exception) {
+                            Log.e("refreshTokensMetadata", "Exception fetching from Clanker API for $address", e)
+                            response.result
+                        }
+                    } else {
+                        response.result
+                    }
+                    
                     // Generate group ID for this token
                     val groupId = generateGroupId(chainId, address)
                     
@@ -73,13 +113,13 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         groupId = groupId,
                         canonicalChainId = chainId,
                         canonicalAddress = address.lowercase(),
-                        symbol = response.result.symbol,
-                        name = response.result.name
+                        symbol = tokenMetadata.symbol,
+                        name = tokenMetadata.name
                     )
                     tokenGroups.add(tokenGroup)
                     
                     // Create token metadata with group ID
-                    response.result.asEntity(
+                    tokenMetadata.asEntity(
                         contractAddress = address,
                         chainId = chainId,
                         groupId = groupId
@@ -119,6 +159,45 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                             TokenMetadataRequestBody(params = listOf(address))
                         )
                     
+                    // Check if the response has empty name and symbol, use Clanker API as fallback
+                    val tokenMetadata = if (response.result.name.isBlank() && response.result.symbol.isBlank()) {
+                        Log.d("refreshTokensMetadataByNetwork", "Empty metadata from Alchemy, trying Clanker API for $address")
+                        try {
+                            val clankerTokens = clankerTokenApi.getClankerTokens(
+                                query = address,
+                                limit = 1,
+                                pageIndex = 1,
+                                startAfter = ""
+                            )
+                            
+                            if (clankerTokens.isNotEmpty()) {
+                                val clankerToken = clankerTokens.first()
+                                Log.d("refreshTokensMetadataByNetwork", "Found token in Clanker: ${clankerToken.name}")
+                                
+                                // Replace gateway.pinata.cloud with ipfs.io if present
+                                val logoUrl = clankerToken.imgUrl
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.replace("gateway.pinata.cloud", "ipfs.io")
+                                
+                                // Create TokenMetadataDto from ClankerToken
+                                TokenMetadataDto(
+                                    name = clankerToken.name,
+                                    symbol = clankerToken.symbol,
+                                    decimals = 18, // Default to 18 decimals for Clanker tokens
+                                    logo = logoUrl
+                                )
+                            } else {
+                                Log.d("refreshTokensMetadataByNetwork", "No token found in Clanker API for $address")
+                                response.result
+                            }
+                        } catch (e: Exception) {
+                            Log.e("refreshTokensMetadataByNetwork", "Exception fetching from Clanker API for $address", e)
+                            response.result
+                        }
+                    } else {
+                        response.result
+                    }
+                    
                     // Generate group ID for this token
                     val groupId = generateGroupId(network.chainId, address)
                     
@@ -127,13 +206,13 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         groupId = groupId,
                         canonicalChainId = network.chainId,
                         canonicalAddress = address.lowercase(),
-                        symbol = response.result.symbol,
-                        name = response.result.name
+                        symbol = tokenMetadata.symbol,
+                        name = tokenMetadata.name
                     )
                     tokenGroups.add(tokenGroup)
                     
                     // Create token metadata with group ID
-                    response.result.asEntity(
+                    tokenMetadata.asEntity(
                         contractAddress = address,
                         chainId = network.chainId,
                         groupId = groupId

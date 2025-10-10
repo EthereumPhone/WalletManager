@@ -13,7 +13,7 @@ data class TokenMetadataJsonResponse(
 data class TokenMetadataDto(
     val name: String,
     val symbol: String,
-    val decimals: Int,
+    val decimals: Int?,
     val logo: String?
 )
 
@@ -25,7 +25,7 @@ fun TokenMetadataDto.asEntity(
     return TokenMetadataEntity(
         contractAddress = contractAddress.lowercase(),
         name = name,
-        decimals = decimals,
+        decimals = decimals ?: 18,
         symbol = symbol,
         chainId = chainId,
         logo = logo,

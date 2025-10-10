@@ -24,20 +24,7 @@ interface RetrofitModule {
     fun bindNetworkTokenPrice(impl: RetrofitTokenPrice): TokenPriceDataSource
 
 
-    @Provides
-    @Singleton
-    fun okHttpCallFactory(): Call.Factory = trace("NiaOkHttpClient") {
-        OkHttpClient.Builder()
-            .addInterceptor(
-                HttpLoggingInterceptor()
-                    .apply {
-                        if (BuildConfig.DEBUG) {
-                            setLevel(HttpLoggingInterceptor.Level.BODY)
-                        }
-                    },
-            )
-            .build()
-    }
+
 
 
 

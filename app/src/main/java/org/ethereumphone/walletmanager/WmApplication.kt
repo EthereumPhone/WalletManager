@@ -13,6 +13,8 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
@@ -26,11 +28,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import org.ethereumphone.walletsdk.WalletSDK
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObserver {
+class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObserver, ImageLoaderFactory {
     
     companion object {
         private const val PREFS_NAME = "welcome_prefs"
@@ -129,6 +133,55 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
             .setMinimumLoggingLevel(Log.VERBOSE)
             .setWorkerFactory(workerFactory)
             .build()
+    
+    override fun newImageLoader(): ImageLoader {
+        // Create OkHttpClient with longer timeouts for IPFS and other slow image sources
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val originalRequest = chain.request()
+                
+                // Add headers required for IPFS gateways
+                val newRequest = originalRequest.newBuilder()
+                    .header("User-Agent", "WalletManager/1.0 (Android)")
+                    .header("Accept", "image/*,*/*")
+                    .build()
+                
+                Log.d(TAG, "Loading image from: ${newRequest.url}")
+                try {
+                    val response = chain.proceed(newRequest)
+                    Log.d(TAG, "Image response code: ${response.code}, content-type: ${response.header("Content-Type")}")
+                    response
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error loading image from ${newRequest.url}", e)
+                    throw e
+                }
+            }
+            .build()
+        
+        return ImageLoader.Builder(this)
+            .okHttpClient(okHttpClient)
+            .crossfade(true)
+            .respectCacheHeaders(false) // Important for IPFS URLs
+            .allowHardware(true) // Enable hardware bitmaps
+            .logger(object : coil.util.Logger {
+                override var level: Int = Log.DEBUG
+                
+                override fun log(tag: String, priority: Int, message: String?, throwable: Throwable?) {
+                    when (priority) {
+                        Log.VERBOSE -> Log.v(tag, message ?: "", throwable)
+                        Log.DEBUG -> Log.d(tag, message ?: "", throwable)
+                        Log.INFO -> Log.i(tag, message ?: "", throwable)
+                        Log.WARN -> Log.w(tag, message ?: "", throwable)
+                        Log.ERROR -> Log.e(tag, message ?: "", throwable)
+                        else -> Log.d(tag, message ?: "", throwable)
+                    }
+                }
+            })
+            .build()
+    }
     
     // Lifecycle observer methods - called when app enters/exits foreground
     override fun onStart(owner: LifecycleOwner) {
