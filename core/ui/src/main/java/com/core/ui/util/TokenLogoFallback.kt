@@ -56,6 +56,7 @@ object TokenLogoFallback {
         "SNX" to LogoSource.Url("https://static.alchemyapi.io/images/assets/2586.png"),
         "COMP" to LogoSource.Url("https://static.alchemyapi.io/images/assets/5692.png"),
         "MKR" to LogoSource.Url("https://static.alchemyapi.io/images/assets/1518.png"),
+        "WETH" to LogoSource.LocalResource(R.drawable.ethereum_placeholder),
         
         // Native tokens with local resources (already in the app)
         "ETH" to LogoSource.LocalResource(R.drawable.ethereum_placeholder)
