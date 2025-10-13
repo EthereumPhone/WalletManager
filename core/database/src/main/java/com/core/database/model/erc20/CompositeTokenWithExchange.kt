@@ -17,11 +17,17 @@ data class CompositeTokenWithExchange(
     @Embedded(prefix = "exchange_")
     val latestExchangeEntity: TokenExchangeEntity? = null
 ) {
-    val tokenMetadataEntity: TokenMetadataEntity
+    val tokenMetadataEntity: TokenMetadataEntity?
         get() = compositeToken.tokenMetadataEntity
     
     val tokenBalanceEntity: TokenBalanceEntity?
         get() = compositeToken.tokenBalanceEntity
+    
+    val contractAddress: String
+        get() = compositeToken.contractAddress
+    
+    val chainId: Int
+        get() = compositeToken.chainId
     
     /**
      * Get the current USD value of this token's balance.
@@ -29,8 +35,9 @@ data class CompositeTokenWithExchange(
      */
     val balanceInUsd: Double?
         get() {
+            val decimals = tokenMetadataEntity?.decimals ?: 18
             val balance = tokenBalanceEntity?.tokenBalance
-                ?.movePointLeft(tokenMetadataEntity.decimals)
+                ?.movePointLeft(decimals)
                 ?.toDouble() ?: 0.0
             val exchangeRate = latestExchangeEntity?.value
             
@@ -46,12 +53,13 @@ data class CompositeTokenWithExchange(
      */
     val formattedBalance: String
         get() {
+            val decimals = tokenMetadataEntity?.decimals ?: 18
             val balance = tokenBalanceEntity?.tokenBalance
-                ?.movePointLeft(tokenMetadataEntity.decimals)
-                ?.setScale(tokenMetadataEntity.decimals, RoundingMode.HALF_DOWN)
+                ?.movePointLeft(decimals)
+                ?.setScale(decimals, RoundingMode.HALF_DOWN)
                 ?.stripTrailingZeros()
-                ?.toPlainString()
-            return balance ?: "0"
+                ?.toPlainString() ?: "0"
+            return balance
         }
     
     /**
@@ -66,17 +74,23 @@ data class CompositeTokenWithExchange(
 /**
  * Convert to external model with price information.
  */
-fun CompositeTokenWithExchange.toExternalModelWithPrice(): TokenAssetWithPrice = TokenAssetWithPrice(
-    address = tokenMetadataEntity.contractAddress,
-    chainId = tokenMetadataEntity.chainId,
-    symbol = tokenMetadataEntity.symbol,
-    name = tokenMetadataEntity.name,
-    balance = tokenBalanceEntity?.tokenBalance?.movePointLeft(tokenMetadataEntity.decimals)
-        ?.setScale(tokenMetadataEntity.decimals, RoundingMode.HALF_DOWN)?.stripTrailingZeros()
-        ?.toDouble()
-        ?: 0.0,
-    decimals = tokenMetadataEntity.decimals,
-    logoUrl = tokenMetadataEntity.logo,
-    swappable = tokenMetadataEntity.swappable,
-    fiatAmount = balanceInUsd ?: 0.0
-)
+fun CompositeTokenWithExchange.toExternalModelWithPrice(): TokenAssetWithPrice {
+    val decimals = tokenMetadataEntity?.decimals ?: 18
+    val balance = tokenBalanceEntity?.tokenBalance
+        ?.movePointLeft(decimals)
+        ?.setScale(decimals, RoundingMode.HALF_DOWN)
+        ?.stripTrailingZeros()
+        ?.toDouble() ?: 0.0
+
+    return TokenAssetWithPrice(
+        address = contractAddress,
+        chainId = chainId,
+        symbol = tokenMetadataEntity?.symbol ?: (contractAddress.take(6) + "..."),
+        name = tokenMetadataEntity?.name ?: (contractAddress.take(6) + "..."),
+        balance = balance,
+        decimals = decimals,
+        logoUrl = tokenMetadataEntity?.logo,
+        swappable = tokenMetadataEntity?.swappable ?: false,
+        fiatAmount = balanceInUsd ?: 0.0
+    )
+}

@@ -44,7 +44,10 @@ class AlchemyTokenBalanceRepository @Inject constructor(
 
     override fun getCombinedTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getCompositeTokens().map { allCompositeTokens ->
-            val groupedBySymbol = allCompositeTokens.groupBy { it.tokenMetadataEntity.symbol }
+            // Filter out tokens without metadata and group by symbol
+            val groupedBySymbol = allCompositeTokens
+                .filter { it.tokenMetadataEntity != null }
+                .groupBy { it.tokenMetadataEntity!!.symbol }
 
             groupedBySymbol.mapNotNull { (symbol, assetsWithSameSymbol) ->
                 val representativeToken = assetsWithSameSymbol
@@ -54,23 +57,26 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                 val totalBalanceForSymbol = assetsWithSameSymbol.sumOf { compositeToken ->
                     val balanceEntity = compositeToken.tokenBalanceEntity
                     val metadataEntity = compositeToken.tokenMetadataEntity
-                    if (balanceEntity != null) {
+                    if (balanceEntity != null && metadataEntity != null) {
                         balanceEntity.tokenBalance.movePointLeft(metadataEntity.decimals)
                     } else {
                         BigDecimal.ZERO
                     }
                 }
 
-                TokenAsset(
-                    address = representativeToken.tokenMetadataEntity.contractAddress,
-                    chainId = representativeToken.tokenMetadataEntity.chainId,
-                    symbol = symbol,
-                    name = representativeToken.tokenMetadataEntity.name,
-                    balance = totalBalanceForSymbol.stripTrailingZeros().toDouble(),
-                    decimals = representativeToken.tokenMetadataEntity.decimals,
-                    logoUrl = representativeToken.tokenMetadataEntity.logo,
-                    swappable = representativeToken.tokenMetadataEntity.swappable
-                )
+                // Safe to access metadata here because we filtered out nulls above
+                representativeToken.tokenMetadataEntity?.let { metadata ->
+                    TokenAsset(
+                        address = metadata.contractAddress,
+                        chainId = metadata.chainId,
+                        symbol = symbol,
+                        name = metadata.name,
+                        balance = totalBalanceForSymbol.stripTrailingZeros().toDouble(),
+                        decimals = metadata.decimals,
+                        logoUrl = metadata.logo,
+                        swappable = metadata.swappable
+                    )
+                }
             }
         }
 

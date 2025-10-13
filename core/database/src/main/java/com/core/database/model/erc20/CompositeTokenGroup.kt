@@ -29,8 +29,9 @@ data class CompositeTokenGroup(
      */
     val totalBalance: BigDecimal
         get() = tokens.sumOf { compositeToken ->
+            val decimals = compositeToken.tokenMetadataEntity?.decimals ?: 18
             compositeToken.tokenBalanceEntity?.tokenBalance
-                ?.movePointLeft(compositeToken.tokenMetadataEntity.decimals)
+                ?.movePointLeft(decimals)
                 ?: BigDecimal.ZERO
         }
     
@@ -57,18 +58,18 @@ data class CompositeTokenGroup(
     
 
     val chainIds: List<Int>
-        get() = tokens.map { it.tokenMetadataEntity.chainId }
+        get() = tokens.mapNotNull { it.tokenMetadataEntity?.chainId }
     
 
     val activeChainIds: List<Int>
         get() = tokens
             .filter { it.tokenBalanceEntity?.tokenBalance?.compareTo(BigDecimal.ZERO) == 1 }
-            .map { it.tokenMetadataEntity.chainId }
+            .mapNotNull { it.tokenMetadataEntity?.chainId }
     
 
     val logoUrl: String?
         get() = tokens
-            .firstOrNull { it.tokenMetadataEntity.chainId == tokenGroup.canonicalChainId }
+            .firstOrNull { it.tokenMetadataEntity?.chainId == tokenGroup.canonicalChainId }
             ?.tokenMetadataEntity?.logo
             ?: tokens.firstOrNull()?.tokenMetadataEntity?.logo
 

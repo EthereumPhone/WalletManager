@@ -120,7 +120,6 @@ interface TokenGroupDao {
             te.value as exchange_value,
             te.timestamp as exchange_timestamp
         FROM token_metadata tm
-        -- Note: Do not join token_balance here; @Relation handles it to avoid null-binding issues
         LEFT JOIN (
             SELECT te1.* FROM token_exchange te1
             WHERE te1.id = (
@@ -154,7 +153,6 @@ interface TokenGroupDao {
             te.value as exchange_value,
             te.timestamp as exchange_timestamp
         FROM token_metadata tm
-        -- Note: Do not join token_balance here; @Relation handles it to avoid null-binding issues
         LEFT JOIN (
             SELECT te1.* FROM token_exchange te1
             WHERE te1.id IN (

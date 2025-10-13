@@ -229,18 +229,21 @@ class DefaultExchangeRepository @Inject constructor(
                     .filter { it.tokenBalanceEntity?.tokenBalance?.compareTo(BigDecimal.ZERO) == 1 }
                     .maxByOrNull { it.tokenBalanceEntity?.tokenBalance ?: BigDecimal.ZERO }
                     ?: tokenGroup.tokensWithExchange.firstOrNull { 
-                        it.tokenMetadataEntity.chainId == tokenGroup.tokenGroup.canonicalChainId 
+                        it.tokenMetadataEntity?.chainId == tokenGroup.tokenGroup.canonicalChainId 
                     }
                     ?: tokenGroup.tokensWithExchange.firstOrNull()
                 
                 representativeToken?.let { token ->
-                    tokenAddressesWithMetadata.add(
-                        TokenAddressWithMetadata(
-                            address = token.tokenMetadataEntity.contractAddress,
-                            chainId = token.tokenMetadataEntity.chainId,
-                            symbol = token.tokenMetadataEntity.symbol
+                    // Only add if metadata is available
+                    token.tokenMetadataEntity?.let { metadata ->
+                        tokenAddressesWithMetadata.add(
+                            TokenAddressWithMetadata(
+                                address = metadata.contractAddress,
+                                chainId = metadata.chainId,
+                                symbol = metadata.symbol
+                            )
                         )
-                    )
+                    }
                 }
             }
             

@@ -21,8 +21,9 @@ data class CompositeTokenGroupWithExchange(
      */
     val totalBalance: BigDecimal
         get() = tokensWithExchange.sumOf { tokenWithExchange ->
+            val decimals = tokenWithExchange.tokenMetadataEntity?.decimals ?: 18
             tokenWithExchange.tokenBalanceEntity?.tokenBalance
-                ?.movePointLeft(tokenWithExchange.tokenMetadataEntity.decimals)
+                ?.movePointLeft(decimals)
                 ?: BigDecimal.ZERO
         }
     
@@ -57,7 +58,7 @@ data class CompositeTokenGroupWithExchange(
      * List of chain IDs where this token exists.
      */
     val chainIds: List<Int>
-        get() = tokensWithExchange.map { it.tokenMetadataEntity.chainId }
+        get() = tokensWithExchange.mapNotNull { it.tokenMetadataEntity?.chainId }
     
     /**
      * List of chain IDs where this token has a non-zero balance.
@@ -65,14 +66,14 @@ data class CompositeTokenGroupWithExchange(
     val activeChainIds: List<Int>
         get() = tokensWithExchange
             .filter { it.tokenBalanceEntity?.tokenBalance?.compareTo(BigDecimal.ZERO) == 1 }
-            .map { it.tokenMetadataEntity.chainId }
+            .mapNotNull { it.tokenMetadataEntity?.chainId }
     
     /**
      * Get the logo URL, preferring the canonical chain's logo.
      */
     val logoUrl: String?
         get() = tokensWithExchange
-            .firstOrNull { it.tokenMetadataEntity.chainId == tokenGroup.canonicalChainId }
+            .firstOrNull { it.tokenMetadataEntity?.chainId == tokenGroup.canonicalChainId }
             ?.tokenMetadataEntity?.logo
             ?: tokensWithExchange.firstOrNull()?.tokenMetadataEntity?.logo
     
@@ -90,7 +91,7 @@ data class CompositeTokenGroupWithExchange(
         get() {
             // First try to get exchange rate from canonical chain
             val canonicalExchange = tokensWithExchange
-                .firstOrNull { it.tokenMetadataEntity.chainId == tokenGroup.canonicalChainId }
+                .firstOrNull { it.tokenMetadataEntity?.chainId == tokenGroup.canonicalChainId }
                 ?.latestExchangeEntity
             
             // If not found, get the most recent exchange rate from any chain

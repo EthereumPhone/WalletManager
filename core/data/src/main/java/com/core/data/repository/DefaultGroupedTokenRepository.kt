@@ -64,9 +64,14 @@ class DefaultGroupedTokenRepository @Inject constructor(
         return tokenGroupDao.observeAllTokensInGroupWithLatestExchange(groupId).map { tokens ->
             val mappedTokens = if (groupId.startsWith("network_")) {
                 // For network tokens, balance is already in ETH/MATIC units, not wei
-                tokens.map { token ->
+                tokens.mapNotNull { token ->
                     val metadata = token.tokenMetadataEntity
                     val balance = token.tokenBalanceEntity?.tokenBalance?.toDouble() ?: 0.0
+                    
+                    // Skip tokens without metadata
+                    if (metadata == null) {
+                        return@mapNotNull null
+                    }
                     
                     // Log exchange rate info for debugging
                     if (groupId.startsWith("network_")) {
