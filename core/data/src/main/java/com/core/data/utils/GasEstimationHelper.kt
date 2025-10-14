@@ -15,14 +15,14 @@ import java.math.BigInteger
 /**
  * Helper class for estimating gas for UserOperations.
  * Uses exact values from API but always sets verificationGasLimit to 800k.
+ * 
+ * NOTE: WalletSDK internally doubles preVerificationGas and verificationGasLimit,
+ * so we return half of the desired final values for these fields.
  */
 object GasEstimationHelper {
     
     // EntryPoint v0.6 address
     private const val ENTRY_POINT = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
-    
-    // Fixed verificationGasLimit as requested
-    private val FIXED_VERIFICATION_GAS_LIMIT = BigInteger.valueOf(800000) // 800k
     
     // Default fallback values if API fails
     private val DEFAULT_PRE_VERIFICATION_GAS = BigInteger.valueOf(70000) // 70k
@@ -30,7 +30,10 @@ object GasEstimationHelper {
     
     /**
      * Estimates gas for a UserOperation by calling eth_estimateUserOperationGas RPC.
-     * Uses exact API values except for verificationGasLimit which is hardcoded to 800k.
+     * Uses exact API values except for verificationGasLimit which is hardcoded to result in 800k after doubling.
+     * 
+     * Note: WalletSDK doubles preVerificationGas and verificationGasLimit internally,
+     * so we return 400k for verificationGasLimit to achieve a final value of 800k.
      */
     suspend fun estimateGas(
         userOp: WalletSDK.UserOperation,
@@ -129,13 +132,29 @@ object GasEstimationHelper {
             println("GasEstimationHelper: Exception during gas estimation: ${e.message}, using defaults")
         }
         
-        // Return gas estimation with fixed verificationGasLimit
-        println("GasEstimationHelper: Final values - preVerificationGas: $preVerificationGas, verificationGasLimit: $FIXED_VERIFICATION_GAS_LIMIT, callGasLimit: $callGasLimit")
+        // WalletSDK internally doubles preVerificationGas and verificationGasLimit
+        // So we need to return half of what we want the final values to be
         
-        WalletSDK.GasEstimation(
+        // We want final verificationGasLimit to be 800k, so return 400k
+        val verificationGasLimitValue = BigInteger.valueOf(400000) // Will be doubled to 800k by WalletSDK
+        
+        // PreVerificationGas will also be doubled, so keep it as-is from API (it will be doubled)
+        // The API already returns the base value which will be doubled
+        
+        println("GasEstimationHelper: Final values (will be doubled by WalletSDK):")
+        println("  - preVerificationGas: $preVerificationGas (will become ${preVerificationGas.multiply(BigInteger.valueOf(2))})")
+        println("  - verificationGasLimit: $verificationGasLimitValue (will become ${verificationGasLimitValue.multiply(BigInteger.valueOf(2))}) - HARDCODED to become 800k")
+        println("  - callGasLimit: $callGasLimit (will NOT be doubled)")
+        
+        val gasEstimation = WalletSDK.GasEstimation(
             preVerificationGas = preVerificationGas,
-            verificationGasLimit = FIXED_VERIFICATION_GAS_LIMIT, // Always 800k
+            verificationGasLimit = verificationGasLimitValue, // 400k -> will be doubled to 800k
             callGasLimit = callGasLimit
         )
+        
+        // Log what we're actually returning
+        println("GasEstimationHelper: Returning GasEstimation with verificationGasLimit = ${gasEstimation.verificationGasLimit} (will be doubled to ${gasEstimation.verificationGasLimit.multiply(BigInteger.valueOf(2))})")
+        
+        gasEstimation
     }
 }
