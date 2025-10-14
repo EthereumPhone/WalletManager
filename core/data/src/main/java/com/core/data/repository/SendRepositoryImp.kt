@@ -4,6 +4,7 @@ import android.content.Context
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
+import com.core.data.utils.GasEstimationHelper
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,9 @@ class SendRepositoryImp @Inject constructor(
     private val reflectiveLedPattern: ReflectiveLedPattern?
 ): SendRepository {
 
+    // Store chainId for use in gasProvider
+    private var currentChainId: Int = 1
+
     override val currentTransactionHash = MutableStateFlow("")
     override val currentTransactionChainId = MutableStateFlow(0)
 
@@ -51,6 +55,9 @@ class SendRepositoryImp @Inject constructor(
         gasAmount: String
     ) {
         withContext(Dispatchers.IO) {
+            // Store chainId for gas provider
+            currentChainId = chainId
+            
             val rpc = NetworkChain.getNetworkByChainId(chainId)
             val walletSDK = if (rpc != null) {
                 WalletSDK(
@@ -105,11 +112,12 @@ class SendRepositoryImp @Inject constructor(
 
             val res = try {
                 walletSDK.sendTransaction(
-                    toAddress,
-                    decimalValue,
-                    "",
-                    null,
-                    chainId
+                    to = toAddress,
+                    value = decimalValue,
+                    data = "",
+                    callGas = null,
+                    chainId = chainId,
+                    gasProvider = ::gasProvider
                 )
             } catch (exception: Exception) {
                 "error"
@@ -307,5 +315,16 @@ class SendRepositoryImp @Inject constructor(
     override fun restoreState() {
         currentTransactionHash.value = ""
         currentTransactionChainId.value = 0
+    }
+    
+    /**
+     * Gas provider for ETH transfers using the shared GasEstimationHelper
+     */
+    private suspend fun gasProvider(userOp: WalletSDK.UserOperation): WalletSDK.GasEstimation {
+        // Get Alchemy RPC URL for the chain
+        val rpcUrl = "https://${NetworkChain.getNetworkByChainId(currentChainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(currentChainId)?.chainName!!)}"
+        
+        // Use the shared gas estimation helper
+        return GasEstimationHelper.estimateGas(userOp, rpcUrl)
     }
 }
