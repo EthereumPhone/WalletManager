@@ -18,7 +18,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.dropUnlessResumed
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.mediumExitDuration
@@ -42,7 +45,8 @@ fun HeaderBar(
     primaryColor: Color,
     onClick: () -> Unit = {}
 ){
-    val debouncedClickHandler = rememberDebouncedClickHandler()
+    var enabled by remember { mutableStateOf(true) }
+
 
     Row (
         modifier = modifier
@@ -78,7 +82,11 @@ fun HeaderBar(
             exit  = fadeOut(tween(mediumExitDuration))
         ) {
             IconButton(modifier = Modifier.size(56.dp),
-                onClick = { debouncedClickHandler(onClick) }) {
+                onClick = dropUnlessResumed {
+                    if (!enabled) return@dropUnlessResumed
+                    enabled = false                      // one-shot guard
+                    onClick()
+                }) {
                 Box(modifier = Modifier.size(56.dp)) {
                     Icon(
                         modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
