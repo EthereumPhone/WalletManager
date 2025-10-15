@@ -10,6 +10,14 @@
             android:enabled="true"
             android:exported="true"
             android:grantUriPermissions="true" />
+
+        <!-- Content Provider for Token Metadata -->
+        <provider
+            android:name=".provider.TokenMetadataContentProvider"
+            android:authorities="com.walletmanager.tokenmetadata.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true" />
     </application>
 
 </manifest>
