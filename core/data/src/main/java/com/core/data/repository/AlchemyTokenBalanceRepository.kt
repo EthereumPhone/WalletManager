@@ -232,18 +232,26 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                                     
                                     // If metadata was fetched, create a group for it
                                     if (metadata != null) {
-                                        val groupId = "${chainId}_${token.contractAddress.lowercase()}"
-                                        val tokenGroup = TokenGroupEntity(
-                                            groupId = groupId,
-                                            canonicalChainId = chainId,
-                                            canonicalAddress = token.contractAddress.lowercase(),
-                                            symbol = metadata.symbol,
-                                            name = metadata.name
+                                        val resolvedGroupId = resolveGroupId(
+                                            chainId = chainId,
+                                            address = token.contractAddress,
+                                            symbol = metadata.symbol
                                         )
-                                        tokenGroups.add(tokenGroup)
                                         
-                                        // Return metadata with groupId
-                                        metadata.copy(groupId = groupId)
+                                        val existingGroup = tokenGroupDao.getGroupedToken(resolvedGroupId)
+                                        if (existingGroup == null) {
+                                            val tokenGroup = TokenGroupEntity(
+                                                groupId = resolvedGroupId,
+                                                canonicalChainId = chainId,
+                                                canonicalAddress = token.contractAddress.lowercase(),
+                                                symbol = metadata.symbol,
+                                                name = metadata.name
+                                            )
+                                            tokenGroups.add(tokenGroup)
+                                        }
+                                        
+                                        // Return metadata with resolved groupId
+                                        metadata.copy(groupId = resolvedGroupId)
                                     } else {
                                         null
                                     }
@@ -268,6 +276,14 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                 Log.e("AlchemyTokenBalanceRepository", "Error fetching missing metadata on-chain", e)
             }
         }
+    }
+
+    private suspend fun resolveGroupId(chainId: Int, address: String, symbol: String): String {
+        val byBridge = tokenGroupDao.findGroupIdByBridge(chainId, address)
+        if (byBridge != null) return byBridge
+        val bySymbol = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
+        if (bySymbol != null) return bySymbol
+        return "${chainId}_${address.lowercase()}"
     }
 
 }

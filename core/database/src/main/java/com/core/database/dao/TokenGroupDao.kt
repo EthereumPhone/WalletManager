@@ -106,6 +106,33 @@ interface TokenGroupDao {
     }
     
     /**
+     * Find an existing groupId for a given token address on a specific chain using bridge relationships.
+     */
+    @Query(
+        """
+        SELECT groupId FROM token_bridge 
+        WHERE (sourceChainId = :chainId AND LOWER(sourceAddress) = LOWER(:address))
+           OR (targetChainId = :chainId AND LOWER(targetAddress) = LOWER(:address))
+        LIMIT 1
+        """
+    )
+    suspend fun findGroupIdByBridge(chainId: Int, address: String): String?
+    
+    /**
+     * Find an existing groupId by token symbol, preferring a group whose canonical chain is mainnet (1).
+     */
+    @Query(
+        """
+        SELECT tg.groupId FROM token_group tg
+        INNER JOIN token_metadata tm ON tm.groupId = tg.groupId
+        WHERE LOWER(tm.symbol) = LOWER(:symbol)
+        ORDER BY CASE WHEN tg.canonicalChainId = 1 THEN 0 ELSE 1 END, tg.groupId
+        LIMIT 1
+        """
+    )
+    suspend fun findGroupIdBySymbolPreferMainnet(symbol: String): String?
+    
+    /**
      * Get a token with its balance and latest exchange rate.
      * This is more efficient than loading all exchange history.
      */

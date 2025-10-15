@@ -18,4 +18,10 @@ interface TokenMetadataRepository {
 
     suspend fun insertTokenMetadata(tokensMetadata: List<TokenMetadataEntity>)
 
+    /**
+     * Ensures that tokens across chains are assigned to the correct cross-chain group.
+     * This reconciles existing rows where groupId may have been created per-chain.
+     */
+    suspend fun reconcileTokenGroups()
+
 }
