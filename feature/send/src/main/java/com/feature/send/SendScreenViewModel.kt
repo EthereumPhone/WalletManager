@@ -131,8 +131,7 @@ class SendViewModel @Inject constructor(
             terminalRepository.events.collect { event ->
                 if (event == TerminalEvent.SendTapped) {
                     send()
-                }
-                if (event == TerminalEvent.QrTapped) {
+                } else {
                     triggerQrScanner()
                 }
             }
@@ -216,9 +215,18 @@ class SendViewModel @Inject constructor(
 
 
     fun send() {
-        if (amountUiState.value.currentAmount == ".") return
-        if (amountUiState.value.currentAmount == "0.") return
-        if (amountUiState.value.currentAmount == "") return
+        // Check if both crypto and fiat amounts are invalid or empty
+        val cryptoAmount = amountUiState.value.currentAmount
+        val fiatAmount = amountUiState.value.currentFiatAmount
+        
+        // Return if both amounts are empty
+        if (cryptoAmount.isEmpty() && fiatAmount.isEmpty()) return
+        
+        // Return if crypto amount is invalid (but only if fiat is also empty)
+        if (fiatAmount.isEmpty() && (cryptoAmount == "." || cryptoAmount == "0.")) return
+        
+        // Return if fiat amount is invalid (but only if crypto is also empty)
+        if (cryptoAmount.isEmpty() && (fiatAmount == "." || fiatAmount == "0.")) return
 
         viewModelScope.launch {
             val selectedAsset = selectedAssetUiState.value

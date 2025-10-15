@@ -59,7 +59,7 @@ class Erc20TransferApi @Inject constructor(
 
         val data = contract.transfer(
             toAddress,
-            realAmount.toBigIntegerExact()
+            realAmount.toBigInteger()  // Truncates decimal places instead of throwing exception
         ).encodeFunctionCall()
 
         return walletSDK.sendTransaction(
