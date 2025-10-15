@@ -6,11 +6,15 @@ import com.core.data.model.dto.TokenBalanceDto
 import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenBalanceRequestBody
 import com.core.data.remote.TokenBalanceApi
+import com.core.data.service.OnChainTokenMetadataFetcher
 import com.core.data.util.chainToApiKey
 import com.core.data.util.spamTokens
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.dao.TokenGroupDao
+import com.core.database.dao.TokenMetadataDao
 import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.asExternalModule
 import com.core.database.model.erc20.toExternalModel
 import com.core.model.NetworkChain
@@ -21,6 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -33,6 +38,9 @@ import kotlin.collections.flatten
 class AlchemyTokenBalanceRepository @Inject constructor(
     private val tokenBalanceApi: TokenBalanceApi,
     private val tokenBalanceDao: TokenBalanceDao,
+    private val tokenMetadataDao: TokenMetadataDao,
+    private val tokenGroupDao: TokenGroupDao,
+    private val onChainTokenMetadataFetcher: OnChainTokenMetadataFetcher
 ): TokenBalanceRepository {
     override fun getTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getCompositeTokens().map {
@@ -44,12 +52,14 @@ class AlchemyTokenBalanceRepository @Inject constructor(
 
     override fun getCombinedTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getCompositeTokens().map { allCompositeTokens ->
-            // Filter out tokens without metadata and group by symbol
-            val groupedBySymbol = allCompositeTokens
-                .filter { it.tokenMetadataEntity != null }
-                .groupBy { it.tokenMetadataEntity!!.symbol }
-
-            groupedBySymbol.mapNotNull { (symbol, assetsWithSameSymbol) ->
+            // Group tokens: those with metadata by symbol, those without separately
+            val tokensWithMetadata = allCompositeTokens.filter { it.tokenMetadataEntity != null }
+            val tokensWithoutMetadata = allCompositeTokens.filter { it.tokenMetadataEntity == null && it.tokenBalanceEntity != null }
+            
+            // Process tokens with metadata (group by symbol)
+            val groupedBySymbol = tokensWithMetadata.groupBy { it.tokenMetadataEntity!!.symbol }
+            
+            val assetsWithMetadata = groupedBySymbol.mapNotNull { (symbol, assetsWithSameSymbol) ->
                 val representativeToken = assetsWithSameSymbol
                     .firstOrNull { it.tokenBalanceEntity != null }
                     ?: return@mapNotNull null
@@ -64,7 +74,6 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                     }
                 }
 
-                // Safe to access metadata here because we filtered out nulls above
                 representativeToken.tokenMetadataEntity?.let { metadata ->
                     TokenAsset(
                         address = metadata.contractAddress,
@@ -78,6 +87,34 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                     )
                 }
             }
+            
+            // Process tokens without metadata (use contract address as identifier)
+            val assetsWithoutMetadata = tokensWithoutMetadata.map { compositeToken ->
+                val balanceEntity = compositeToken.tokenBalanceEntity!!
+                // Use default decimals of 18 for tokens without metadata
+                val decimals = 18
+                val balance = balanceEntity.tokenBalance
+                    .movePointLeft(decimals)
+                    .stripTrailingZeros()
+                    .toDouble()
+                
+                // Use shortened address as symbol/name for now
+                val shortAddress = "${balanceEntity.contractAddress.take(6)}...${balanceEntity.contractAddress.takeLast(4)}"
+                
+                TokenAsset(
+                    address = balanceEntity.contractAddress,
+                    chainId = balanceEntity.chainId,
+                    symbol = shortAddress,
+                    name = "Unknown Token",
+                    balance = balance,
+                    decimals = decimals,
+                    logoUrl = null,
+                    swappable = false
+                )
+            }
+            
+            // Combine both lists
+            assetsWithMetadata + assetsWithoutMetadata
         }
 
     override fun getTokensBalances(): Flow<List<TokenBalance>> =
@@ -127,6 +164,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
 
             if (allEntities.isNotEmpty()) {
                 tokenBalanceDao.upsertTokenBalances(allEntities)
+                
+                // Fetch metadata for tokens that don't have it
+                fetchMissingMetadataOnChain()
             }
         }
     }
@@ -145,6 +185,87 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                     .filter { it.contractAddress !in spamTokens }
                     .map { it.asEntity(network!!.chainId) }
                 tokenBalanceDao.upsertTokenBalances(results)
+                
+                // Fetch metadata for tokens that don't have it
+                fetchMissingMetadataOnChain()
+            }
+        }
+    }
+    
+    /**
+     * Fetches metadata on-chain for tokens that don't have metadata in the database
+     */
+    private suspend fun fetchMissingMetadataOnChain() {
+        withContext(Dispatchers.IO) {
+            try {
+                // Get all token balances without metadata
+                val tokensWithoutMetadata = tokenBalanceDao.observeTokenBalancesWithoutMetadataFlow()
+                    .first() // Get the current value
+                
+                if (tokensWithoutMetadata.isEmpty()) {
+                    Log.d("AlchemyTokenBalanceRepository", "No tokens without metadata found")
+                    return@withContext
+                }
+                
+                Log.d("AlchemyTokenBalanceRepository", "Found ${tokensWithoutMetadata.size} tokens without metadata")
+                
+                // Group tokens by chain ID for efficient processing
+                val tokensByChain = tokensWithoutMetadata.groupBy { it.chainId }
+                
+                supervisorScope {
+                    tokensByChain.map { (chainId, tokens) ->
+                        async {
+                            val network = NetworkChain.getNetworkByChainId(chainId)
+                            if (network != null) {
+                                val apiKey = chainToApiKey(network.chainName)
+                                val rpcUrl = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
+                                
+                                // Fetch metadata for each token on this chain
+                                val tokenGroups = mutableListOf<TokenGroupEntity>()
+                                val metadataList = tokens.mapNotNull { token ->
+                                    Log.d("AlchemyTokenBalanceRepository", "Fetching on-chain metadata for ${token.contractAddress} on chain $chainId")
+                                    val metadata = onChainTokenMetadataFetcher.fetchTokenMetadata(
+                                        contractAddress = token.contractAddress,
+                                        chainId = chainId,
+                                        rpcUrl = rpcUrl
+                                    )
+                                    
+                                    // If metadata was fetched, create a group for it
+                                    if (metadata != null) {
+                                        val groupId = "${chainId}_${token.contractAddress.lowercase()}"
+                                        val tokenGroup = TokenGroupEntity(
+                                            groupId = groupId,
+                                            canonicalChainId = chainId,
+                                            canonicalAddress = token.contractAddress.lowercase(),
+                                            symbol = metadata.symbol,
+                                            name = metadata.name
+                                        )
+                                        tokenGroups.add(tokenGroup)
+                                        
+                                        // Return metadata with groupId
+                                        metadata.copy(groupId = groupId)
+                                    } else {
+                                        null
+                                    }
+                                }
+                                
+                                // Store the token groups first (due to foreign key constraints)
+                                if (tokenGroups.isNotEmpty()) {
+                                    Log.d("AlchemyTokenBalanceRepository", "Storing ${tokenGroups.size} token groups")
+                                    tokenGroupDao.upsertTokenGroups(tokenGroups)
+                                }
+                                
+                                // Then store the fetched metadata
+                                if (metadataList.isNotEmpty()) {
+                                    Log.d("AlchemyTokenBalanceRepository", "Storing ${metadataList.size} fetched metadata entries")
+                                    tokenMetadataDao.upsertTokensMetadata(metadataList)
+                                }
+                            }
+                        }
+                    }.awaitAll()
+                }
+            } catch (e: Exception) {
+                Log.e("AlchemyTokenBalanceRepository", "Error fetching missing metadata on-chain", e)
             }
         }
     }
