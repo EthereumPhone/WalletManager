@@ -63,6 +63,8 @@ class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val walletSDK: WalletSDK?,
     private val terminalRepository: TerminalRepository,
+    private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
 ) : ViewModel() {
 
     private val _topUpAmount = MutableStateFlow(TextFieldValue(""))
@@ -124,15 +126,15 @@ class PayMasterViewModel @Inject constructor(
                     _balance.value = "0.0"
                     Log.e("PayMasterViewModel", "SDK initialization failed")
                     // Generic error message for users
-                    showDgenToast(appContext,"An error occurred. Please try again later.")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                 }
-<<<<<<< HEAD
                 // Also, trigger a query update to ensure we get the latest from backend if needed.
                 // This is useful if the service starts with a stale value before observer is hit.
                 paymasterSDK.queryUpdate() // Query after registration to ensure observer gets it
-            } else {
+            } catch(e: Exception) {
                 _balance.value = "Error: SDK Init failed"
                 showDgenToast(context,"Error: SDK initialization failed. Please try again later.")
+                e.printStackTrace()
             }
 
 
@@ -167,13 +169,6 @@ class PayMasterViewModel @Inject constructor(
                         }
                     }
                 }
-                // Keep balance as 0.0 on SDK init failure
-=======
-            } catch (e: Exception) {
-                Log.e("PayMasterViewModel", "Error during SDK initialization", e)
->>>>>>> 0b6ec274 (Fix send gas values)
-                _balance.value = "0.0"
-                showDgenToast(appContext,"An error occurred. Please try again later.")
             }
         }
     }
@@ -238,12 +233,8 @@ class PayMasterViewModel @Inject constructor(
     suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         // Early exit if there is no internet connection
         if (!isInternetAvailable()) {
-<<<<<<< HEAD
-            showDgenToast(context,"No internet connection!")
-=======
             Log.w("PayMasterViewModel", "No internet connection available")
-            showDgenToast(appContext,"No internet connection")
->>>>>>> 0b6ec274 (Fix send gas values)
+            showDgenToast(context,"No internet connection")
             return@withContext null
         }
 
@@ -252,7 +243,7 @@ class PayMasterViewModel @Inject constructor(
             if (userId.isBlank()) {
                 // Handle case where userId is not available
                 Log.e("PayMasterViewModel", "User ID not found from wallet SDK")
-                showDgenToast(appContext,"An error occurred. Please try again later.")
+                showDgenToast(context,"An error occurred. Please try again later.")
                 return@withContext null
             }
 
@@ -270,14 +261,14 @@ class PayMasterViewModel @Inject constructor(
                     val errorBody = response.body?.string()
                     Log.e("PayMasterViewModel", "API error response (${response.code}): $errorBody")
                     // Show generic error to user
-                    showDgenToast(appContext,"An error occurred. Please try again later.")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
 
                 val responseBodyString = response.body?.string()
                 if (responseBodyString == null) {
                     Log.e("PayMasterViewModel", "Empty API response")
-                    showDgenToast(appContext,"An error occurred. Please try again later.")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
 
@@ -287,7 +278,7 @@ class PayMasterViewModel @Inject constructor(
 
                 if (daimoPaymentId.isNullOrBlank()) {
                     Log.e("PayMasterViewModel", "Daimo Payment URL missing in response: $responseBodyString")
-                    showDgenToast(appContext,"An error occurred. Please try again later.")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
                 
@@ -299,14 +290,10 @@ class PayMasterViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("PayMasterViewModel", "Exception during topUp", e)
             if (e is UnknownHostException) {
-<<<<<<< HEAD
-                showDgenToast(context,"No internet connection!")
-=======
-                showDgenToast(appContext,"No internet connection")
->>>>>>> 0b6ec274 (Fix send gas values)
+                showDgenToast(context,"No internet connection")
             } else {
                 // Generic error message for any other exception
-                showDgenToast(appContext,"An error occurred. Please try again later.")
+                showDgenToast(context,"An error occurred. Please try again later.")
             }
             return@withContext null
         }
@@ -390,13 +377,13 @@ class PayMasterViewModel @Inject constructor(
                             if (daimoUrl != null) {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                appContext.startActivity(intent)
+                                context.startActivity(intent)
 
                                 
                                 // Only show success toasts if internet is available and topUp was successful
                                 if (isInternetAvailable()) {
                                     showDgenToast(
-                                        context = appContext,
+                                        context = context,
                                         message = "You added ${topUpAmount.value.text} to your Paymaster."
                                     )
                                 }
@@ -421,7 +408,7 @@ class PayMasterViewModel @Inject constructor(
                     // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
                     val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
                     if (cleanAmount.isEmpty()) {
-                        showDgenToast(appContext,"Please enter an amount")
+                        showDgenToast(context,"Please enter an amount")
                         return@displayTopUp
                     }
                     viewModelScope.launch(Dispatchers.Main) {
@@ -430,12 +417,12 @@ class PayMasterViewModel @Inject constructor(
                         if (daimoUrl != null) {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            appContext.startActivity(intent)
+                            context.startActivity(intent)
                             
                             // Only show success toasts if internet is available and topUp was successful
                             if (isInternetAvailable()) {
                                 showDgenToast(
-                                    context = appContext,
+                                    context = context,
                                     message = "You added ${topUpAmount.value.text} to your Paymaster."
                                 )
                             }

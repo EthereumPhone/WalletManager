@@ -48,6 +48,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import kotlinx.coroutines.delay
 import com.feature.send.ui.TransactionStatus
+import kotlinx.coroutines.flow.update
+import org.kethereum.eip137.model.ENSName
+import org.kethereum.ens.ENS
+import org.kethereum.ens.isPotentialENSDomain
+import org.kethereum.rpc.HttpEthereumRPC
 
 sealed interface TxCompleteUiState {
     object UnComplete: TxCompleteUiState

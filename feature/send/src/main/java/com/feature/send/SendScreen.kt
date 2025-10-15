@@ -137,7 +137,7 @@ fun SendRoute(
                 Log.d("SendScreen", "Fade transition complete, clearing overlay")
                 viewModel.clearTransactionStatus()
             }
-            TransactionStatus.FAILURE -> {
+            is TransactionStatus.FAILURE -> {
                 Log.d("SendScreen", "🔴 FAILURE status detected - showing error state")
                 // Display failure overlay for a reasonable duration to acknowledge the error
                 delay(TransactionTiming.FAILURE_DISPLAY_DURATION)
