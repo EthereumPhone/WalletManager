@@ -99,7 +99,13 @@ class MainActivityViewModel @Inject constructor(
             terminalSDK.displayBlackText(text)
 
             delay(2500)
-            terminalSDK.finishScreen()
+            
+            // Only finish the screen if we're still on the home screen
+            if (lastKnownRoute.value in listOf("", homeRoute)) {
+                terminalSDK.finishScreen()
+            } else {
+                println("Not on homescreen, lets not finish screen")
+            }
         }
     }
 
