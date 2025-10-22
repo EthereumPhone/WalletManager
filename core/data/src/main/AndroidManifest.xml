@@ -2,4 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Custom permission for token balance updates -->
+    <permission 
+        android:name="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE"
+        android:protectionLevel="signature" />
+    
+    <uses-permission android:name="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" />
+    
+    <application>
+        <!-- BroadcastReceiver for token balance updates from TokenLauncher -->
+        <!-- TODO: Re-enable permission check after testing -->
+        <receiver 
+            android:name=".broadcast.TokenBalanceUpdateReceiver"
+            android:exported="true">
+            <!-- android:permission="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" -->
+            <intent-filter>
+                <action android:name="org.ethereumphone.walletmanager.DEDUCT_TOKEN_BALANCE" />
+            </intent-filter>
+        </receiver>
+    </application>
 </manifest>
