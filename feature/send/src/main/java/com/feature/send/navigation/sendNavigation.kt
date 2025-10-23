@@ -21,15 +21,17 @@ import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.largeExitDuration
 import com.feature.send.SendRoute
 
-const val sendRoute = "send_route?address={address}&groupId={groupId}"
+const val sendRoute = "send_route?address={address}&groupId={groupId}&amount={amount}&chainId={chainId}"
 const val sendDeepLinkPattern = "app://wallet_manager/send_deep_link/{address}"
 
 
 fun NavController.navigateToSend(
     address: String = "",
     groupId: String = "",
+    amount: String = "",
+    chainId: String = "",
 ) {
-    val route = "send_route?address=$address&groupId=$groupId"
+    val route = "send_route?address=$address&groupId=$groupId&amount=$amount&chainId=$chainId"
 
     this.navigate(route) {
         popUpTo("home_route") {
@@ -57,6 +59,14 @@ fun NavGraphBuilder.sendScreen(
                 defaultValue = ""
             },
             navArgument("groupId") {
+                type = NavType.StringType
+                defaultValue = ""
+            },
+            navArgument("amount") {
+                type = NavType.StringType
+                defaultValue = ""
+            },
+            navArgument("chainId") {
                 type = NavType.StringType
                 defaultValue = ""
             }

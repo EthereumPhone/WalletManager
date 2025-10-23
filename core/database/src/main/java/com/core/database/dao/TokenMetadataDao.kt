@@ -16,9 +16,15 @@ interface TokenMetadataDao {
 
     @Query("""
         SELECT * FROM token_metadata
-        WHERE contractAddress = :address AND :chainId
+        WHERE contractAddress = :address AND chainId = :chainId
     """)
     suspend fun getTokenMetadataByAddressChainId(address: String, chainId: String): TokenMetadataEntity?
+
+    @Query("""
+        SELECT * FROM token_metadata
+        WHERE contractAddress = :address AND chainId = :chainIdInt
+    """)
+    suspend fun getTokenMetadataByAddressAndChainId(address: String, chainIdInt: Int): TokenMetadataEntity?
 
     @Query("SELECT * FROM token_metadata WHERE symbol == :symbol")
     fun getTokensMetadata(symbol: String): Flow<List<TokenMetadataEntity>>

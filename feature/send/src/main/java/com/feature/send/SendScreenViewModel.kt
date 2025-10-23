@@ -70,6 +70,8 @@ sealed interface TxCompleteUiState {
 
 private const val GROUP_NAV_ARGUMENT = "groupId"
 private const val ADDRESS_NAV_ARGUMENT = "address"
+private const val AMOUNT_NAV_ARGUMENT = "amount"
+private const val CHAIN_ID_NAV_ARGUMENT = "chainId"
 
 @HiltViewModel
 class SendViewModel @Inject constructor(
@@ -87,6 +89,8 @@ class SendViewModel @Inject constructor(
 ): ViewModel() {
     val groupId: String = savedStateHandle[GROUP_NAV_ARGUMENT] ?: ""
     val address: String = savedStateHandle[ADDRESS_NAV_ARGUMENT] ?: ""
+    private val initialAmount: String = savedStateHandle[AMOUNT_NAV_ARGUMENT] ?: ""
+    private val preferredChainId: Int? = savedStateHandle.get<String>(CHAIN_ID_NAV_ARGUMENT)?.toIntOrNull()
 
 
     val assetsUiState: StateFlow<AssetsUiState> =
@@ -100,42 +104,73 @@ class SendViewModel @Inject constructor(
                 initialValue = AssetsUiState.Loading
             )
 
+    private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
+    val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
+    
+    // Keyboard dismissal state - triggered when ENS resolution succeeds
+    private val _shouldDismissKeyboard = MutableStateFlow(false)
+    val shouldDismissKeyboard: StateFlow<Boolean> = _shouldDismissKeyboard.asStateFlow()
+
     init {
+        Log.d("SendViewModel", "INIT - groupId=$groupId, address=$address, initialAmount=$initialAmount, preferredChainId=$preferredChainId")
+        // Track if we've already initialized the selection (to avoid overwriting user changes)
+        var hasInitializedSelection = false
+        
+        // Continuously observe assets state and auto-select when they load
         viewModelScope.launch {
-            val assetState = assetsUiState.first { it !is AssetsUiState.Loading }
-            if (assetState is AssetsUiState.Success) {
-                val assets = assetState.assets
+            assetsUiState.collect { assetState ->
+                // Only auto-select if we haven't already and assets are loaded
+                if (!hasInitializedSelection && assetState is AssetsUiState.Success) {
+                    val assets = assetState.assets
 
-                when {
-                    assets.size == 1 -> {
-                        val asset = assets.first()
+                    when {
+                        assets.size == 1 -> {
+                            val asset = assets.first()
 
-                        _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
-                        _amountUiState.update { it.copy(
-                            maxAmount = asset.balance,
-                            formattedMaxAmount = asset.balance.formatWithSuffix(),
-                            maxFiatAmount = asset.fiatAmount,
-                            formattedMaxFiatAmount = asset.fiatAmount.formatWithSuffix(2)
-                        ) }
+                            _selectedAssetUiState.value = SelectedAssetUiState.Selected(asset)
+                            val amountToSet = initialAmount.ifEmpty { "" }
+                            Log.d("SendViewModel", "Setting amount for single asset: initialAmount='$initialAmount', setting to='$amountToSet'")
+                            _amountUiState.update { it.copy(
+                                maxAmount = asset.balance,
+                                formattedMaxAmount = asset.balance.formatWithSuffix(),
+                                maxFiatAmount = asset.fiatAmount,
+                                formattedMaxFiatAmount = asset.fiatAmount.formatWithSuffix(2),
+                                currentAmount = amountToSet
+                            ) }
+                            hasInitializedSelection = true
+                        }
+                        assets.size > 1 -> {
+                            // If a preferred chainId was provided (from deep link), select that chain
+                            // Otherwise, select the chain with the lowest chainId
+                            val selectedAsset = if (preferredChainId != null) {
+                                assets.find { it.chainId == preferredChainId } ?: assets.minByOrNull { it.chainId }!!
+                            } else {
+                                assets.minByOrNull { it.chainId }!!
+                            }
+                            
+                            _selectedAssetUiState.value = SelectedAssetUiState.Selected(selectedAsset)
+
+                            val amountToSet = initialAmount.ifEmpty { "" }
+                            Log.d("SendViewModel", "Setting amount for multiple assets (chainId=${selectedAsset.chainId}): initialAmount='$initialAmount', setting to='$amountToSet'")
+                            _amountUiState.update { it.copy(
+                                maxAmount = selectedAsset.balance,
+                                formattedMaxAmount = selectedAsset.balance.formatWithSuffix(),
+                                maxFiatAmount = selectedAsset.fiatAmount,
+                                formattedMaxFiatAmount = selectedAsset.fiatAmount.formatWithSuffix(2),
+                                currentAmount = amountToSet
+                            ) }
+                            hasInitializedSelection = true
+                        }
+                        assets.isEmpty() -> {
+                            _selectedAssetUiState.value = SelectedAssetUiState.Unselected
+                        }
                     }
-                    assets.size > 1 -> {
-                        val sortedByChainId = assets.minByOrNull { it.chainId }!!
-                        _selectedAssetUiState.value = SelectedAssetUiState.Selected(sortedByChainId)
-
-                        _amountUiState.update { it.copy(
-                            maxAmount = sortedByChainId.balance,
-                            formattedMaxAmount = sortedByChainId.balance.formatWithSuffix(),
-                            maxFiatAmount = sortedByChainId.fiatAmount,
-                            formattedMaxFiatAmount = sortedByChainId.fiatAmount.formatWithSuffix(2)
-
-                        ) }
-                    }
-                    else -> _selectedAssetUiState.value = SelectedAssetUiState.Unselected
                 }
             }
-
-
-
+        }
+        
+        // Observe terminal events in a separate coroutine
+        viewModelScope.launch {
             terminalRepository.events.collect { event ->
                 if (event == TerminalEvent.SendTapped) {
                     send()
@@ -145,24 +180,21 @@ class SendViewModel @Inject constructor(
                 }
             }
         }
+        
+        // If an address was provided (e.g., from deep link), resolve ENS if needed
+        if (address.isNotEmpty()) {
+            viewModelScope.launch {
+                resolveEns()
+            }
+        }
     }
-
-
-
-
-    private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
-    val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
-    
-    // Keyboard dismissal state - triggered when ENS resolution succeeds
-    private val _shouldDismissKeyboard = MutableStateFlow(false)
-    val shouldDismissKeyboard: StateFlow<Boolean> = _shouldDismissKeyboard.asStateFlow()
 
 
 
     private val _amountUiState = MutableStateFlow<AmountUiState>(AmountUiState(
         0.0,
         "0.0",
-        currentAmount = "",
+        currentAmount = initialAmount,
         maxFiatAmount = 0.0,
         formattedMaxFiatAmount = "0.0",
         currentFiatAmount = "",

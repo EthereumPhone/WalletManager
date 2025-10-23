@@ -1,6 +1,7 @@
 package org.ethereumphone.walletmanager
 
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,6 +21,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.core.data.repository.SendRepository
@@ -34,6 +36,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ethereumphone.walletmanager.deeplink.Eip681DeepLinkHandler
+import org.ethereumphone.walletmanager.deeplink.Eip681DeepLinkResult
 import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
 import com.core.ui.util.SystemColorManager
@@ -51,6 +55,8 @@ class MainActivity() : ComponentActivity() {
     @Inject
     lateinit var networkMonitor: NetworkMonitor
 
+    @Inject
+    lateinit var eip681DeepLinkHandler: Eip681DeepLinkHandler
 
     @Inject
     @JvmField
@@ -63,6 +69,8 @@ class MainActivity() : ComponentActivity() {
     val viewModel: MainActivityViewModel by viewModels()
 
     val coroutineScope = CoroutineScope(Dispatchers.IO)
+
+    private var pendingDeepLink by mutableStateOf<Eip681DeepLinkResult?>(null)
 
     
 
@@ -85,6 +93,9 @@ class MainActivity() : ComponentActivity() {
         // checks periodically the address & network of the system wallet
         walletAddressUpdater.startPeriodicUpdate()
 
+        // Handle EIP-681 deep link
+        handleDeepLink(intent)
+
         setContent {
             val systemUiController = rememberSystemUiController()
             systemUiController.setStatusBarColor(
@@ -104,8 +115,28 @@ class MainActivity() : ComponentActivity() {
                 viewModel = viewModel,
                 networkMonitor = networkMonitor,
                 terminalSDK = terminalSDK,
-                reflectiveLedPattern = reflectiveLedPattern
+                reflectiveLedPattern = reflectiveLedPattern,
+                pendingDeepLink = pendingDeepLink,
+                onDeepLinkHandled = { pendingDeepLink = null }
             )
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent) {
+        if (intent.action == Intent.ACTION_VIEW && intent.data?.scheme == "ethereum") {
+            Log.d("MainActivity", "Processing EIP-681 deep link: ${intent.data}")
+            coroutineScope.launch {
+                val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
+                withContext(Dispatchers.Main) {
+                    pendingDeepLink = result
+                }
+            }
         }
     }
 
