@@ -89,6 +89,15 @@ object TokenBalanceProviderContract {
             .appendPath("balance")
             .build()
     }
+
+    fun buildAdjustDeductUri(chainId: Int, contractAddress: String): Uri {
+        return CONTENT_URI.buildUpon()
+            .appendPath("adjust")
+            .appendPath("deduct")
+            .appendPath(chainId.toString())
+            .appendPath(contractAddress)
+            .build()
+    }
     
     /**
      * Helper method to query token balance from another app

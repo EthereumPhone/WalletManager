@@ -4,6 +4,7 @@ import android.content.Context
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
+import com.core.data.utils.GasEstimationHelper
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import org.web3j.protocol.http.HttpService
 import org.web3j.utils.Convert
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 import javax.inject.Inject
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TransferDao
@@ -37,6 +39,9 @@ class SendRepositoryImp @Inject constructor(
     private val reflectiveLedPattern: ReflectiveLedPattern?
 ): SendRepository {
 
+    // Store chainId for use in gasProvider
+    private var currentChainId: Int = 1
+
     override val currentTransactionHash = MutableStateFlow("")
     override val currentTransactionChainId = MutableStateFlow(0)
 
@@ -50,6 +55,9 @@ class SendRepositoryImp @Inject constructor(
         gasAmount: String
     ) {
         withContext(Dispatchers.IO) {
+            // Store chainId for gas provider
+            currentChainId = chainId
+            
             val rpc = NetworkChain.getNetworkByChainId(chainId)
             val walletSDK = if (rpc != null) {
                 WalletSDK(
@@ -74,29 +82,25 @@ class SendRepositoryImp @Inject constructor(
             // Check if the amount exceeds the actual database balance
             val currentBalances = tokenBalanceDao.getTokenBalances(listOf(chainId.toString())).first()
             val currentBalance = currentBalances.firstOrNull { it.chainId == chainId }
-            
-            val amountDouble = value.replace(",",".").toDouble()
-            
-            val finalAmountDouble = if (currentBalance != null) {
-                // IMPORTANT: Network tokens (ETH/MATIC) are stored in ETH units in the database, NOT wei!
-                // This is different from ERC20 tokens which are stored in their smallest unit
-                val balanceInEth = currentBalance.tokenBalance
-                
-                // Compare the requested amount with the balance (both in ETH)
-                val requestedAmount = BigDecimal(amountDouble)
-                
-                // If the amount exceeds the database balance, use the exact database balance
-                if (requestedAmount > balanceInEth) {
-                    val adjustedAmount = balanceInEth.toDouble()
-                    adjustedAmount
-                } else {
-                    amountDouble
-                }
+
+            // Use precise conversion: ETH (string) -> WEI (BigDecimal) without floating imprecision
+            val valueNormalized = value.replace(",", ".")
+            val amountWeiNoFraction = BigDecimal(valueNormalized)
+                .movePointRight(18)
+                .setScale(0, RoundingMode.DOWN)
+
+            // If the requested amount exceeds the DB balance, clamp to the DB balance
+            val finalWei: BigDecimal = if (currentBalance != null) {
+                // DB stores native token balance in ETHER → convert to WEI for comparison
+                val dbWei = currentBalance.tokenBalance
+                    .movePointRight(18)
+                    .setScale(0, RoundingMode.DOWN)
+                if (amountWeiNoFraction.compareTo(dbWei) > 0) dbWei else amountWeiNoFraction
             } else {
-                amountDouble
+                amountWeiNoFraction
             }
-            
-            val decimalValue = BigDecimal(finalAmountDouble).times(BigDecimal.TEN.pow(18)).toBigInteger().toString()
+
+            val decimalValue = finalWei.toPlainString()
 
 
             var ethGasPrice = web3j.ethGasPrice().send().gasPrice
@@ -108,11 +112,12 @@ class SendRepositoryImp @Inject constructor(
 
             val res = try {
                 walletSDK.sendTransaction(
-                    toAddress,
-                    decimalValue,
-                    data?: "",
-                    BigInteger("120000"),
-                    chainId
+                    to = toAddress,
+                    value = decimalValue,
+                    data = "",
+                    callGas = null,
+                    chainId = chainId,
+                    gasProvider = ::gasProvider
                 )
             } catch (exception: Exception) {
                 "error"
@@ -121,20 +126,17 @@ class SendRepositoryImp @Inject constructor(
             // If the transaction was successful (we got a valid bundler tx hash)
             if (res.isNotEmpty() && res != "error" && res != "decline") {
                 if (currentBalance != null) {
-                    // IMPORTANT: Network tokens are stored in ETH units, not wei!
-                    // So we deduct the amount in ETH, not wei
-                    // TODO: This doesn't account for gas fees, which are also deducted by the walletSDK
-                    // The actual balance will be lower than this due to gas fees
-                    val finalAmountInEth = BigDecimal(finalAmountDouble)
-                    val newBalance = currentBalance.tokenBalance - finalAmountInEth
+                    // Convert the final amount back to ETHER to update the DB (DB stores ETHER for native tokens)
+                    val finalAmountEther = finalWei.movePointLeft(18)
+                    val newBalanceEther = currentBalance.tokenBalance.subtract(finalAmountEther)
 
-                    val updatedBalance = currentBalance.copy(tokenBalance = newBalance)
+                    val updatedBalance = currentBalance.copy(tokenBalance = newBalanceEther)
                     tokenBalanceDao.upsertTokenBalances(listOf(updatedBalance))
                 }
 
                 // Insert provisional transfer entry so the UI can display it immediately
                 val fromAddress = walletSDK.getAddress()
-                
+                val finalAmountEther = finalWei.movePointLeft(18)
                 val transferEntity = TransferEntity(
                     uniqueId = "temp_${res}",
                     asset = "ETH",
@@ -152,7 +154,7 @@ class SendRepositoryImp @Inject constructor(
                     ),
                     toaddress = toAddress,
                     tokenId = chainId.toString(),
-                    value = finalAmountDouble,  // FIX: Use finalAmountDouble instead of amountDouble
+                    value = finalAmountEther.toDouble(),
                     blockTimestamp = Clock.System.now(),
                     userIsSender = true
                 )
@@ -313,5 +315,16 @@ class SendRepositoryImp @Inject constructor(
     override fun restoreState() {
         currentTransactionHash.value = ""
         currentTransactionChainId.value = 0
+    }
+    
+    /**
+     * Gas provider for ETH transfers using the shared GasEstimationHelper
+     */
+    private suspend fun gasProvider(userOp: WalletSDK.UserOperation): WalletSDK.GasEstimation {
+        // Get Alchemy RPC URL for the chain
+        val rpcUrl = "https://${NetworkChain.getNetworkByChainId(currentChainId)?.chainName}.g.alchemy.com/v2/${chainToApiKey(NetworkChain.getNetworkByChainId(currentChainId)?.chainName!!)}"
+        
+        // Use the shared gas estimation helper
+        return GasEstimationHelper.estimateGas(userOp, rpcUrl)
     }
 }

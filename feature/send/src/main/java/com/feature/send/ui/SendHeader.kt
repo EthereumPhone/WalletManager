@@ -9,6 +9,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.lifecycle.compose.dropUnlessResumed
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.TokenLogoFallback
@@ -35,7 +40,7 @@ fun SendHeader(
     onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
-    val debouncedClickHandler = rememberDebouncedClickHandler()
+    var enabled by remember { mutableStateOf(true) }
 
     val (iconUrl, symbol) = when(assetsUiState) {
         is AssetsUiState.Success -> {
@@ -105,7 +110,11 @@ fun SendHeader(
         // back icon
         IconButton(
             modifier = Modifier.size(56.dp),
-            onClick = { debouncedClickHandler(onBackClick) }
+            onClick = dropUnlessResumed {
+                if (!enabled) return@dropUnlessResumed
+                enabled = false                      // one-shot guard
+                onBackClick()
+            }
         ) {
             Box(modifier = Modifier.size(56.dp)) {
                 Icon(

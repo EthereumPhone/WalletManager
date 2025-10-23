@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters
 import com.core.data.remote.EnsApi
 import com.core.data.repository.EnsRepository
 import com.core.data.repository.TokenExchangeRepository
+import com.core.data.repository.TokenMetadataRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.domain.UpdateTokensUseCase
@@ -40,7 +41,8 @@ class SeedTokensWorker @AssistedInject constructor(
     private val userDataRepository: UserDataRepository,
     private val exchangeRepository: TokenExchangeRepository,
     private val ensApi: EnsApi,
-    private val ensRepository: EnsRepository
+    private val ensRepository: EnsRepository,
+    private val tokenMetadataRepository: TokenMetadataRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -55,6 +57,9 @@ class SeedTokensWorker @AssistedInject constructor(
                 launch { transferRepository.refreshTransfers(address) }
                 launch { updateTokenUseCase(address) }
             }
+
+            // Reconcile cross-chain token grouping after metadata/balances updates
+            tokenMetadataRepository.reconcileTokenGroups()
             
             // fetch ens and exchange rate
             coroutineScope {

@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import com.core.database.dao.TokenBalanceDao
+import com.core.database.WmDatabase
 import com.core.database.model.erc20.TokenBalanceEntity
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -50,6 +51,7 @@ class TokenBalanceContentProvider : ContentProvider() {
         private const val BALANCES_BY_CHAIN = 2
         private const val BALANCES_POSITIVE = 3
         private const val BALANCE_INSERT = 4
+        private const val BALANCE_ADJUST_DEDUCT = 5
         
         // Column names
         const val COLUMN_CONTRACT_ADDRESS = "contract_address"
@@ -71,6 +73,8 @@ class TokenBalanceContentProvider : ContentProvider() {
             addURI(AUTHORITY, "balances/positive", BALANCES_POSITIVE)
             // Match: balance (for insert/upsert)
             addURI(AUTHORITY, "balance", BALANCE_INSERT)
+            // Match: adjust/deduct/[chainId]/[contractAddress]
+            addURI(AUTHORITY, "adjust/deduct/#/*", BALANCE_ADJUST_DEDUCT)
         }
     }
     
@@ -78,9 +82,11 @@ class TokenBalanceContentProvider : ContentProvider() {
     @InstallIn(SingletonComponent::class)
     interface TokenBalanceContentProviderEntryPoint {
         fun tokenBalanceDao(): TokenBalanceDao
+        fun database(): WmDatabase
     }
     
     private lateinit var tokenBalanceDao: TokenBalanceDao
+    private lateinit var wmDatabase: WmDatabase
     
     override fun onCreate(): Boolean {
         val context = context ?: return false
@@ -90,6 +96,7 @@ class TokenBalanceContentProvider : ContentProvider() {
             TokenBalanceContentProviderEntryPoint::class.java
         )
         tokenBalanceDao = entryPoint.tokenBalanceDao()
+        wmDatabase = entryPoint.database()
         
         return true
     }
@@ -168,44 +175,67 @@ class TokenBalanceContentProvider : ContentProvider() {
         return when (uriMatcher.match(uri)) {
             BALANCE_BY_CHAIN_AND_ADDRESS -> "vnd.android.cursor.item/vnd.$AUTHORITY.balance"
             BALANCES_BY_CHAIN, BALANCES_POSITIVE -> "vnd.android.cursor.dir/vnd.$AUTHORITY.balance"
-            BALANCE_INSERT -> "vnd.android.cursor.item/vnd.$AUTHORITY.balance"
+            BALANCE_INSERT, BALANCE_ADJUST_DEDUCT -> "vnd.android.cursor.item/vnd.$AUTHORITY.balance"
             else -> null
         }
     }
     
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
-        if (uriMatcher.match(uri) != BALANCE_INSERT) {
-            return null
-        }
-        
-        values ?: return null
-        
-        try {
-            val contractAddress = values.getAsString(COLUMN_CONTRACT_ADDRESS) ?: return null
-            val chainId = values.getAsInteger(COLUMN_CHAIN_ID) ?: return null
-            val tokenBalance = values.getAsString(COLUMN_TOKEN_BALANCE)?.let { 
-                BigDecimal(it) 
-            } ?: return null
-            
-            val entity = TokenBalanceEntity(
-                contractAddress = contractAddress,
-                chainId = chainId,
-                tokenBalance = tokenBalance
-            )
-            
-            // Perform upsert operation
-            runBlocking {
-                tokenBalanceDao.upsertTokenBalances(listOf(entity))
+        when (uriMatcher.match(uri)) {
+            BALANCE_INSERT -> {
+                values ?: return null
+                try {
+                    val contractAddress = values.getAsString(COLUMN_CONTRACT_ADDRESS) ?: return null
+                    val chainId = values.getAsInteger(COLUMN_CHAIN_ID) ?: return null
+                    val tokenBalance = values.getAsString(COLUMN_TOKEN_BALANCE)?.let { 
+                        BigDecimal(it) 
+                    } ?: return null
+
+                    val entity = TokenBalanceEntity(
+                        contractAddress = contractAddress,
+                        chainId = chainId,
+                        tokenBalance = tokenBalance
+                    )
+
+                    runBlocking {
+                        tokenBalanceDao.upsertTokenBalances(listOf(entity))
+                    }
+                    context?.contentResolver?.notifyChange(uri, null)
+                    return Uri.parse("$AUTHORITY/balance/$chainId/$contractAddress")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
             }
-            
-            // Notify observers
-            context?.contentResolver?.notifyChange(uri, null)
-            
-            // Return URI for the inserted/updated item
-            return Uri.parse("$AUTHORITY/balance/$chainId/$contractAddress")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
+            BALANCE_ADJUST_DEDUCT -> {
+                try {
+                    val chainId = uri.pathSegments[2].toIntOrNull() ?: return null
+                    val contractAddress = uri.pathSegments[3]
+                    val amountToDeduct = values?.getAsString(COLUMN_TOKEN_BALANCE)?.let { BigDecimal(it) } ?: return null
+
+                    runBlocking {
+                        wmDatabase.runInTransaction {
+                            val current = tokenBalanceDao.getTokenBalanceEntity(contractAddress, chainId)
+                            val currentBalance = current?.tokenBalance ?: BigDecimal.ZERO
+                            val newBalance = currentBalance.subtract(amountToDeduct)
+                            val finalBalance = if (newBalance < BigDecimal.ZERO) BigDecimal.ZERO else newBalance
+
+                            val updated = TokenBalanceEntity(
+                                contractAddress = contractAddress,
+                                chainId = chainId,
+                                tokenBalance = finalBalance
+                            )
+                            tokenBalanceDao.upsertTokenBalances(listOf(updated))
+                        }
+                    }
+                    context?.contentResolver?.notifyChange(uri, null)
+                    return Uri.parse("$AUTHORITY/balance/$chainId/$contractAddress")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
+            }
+            else -> return null
         }
     }
     

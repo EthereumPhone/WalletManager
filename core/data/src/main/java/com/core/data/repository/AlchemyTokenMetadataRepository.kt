@@ -17,6 +17,7 @@ import com.core.model.TokenMetadata
 import com.squareup.moshi.JsonDataException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -105,24 +106,31 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         response.result
                     }
                     
-                    // Generate group ID for this token
-                    val groupId = generateGroupId(chainId, address)
-                    
-                    // Create token group entity
-                    val tokenGroup = TokenGroupEntity(
-                        groupId = groupId,
-                        canonicalChainId = chainId,
-                        canonicalAddress = address.lowercase(),
-                        symbol = tokenMetadata.symbol,
-                        name = tokenMetadata.name
+                    // Resolve or create a groupId for this token
+                    val resolvedGroupId = resolveGroupId(
+                        chainId = chainId,
+                        address = address,
+                        symbol = tokenMetadata.symbol
                     )
-                    tokenGroups.add(tokenGroup)
-                    
-                    // Create token metadata with group ID
+
+                    // Ensure the TokenGroup exists only if needed
+                    val existingGroup = tokenGroupDao.getGroupedToken(resolvedGroupId)
+                    if (existingGroup == null) {
+                        val tokenGroup = TokenGroupEntity(
+                            groupId = resolvedGroupId,
+                            canonicalChainId = chainId,
+                            canonicalAddress = address.lowercase(),
+                            symbol = tokenMetadata.symbol,
+                            name = tokenMetadata.name
+                        )
+                        tokenGroups.add(tokenGroup)
+                    }
+
+                    // Create token metadata with resolved group ID
                     tokenMetadata.asEntity(
                         contractAddress = address,
                         chainId = chainId,
-                        groupId = groupId
+                        groupId = resolvedGroupId
                     )
                 } catch (e: JsonDataException) {
                     // This happens when the API returns an error object instead of result
@@ -198,24 +206,31 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         response.result
                     }
                     
-                    // Generate group ID for this token
-                    val groupId = generateGroupId(network.chainId, address)
-                    
-                    // Create token group entity
-                    val tokenGroup = TokenGroupEntity(
-                        groupId = groupId,
-                        canonicalChainId = network.chainId,
-                        canonicalAddress = address.lowercase(),
-                        symbol = tokenMetadata.symbol,
-                        name = tokenMetadata.name
+                    // Resolve or create a groupId for this token
+                    val resolvedGroupId = resolveGroupId(
+                        chainId = network.chainId,
+                        address = address,
+                        symbol = tokenMetadata.symbol
                     )
-                    tokenGroups.add(tokenGroup)
-                    
-                    // Create token metadata with group ID
+
+                    // Ensure the TokenGroup exists only if needed
+                    val existingGroup = tokenGroupDao.getGroupedToken(resolvedGroupId)
+                    if (existingGroup == null) {
+                        val tokenGroup = TokenGroupEntity(
+                            groupId = resolvedGroupId,
+                            canonicalChainId = network.chainId,
+                            canonicalAddress = address.lowercase(),
+                            symbol = tokenMetadata.symbol,
+                            name = tokenMetadata.name
+                        )
+                        tokenGroups.add(tokenGroup)
+                    }
+
+                    // Create token metadata with resolved group ID
                     tokenMetadata.asEntity(
                         contractAddress = address,
                         chainId = network.chainId,
-                        groupId = groupId
+                        groupId = resolvedGroupId
                     )
                 } catch (e: JsonDataException) {
                     // This happens when the API returns an error object instead of result
@@ -248,5 +263,72 @@ class AlchemyTokenMetadataRepository @Inject constructor(
      */
     private fun generateGroupId(chainId: Int, address: String): String {
         return "${chainId}_${address.lowercase()}"
+    }
+
+    private suspend fun resolveGroupId(chainId: Int, address: String, symbol: String): String {
+        // 1) Prefer explicit bridge relationships
+        val byBridge = tokenGroupDao.findGroupIdByBridge(chainId, address)
+        if (byBridge != null) return byBridge
+
+        // 2) Fallback: prefer existing group by symbol (favor mainnet canonical groups)
+        val bySymbol = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
+        if (bySymbol != null) return bySymbol
+
+        // 3) Otherwise, create a new group id scoped to this token
+        return generateGroupId(chainId, address)
+    }
+
+    override suspend fun reconcileTokenGroups() {
+        withContext(Dispatchers.IO) {
+            try {
+                // Load all tokens and group them by symbol
+                val allTokens = tokenMetadataDao.getTokensMetadata().first()
+                val bySymbol = allTokens.groupBy { it.symbol.lowercase() }
+
+                val groupsToCreate = mutableListOf<TokenGroupEntity>()
+                val tokensToUpdate = mutableListOf<TokenMetadataEntity>()
+
+                bySymbol.forEach { (_, tokenList) ->
+                    if (tokenList.isEmpty()) return@forEach
+
+                    val symbol = tokenList.first().symbol
+
+                    // Prefer an existing mainnet-backed group if present
+                    val preferredGroupId = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
+
+                    val canonicalToken = tokenList.minWithOrNull(compareBy<TokenMetadataEntity> { it.chainId != 1 }.thenBy { it.contractAddress.lowercase() })
+                        ?: tokenList.first()
+
+                    val canonicalGroupId = preferredGroupId ?: generateGroupId(canonicalToken.chainId, canonicalToken.contractAddress)
+
+                    // Ensure the canonical TokenGroup exists
+                    val existingGroup = tokenGroupDao.getGroupedToken(canonicalGroupId)
+                    if (existingGroup == null) {
+                        groupsToCreate.add(
+                            TokenGroupEntity(
+                                groupId = canonicalGroupId,
+                                canonicalChainId = canonicalToken.chainId,
+                                canonicalAddress = canonicalToken.contractAddress.lowercase(),
+                                symbol = canonicalToken.symbol,
+                                name = canonicalToken.name
+                            )
+                        )
+                    }
+
+                    // Update all tokens to point to the canonical group
+                    tokenList.forEach { token ->
+                        if (token.groupId != canonicalGroupId) {
+                            tokensToUpdate.add(token.copy(groupId = canonicalGroupId))
+                        }
+                    }
+                }
+
+                if (groupsToCreate.isNotEmpty()) tokenGroupDao.upsertTokenGroups(groupsToCreate)
+                if (tokensToUpdate.isNotEmpty()) tokenMetadataDao.upsertTokensMetadata(tokensToUpdate)
+
+            } catch (e: Exception) {
+                Log.e("AlchemyTokenMetadataRepository", "Error reconciling token groups", e)
+            }
+        }
     }
 }

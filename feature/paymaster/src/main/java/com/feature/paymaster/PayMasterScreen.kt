@@ -96,6 +96,9 @@ internal fun PayMasterScreenRoute(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
+                    // Always update balance on resume
+                    viewModel.onResume()
+                    
                     if (!hasHandledInitialResume) {
                         hasHandledInitialResume = true
                     } else {
@@ -163,7 +166,8 @@ fun PayMasterScreen(
         val bd = BigDecimal(balance)
         bd.setScale(2, RoundingMode.HALF_UP).toPlainString()
     } catch (e: NumberFormatException) {
-        balance
+        // Always show a valid numeric value, default to 0.00 if balance is invalid
+        "0.00"
     }
 
     Column(

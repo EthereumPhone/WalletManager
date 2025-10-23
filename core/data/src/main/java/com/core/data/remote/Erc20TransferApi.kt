@@ -6,6 +6,16 @@ import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainIdToName
 import com.core.data.util.chainIdToRPC
 import com.core.data.util.chainToApiKey
+import com.core.data.utils.GasEstimationHelper
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.ethereumphone.walletsdk.WalletSDK
 import org.ethosmobile.uniswap_routing_sdk.ERC20
 import org.web3j.crypto.Credentials
@@ -20,6 +30,7 @@ import javax.inject.Inject
 class Erc20TransferApi @Inject constructor(
     private val context: Context,
 ) {
+    private var currentChainId: Int = 1
 
     suspend fun sendErc20Token(
         toAddress: String,
@@ -28,6 +39,8 @@ class Erc20TransferApi @Inject constructor(
         decimals: Int,
         chainId: Int
     ): String {
+        // Store chainId for use in gasProvider
+        currentChainId = chainId
         // Build web3j and WalletSDK
         val web3j = Web3j.build(HttpService(chainIdToRPC(chainId)))
         val walletSDK = WalletSDK(
@@ -46,7 +59,7 @@ class Erc20TransferApi @Inject constructor(
 
         val data = contract.transfer(
             toAddress,
-            realAmount.toBigIntegerExact()
+            realAmount.toBigInteger()  // Truncates decimal places instead of throwing exception
         ).encodeFunctionCall()
 
         return walletSDK.sendTransaction(
@@ -55,6 +68,15 @@ class Erc20TransferApi @Inject constructor(
             data = data,
             callGas = null,
             chainId = chainId,
+            gasProvider = ::gasProvider
         )
+    }
+
+    suspend fun gasProvider(userOp: WalletSDK.UserOperation): WalletSDK.GasEstimation {
+        // Get Alchemy RPC URL for the chain
+        val alchemyUrl = chainIdToRPC(currentChainId)
+        
+        // Use the shared gas estimation helper
+        return GasEstimationHelper.estimateGas(userOp, alchemyUrl)
     }
 }

@@ -26,6 +26,9 @@ interface TokenBalanceDao {
     @Query("SELECT * FROM token_balance WHERE chainId == :chainId")
     fun getTokenBalances(chainId: Int): Flow<List<TokenBalanceEntity>>
 
+    @Query("SELECT * FROM token_balance WHERE contractAddress = :contractAddress AND chainId = :chainId LIMIT 1")
+    fun getTokenBalanceEntity(contractAddress: String, chainId: Int): TokenBalanceEntity?
+
     @Transaction
     @Query("""SELECT * FROM token_metadata""")
     fun getCompositeTokens(): Flow<List<CompositeToken>>

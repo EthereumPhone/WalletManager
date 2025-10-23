@@ -44,7 +44,15 @@ import com.core.ui.util.dgenWhite
 import com.core.terminalsdk.TerminalSDK
 import kotlinx.coroutines.delay
 import com.core.ui.showDgenToast
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import com.core.ui.util.PitagonsSans
+import com.core.ui.util.SystemColorManager
+import com.core.ui.util.lazerCore
+import com.core.ui.util.terminalCore
+import com.core.ui.util.oceanCore
+import com.core.ui.util.orcheCore
+import com.core.ui.util.gunMetalCore
 
 // Data classes for API interaction
 data class InitiateBalanceRequest(val userId: String, val amount: String)
@@ -55,6 +63,8 @@ class PayMasterViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val walletSDK: WalletSDK?,
     private val terminalRepository: TerminalRepository,
+    private val terminalSDK: TerminalSDK?,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
 ) : ViewModel() {
 
     private val _topUpAmount = MutableStateFlow(TextFieldValue(""))
@@ -74,34 +84,57 @@ class PayMasterViewModel @Inject constructor(
         .build()
 
     val paymasterSDK = PaymasterSDK(context)
+    
+    // Job for periodic balance polling
+    private var balancePollingJob: Job? = null
 
     companion object {
         private const val INITIATE_BALANCE_URL = "https://api.markushaas.com/api/initiate-add-balance"
         private const val DAIMO_APP_ID = "pay-demo" // As per prompt for prototyping
-        private const val DAIMO_CHECKOUT_BASE_URL = "https://pay.daimo.com/checkout"
+        private const val
+                DAIMO_CHECKOUT_BASE_URL = "https://pay.daimo.com/checkout"
+    }
+
+    /**
+     * Get the current color name based on the SystemColorManager's primary color
+     */
+    private fun getCurrentColorName(): String {
+        return when (SystemColorManager.primaryColor) {
+            lazerCore -> "Red"
+            terminalCore -> "Green"
+            oceanCore -> "Aqua"
+            orcheCore -> "Ochre"
+            gunMetalCore -> "Gray"
+            else -> "Red" // Default to Red if no match
+        }
     }
 
     init {
+        // Refresh SystemColorManager to ensure we have the latest colors
+        SystemColorManager.refresh(context)
+        
         viewModelScope.launch {
-            if (paymasterSDK.initialize()) {
-                paymasterSDK.registerObserver { newBalance ->
-                    _balance.value = newBalance
-                }
-                // Initial fetch of balance after registration
-                val initialBalance = paymasterSDK.getCurrentBalance()
-                if (initialBalance != null) {
-                    _balance.value = initialBalance
+            try {
+                if (paymasterSDK.initialize()) {
+                    // Initial fetch of balance with query
+                    updateBalanceFromSDK()
+                    
+                    // Start periodic polling every 5 seconds (cache only)
+                    startBalancePolling()
                 } else {
-                    // If initial balance is null (e.g. error during fetch), query for an update.
-                    // The observer will then pick up the change.
-                    paymasterSDK.queryUpdate()
+                    // Keep balance as 0.0 on SDK init failure
+                    _balance.value = "0.0"
+                    Log.e("PayMasterViewModel", "SDK initialization failed")
+                    // Generic error message for users
+                    showDgenToast(context,"An error occurred. Please try again later.")
                 }
                 // Also, trigger a query update to ensure we get the latest from backend if needed.
                 // This is useful if the service starts with a stale value before observer is hit.
                 paymasterSDK.queryUpdate() // Query after registration to ensure observer gets it
-            } else {
+            } catch(e: Exception) {
                 _balance.value = "Error: SDK Init failed"
                 showDgenToast(context,"Error: SDK initialization failed. Please try again later.")
+                e.printStackTrace()
             }
 
 
@@ -139,11 +172,69 @@ class PayMasterViewModel @Inject constructor(
             }
         }
     }
+    
+    /**
+     * Starts periodic balance polling every 5 seconds
+     */
+    private fun startBalancePolling() {
+        // Cancel any existing polling job
+        balancePollingJob?.cancel()
+        
+        balancePollingJob = viewModelScope.launch {
+            while (isActive) {
+                delay(5000) // Wait 5 seconds
+                // Only get current balance, don't query for updates
+                updateBalanceFromCache()
+            }
+        }
+    }
+    
+    /**
+     * Updates balance from SDK by querying for an update (expensive operation)
+     */
+    private suspend fun updateBalanceFromSDK() {
+        try {
+            // Query for balance update from backend
+            paymasterSDK.queryUpdate()
+            
+            // Get the current balance after query
+            val currentBalance = paymasterSDK.getCurrentBalance()
+            if (currentBalance != null) {
+                _balance.value = currentBalance
+                Log.d("PayMasterViewModel", "Balance updated after query: $currentBalance")
+            } else {
+                Log.w("PayMasterViewModel", "Failed to get current balance after query")
+            }
+        } catch (e: Exception) {
+            Log.e("PayMasterViewModel", "Error updating balance from SDK", e)
+            // Don't show error to user for periodic updates, just log it
+        }
+    }
+    
+    /**
+     * Updates balance from SDK cache without querying backend
+     */
+    private suspend fun updateBalanceFromCache() {
+        try {
+            // Only get current balance from cache, don't query backend
+            val currentBalance = paymasterSDK.getCurrentBalance()
+            if (currentBalance != null) {
+                _balance.value = currentBalance
+                Log.d("PayMasterViewModel", "Balance refreshed from cache: $currentBalance")
+            } else {
+                Log.w("PayMasterViewModel", "Failed to get current balance from cache")
+            }
+        } catch (e: Exception) {
+            Log.e("PayMasterViewModel", "Error getting balance from cache", e)
+            // Don't show error to user for periodic updates, just log it
+        }
+    }
 
     suspend fun topUp(amount: String): String? = withContext(Dispatchers.IO) {
         // Early exit if there is no internet connection
         if (!isInternetAvailable()) {
-            showDgenToast(context,"No internet connection!")
+            Log.w("PayMasterViewModel", "No internet connection available")
+            showDgenToast(context,"No internet connection")
             return@withContext null
         }
 
@@ -151,7 +242,8 @@ class PayMasterViewModel @Inject constructor(
             val userId = walletSDK?.getAddress() ?: "" // Get address from WalletSDK
             if (userId.isBlank()) {
                 // Handle case where userId is not available
-                _balance.value = "Error: User ID not found"
+                Log.e("PayMasterViewModel", "User ID not found from wallet SDK")
+                showDgenToast(context,"An error occurred. Please try again later.")
                 return@withContext null
             }
 
@@ -165,40 +257,43 @@ class PayMasterViewModel @Inject constructor(
 
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    // Handle API error
+                    // Log the actual error for debugging
                     val errorBody = response.body?.string()
-                    _balance.value = "Error: API ${response.code} ${errorBody ?: "Unknown error"}"
-                    showDgenToast(context,"Error: Unable to reach server. ${errorBody ?: "Unknown error"}")
+                    Log.e("PayMasterViewModel", "API error response (${response.code}): $errorBody")
+                    // Show generic error to user
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
 
                 val responseBodyString = response.body?.string()
                 if (responseBodyString == null) {
-                     _balance.value = "Error: Empty API response"
+                    Log.e("PayMasterViewModel", "Empty API response")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
 
                 val responseAdapter = moshi.adapter(InitiateBalanceResponse::class.java)
                 val apiResponse = responseAdapter.fromJson(responseBodyString)
-                val daimoPaymentUrl = apiResponse?.daimoPaymentUrl
+                val daimoPaymentId = apiResponse?.daimoPaymentId
 
-                if (daimoPaymentUrl.isNullOrBlank()) {
-                    _balance.value = "Error: Daimo Payment ID not found in response"
-                    showDgenToast(context,"Error: Daimo Payment information missing in response")
+                if (daimoPaymentId.isNullOrBlank()) {
+                    Log.e("PayMasterViewModel", "Daimo Payment URL missing in response: $responseBodyString")
+                    showDgenToast(context,"An error occurred. Please try again later.")
                     return@withContext null
                 }
                 
-                // Construct Daimo URL
-                println(daimoPaymentUrl)
-                return@withContext daimoPaymentUrl
+                // Construct Daimo URL with color parameter
+                val colorName = getCurrentColorName()
+                Log.d("PayMasterViewModel", "Successfully obtained Daimo URL: $daimoPaymentId with color: $colorName")
+                return@withContext "https://ethos-onramp-hosting.web.app/?payId=$daimoPaymentId&color=$colorName"
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("PayMasterViewModel", "Exception during topUp", e)
             if (e is UnknownHostException) {
-                showDgenToast(context,"No internet connection!")
+                showDgenToast(context,"No internet connection")
             } else {
-                showDgenToast(context,"Error: ${e.message}")
-                _balance.value = "Error: ${e.message}"
+                // Generic error message for any other exception
+                showDgenToast(context,"An error occurred. Please try again later.")
             }
             return@withContext null
         }
@@ -206,12 +301,29 @@ class PayMasterViewModel @Inject constructor(
 
     fun forceUpdateBalance() {
         viewModelScope.launch {
-            paymasterSDK.queryUpdate()
+            updateBalanceFromSDK()
+        }
+    }
+    
+    /**
+     * Called when the screen resumes - queries backend for latest balance
+     */
+    fun onResume() {
+        Log.d("PayMasterViewModel", "onResume - querying backend for balance update")
+        viewModelScope.launch {
+            // Query backend for latest balance on resume
+            updateBalanceFromSDK()
+        }
+        // Restart polling if it was stopped (will only poll cache)
+        if (balancePollingJob?.isActive != true) {
+            startBalancePolling()
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        // Cancel balance polling
+        balancePollingJob?.cancel()
         paymasterSDK.cleanup()
     }
 
@@ -236,11 +348,91 @@ class PayMasterViewModel @Inject constructor(
             delay(300)
             terminalRepository.generateTopUp()
         }
+        
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                delay(2000)
+                if (terminalSDK?.isAvailable() == true) {
+                    while (terminalSDK.isScreenOn() != true) {
+                        Log.d(
+                            "PayMasterViewModel",
+                            "ETHOSDEBUG: Waiting for secondary screen to be on..."
+                        )
+                        delay(500)
+                    }
+                    TerminalLEDController.displayChadPattern()
+                    terminalSDK.displayTopUp {
+                        // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
+                        val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
+                        if (cleanAmount.isEmpty()) {
+                            showDgenToast(context, "Please enter an amount")
+                            return@displayTopUp
+                        }
+                        viewModelScope.launch(Dispatchers.Main) {
+                            Log.e(
+                                "PayMasterViewModel",
+                                "topUpAmount.value.text: ${topUpAmount.value.text}"
+                            )
+                            val daimoUrl = topUp(topUpAmount.value.text)
+                            if (daimoUrl != null) {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+
+                                
+                                // Only show success toasts if internet is available and topUp was successful
+                                if (isInternetAvailable()) {
+                                    showDgenToast(
+                                        context = context,
+                                        message = "You added ${topUpAmount.value.text} to your Paymaster."
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("PayMasterViewModel", "Error in onScreenOpenedAfterResume", e)
+                // Don't show error to user - fail silently for terminal operations
+            }
+        }
     }
 
-    fun onTopUpOpened(){
-        viewModelScope.launch {
-            terminalRepository.generateTopUp()
+    suspend fun onTopUpOpened(){
+        try{
+            //check if terminal sdk is available
+            reflectiveLedPattern?.displayPlus(getSystemColorHex())
+//            TerminalLEDController.displaySignPattern()
+            if (terminalSDK?.isAvailable() == true) {
+                terminalSDK.displayTopUp {
+                    // Wenn kein Betrag eingegeben wurde, nichts tun und Hinweis anzeigen
+                    val cleanAmount = topUpAmount.value.text.removePrefix("$").trim()
+                    if (cleanAmount.isEmpty()) {
+                        showDgenToast(context,"Please enter an amount")
+                        return@displayTopUp
+                    }
+                    viewModelScope.launch(Dispatchers.Main) {
+                        Log.e("PayMasterViewModel", "topUpAmount.value.text: ${topUpAmount.value.text}")
+                        val daimoUrl = topUp(topUpAmount.value.text)
+                        if (daimoUrl != null) {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(daimoUrl))
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+                            
+                            // Only show success toasts if internet is available and topUp was successful
+                            if (isInternetAvailable()) {
+                                showDgenToast(
+                                    context = context,
+                                    message = "You added ${topUpAmount.value.text} to your Paymaster."
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("PayMasterViewModel", "Error in onTopUpOpened", e)
+            // Don't show error to user - fail silently for terminal operations
         }
     }
 

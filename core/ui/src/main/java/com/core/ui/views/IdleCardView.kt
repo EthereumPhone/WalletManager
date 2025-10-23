@@ -238,7 +238,7 @@ fun IdleView(
                 }
 
                 val price = if (fiatAmount == 0.0 ) {
-                    "N/A"
+                    ""
                 } else if (fiatAmount < 0.01 && fiatAmount != 0.0) {
                     "‹ $0.01"
                 } else {
