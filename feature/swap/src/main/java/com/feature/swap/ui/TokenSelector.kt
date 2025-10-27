@@ -1,327 +1,105 @@
 package com.feature.swap.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.SwapVert
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material3.BottomSheetScaffoldState
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.core.model.TokenAsset
-import com.core.ui.TextToggleButton
-import com.core.ui.WmTextField
-import com.core.ui.ethOSTextField
-import com.feature.swap.AmountsUiState
-import com.feature.swap.AssetsUiState
-import com.feature.swap.SelectedTokenUiState
-import com.feature.swap.SwapTokenUiState
-import com.feature.swap.TextFieldSelected
-import org.ethosmobile.components.library.core.ethOSTagButton
-import org.ethosmobile.components.library.theme.Colors
-import java.math.BigDecimal
-import java.text.DecimalFormat
+import com.core.model.SwapToken
+import com.core.ui.util.SpaceMono
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TokenSelector(
-    amountsUiState: AmountsUiState,
-    assetsUiState: AssetsUiState,
-    isSyncing: Boolean,
+    token: SwapToken?,
+    primaryColor: Color,
+    secondaryColor: Color,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    switchTokens: () -> Unit,
-    onPickAssetClicked: (TextFieldSelected) -> Unit,
-    onAmountChange: (TextFieldSelected, String) -> Unit,
-    focusManager: FocusManager
+    isSelectable: Boolean = true
 ) {
-
-    val fromBalance = when(assetsUiState.fromAsset) {
-        is SelectedTokenUiState.Unselected -> { "" }
-        is SelectedTokenUiState.Selected -> {
-            formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
-        }
-    }
-
-    val toBalance = when(assetsUiState.toAsset) {
-        is SelectedTokenUiState.Unselected -> { "" }
-        is SelectedTokenUiState.Selected -> {
-            formatDouble(assetsUiState.toAsset.tokenAsset.balance)
-        }
-    }
-
-    val maxed2 = remember { mutableStateOf(false) }
-
-
-
-
-
-
-
-
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(42.dp)
+    Row(
+        modifier = modifier
+            .then(
+                if (isSelectable) {
+                    Modifier.clickable { onClick() }
+                } else {
+                    Modifier
+                }
+            )
+            .widthIn(max = 132.dp)
+            .background(
+                Color.Transparent,
+                RoundedCornerShape(3.dp)
+            )
+            .padding(vertical=12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            horizontalAlignment= Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            val fromAmountTooHigh = amountsUiState.fromAmount.isNotBlank() &&
-                    (assetsUiState.fromAsset is SelectedTokenUiState.Selected) &&
-                    (assetsUiState.fromAsset.tokenAsset.balance < amountsUiState.fromAmount.toDouble())
-
-            ethOSTextField(
-                text = amountsUiState.fromAmount,
-                label="0",
-                size = 56,
-                maxChar = 12,
-                numberInput = true,
-                onTextChanged = {
-                    val amountText = if (it == ".") "0$it" else it
-                    onAmountChange(TextFieldSelected.FROM, amountText)
-                },
-                color = if(fromAmountTooHigh) Colors.ERROR else Color.White,
-//                focusManager = focusManager
-
-            )
-            when(assetsUiState.fromAsset) {
-            is SelectedTokenUiState.Unselected -> { }
-            is SelectedTokenUiState.Selected -> {
-                formatDouble(assetsUiState.fromAsset.tokenAsset.balance)
-                Text(text = "${formatDouble(assetsUiState.fromAsset.tokenAsset.balance)} available", fontSize = 16.sp,
-                    color= Colors.GRAY)
-            }
-        }
-
-
-
-            //tokenasseticon
-//            TokenAssetIcon(assetsUiState.fromAsset) {
-//                onPickAssetClicked(TextFieldSelected.FROM)
-//                //fromEnabled = true
-//                if(TextFieldSelected.FROM.name == TextFieldSelected.TO.name){
-//                    switchTokens()
-//                }
-//            }
-
-            val fromtext = when(assetsUiState.fromAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select token" }
-                is SelectedTokenUiState.Selected -> { assetsUiState.fromAsset.tokenAsset.symbol  }
-                else -> {""}
-            }
-            ethOSTagButton(text = fromtext) {
-                focusManager.clearFocus()
-                onPickAssetClicked(TextFieldSelected.FROM)
-                //fromEnabled = true
-                if(TextFieldSelected.FROM.name == TextFieldSelected.TO.name){
-                    switchTokens()
-                }
-            }
-            //switchTokens()
-
-
-        }
-
-
-
-        Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = "Swap icon", tint=Color.White, modifier = Modifier.size(64.dp))
-
-        val toAmountTooHigh = amountsUiState.toAmount.isNotBlank() &&
-                (assetsUiState.toAsset is SelectedTokenUiState.Selected) &&
-                (assetsUiState.toAsset.tokenAsset.balance < amountsUiState.toAmount.toDouble())
-
-        Column (
-            horizontalAlignment= Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ){
-
-            ethOSTextField(
-                text = if(maxed2.value) "$toBalance" else amountsUiState.toAmount,
-                label="0",
-                size = 56,
-                maxChar = 12,
-                numberInput = true,
-                onTextChanged = {
-                    val amountText = if (it == ".") "0$it" else it
-                    onAmountChange(TextFieldSelected.TO, amountText)
-                },
-                color = Color.White,
-
-//                focusManager = focusManager
-
-            )
-
-//            TokenAssetIcon(assetsUiState.toAsset) {
-//                onPickAssetClicked(TextFieldSelected.TO)
-//
-//                if(TextFieldSelected.TO.name == TextFieldSelected.FROM.name){
-//                    switchTokens()
-//                }
-//                //toEnabled = true
-//            }
-            val totext = when(assetsUiState.toAsset) {
-                is SelectedTokenUiState.Unselected -> { "Select token" }
-                is SelectedTokenUiState.Selected -> { assetsUiState.toAsset.tokenAsset.symbol  }
-                else -> {""}
-            }
-            ethOSTagButton(text = totext) {
-                focusManager.clearFocus()
-
-                onPickAssetClicked(TextFieldSelected.TO)
-
-                if(TextFieldSelected.TO.name == TextFieldSelected.FROM.name){
-                    switchTokens()
-                }
-            }
-
-        }
-    }
-}
-
-
-
-
-
-@Composable
-private fun TokenAssetIcon(
-    tokenAsset: SelectedTokenUiState,
-    onClick: () -> Unit
-
-) {
-    val text = when(tokenAsset) {
-        is SelectedTokenUiState.Unselected -> { "Select token" }
-        is SelectedTokenUiState.Selected -> { tokenAsset.tokenAsset.symbol  }
-        else -> {""}
-    }
-    Button(
-        onClick = onClick,
-        contentPadding = PaddingValues(start = 12.dp,end = 6.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF262626),
-            contentColor = Color.White
-        ),
-        shape = CircleShape,
-        content = {
-            Row (
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+        if (token != null) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
-            ){
-                Text(text,fontWeight = FontWeight.Medium, fontSize = 16.sp)
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = "",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(90f)
+            ) {
+                // Token image with chain overlay - bigger size for better visibility
+                val isNativeToken = token.token.address?.lowercase() == "0x0000000000000000000000000000000000000000" ||
+                        token.token.address == token.token.chainId.toString() ||
+                        token.token.symbol.uppercase() == "ETH"
+
+                TokenLogoWithChain(
+                    token = token.token,
+                    size = 32.dp, // Increased from 24dp to 32dp
+                    primaryColor = primaryColor,
+                    secondaryColor = secondaryColor,
+                    showChainOverlay = isNativeToken
+                )
+                // Token symbol
+                val tokensymbol = if(token.token.symbol == "ETH") "ETH" else "\$"+token.token.symbol
+                Text(
+                    text = tokensymbol,
+                    fontFamily = SpaceMono,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = if(isSelectable) 56.dp else 80.dp)
                 )
             }
-        }
-    )
-}
-
-
-
-
-@Preview
-@Composable
-fun PreviewTokenSelector() {
-    var clicked by remember { mutableStateOf(0) }
-    var amount by remember { mutableStateOf(AmountsUiState("0.123", "0.234")) }
-
-    val assetState = AssetsUiState(
-        SelectedTokenUiState.Selected(
-            TokenAsset(
-                "123",
-                1,
-                "ABC",
-                "ABC",
-                0.1,
+        } else {
+            Text(
+                text = "Select token",
+                fontSize = 16.sp,
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 80.dp)
             )
-        ),
-        SelectedTokenUiState.Unselected
-    )
+        }
 
-    Column {
-//        TokenSelector(
-//            amountsUiState = amount,
-//            assetsUiState = assetState,
-//            isSyncing = false,
-//            modifier = Modifier.fillMaxWidth(),
-//            {},
-//            {textFieldSelected: TextFieldSelected -> clicked += 1 },
-//            {textFieldSelected: TextFieldSelected, text: String ->
-//                amount = when(textFieldSelected) {
-//                    TextFieldSelected.FROM -> {
-//                        amount.copy(
-//                            fromAmount = text
-//                        )
-//                    }
-//
-//                    TextFieldSelected.TO -> {
-//                        amount.copy(
-//                            toAmount = text
-//                        )
-//                    }
-//                }
-//
-//            }
-//
-//        )
-        Spacer(modifier = Modifier.height(8.dp))
-        //Text(text = "Test TEXT $clicked")
-
-
+        // Show chevron only if selectable
+        if (isSelectable) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Select token",
+                tint = primaryColor,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
-
-
 }

@@ -75,7 +75,9 @@ dependencies {
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'
 
-
+    // Coil for image loading
+    implementation libs.coil.compose
+    implementation libs.coil.network.okhttp
 
 
 }

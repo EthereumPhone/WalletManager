@@ -18,6 +18,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,20 +36,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.core.model.TokenAsset
+import com.core.model.SwapUIState
+import com.core.model.SwapToken
+import com.core.ui.HeaderBar
 import com.core.ui.InfoDialog
 import com.core.ui.TopHeader
+import com.core.ui.util.SystemColorManager
 import com.core.ui.util.chainIdToName
-//import com.core.ui.WmButton
-import com.feature.swap.ui.ExchangeRateRow
-import com.feature.swap.ui.TokenPickerSheet
-import com.feature.swap.ui.TokenSelector
-import kotlinx.coroutines.launch
-import org.ethosmobile.components.library.core.ethOSButton
-import org.ethosmobile.components.library.core.ethOSHeader
-import org.ethosmobile.components.library.theme.Colors
-import org.ethosmobile.components.library.theme.Fonts
-import java.lang.NumberFormatException
-import java.math.BigDecimal
+import com.core.ui.util.dgenBlack
+import com.feature.swap.ui.SwapInterface
 
 @Composable
 internal fun SwapRoute(
@@ -57,242 +53,82 @@ internal fun SwapRoute(
     onBackClick: () -> Unit
 ) {
 
-    val walletDataUiState by viewModel.walletDataState.collectAsStateWithLifecycle()
-    val amountsUiState by viewModel.amountsUiState.collectAsStateWithLifecycle()
-    val assetsUiState by viewModel.swapAssetsUiState.collectAsStateWithLifecycle()
-    val swapTokenUiState by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
-    val exchangeUiState by viewModel.exchangeRate.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
-
     SwapScreen(
         modifier = modifier,
-        swapTokenUiState = swapTokenUiState,
-        exchangeUiState = exchangeUiState,
-        amountsUiState = amountsUiState,
-        assetsUiState = assetsUiState,
-        isSyncing = isSyncing,
-        searchQuery = searchQuery,
-        onQueryChange = viewModel::updateSearchQuery,
-        switchTokens = viewModel::switchTokens,
-        onTextFieldSelected = viewModel::setSelectedTextField,
-        onAmountChange = viewModel::updateAmount,
-        onSelectAsset = viewModel::selectAsset,
-        onSwapClicked = { viewModel.swap(it) },
         onBackClick = onBackClick,
-        walletDataUiState = walletDataUiState
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SwapScreen(
-
-    modifier: Modifier = Modifier,
-    swapTokenUiState: SwapTokenUiState,
-    exchangeUiState: Double,
-    amountsUiState: AmountsUiState,
-    assetsUiState: AssetsUiState,
-    isSyncing: Boolean,
-    searchQuery: String,
-    onQueryChange: (String) -> Unit,
-    switchTokens: () -> Unit,
-    onTextFieldSelected: (TextFieldSelected) -> Unit,
-    onAmountChange: (TextFieldSelected, String) -> Unit,
-    onSelectAsset: (TokenAsset) -> Unit,
-    onSwapClicked: ((String) -> Unit) -> Unit,
+    modifier: Modifier=Modifier,
     onBackClick: () -> Unit,
-    walletDataUiState: WalletDataUiState,
-
 ) {
 
-    // Create a BottomSheetScaffoldState
-    var showSheet by remember { mutableStateOf(false) }
-    val modalSheetState = rememberModalBottomSheetState(true)
-    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { SystemColorManager.refresh(context) }
 
-    //Info
-    val showInfoDialog =  remember { mutableStateOf(false) }
-    if(showInfoDialog.value){
-        InfoDialog(
-            setShowDialog = {
-                showInfoDialog.value = false
-            },
-            title = "Swap",
-            text = "Enjoy a low 0.5% fee per swap. Simplify your transactions, maximize your gains!"
+    val primaryColor = SystemColorManager.primaryColor
+
+    // Create sample UI state for testing
+    val sampleUIState = remember {
+        SwapUIState(
+            fromToken = SwapToken(
+                token = TokenAsset(
+                    address = "0x0000000000000000000000000000000000000000",
+                    chainId = 1,
+                    symbol = "ETH",
+                    name = "Ethereum",
+                    balance = 2.5,
+                    decimals = 18,
+                    logoUrl = "",
+                    swappable = true
+                ),
+                balance = "2.5000",
+                fiatBalance = "8350.00",
+                formattedMaxAmount = "2.5000",
+                formattedMaxFiatAmount = "8350.00"
+            ),
+            fromCurrentAmount = "",
+            fromCurrentFiatAmount = "",
+            fromUseMaxAmount = false,
+            fromTitle = "FROM",
+            fromReadOnly = false,
+            toToken = null,
+            toCurrentAmount = "",
+            toCurrentFiatAmount = "",
+            toUseMaxAmount = false,
+            toTitle = "TO",
+            toReadOnly = true,
+            fromOnAmountChange = { _, _ -> },
+            fromOnMaxClick = { },
+            fromOnTokenClick = { },
+            toOnAmountChange = { _, _ -> },
+            toOnMaxClick = { },
+            toOnTokenClick = { }
         )
     }
 
-    val network = when(walletDataUiState) {
-        is WalletDataUiState.Loading -> { "Loading" }
-        is WalletDataUiState.Success -> { chainIdToName(walletDataUiState.userData.walletNetwork) }
-    }
-
-    val currentChain = when(walletDataUiState) {
-        is WalletDataUiState.Loading -> { 0 }
-        is WalletDataUiState.Success -> { walletDataUiState.userData.walletNetwork.toInt() }
-    }
-
-
-    val focusManager = LocalFocusManager.current
-
-
-    Column(
+    Column (
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .background(Colors.BLACK)
+            .background(dgenBlack)
             .statusBarsPadding()
-            .clickable(
-                onClick = { focusManager.clearFocus() },
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            )
-
-
-//            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 24.dp)
+        //.padding(horizontal = 32.dp, vertical = 32.dp)
     ) {
-        ethOSHeader(
-            title="Swap",
-            isBottomContent = true,
-            bottomContent = {
-                Text(
-                    text = network,
-                    fontSize = 16.sp,
-                    color = Colors.GRAY,
-                    fontFamily = Fonts.INTER,
-                    fontWeight = FontWeight.Normal,
-
-                    )
-            },
-            isBackButton = true,
-            onBackClick = onBackClick,
+        HeaderBar(text = "SWAP ASSETS", onClick = onBackClick, primaryColor = primaryColor)
+        
+        SwapInterface(
+            primaryColor = primaryColor,
+            uiState = sampleUIState,
+            modifier = Modifier.fillMaxWidth()
         )
-
-        Column (
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(36.dp)
-        ) {
-            TokenSelector(
-                amountsUiState = amountsUiState,
-                assetsUiState = assetsUiState,
-                switchTokens = switchTokens,
-                isSyncing = isSyncing,
-                onAmountChange = { selectedTextField, amount ->
-                    onTextFieldSelected(selectedTextField)
-                    try {
-                        if (amount == "") {
-                            onAmountChange(selectedTextField, amount)
-                        } else {
-                            val bigDc = BigDecimal(amount.replace(",", "."))
-                            onAmountChange(selectedTextField, amount)
-                        }
-                    } catch (e: NumberFormatException) {
-                        // Catch the error and do nothing
-                    }
-                },
-                onPickAssetClicked = {
-                    showSheet = true
-                    onTextFieldSelected(it)
-                } ,
-                focusManager = focusManager
-            )
-                ExchangeRateRow(
-                    assetsUiState = assetsUiState,
-                    exchangeUiState = exchangeUiState,
-                    isSyncing = isSyncing
-                )
-
-
-        }
-
-        val context = LocalContext.current
-
-        if(currentChain != 1 && currentChain  != 10 && currentChain  != 0) {
-            Text(
-                "Only Mainnet and Optimism supported at this time",
-                color = Colors.ERROR
-            )
-        }
-
-        val allSelected = assetsUiState.toAsset is SelectedTokenUiState.Selected && assetsUiState.fromAsset is SelectedTokenUiState.Selected
-        val correctChain = currentChain == 1 || currentChain  == 10
-        val validAmount = (amountsUiState.fromAmount.toDoubleOrNull() ?: 0.0)
-        val tooHighAmount = when(assetsUiState.toAsset) {
-            is SelectedTokenUiState.Selected -> {
-                assetsUiState.toAsset.tokenAsset.balance >= validAmount
-            }
-            else -> false
-        }
-
-
-
-        ethOSButton(
-            text = "Swap",
-            enabled =  correctChain && amountsUiState.toAmount.isNotBlank() && allSelected && !tooHighAmount && validAmount != 0.0,
-            onClick = {
-                if (currentChain != 1 && currentChain  != 10) {
-                    (context as Activity).runOnUiThread {
-                        Toast.makeText(context, "Swap only supports Mainnet and Optimism at this time.", Toast.LENGTH_LONG).show()
-                    }
-                } else {
-                    onSwapClicked {
-                        if (it.length == 66 && isEthereumTransactionHash(it)) {
-                            (context as Activity).runOnUiThread {
-                                Toast.makeText(context, "Swap successful.", Toast.LENGTH_LONG).show()
-                            }
-                        } else if (it == "decline") {
-                            (context as Activity).runOnUiThread {
-                                Toast.makeText(context, "Transaction declined", Toast.LENGTH_LONG).show()
-                            }
-                        } else {
-                            (context as Activity).runOnUiThread {
-                                Toast.makeText(context, "Error: $it", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                        onBackClick()
-                    }
-                }
-
-            },
-            modifier = Modifier.padding(start = 32.dp,end = 32.dp,bottom = 32.dp)
-        )
-
-        if(showSheet) {
-            ModalBottomSheet(
-
-                containerColor= Colors.BLACK,
-                contentColor= Colors.WHITE,
-
-                onDismissRequest = {
-                    coroutineScope.launch {
-                        modalSheetState.hide()
-                    }.invokeOnCompletion {
-                        if(!modalSheetState.isVisible) showSheet = false
-                    }
-                },
-                sheetState = modalSheetState
-            ) {
-                TokenPickerSheet(
-                    swapTokenUiState = swapTokenUiState,
-                    searchQuery = searchQuery,
-                    onQueryChange = onQueryChange,
-                    filterByChain = currentChain.toInt(),
-                    onSelectAsset = {
-                        onSelectAsset(it)
-                        coroutineScope.launch {
-                            modalSheetState.hide()
-                        }.invokeOnCompletion {
-                            if(!modalSheetState.isVisible) showSheet = false
-                        }
-                    }
-                )
-            }
-        }
-
     }
+
+
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {
@@ -304,30 +140,7 @@ fun isEthereumTransactionHash(input: String): Boolean {
 @Composable
 fun PreviewSwapScreen() {
     SwapScreen(
-        swapTokenUiState = SwapTokenUiState.Success(
-            listOf(
-                TokenAsset(
-                    "0xFjeiu54h44h5h643o4o4",
-                    1,
-                    "ETH",
-                    "Ether",
-                    1.2145
-                )
-            )
-        ),
-        exchangeUiState = 0.0,
-        amountsUiState=  AmountsUiState(),
-        assetsUiState= AssetsUiState(),
-        isSyncing = false,
-        searchQuery= "",
-        onQueryChange = { text -> },
-        switchTokens = {},
-        onTextFieldSelected = { textFieldSelected ->  },
-        onAmountChange = { textFieldSelected, s ->  },
-        onSelectAsset= { asset ->},
-        onSwapClicked= { },
         onBackClick= {},
-        walletDataUiState = WalletDataUiState.Loading,
     )
 }
 
