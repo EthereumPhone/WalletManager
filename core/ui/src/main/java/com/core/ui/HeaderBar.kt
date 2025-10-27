@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenOcean
 import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.mediumExitDuration
 import com.core.ui.util.rememberDebouncedClickHandler

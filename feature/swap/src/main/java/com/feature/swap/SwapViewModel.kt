@@ -6,9 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.repository.SwapRepository
 import com.core.data.repository.UserDataRepository
+import com.core.data.repository.DEFAULT_EXCLUDE_LIST
+import com.core.domain.GetAllGroupedTokensUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
+import com.core.model.TokenGroupAssetOverview
 import com.core.model.UserData
 import com.core.result.Result
 import com.core.result.asResult
@@ -39,6 +42,7 @@ class SwapViewModel @Inject constructor(
     queryTokenAssetsByNetwork: QueryTokenAssetsByNetwork,
     private val swapRepository: SwapRepository,
     private val savedStateHandle: SavedStateHandle,
+    private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     ): ViewModel() {
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
@@ -48,6 +52,33 @@ class SwapViewModel @Inject constructor(
         initialValue = WalletDataUiState.Loading,
         started = SharingStarted.WhileSubscribed(5_000)
     )
+
+    // Grouped tokens for token selection overlay
+    val groupedTokenAssetState: StateFlow<GroupedAssetsUiState> =
+        getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST).map {
+            if (it.isEmpty()) {
+                GroupedAssetsUiState.Empty
+            } else {
+                val sortedAssets = it.sortedBy { asset -> asset.totalFiatBalance ?: 0.0 }
+                GroupedAssetsUiState.Success(sortedAssets)
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = GroupedAssetsUiState.Loading
+        )
+
+    // Token overlay visibility state
+    private val _isTokenOverlayVisible = MutableStateFlow(false)
+    val isTokenOverlayVisible: StateFlow<Boolean> = _isTokenOverlayVisible.asStateFlow()
+
+    fun showTokenOverlay() {
+        _isTokenOverlayVisible.value = true
+    }
+
+    fun hideTokenOverlay() {
+        _isTokenOverlayVisible.value = false
+    }
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
@@ -284,4 +315,13 @@ sealed interface SelectedTokenUiState {
 sealed interface WalletDataUiState {
     object Loading: WalletDataUiState
     data class Success(val userData: UserData): WalletDataUiState
+}
+
+sealed interface GroupedAssetsUiState {
+    object Loading : GroupedAssetsUiState
+    object Error : GroupedAssetsUiState
+    object Empty : GroupedAssetsUiState
+    data class Success(
+        val assets: List<TokenGroupAssetOverview>
+    ) : GroupedAssetsUiState
 }

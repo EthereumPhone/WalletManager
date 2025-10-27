@@ -45,6 +45,8 @@ import com.core.ui.util.SystemColorManager
 import com.core.ui.util.chainIdToName
 import com.core.ui.util.dgenBlack
 import com.feature.swap.ui.SwapInterface
+import com.feature.home.ui.TokenCarouselOverlay
+import com.feature.home.ui.TokenCardCarousel
 
 @Composable
 internal fun SwapRoute(
@@ -52,26 +54,31 @@ internal fun SwapRoute(
     viewModel: SwapViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
-
     SwapScreen(
         modifier = modifier,
         onBackClick = onBackClick,
+        viewModel = viewModel
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SwapScreen(
-    modifier: Modifier=Modifier,
+    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
+    viewModel: SwapViewModel = hiltViewModel()
 ) {
-
     val context = LocalContext.current
     LaunchedEffect(Unit) { SystemColorManager.refresh(context) }
 
     val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
 
-    // Create sample UI state for testing
+    // Collect states from SwapViewModel
+    val groupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
+    val isTokenOverlayVisible by viewModel.isTokenOverlayVisible.collectAsStateWithLifecycle()
+
+    // Create sample UI state for testing with overlay integration
     val sampleUIState = remember {
         SwapUIState(
             fromToken = SwapToken(
@@ -103,7 +110,10 @@ internal fun SwapScreen(
             toReadOnly = true,
             fromOnAmountChange = { _, _ -> },
             fromOnMaxClick = { },
-            fromOnTokenClick = { },
+            fromOnTokenClick = { 
+                // Show token overlay when "from" token selector is clicked
+                viewModel.showTokenOverlay()
+            },
             toOnAmountChange = { _, _ -> },
             toOnMaxClick = { },
             toOnTokenClick = { }
@@ -128,7 +138,34 @@ internal fun SwapScreen(
         )
     }
 
-
+    // Token Carousel Overlay - shows when from token selector is clicked
+    val currentAssetsState = groupedAssetsUiState
+    when (currentAssetsState) {
+        is GroupedAssetsUiState.Success -> {
+            TokenCarouselOverlay(
+                isVisible = isTokenOverlayVisible,
+                assets = currentAssetsState.assets,
+                navigateToSend = { groupId ->
+                    // Handle token selection
+                    // TODO: Update the fromToken in the swap state with selected token
+                    viewModel.hideTokenOverlay()
+                },
+                primaryColor = primaryColor,
+                secondaryColor = secondaryColor,
+                onDismiss = { viewModel.hideTokenOverlay() }
+            )
+        }
+        else -> {
+            TokenCarouselOverlay(
+                isVisible = isTokenOverlayVisible,
+                assets = emptyList(),
+                navigateToSend = { _ -> viewModel.hideTokenOverlay() },
+                primaryColor = primaryColor,
+                secondaryColor = secondaryColor,
+                onDismiss = { viewModel.hideTokenOverlay() }
+            )
+        }
+    }
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {

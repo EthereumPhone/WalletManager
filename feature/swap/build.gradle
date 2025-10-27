@@ -47,6 +47,7 @@ dependencies {
     implementation project(path: ':core:common')
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
+    implementation project(path: ':feature:home')
 
 
     implementation libs.androidx.core
@@ -78,6 +79,8 @@ dependencies {
     // Coil for image loading
     implementation libs.coil.compose
     implementation libs.coil.network.okhttp
+
+    implementation project(':feature:home')
 
 
 }
