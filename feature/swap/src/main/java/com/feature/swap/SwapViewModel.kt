@@ -10,6 +10,7 @@ import com.core.data.repository.DEFAULT_EXCLUDE_LIST
 import com.core.data.repository.GroupedTokenRepository
 import com.core.domain.GetAllGroupedTokensUsecase
 import com.core.domain.GetSwapTokens
+import com.core.domain.GetSwappableTokensForSelection
 import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.TokenAsset
 import com.core.model.TokenGroupAssetOverview
@@ -48,6 +49,7 @@ class SwapViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val groupedTokenRepository: GroupedTokenRepository,
+    private val getSwappableTokensForSelection: GetSwappableTokensForSelection,
     ): ViewModel() {
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
@@ -244,6 +246,28 @@ class SwapViewModel @Inject constructor(
             }
         }
     }
+
+    fun selectToTokenAsset(tokenAsset: TokenAsset) {
+        viewModelScope.launch {
+            Log.d("SwapViewModel", "selectToTokenAsset: ${'$'}{tokenAsset.symbol} on chain ${'$'}{tokenAsset.chainId}")
+            val swapToken = SwapToken(
+                token = tokenAsset,
+                balance = "",
+                fiatBalance = "",
+                formattedMaxAmount = "",
+                formattedMaxFiatAmount = ""
+            )
+            _swapUIState.update { currentState ->
+                currentState.copy(
+                    toToken = swapToken,
+                    toCurrentAmount = "",
+                    toCurrentFiatAmount = "",
+                    toUseMaxAmount = false
+                )
+            }
+            hideTokenOverlay()
+        }
+    }
     
     private suspend fun convertToSwapToken(asset: TokenGroupAssetOverview, groupId: String): SwapToken {
         Log.d("SwapViewModel", "convertToSwapToken: Converting ${asset.symbol} with groupId: $groupId")
@@ -317,16 +341,30 @@ class SwapViewModel @Inject constructor(
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
-    val swapTokenUiState: StateFlow<SwapTokenUiState> =
-        swapTokenUiState(
-            userDataRepository,
-            getSwapTokens,
-            searchQuery
-        ).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SwapTokenUiState.Loading
-        )
+    // Enhanced token list that includes both owned and available swappable tokens
+    val swapTokenUiState: StateFlow<SwapTokenUiState> = combine(
+        swapUIState,
+        searchQuery,
+        userDataRepository.userData
+    ) { uiState, query, userData ->
+        Triple(uiState.fromToken?.token, query, userData.walletNetwork.toInt())
+    }.flatMapLatest { (fromToken, query, chainId) ->
+        getSwappableTokensForSelection(
+            excludeToken = fromToken,
+            targetChainId = chainId,
+            query = query
+        ).asResult().map { result ->
+            when(result) {
+                is Result.Error -> SwapTokenUiState.Error
+                is Result.Loading -> SwapTokenUiState.Loading
+                is Result.Success -> SwapTokenUiState.Success(result.data)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = SwapTokenUiState.Loading
+    )
 
     private val _swapAssetsUiState = MutableStateFlow(AssetsUiState())
     val swapAssetsUiState = _swapAssetsUiState.asStateFlow()
@@ -509,6 +547,8 @@ enum class TokenSelectionMode {
 private const val SEARCH_QUERY = "searchQuery"
 
 
+// Legacy helper function - no longer used, replaced by enhanced getSwappableTokensForSelection
+// Keeping for reference in case rollback is needed
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun swapTokenUiState(
     userDataRepository: UserDataRepository,

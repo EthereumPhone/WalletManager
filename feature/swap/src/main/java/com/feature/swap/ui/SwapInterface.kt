@@ -53,7 +53,6 @@ fun SwapInterface(
             },
             onAmountChange = uiState.fromOnAmountChange,
             onMaxClick = uiState.fromOnMaxClick,
-            readOnly = uiState.fromReadOnly
         )
 
         Box(
@@ -87,7 +86,6 @@ fun SwapInterface(
             },
             onAmountChange = uiState.toOnAmountChange,
             onMaxClick = uiState.toOnMaxClick,
-            readOnly = uiState.toReadOnly
         )
     }
 }

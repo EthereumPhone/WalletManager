@@ -47,6 +47,7 @@ dependencies {
     implementation project(path: ':core:common')
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
+    implementation project(path: ':core:database')
     implementation project(path: ':feature:home')
 
 
@@ -81,6 +82,7 @@ dependencies {
     implementation libs.coil.network.okhttp
 
     implementation project(':feature:home')
+    implementation project(':feature:assets')
 
 
 }

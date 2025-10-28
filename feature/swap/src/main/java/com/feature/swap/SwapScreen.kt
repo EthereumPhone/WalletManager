@@ -26,7 +26,7 @@ import com.core.ui.HeaderBar
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.feature.swap.ui.SwapInterface
-import com.feature.swap.ui.TokenCarouselOverlay
+import com.feature.swap.ui.TokenSelectorOverlay
 
 @Composable
 internal fun SwapRoute(
@@ -61,6 +61,8 @@ internal fun SwapScreen(
     val groupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
     val isTokenOverlayVisible by viewModel.isTokenOverlayVisible.collectAsStateWithLifecycle()
     val swapUIState by viewModel.swapUIState.collectAsStateWithLifecycle()
+    val selectionMode by viewModel.tokenSelectionMode.collectAsStateWithLifecycle()
+    val tokenListUi by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     
     // Debug logging
     LaunchedEffect(swapUIState) {
@@ -93,33 +95,25 @@ internal fun SwapScreen(
         )
     }
 
-    // Token Carousel Overlay - shows when from token selector is clicked
-    val currentAssetsState = groupedAssetsUiState
-    when (currentAssetsState) {
-        is GroupedAssetsUiState.Success -> {
-            TokenCarouselOverlay(
-                isVisible = isTokenOverlayVisible,
-                assets = currentAssetsState.assets,
-                selectToken = { groupId ->
-                    // Handle token selection
-                    viewModel.selectTokenFromCarousel(groupId)
-                },
-                primaryColor = primaryColor,
-                secondaryColor = secondaryColor,
-                onDismiss = { viewModel.hideTokenOverlay() }
-            )
-        }
-        else -> {
-            TokenCarouselOverlay(
-                isVisible = isTokenOverlayVisible,
-                assets = emptyList(),
-                selectToken = { _ -> viewModel.hideTokenOverlay() },
-                primaryColor = primaryColor,
-                secondaryColor = secondaryColor,
-                onDismiss = { viewModel.hideTokenOverlay() }
-            )
-        }
+    // Unified Token Selector Overlay - handles both From and To selections
+    val fromAssets = (groupedAssetsUiState as? GroupedAssetsUiState.Success)?.assets ?: emptyList()
+    val toTokens = when (tokenListUi) {
+        is SwapTokenUiState.Success -> (tokenListUi as SwapTokenUiState.Success).tokenAssets
+        else -> emptyList()
     }
+
+    TokenSelectorOverlay(
+        isVisible = isTokenOverlayVisible,
+        mode = selectionMode,
+        fromAssets = fromAssets,
+        toTokens = toTokens,
+        selectFromGroup = { groupId -> viewModel.selectTokenFromCarousel(groupId) },
+        selectToToken = { token -> viewModel.selectToTokenAsset(token) },
+        primaryColor = primaryColor,
+        secondaryColor = secondaryColor,
+        onDismiss = { viewModel.hideTokenOverlay() },
+        currentChainId = toTokens.firstOrNull()?.chainId
+    )
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {
