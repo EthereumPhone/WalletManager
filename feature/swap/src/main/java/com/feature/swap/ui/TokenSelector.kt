@@ -55,17 +55,13 @@ fun TokenSelector(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Token image with chain overlay - bigger size for better visibility
-                val isNativeToken = token.token.address?.lowercase() == "0x0000000000000000000000000000000000000000" ||
-                        token.token.address == token.token.chainId.toString() ||
-                        token.token.symbol.uppercase() == "ETH"
-
+                // Token image with chain overlay - always show chain overlay
                 TokenLogoWithChain(
                     token = token.token,
                     size = 32.dp, // Increased from 24dp to 32dp
                     primaryColor = primaryColor,
                     secondaryColor = secondaryColor,
-                    showChainOverlay = isNativeToken
+                    showChainOverlay = true // Always show chain to indicate which chain the token is on
                 )
                 // Token symbol
                 val tokensymbol = if(token.token.symbol == "ETH") "ETH" else "\$"+token.token.symbol

@@ -1,4 +1,4 @@
-package com.feature.home.ui
+package com.feature.swap.ui
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -34,14 +34,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.core.model.TokenGroupAssetOverview
-import dev.chrisbanes.snapper.ExperimentalSnapperApi
+import com.core.ui.views.SwapView
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
 @SuppressLint("RestrictedApi")
 @Composable
-fun TokenCardCarousel(
+fun TokenCardSwapCarousel(
     assets: List<TokenGroupAssetOverview>,
     navigateToSend: (groupId: String) -> Unit,
     primaryColor: Color,
@@ -193,13 +193,13 @@ fun TokenCardCarousel(
                             cameraDistance = 32f * density
                         },
                     frontSide = {
-                        IdleView(
+                        SwapView(
                             amount = item.totalBalance,
                             tokenName = item.symbol,
                             fiatAmount = item.totalFiatBalance ?: 0.0,
                             icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
-                            navigateToSend = { navigateToSend(item.groupId) },
-                            enableSend = item.totalBalance > 0,
+                            navigateToSwap = { navigateToSend(item.groupId) },
+                            enableSwap = item.totalBalance > 0,
                             primaryColor = primaryColor,
                         )
                     },

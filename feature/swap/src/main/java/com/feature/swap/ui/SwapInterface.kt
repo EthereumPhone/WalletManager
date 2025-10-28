@@ -145,7 +145,7 @@ private fun PreviewSwapInterface() {
             toTitle = "TO",
             toReadOnly = true
         ),
-        primaryColor = TODO(),
-        modifier = TODO()
+        primaryColor = dgenTurqoise,
+        modifier = Modifier.fillMaxWidth()
     )
 }
