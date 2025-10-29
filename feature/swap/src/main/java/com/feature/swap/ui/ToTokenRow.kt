@@ -23,7 +23,9 @@ import com.core.model.TokenAsset
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 import com.core.ui.util.label_fontSize
+import com.core.ui.util.neonOpacity
 
 @Composable
 fun ToTokenRow(
@@ -60,18 +62,18 @@ fun ToTokenRow(
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = token.name,
-                    fontFamily = SpaceMono,
+                    fontFamily = PitagonsSans,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    color = dgenWhite,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(200.dp).background(dgenRed)
+                    modifier = Modifier.width(200.dp)
                 )
                 // Show "OWNED" badge if user has this token
                 if (isOwned) {
@@ -92,11 +94,11 @@ fun ToTokenRow(
             }
             Text(
                 text = "$"+token.symbol,
-                fontFamily = SpaceMono,
+                fontFamily = PitagonsSans,
+                color = dgenWhite.copy(alpha = neonOpacity),
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                color = primaryColor,
-                maxLines = 1,
+                letterSpacing = 1.sp,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -125,9 +127,10 @@ fun ToTokenRow(
                 Text(
                     text = "$" + formatUsd(unitPriceUsd),
                     fontFamily = PitagonsSans,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = primaryColor,
+                    color = dgenWhite,
+                    letterSpacing = 1.sp,
                     maxLines = 1
                 )
             }

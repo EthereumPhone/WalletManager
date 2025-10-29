@@ -8,6 +8,8 @@ import com.core.data.repository.SwapRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.repository.DEFAULT_EXCLUDE_LIST
 import com.core.data.repository.GroupedTokenRepository
+import com.core.data.repository.TerminalRepository
+import com.core.data.repository.TerminalEvent
 import com.core.domain.GetAllGroupedTokensUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetSwappableTokensForSelection
@@ -21,6 +23,7 @@ import com.core.result.Result
 import com.core.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,6 +53,7 @@ class SwapViewModel @Inject constructor(
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val groupedTokenRepository: GroupedTokenRepository,
     private val getSwappableTokensForSelection: GetSwappableTokensForSelection,
+    private val terminalRepository: TerminalRepository,
     ): ViewModel() {
 
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
@@ -108,6 +112,21 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             swapUIState.collect { state ->
                 Log.d("SwapViewModel", "SwapUIState updated - FROM: ${state.fromToken?.token?.symbol}, TO: ${state.toToken?.token?.symbol}")
+            }
+        }
+        
+        // Observe terminal events
+        viewModelScope.launch {
+            onSwapTerminalOpened()
+            
+            terminalRepository.events.collect { event ->
+                if (event == TerminalEvent.SwapTapped) {
+                    Log.d("SwapViewModel", "SwapTapped event received")
+                    // Trigger swap when terminal swap button is tapped
+                    swap { result ->
+                        Log.d("SwapViewModel", "Terminal swap result: $result")
+                    }
+                }
             }
         }
     }
@@ -518,19 +537,82 @@ class SwapViewModel @Inject constructor(
 
     fun swap(callback: (String) -> Unit) {
         viewModelScope.launch {
+            // Prefer the new unified UI state when available
+            val uiState = swapUIState.value
+            val fromAddrFromUi = uiState.fromToken?.token?.address
+            val toAddrFromUi = uiState.toToken?.token?.address
+            val fromAmountFromUi = uiState.fromCurrentAmount
+
             val (fromAsset, toAsset) = swapAssetsUiState.value
-            val fromAmount = amountsUiState.value.fromAmount
+            val fromAmountLegacy = amountsUiState.value.fromAmount
             try {
-                if(fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
-                    val result = swapRepository.swap(
-                        fromAsset.tokenAsset.address,
-                        toAsset.tokenAsset.address,
-                        fromAmount.toDouble()
-                    )
-                    callback(result)
+                val hasUiTokens = !fromAddrFromUi.isNullOrBlank() && !toAddrFromUi.isNullOrBlank() && !fromAmountFromUi.isNullOrBlank()
+                if (hasUiTokens) {
+                    val amt = fromAmountFromUi.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    if (amt > 0) {
+                        val result = swapRepository.swap(
+                            fromAddrFromUi,
+                            toAddrFromUi,
+                            amt
+                        )
+                        callback(result)
+                        return@launch
+                    }
+                }
+
+                if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                    val amt = fromAmountLegacy.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    if (amt > 0) {
+                        val result = swapRepository.swap(
+                            fromAsset.tokenAsset.address,
+                            toAsset.tokenAsset.address,
+                            amt
+                        )
+                        callback(result)
+                    } else {
+                        callback("")
+                    }
+                } else {
+                    callback("")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Calls this function when the swap screen is opened
+     * When opened it displays the swap button on terminal
+     */
+    suspend fun onSwapTerminalOpened() {
+        try {
+            // Use TerminalRepository to generate swap screen
+            terminalRepository.generateSwap()
+        } catch (e: Exception) {
+            Log.e("SwapViewModel", "Error displaying swap terminal screen", e)
+        }
+    }
+
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch {
+            try {
+                // Redraw the terminal content after resume
+                delay(300)
+                terminalRepository.generateSwap()
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error redrawing swap terminal screen after resume", e)
+            }
+        }
+    }
+
+    fun onSwapTerminalClosed() {
+        viewModelScope.launch {
+            try {
+                // Use TerminalRepository to dismiss content
+                terminalRepository.dismissContent()
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error removing swap terminal screen", e)
             }
         }
     }

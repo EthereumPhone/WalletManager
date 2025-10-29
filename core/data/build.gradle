@@ -31,10 +31,12 @@ android {
         def alchemyApi = properties.getProperty("ALCHEMY_API")
         def tokenPriceApi = properties.getProperty("TOKEN_PRICE_API")
         def bundlerApi = properties.getProperty("BUNDLER_API")
+        def zeroXApi = properties.getProperty("ZEROX_API_KEY", "")
 
         buildConfigField "String", "ALCHEMY_API", "\"${alchemyApi}\""
         buildConfigField "String", "TOKEN_PRICE_API", "\"${tokenPriceApi}\""
         buildConfigField "String", "BUNDLER_API", "\"${bundlerApi}\""
+        buildConfigField "String", "ZEROX_API_KEY", "\"${zeroXApi}\""
 
 
 
@@ -90,6 +92,7 @@ dependencies {
     implementation libs.hilt.android
     ksp libs.hilt.compiler
     implementation libs.gson
+    implementation libs.okhttp
 
     implementation libs.moshi
     implementation libs.kotlinx.datetime

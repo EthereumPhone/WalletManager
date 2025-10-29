@@ -1,5 +1,6 @@
 package com.feature.swap.ui
 
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,12 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,11 +44,18 @@ import androidx.compose.ui.zIndex
 import com.core.database.provider.TokenMetadataProviderContract
 import com.core.model.TokenAsset
 import com.core.model.TokenGroupAssetOverview
+import com.core.model.NetworkChain
+import com.core.ui.DgenSearchBar
 import com.core.ui.HeaderBar
+import com.core.ui.InfoScreen
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenWhite
 import com.feature.swap.TokenSelectionMode
 
+
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TokenSelectorOverlay(
     isVisible: Boolean,
@@ -60,6 +72,18 @@ fun TokenSelectorOverlay(
 ) {
     if (!isVisible) return
 
+    // Search and filtering state
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedChainId by remember { mutableStateOf<Int?>(null) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var isFocused by remember { mutableStateOf(false) }
+    var context = LocalContext.current
+    
+    // Chain selector overlay state
+    var isChainSelectorVisible by remember { mutableStateOf(false) }
+
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -69,10 +93,10 @@ fun TokenSelectorOverlay(
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp).background(dgenBlack)
+            modifier = Modifier.fillMaxSize().background(dgenBlack)
         ) {
             HeaderBar(
-                modifier = Modifier,
+                modifier = Modifier.padding(horizontal = 24.dp),
                 text = "SELECT TOKEN",
                 onClick = onDismiss,
                 primaryColor = primaryColor
@@ -118,63 +142,129 @@ fun TokenSelectorOverlay(
                             }
                         }
 
-                        if (toTokens.isNotEmpty()) {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize().padding(top = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                item{
-                                    Spacer(modifier = Modifier.fillMaxWidth().height(24.dp))
-                                }
-                                items(toTokens, key = { it.address + "_" + it.chainId }) { token ->
-                                    val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
-                                    ToTokenRow(
-                                        token = token,
-                                        unitPriceUsd = unitPrice,
-                                        primaryColor = primaryColor,
-                                        secondaryColor = secondaryColor,
-                                        onClick = {
-                                            selectToToken(token)
-                                            onDismiss()
+                        // Filter tokens based on search query and selected chain
+                        val filteredTokens = remember(toTokens, searchQuery, selectedChainId) {
+                            toTokens.filter { token ->
+                                val matchesSearch = searchQuery.isEmpty() || 
+                                    token.name.contains(searchQuery, ignoreCase = true) || 
+                                    token.symbol.contains(searchQuery, ignoreCase = true) ||
+                                    token.address.contains(searchQuery, ignoreCase = true)
+                                
+                                val matchesChain = selectedChainId == null || token.chainId == selectedChainId
+                                
+                                matchesSearch && matchesChain
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            // Search bar
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                            )
+                            {
+                                DgenSearchBar(
+                                    searchValue = searchQuery,
+                                    onSearchValueChange = { searchQuery = it },
+                                    focusedSearch = isFocused,
+                                    onFocusChanged = { isFocused = it },
+                                    textColor = primaryColor,
+                                    backgroundColor = secondaryColor,
+                                    primaryColor = primaryColor,
+                                    secondaryColor = secondaryColor,
+                                    focusRequester = focusRequester,
+                                    keyboardController = keyboardController,
+                                    onClear = { searchQuery = "" },
+                                    onNavigateBack = onDismiss,
+                                    selectedChainId = selectedChainId,
+                                    onNetworkClick = {
+                                        isChainSelectorVisible = true
+                                    }
+                                )
+                            }
+
+                            Box(
+
+                            ){
+                                if (filteredTokens.isNotEmpty()) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+
+                                        items(filteredTokens, key = { it.address + "_" + it.chainId }) { token ->
+                                            val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                            ToTokenRow(
+                                                token = token,
+                                                unitPriceUsd = unitPrice,
+                                                primaryColor = primaryColor,
+                                                secondaryColor = secondaryColor,
+                                                onClick = {
+                                                    selectToToken(token)
+                                                    onDismiss()
+                                                }
+                                            )
                                         }
-                                    )
+                                    }
                                 }
+                                else {
+
+                                    InfoScreen(
+                                        description = "No tokens available.",
+                                        primaryColor = primaryColor
+                                    )
+
+                                }
+
+                                // Top gradient fade
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(24.dp)
+                                        .align(Alignment.TopCenter)
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(dgenBlack, Color.Transparent)
+                                            )
+                                        ).zIndex(3f)
+                                )
+
+                                // Bottom gradient fade
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(32.dp)
+                                        .align(Alignment.BottomCenter)
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(Color.Transparent, dgenBlack)
+                                            )
+                                        )
+                                        .zIndex(3f)
+                                )
                             }
                         }
                     }
                     else -> { /* Do nothing */ }
                 }
 
-                // Top gradient fade
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp)
-                        .align(Alignment.TopCenter)
-                        .offset(y = 0.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(dgenBlack, dgenBlack, Color.Transparent)
-                            )
-                        ).zIndex(3f)
-                )
 
-                // Bottom gradient fade
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, dgenBlack)
-                            )
-                        )
-                        .zIndex(3f)
-                )
             }
         }
     }
+    
+    // Chain selector overlay
+    ChainSelectorOverlay(
+        isVisible = isChainSelectorVisible,
+        selectedChainId = selectedChainId,
+        onChainSelected = { chainId ->
+            selectedChainId = chainId
+        },
+        onDismiss = { isChainSelectorVisible = false },
+        primaryColor = primaryColor,
+        secondaryColor = secondaryColor
+    )
 }
 
 

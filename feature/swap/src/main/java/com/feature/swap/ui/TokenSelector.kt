@@ -78,7 +78,7 @@ fun TokenSelector(
             }
         } else {
             Text(
-                text = "Select token",
+                text = "SELECT",
                 fontSize = 16.sp,
                 fontFamily = SpaceMono,
                 color = primaryColor,

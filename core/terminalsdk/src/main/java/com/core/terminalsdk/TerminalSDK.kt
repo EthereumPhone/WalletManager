@@ -290,6 +290,39 @@ class TerminalSDK(private val context: Context) {
     }
 
     /**
+     * Displays the swap bitmap in LogScreen
+     */
+    suspend fun displaySwap(onSwap: () -> Unit) {
+        // Clean up any existing touch handler first
+        destroyTouchHandler()
+
+        val layoutRenderer = LayoutRenderer(context)
+        val qrCodeBitmap = layoutRenderer.renderLogTerminal()
+
+        refresh(qrCodeBitmap, ID_PERSISTENT)
+
+        miniDisplayTouchHandler = MiniDisplayTouchHandler(
+            context,
+            MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                if (action != MotionEvent.ACTION_DOWN) {
+                    return@OnTouchListener
+                }
+                try {
+                    onSwap()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        )
+    }
+
+    suspend fun removeSwap() {
+        println("ETHOSDEBUGTERMINAL removeLog")
+        resume(ID_STATUSBAR)
+        destroyTouchHandler()
+    }
+
+    /**
      * Manually destroy the current touch handler
      */
     suspend fun destroyTouchHandler() {

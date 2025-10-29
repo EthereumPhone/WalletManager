@@ -181,6 +181,28 @@ class TerminalRepository @Inject constructor(
         }
 
     }
+
+    suspend fun generateSwap() {
+        sdk?.apply {
+            println("ETHOSDEBUGTERMINAL displaySwap")
+            destroyTouchHandler()
+
+            val layoutRenderer = LayoutRenderer(context)
+            val swapBitmap = layoutRenderer.renderSwap()
+            refresh(swapBitmap, ID_PERSISTENT)
+
+            miniDisplayTouchHandler = MiniDisplayTouchHandler(
+                context,
+                { _, _, action ->
+                    if (action == MotionEvent.ACTION_DOWN) {
+                        coroutineScope.launch {
+                            _events.emit(TerminalEvent.SwapTapped)
+                        }
+                    }
+                }
+            )
+        }
+    }
 }
 
 
@@ -190,5 +212,6 @@ sealed interface TerminalEvent {
     object SendTapped: TerminalEvent
     object TopUpTapped: TerminalEvent
     object LogTapped: TerminalEvent
+    object SwapTapped: TerminalEvent
     data class LogDetailTapped(val txHash: String = ""): TerminalEvent
 }

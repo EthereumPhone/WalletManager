@@ -3,6 +3,9 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.remote.UniswapApi
 import com.core.model.TokenMetadata
+import com.core.data.swap.SwapHandler
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +28,7 @@ import kotlin.coroutines.suspendCoroutine
 class SwapRepositoryImp @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val uniswapApi: UniswapApi?,
+    @ApplicationContext private val context: Context,
 ): SwapRepository {
 
     override suspend fun getQuote(
@@ -65,51 +69,42 @@ class SwapRepositoryImp @Inject constructor(
         outputTokenAddress: String,
         amount: Double
     ): String = withContext(Dispatchers.IO) {
-        val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
-            .first()
-        println("TokenMetadatalist: $tokenMetadataList")
-        val inputToken = when (inputTokenAddress) {
-            "1" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            "10" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            else -> {
-                val inputTokenMetadata = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
-                Token(
-                    chainId = inputTokenMetadata?.chainId!!,
-                    address = inputTokenMetadata.contractAddress,
-                    decimals = inputTokenMetadata.decimals,
-                    name = inputTokenMetadata.name,
-                    symbol = inputTokenMetadata.symbol
-                )
-            }
-        }
-        val outputToken = when (outputTokenAddress) {
-            "1" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            "10" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            else -> {
-                val outputTokenMetadata = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
-                Token(
-                    chainId = outputTokenMetadata?.chainId!!,
-                    address = outputTokenMetadata.contractAddress,
-                    decimals = outputTokenMetadata.decimals,
-                    name = outputTokenMetadata.name,
-                    symbol = outputTokenMetadata.symbol
-                )
-            }
-        }
+        try {
+            val tokenMetadataList = tokenMetadataRepository
+                .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
+                .first()
 
-        uniswapApi?.swap(
-            fromToken = inputToken,
-            toToken = outputToken,
-            amount = amount
-        ) ?: ""
+            val fromMeta = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
+            val toMeta = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
+
+            val isFromEthAlias = (inputTokenAddress == "1" || inputTokenAddress == "10")
+            val isToEthAlias = (outputTokenAddress == "1" || outputTokenAddress == "10")
+
+            val fromAddress = if (isFromEthAlias) "0x0000000000000000000000000000000000000000" else (fromMeta?.contractAddress ?: inputTokenAddress)
+            val toAddress = if (isToEthAlias) "0x0000000000000000000000000000000000000000" else (toMeta?.contractAddress ?: outputTokenAddress)
+
+            val fromDecimals = fromMeta?.decimals ?: 18
+            val toDecimals = toMeta?.decimals ?: 18
+            val chainId = (fromMeta?.chainId ?: toMeta?.chainId) ?: 8453
+
+            val fromSymbol = fromMeta?.symbol ?: if (isFromEthAlias) "ETH" else ""
+            val toSymbol = toMeta?.symbol ?: if (isToEthAlias) "ETH" else ""
+
+            val handler = SwapHandler(context)
+            handler.executeSwap(
+                fromAddress = fromAddress,
+                toAddress = toAddress,
+                fromDecimals = fromDecimals,
+                toDecimals = toDecimals,
+                chainId = chainId,
+                fromSymbol = fromSymbol,
+                toSymbol = toSymbol,
+                fromAmount = amount.toBigDecimal()
+            )
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "0x swap failed, returning empty string", e)
+            ""
+        }
     }
 }
 
