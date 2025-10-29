@@ -140,11 +140,12 @@ internal fun SwapScreen(
         
         // Debug button - TODO: Remove this later
         Button(
-            onClick = {
-                Log.d("SwapScreen", "Debug button clicked – executing swap")
-                viewModel.swap { result ->
-                    Log.d("SwapScreen", "Swap result: $result")
-                }
+            onClick = { 
+                Log.d("SwapScreen", "Debug button clicked")
+                Log.d("SwapScreen", "FROM: ${swapUIState.fromToken?.token?.symbol}")
+                Log.d("SwapScreen", "TO: ${swapUIState.toToken?.token?.symbol}")
+                Log.d("SwapScreen", "FROM Amount: ${swapUIState.fromCurrentAmount}")
+                Log.d("SwapScreen", "TO Amount: ${swapUIState.toCurrentAmount}")
             },
             modifier = Modifier
                 .fillMaxWidth()

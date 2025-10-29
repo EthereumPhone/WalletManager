@@ -26,6 +26,10 @@ import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.label_fontSize
 import com.core.ui.util.neonOpacity
+import com.core.ui.util.formatWithSuffix
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 @Composable
 fun ToTokenRow(
@@ -39,6 +43,12 @@ fun ToTokenRow(
     val amount = token.balance
     val usdValue = amount * unitPriceUsd
     val isOwned = amount > 0.0
+    val amountText = amount.formatWithSuffix()
+    val fiatText = when {
+        usdValue == 0.0 -> ""
+        usdValue < 0.01 -> "‹ $0.01"
+        else -> "$" + DecimalFormat("0.00", DecimalFormatSymbols(Locale.US)).format(usdValue)
+    }
 
     Row(
         modifier = modifier
@@ -108,21 +118,153 @@ fun ToTokenRow(
         ) {
             if (isOwned) {
                 Text(
-                    text = formatAmount(amount) + " " + token.symbol,
+                    text = amountText + " " + token.symbol,
                     fontFamily = PitagonsSans,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
                     maxLines = 1
                 )
+                if (fiatText.isNotEmpty()) {
+                    Text(
+                        text = fiatText,
+                        fontFamily = PitagonsSans,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = primaryColor,
+                        maxLines = 1
+                    )
+                }
+            } else {
                 Text(
-                    text = "$" + formatUsd(usdValue),
+                    text = "$" + formatUsd(unitPriceUsd),
                     fontFamily = PitagonsSans,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = primaryColor,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = dgenWhite,
+                    letterSpacing = 1.sp,
                     maxLines = 1
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ToTokenRow(
+    name: String,
+    symbol: String,
+    logoUrl: String?,
+    unitPriceUsd: Double,
+    primaryColor: Color,
+    secondaryColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    chainId: Int? = null,
+    displayAmount: String? = null,
+    displayUsd: String? = null,
+    owned: Boolean = false
+) {
+    val isOwned = owned || (displayAmount?.isNotBlank() == true)
+
+    // Create a lightweight token only for rendering the logo and optional chain overlay
+    val logoToken = TokenAsset(
+        address = "0x0000000000000000000000000000000000000000",
+        chainId = chainId ?: 1,
+        symbol = symbol,
+        name = name,
+        balance = 0.0,
+        decimals = 0,
+        logoUrl = logoUrl,
+        swappable = true
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TokenLogoWithChain(
+            token = logoToken,
+            size = 32.dp,
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor,
+            showChainOverlay = chainId != null
+        )
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = name,
+                    fontFamily = PitagonsSans,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = dgenWhite,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.width(200.dp)
+                )
+                if (isOwned) {
+                    Text(
+                        text = "OWNED",
+                        fontFamily = SpaceMono,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = primaryColor,
+                        modifier = Modifier
+                            .background(
+                                primaryColor.copy(alpha = 0.2f),
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            Text(
+                text = "$" + symbol,
+                fontFamily = PitagonsSans,
+                color = dgenWhite.copy(alpha = neonOpacity),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
+                letterSpacing = 1.sp,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            if (isOwned && (displayAmount != null || displayUsd != null)) {
+                if (displayAmount != null) {
+                    Text(
+                        text = displayAmount,
+                        fontFamily = PitagonsSans,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1
+                    )
+                }
+                if (displayUsd != null) {
+                    Text(
+                        text = displayUsd,
+                        fontFamily = PitagonsSans,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = primaryColor,
+                        maxLines = 1
+                    )
+                }
             } else {
                 Text(
                     text = "$" + formatUsd(unitPriceUsd),

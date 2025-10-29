@@ -51,7 +51,8 @@ fun AmountTextFieldBasic(
     secondaryContent: @Composable (Boolean) -> Unit,
     onAmountChange: (String, Boolean) -> Unit,
     onMaxClick: () -> Unit,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    showMaxAmount: Boolean = true,
 ) {
     val primaryColor = SystemColorManager.primaryColor
     var toggleFiat by remember { mutableStateOf(false) }
@@ -110,7 +111,17 @@ fun AmountTextFieldBasic(
                     color = primaryColor,
                     modifier = Modifier
                         .offset(y = 2.dp)
-                        .then(if (!readOnly) Modifier.clickable { onMaxClick() } else Modifier)
+                        .then(
+                            if (!readOnly && showMaxAmount) Modifier.clickable {
+                                val target = if (toggleFiat) formattedMaxFiatAmount else formattedMaxAmount
+                                textFieldValue = TextFieldValue(
+                                    text = target,
+                                    selection = TextRange(target.length)
+                                )
+                                onAmountChange(target, toggleFiat)
+                                onMaxClick()
+                            } else Modifier
+                        )
                 )
 
                 val maxAmount = if (toggleFiat) {
@@ -118,19 +129,31 @@ fun AmountTextFieldBasic(
                 } else {
                     formattedMaxAmount
                 }
-                Text(
-                    text = if (!readOnly) "MAX $maxAmount" else "$maxAmount",
-                    fontFamily = PitagonsSans,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 18.sp,
-                    letterSpacing = 0.sp,
-                    textDecoration = TextDecoration.None,
-                    color = primaryColor.copy(maxAlpha),
-                    modifier = Modifier
-                        .offset(y = 2.dp)
-                        .then(if (!readOnly) Modifier.clickable { onMaxClick() } else Modifier)
-                )
+
+                    Text(
+                        text = if (showMaxAmount) "MAX $maxAmount" else "$maxAmount",
+                        fontFamily = PitagonsSans,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 18.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None,
+                        color = primaryColor.copy(maxAlpha),
+                        modifier = Modifier
+                            .offset(y = 2.dp)
+                            .then(
+                                if (!readOnly && showMaxAmount) Modifier.clickable {
+                                    val target = if (toggleFiat) formattedMaxFiatAmount else formattedMaxAmount
+                                    textFieldValue = TextFieldValue(
+                                        text = target,
+                                        selection = TextRange(target.length)
+                                    )
+                                    onAmountChange(target, toggleFiat)
+                                    onMaxClick()
+                                } else Modifier
+                            )
+                    )
+
             }
 
             Row(

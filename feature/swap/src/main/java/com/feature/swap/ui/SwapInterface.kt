@@ -22,6 +22,7 @@ import com.core.model.SwapToken
 import com.core.model.TokenAsset
 import com.core.ui.util.dgenOcean
 import com.core.ui.util.dgenTurqoise
+import com.core.ui.util.formatWithSuffix
 
 @Composable
 fun SwapInterface(
@@ -38,7 +39,7 @@ fun SwapInterface(
         AmountTextFieldBasic(
             currentAmount = uiState.fromCurrentAmount,
             currentFiatAmount = uiState.fromCurrentFiatAmount,
-            formattedMaxAmount = uiState.fromToken?.formattedMaxAmount ?: "0.0",
+            formattedMaxAmount = uiState.fromToken?.token?.balance?.formatWithSuffix() ?: "0.00",
             formattedMaxFiatAmount = uiState.fromToken?.formattedMaxFiatAmount ?: "0.00",
             useMaxAmount = uiState.fromUseMaxAmount,
             title = uiState.fromTitle,
@@ -71,10 +72,11 @@ fun SwapInterface(
         AmountTextFieldBasic(
             currentAmount = uiState.toCurrentAmount,
             currentFiatAmount = uiState.toCurrentFiatAmount,
-            formattedMaxAmount = uiState.toToken?.formattedMaxAmount ?: "0.0",
+            formattedMaxAmount = uiState.toToken?.token?.balance?.formatWithSuffix() ?: "0.00",
             formattedMaxFiatAmount = uiState.toToken?.formattedMaxFiatAmount ?: "0.00",
             useMaxAmount = uiState.toUseMaxAmount,
             title = uiState.toTitle,
+            showMaxAmount = false,
             secondaryContent = { readOnly ->
                 TokenSelector(
                     token = uiState.toToken,

@@ -208,13 +208,14 @@ fun BoxScope.DgenSearchBar(
                         }else{
                             Modifier.width(80.dp)
                         }
-                    ).background(Color.Red),
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End
                 ){
                     if (hasText) {
                         ActionButton(
                             modifier = modifier
-                                .size(24.dp)
+                                .size(28.dp)
                                 .drawBehind {
                                     drawCircle(
                                         color = textColor,

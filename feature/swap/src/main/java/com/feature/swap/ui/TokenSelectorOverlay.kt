@@ -52,6 +52,7 @@ import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
+import com.core.ui.util.formatWithSuffix
 import com.feature.swap.TokenSelectionMode
 
 
@@ -95,12 +96,14 @@ fun TokenSelectorOverlay(
         Column(
             modifier = Modifier.fillMaxSize().background(dgenBlack)
         ) {
-            HeaderBar(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                text = "SELECT TOKEN",
-                onClick = onDismiss,
-                primaryColor = primaryColor
-            )
+            if(mode.equals(TokenSelectionMode.From)){
+                HeaderBar(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    text = "SELECT TOKEN",
+                    onClick = onDismiss,
+                    primaryColor = primaryColor
+                )
+            }
 
             Box(
                 modifier = Modifier.fillMaxSize()
@@ -192,6 +195,29 @@ fun TokenSelectorOverlay(
                                         modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
+                                        item {
+                                            Spacer(Modifier.fillMaxWidth().height(16.dp))
+                                        }
+                                        if (fromAssets.isNotEmpty()) {
+                                            items(fromAssets, key = { it.groupId }) { group ->
+                                                ToTokenRow(
+                                                    name = group.name,
+                                                    symbol = group.symbol,
+                                                    logoUrl = group.logoUrl,
+                                                    unitPriceUsd = 0.0,
+                                                    primaryColor = primaryColor,
+                                                    secondaryColor = secondaryColor,
+                                                    onClick = {
+                                                        selectFromGroup(group.groupId)
+                                                        onDismiss()
+                                                    },
+                                                    chainId = null,
+                                                    displayAmount = group.formattedBalance.toDouble().formatWithSuffix()+ " " + group.symbol,
+                                                    displayUsd = "$" + (group.formattedFiatBalance ?: "0.00"),
+                                                    owned = (group.totalBalance > 0.0)
+                                                )
+                                            }
+                                        }
 
                                         items(filteredTokens, key = { it.address + "_" + it.chainId }) { token ->
                                             val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
