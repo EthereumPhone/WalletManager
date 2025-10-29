@@ -169,7 +169,12 @@ fun ToTokenRow(
 
     // Create a lightweight token only for rendering the logo and optional chain overlay
     val logoToken = TokenAsset(
-        address = "0x0000000000000000000000000000000000000000",
+        address = if (symbol.equals("ETH", ignoreCase = true)) {
+            "0x0000000000000000000000000000000000000000"
+        } else {
+            // Non-ETH placeholder address to avoid ETH detection in TokenLogoWithChain
+            "0x1111111111111111111111111111111111111111"
+        },
         chainId = chainId ?: 1,
         symbol = symbol,
         name = name,
