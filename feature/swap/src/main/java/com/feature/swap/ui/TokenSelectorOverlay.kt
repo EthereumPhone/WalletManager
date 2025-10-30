@@ -227,7 +227,11 @@ fun TokenSelectorOverlay(
                                         }
                                         
                                         items(filteredFromTokens, key = { it.address + "_" + it.chainId }) { token ->
-                                            val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                            // For network tokens (ETH), the address is the chain ID
+                                            // Try lookup by address first, then by chain ID as fallback
+                                            val unitPrice = priceMap[token.address.lowercase()] 
+                                                ?: priceMap[token.chainId.toString()] 
+                                                ?: 0.0
                                             
                                             // Debug logging for ETH tokens
                                             if (token.symbol.equals("ETH", ignoreCase = true)) {
@@ -432,7 +436,11 @@ fun TokenSelectorOverlay(
                                                 )
                                             }
                                             items(ownedTokens, key = { it.address + "_" + it.chainId + "_owned" }) { token ->
-                                                val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                                // For network tokens (ETH), the address is the chain ID
+                                                // Try lookup by address first, then by chain ID as fallback
+                                                val unitPrice = priceMap[token.address.lowercase()] 
+                                                    ?: priceMap[token.chainId.toString()] 
+                                                    ?: 0.0
                                                 TokenRow(
                                                     token = token,
                                                     unitPriceUsd = unitPrice,
@@ -477,7 +485,11 @@ fun TokenSelectorOverlay(
                                                 )
                                             }
                                             items(allTokens, key = { it.address + "_" + it.chainId + "_all" }) { token ->
-                                                val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                                // For network tokens (ETH), the address is the chain ID
+                                                // Try lookup by address first, then by chain ID as fallback
+                                                val unitPrice = priceMap[token.address.lowercase()] 
+                                                    ?: priceMap[token.chainId.toString()] 
+                                                    ?: 0.0
                                                 TokenRow(
                                                     token = token,
                                                     unitPriceUsd = unitPrice,

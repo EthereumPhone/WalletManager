@@ -23,6 +23,7 @@ import com.core.model.SwapUIState
 import com.core.model.SwapToken
 import com.core.result.Result
 import com.core.result.asResult
+import com.feature.swap.ui.SwapTransactionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -42,6 +44,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ethereumphone.walletsdk.WalletSDK
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
 import javax.inject.Inject
 
@@ -84,12 +87,13 @@ class SwapViewModel @Inject constructor(
         )
 
     // Individual tokens by chain for token selection overlay
+    // Note: Default FROM token is selected by highest USD price on Base (chainId 8453)
     val fromTokensState: StateFlow<FromTokensUiState> =
         getAllTokensUsecase().map { tokens ->
             if (tokens.isEmpty()) {
                 FromTokensUiState.Empty
             } else {
-                // Filter tokens with balance > 0 and sort by balance descending
+                // Filter tokens with balance > 0 and sort by balance descending for display
                 val tokensWithBalance = tokens.filter { it.balance > 0.0 }
                     .sortedByDescending { it.balance }
                 FromTokensUiState.Success(tokensWithBalance)
@@ -119,6 +123,21 @@ class SwapViewModel @Inject constructor(
     // Toast message state
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
+    
+    // Transaction status state for overlay
+    private val _swapTransactionStatus = MutableStateFlow<SwapTransactionStatus?>(null)
+    val swapTransactionStatus: StateFlow<SwapTransactionStatus?> = _swapTransactionStatus.asStateFlow()
+    
+    // Quote fetching state
+    private val _isFetchingQuote = MutableStateFlow(false)
+    val isFetchingQuote: StateFlow<Boolean> = _isFetchingQuote.asStateFlow()
+    
+    // Track the last quote fetched
+    private val _lastQuote = MutableStateFlow<com.core.data.swap.ZeroXSwapQuoteResponse?>(null)
+    val lastQuote: StateFlow<com.core.data.swap.ZeroXSwapQuoteResponse?> = _lastQuote.asStateFlow()
+    
+    // Track the last fetch parameters to avoid duplicate requests
+    private var lastFetchParams: Triple<String?, String?, String>? = null
 
     fun showTokenOverlay(mode: TokenSelectionMode = TokenSelectionMode.From) {
         Log.d("SwapViewModel", "showTokenOverlay: mode=$mode")
@@ -162,21 +181,72 @@ class SwapViewModel @Inject constructor(
                 }
             }
         }
+        
+        // Initialize quote fetching with debouncing
+        setupQuoteFetching()
     }
     
     private fun observeAndSetDefaultToken() {
         viewModelScope.launch {
-            // Only collect until we find a success state with tokens
-            fromTokensState
-                .filter { it is FromTokensUiState.Success && it.tokens.isNotEmpty() }
-                .first()
-                .let { state ->
-                    if (state is FromTokensUiState.Success && _swapUIState.value.fromToken == null) {
-                        // Get the highest balance token (first in the sorted list)
-                        val highestBalanceToken = state.tokens.first()
-                        selectFromTokenAsset(highestBalanceToken)
+            // Wait for both tokens and grouped tokens (with prices) to be ready
+            combine(
+                fromTokensState.filter { it is FromTokensUiState.Success && it.tokens.isNotEmpty() },
+                groupedTokenAssetState.filter { it is GroupedAssetsUiState.Success }
+            ) { tokensState, groupedState ->
+                Pair(tokensState, groupedState)
+            }.first().let { (tokensState, groupedState) ->
+                if (tokensState is FromTokensUiState.Success && 
+                    groupedState is GroupedAssetsUiState.Success &&
+                    _swapUIState.value.fromToken == null) {
+                    
+                    // Filter tokens on Base network (chainId 8453) with balance > 0
+                    val baseTokens = tokensState.tokens.filter { it.chainId == 8453 && it.balance > 0.0 }
+                    
+                    if (baseTokens.isEmpty()) {
+                        Log.w("SwapViewModel", "No tokens with balance on Base network, using highest balance token instead")
+                        // Fallback to highest balance token if no Base tokens
+                        selectFromTokenAsset(tokensState.tokens.first())
+                        return@let
+                    }
+                    
+                    // Calculate unit prices for Base tokens by matching with grouped token data
+                    val tokensWithPrices = baseTokens.mapNotNull { token ->
+                        // Find the grouped token that matches this token's symbol
+                        val groupedToken = groupedState.assets.find { 
+                            it.symbol.equals(token.symbol, ignoreCase = true)
+                        }
+                        
+                        val unitPrice = groupedToken?.let { group ->
+                            // Calculate unit price: totalFiatBalance / totalBalance
+                            // Store in local variable to avoid smart cast issues
+                            val fiatBalance = group.totalFiatBalance
+                            if (group.totalBalance > 0.0 && fiatBalance != null && fiatBalance > 0.0) {
+                                fiatBalance / group.totalBalance
+                            } else {
+                                null
+                            }
+                        }
+                        
+                        if (unitPrice != null && unitPrice > 0.0) {
+                            Pair(token, unitPrice)
+                        } else {
+                            null
+                        }
+                    }
+                    
+                    // Select the token with the highest unit price on Base
+                    val highestPricedToken = tokensWithPrices.maxByOrNull { it.second }
+                    
+                    if (highestPricedToken != null) {
+                        Log.d("SwapViewModel", "Selected default token: ${highestPricedToken.first.symbol} on Base with unit price: $${highestPricedToken.second}")
+                        selectFromTokenAsset(highestPricedToken.first)
+                    } else {
+                        // Fallback if no tokens have price data
+                        Log.w("SwapViewModel", "No Base tokens with price data, selecting first Base token by balance")
+                        selectFromTokenAsset(baseTokens.first())
                     }
                 }
+            }
         }
     }
     
@@ -191,7 +261,7 @@ class SwapViewModel @Inject constructor(
                     updateFromAmount(amount)
                 },
                 fromOnMaxClick = {
-                    // TODO: Implement max click functionality
+                    handleMaxClickFrom()
                 },
                 fromOnTokenClick = {
                     Log.d("SwapViewModel", "fromOnTokenClick called")
@@ -215,7 +285,8 @@ class SwapViewModel @Inject constructor(
         _swapUIState.update { currentState ->
             currentState.copy(
                 fromCurrentAmount = amount,
-                fromCurrentFiatAmount = calculateFiatAmount(amount, currentState.fromToken)
+                fromCurrentFiatAmount = calculateFiatAmount(amount, currentState.fromToken),
+                fromUseMaxAmount = false // Clear MAX flag when user types manually
             )
         }
     }
@@ -232,6 +303,238 @@ class SwapViewModel @Inject constructor(
     private fun calculateFiatAmount(amount: String, token: SwapToken?): String {
         // TODO: Implement proper fiat calculation based on exchange rates
         return ""
+    }
+    
+    /**
+     * Handle max button click for FROM token
+     * Sets the amount to the maximum available balance
+     * 
+     * IMPORTANT: Displays the rounded amount in the textfield for UX,
+     * but uses the exact full-precision amount for API calls to avoid balance issues
+     */
+    private fun handleMaxClickFrom() {
+        val currentState = _swapUIState.value
+        val fromToken = currentState.fromToken
+        
+        if (fromToken == null) {
+            Log.w("SwapViewModel", "handleMaxClickFrom: No FROM token selected")
+            return
+        }
+        
+        Log.d("SwapViewModel", "=== MAX BUTTON CLICKED ===")
+        Log.d("SwapViewModel", "FROM token: ${fromToken.token.symbol}")
+        Log.d("SwapViewModel", "Actual balance (full precision): ${fromToken.token.balance}")
+        Log.d("SwapViewModel", "Max amount (exact): ${fromToken.formattedMaxAmount}")
+        Log.d("SwapViewModel", "Current TO token: ${currentState.toToken?.token?.symbol ?: "null"}")
+        
+        // Set the FULL PRECISION amount in the textfield
+        // Set fromUseMaxAmount=true so we apply safety multiplier (99.99%) in API calls
+        _swapUIState.update { state ->
+            state.copy(
+                fromCurrentAmount = fromToken.formattedMaxAmount, // Full precision in textfield
+                fromUseMaxAmount = true, // Flag to apply 99.99% multiplier in API calls
+                fromCurrentFiatAmount = fromToken.formattedMaxFiatAmount
+            )
+        }
+        
+        Log.d("SwapViewModel", "State updated:")
+        Log.d("SwapViewModel", "  Display amount: ${_swapUIState.value.fromCurrentAmount}")
+        Log.d("SwapViewModel", "  Use max flag: ${_swapUIState.value.fromUseMaxAmount}")
+        Log.d("SwapViewModel", "  (API will use 99.99% of this for safety)")
+    }
+    
+    /**
+     * Setup automatic quote fetching when FROM amount changes
+     * Uses 500ms debouncing to avoid excessive API calls (matching TokenLauncher implementation)
+     * 
+     * IMPORTANT: Only observes FROM token, TO token, and FROM amount changes.
+     * Does NOT trigger when TO amount changes (to avoid infinite loops when we update TO amount)
+     */
+    private fun setupQuoteFetching() {
+        viewModelScope.launch {
+            swapUIState
+                .map { state ->
+                    // Only track FROM token, TO token, and FROM amount
+                    // Ignore TO amount to prevent triggering when we update it
+                    Log.d("SwapViewModel", "setupQuoteFetching: State observed")
+                    Log.d("SwapViewModel", "  FROM token: ${state.fromToken?.token?.symbol} (address: ${state.fromToken?.token?.address})")
+                    Log.d("SwapViewModel", "  TO token: ${state.toToken?.token?.symbol} (address: ${state.toToken?.token?.address})")
+                    Log.d("SwapViewModel", "  FROM amount: '${state.fromCurrentAmount}'")
+                    Triple(
+                        state.fromToken?.token?.address to state.fromToken?.token?.symbol,
+                        state.toToken?.token?.address to state.toToken?.token?.symbol,
+                        state.fromCurrentAmount
+                    )
+                }
+                .distinctUntilChanged()
+                .collect { (fromTokenPair, toTokenPair, fromAmount) ->
+                    val fromToken = _swapUIState.value.fromToken
+                    val toToken = _swapUIState.value.toToken
+                    
+                    Log.d("SwapViewModel", "setupQuoteFetching: Collect triggered")
+                    Log.d("SwapViewModel", "  FROM amount='$fromAmount'")
+                    
+                    // Reset TO amount and quote if inputs are invalid
+                    if (fromAmount.isNullOrBlank() || 
+                        fromAmount.toBigDecimalOrNull() == null ||
+                        fromAmount.toBigDecimalOrNull() == BigDecimal.ZERO ||
+                        fromToken == null || 
+                        toToken == null) {
+                        
+                        Log.d("SwapViewModel", "setupQuoteFetching: Invalid inputs, clearing TO amount and quote")
+                        _isFetchingQuote.value = false
+                        _lastQuote.value = null
+                        lastFetchParams = null
+                        _swapUIState.update { currentState ->
+                            currentState.copy(
+                                toCurrentAmount = "",
+                                toCurrentFiatAmount = ""
+                            )
+                        }
+                        return@collect
+                    }
+                    
+                    // If MAX button was clicked, use the exact full-precision amount
+                    // Otherwise use the amount from the textfield
+                    val currentState = _swapUIState.value
+                    val useMaxAmount = currentState.fromUseMaxAmount
+                    val exactAmount = if (useMaxAmount && fromToken != null) {
+                        fromToken.formattedMaxAmount // Exact full precision
+                    } else {
+                        fromAmount // User-entered amount
+                    }
+                    
+                    // Check if this is a duplicate request (same parameters as last fetch)
+                    val currentParams = Triple(fromToken.token.address, toToken.token.address, exactAmount)
+                    if (currentParams == lastFetchParams) {
+                        Log.d("SwapViewModel", "setupQuoteFetching: ⏭️ Skipping duplicate request (same parameters)")
+                        return@collect
+                    }
+                    
+                    Log.d("SwapViewModel", "setupQuoteFetching: Valid inputs, starting quote fetch")
+                    _isFetchingQuote.value = true
+                    
+                    // Debounce for 500ms to avoid too many API calls
+                    delay(500)
+                    
+                    try {
+                        var amount = exactAmount.toBigDecimalOrNull() ?: return@collect
+                        
+                        // If using MAX, use 99.99% of the balance to account for Double precision loss
+                        // This ensures we never try to sell more than we actually have
+                        if (useMaxAmount) {
+                            // Use 99.99% of max to handle precision issues (standard DeFi practice)
+                            val maxMultiplier = BigDecimal("0.9999")
+                            amount = amount.multiply(maxMultiplier)
+                            Log.d("SwapViewModel", "Applied MAX safety multiplier: 99.99%")
+                            Log.d("SwapViewModel", "Original: $exactAmount")
+                            Log.d("SwapViewModel", "Adjusted: $amount")
+                        }
+                        
+                        Log.d("SwapViewModel", "=== Fetching Quote ===")
+                        Log.d("SwapViewModel", "FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
+                        Log.d("SwapViewModel", "TO: ${toToken.token.symbol} (${toToken.token.address})")
+                        Log.d("SwapViewModel", "Display amount: $fromAmount")
+                        Log.d("SwapViewModel", "Use MAX amount: $useMaxAmount")
+                        Log.d("SwapViewModel", "Exact amount for API: $amount")
+                        Log.d("SwapViewModel", "CHAIN: ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "")
+                        Log.d("SwapViewModel", "📞 Calling swapRepository.getSwapQuote() with:")
+                        Log.d("SwapViewModel", "  inputTokenAddress: ${fromToken.token.address}")
+                        Log.d("SwapViewModel", "  outputTokenAddress: ${toToken.token.address}")
+                        Log.d("SwapViewModel", "  amount: $amount (${if (useMaxAmount) "EXACT" else "USER-ENTERED"})")
+                        Log.d("SwapViewModel", "  inputTokenDecimals: ${fromToken.token.decimals}")
+                        Log.d("SwapViewModel", "  outputTokenDecimals: ${toToken.token.decimals}")
+                        Log.d("SwapViewModel", "  chainId: ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "  inputTokenSymbol: ${fromToken.token.symbol}")
+                        Log.d("SwapViewModel", "  outputTokenSymbol: ${toToken.token.symbol}")
+                        
+                        // Get quote from 0x API via SwapRepository
+                        val quote = try {
+                            swapRepository.getSwapQuote(
+                                inputTokenAddress = fromToken.token.address,
+                                outputTokenAddress = toToken.token.address,
+                                amount = amount,
+                                inputTokenDecimals = fromToken.token.decimals,
+                                outputTokenDecimals = toToken.token.decimals,
+                                chainId = fromToken.token.chainId,
+                                inputTokenSymbol = fromToken.token.symbol,
+                                outputTokenSymbol = toToken.token.symbol
+                            )
+                        } catch (quoteException: Exception) {
+                            Log.e("SwapViewModel", "💥 Exception calling swapRepository.getSwapQuote()", quoteException)
+                            Log.e("SwapViewModel", "  Exception type: ${quoteException::class.simpleName}")
+                            Log.e("SwapViewModel", "  Exception message: ${quoteException.message}")
+                            quoteException.printStackTrace()
+                            null
+                        }
+                        
+                        Log.d("SwapViewModel", "📬 Quote response received: ${if (quote != null) "SUCCESS" else "NULL"}")
+                        
+                        if (quote != null) {
+                            Log.d("SwapViewModel", "✅ Quote received successfully")
+                            Log.d("SwapViewModel", "  Buy amount (smallest unit): ${quote.buyAmount}")
+                            Log.d("SwapViewModel", "  Price: ${quote.price ?: "N/A"}")
+                            
+                            // Store the parameters of this successful fetch
+                            lastFetchParams = currentParams
+                            _lastQuote.value = quote
+                            
+                            // Convert buyAmount from smallest unit to human-readable format
+                            val toDecimals = toToken.token.decimals
+                            val buyAmountBigInt = quote.buyAmount.toBigIntegerOrNull() ?: BigInteger.ZERO
+                            val buyAmountDecimal = BigDecimal(buyAmountBigInt)
+                                .divide(BigDecimal.TEN.pow(toDecimals), toDecimals, RoundingMode.DOWN)
+                            
+                            // Format the output amount (strip trailing zeros)
+                            val formattedToAmount = buyAmountDecimal.stripTrailingZeros().toPlainString()
+                            
+                            Log.d("SwapViewModel", "  Formatted TO amount: $formattedToAmount ${toToken.token.symbol}")
+                            Log.d("SwapViewModel", "  Stored fetch params to prevent duplicates")
+                            
+                            // Update the TO amount in the UI state
+                            _swapUIState.update { currentState ->
+                                currentState.copy(
+                                    toCurrentAmount = formattedToAmount,
+                                    toCurrentFiatAmount = "" // TODO: Calculate fiat value
+                                )
+                            }
+                        } else {
+                            Log.w("SwapViewModel", "⚠️ Quote returned null")
+                            Log.w("SwapViewModel", "  FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
+                            Log.w("SwapViewModel", "  TO: ${toToken.token.symbol} (${toToken.token.address})")
+                            Log.w("SwapViewModel", "  Amount: $amount")
+                            Log.w("SwapViewModel", "  Possible reasons:")
+                            Log.w("SwapViewModel", "    - No liquidity for this token pair")
+                            Log.w("SwapViewModel", "    - Amount too small or too large")
+                            Log.w("SwapViewModel", "    - Insufficient balance")
+                            Log.w("SwapViewModel", "    - 0x API error")
+                            Log.w("SwapViewModel", "  NOT storing params (failed fetch - will allow retry)")
+                            Log.w("SwapViewModel", "  CHECK LOGCAT FOR: SwapRepositoryImp and WM-SwapHandler tags for details!")
+                            _lastQuote.value = null
+                            // Don't update lastFetchParams on failure - allow retry
+                            _swapUIState.update { currentState ->
+                                currentState.copy(
+                                    toCurrentAmount = "",
+                                    toCurrentFiatAmount = ""
+                                )
+                            }
+                        }
+                        
+                    } catch (e: Exception) {
+                        Log.e("SwapViewModel", "❌ Exception while fetching quote", e)
+                        _lastQuote.value = null
+                        _swapUIState.update { currentState ->
+                            currentState.copy(
+                                toCurrentAmount = "",
+                                toCurrentFiatAmount = ""
+                            )
+                        }
+                    } finally {
+                        _isFetchingQuote.value = false
+                    }
+                }
+        }
     }
     
     fun selectTokenFromCarousel(groupId: String, setAsDefault: Boolean = false) {
@@ -265,6 +568,7 @@ class SwapViewModel @Inject constructor(
             when (targetMode) {
                 TokenSelectionMode.From -> {
                     Log.d("SwapViewModel", "Updating FROM token to ${swapToken.token.symbol}")
+                    lastFetchParams = null // Clear cached params when token changes
                     _swapUIState.update { currentState ->
                         currentState.copy(
                             fromToken = swapToken,
@@ -277,6 +581,7 @@ class SwapViewModel @Inject constructor(
                 }
                 TokenSelectionMode.To -> {
                     Log.d("SwapViewModel", "Updating TO token to ${swapToken.token.symbol}")
+                    lastFetchParams = null // Clear cached params when token changes
                     _swapUIState.update { currentState ->
                         currentState.copy(
                             toToken = swapToken,
@@ -303,6 +608,7 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectToTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
+            lastFetchParams = null // Clear cached params when token changes
             val currentFromToken = _swapUIState.value.fromToken
             
             // Check if this is a cross-chain swap attempt
@@ -342,11 +648,14 @@ class SwapViewModel @Inject constructor(
             // Format the balance for display
             val formattedBalance = String.format("%.6f", tokenAsset.balance).trimEnd('0').trimEnd('.')
             
+            // For MAX amount, use the full precision balance to avoid rounding errors
+            val maxAmountFullPrecision = tokenAsset.balance.toString()
+            
             val swapToken = SwapToken(
                 token = tokenAsset,
                 balance = formattedBalance,
                 fiatBalance = "", // TODO: Add price calculation
-                formattedMaxAmount = formattedBalance,
+                formattedMaxAmount = maxAmountFullPrecision, // Use full precision for MAX
                 formattedMaxFiatAmount = "" // TODO: Add fiat calculation
             )
             _swapUIState.update { currentState ->
@@ -408,14 +717,24 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectFromTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
-            // Format the balance for display
+            lastFetchParams = null // Clear cached params when token changes
+            
+            // Format the balance for display (showing 6 decimals max)
             val formattedBalance = String.format("%.6f", tokenAsset.balance).trimEnd('0').trimEnd('.')
+            
+            // For MAX amount, use the full precision balance to avoid rounding errors
+            // This ensures we don't try to sell more than we actually have
+            val maxAmountFullPrecision = tokenAsset.balance.toString()
+            
+            Log.d("SwapViewModel", "  Balance: ${tokenAsset.balance}")
+            Log.d("SwapViewModel", "  Formatted for display: $formattedBalance")
+            Log.d("SwapViewModel", "  Max amount (full precision): $maxAmountFullPrecision")
             
             val swapToken = SwapToken(
                 token = tokenAsset,
                 balance = formattedBalance,
                 fiatBalance = "", // TODO: Add price calculation
-                formattedMaxAmount = formattedBalance,
+                formattedMaxAmount = maxAmountFullPrecision, // Use full precision for MAX
                 formattedMaxFiatAmount = "" // TODO: Add fiat calculation
             )
             
@@ -474,16 +793,20 @@ class SwapViewModel @Inject constructor(
                 )
             }
             
+            // Use full precision for max amount to avoid rounding errors
+            val maxAmountFullPrecision = tokenAsset.balance.toString()
+            
             SwapToken(
                 token = tokenAsset,
                 balance = asset.formattedBalance,
                 fiatBalance = asset.formattedFiatBalance ?: "0.00",
-                formattedMaxAmount = asset.formattedBalance,
+                formattedMaxAmount = maxAmountFullPrecision, // Use full precision for MAX
                 formattedMaxFiatAmount = asset.formattedFiatBalance ?: "0.00"
             )
         } catch (e: Exception) {
             Log.e("SwapViewModel", "convertToSwapToken: Error converting token", e)
             // Return fallback on error
+            val fallbackMaxAmount = asset.totalBalance.toString()
             SwapToken(
                 token = TokenAsset(
                     address = "0x0000000000000000000000000000000000000000",
@@ -497,7 +820,7 @@ class SwapViewModel @Inject constructor(
                 ),
                 balance = asset.formattedBalance,
                 fiatBalance = asset.formattedFiatBalance ?: "0.00",
-                formattedMaxAmount = asset.formattedBalance,
+                formattedMaxAmount = fallbackMaxAmount, // Use full precision for MAX
                 formattedMaxFiatAmount = asset.formattedFiatBalance ?: "0.00"
             )
         }
@@ -683,6 +1006,13 @@ class SwapViewModel @Inject constructor(
     fun clearToastMessage() {
         _toastMessage.value = null
     }
+    
+    /**
+     * Clear the transaction status, e.g., when the overlay is dismissed or when navigating away
+     */
+    fun clearSwapTransactionStatus() {
+        _swapTransactionStatus.value = null
+    }
 
     /**
      * Unified swap entry point - called by both debug swap button and terminal swap button
@@ -692,7 +1022,10 @@ class SwapViewModel @Inject constructor(
      */
     fun swap(callback: (String) -> Unit) {
         viewModelScope.launch {
-            Log.d("SwapViewModel", "=== SWAP INITIATED ===")
+            Log.d("SwapViewModel", "")
+            Log.d("SwapViewModel", "═══════════════════════════════════════")
+            Log.d("SwapViewModel", "     SWAP INITIATED")
+            Log.d("SwapViewModel", "═══════════════════════════════════════")
             
             // Prefer the new unified UI state when available
             val uiState = swapUIState.value
@@ -704,13 +1037,24 @@ class SwapViewModel @Inject constructor(
             val (fromAsset, toAsset) = swapAssetsUiState.value
             val fromAmountLegacy = amountsUiState.value.fromAmount
             
+            Log.d("SwapViewModel", "📊 Current State:")
+            Log.d("SwapViewModel", "  UI State - FROM: ${fromToken?.token?.symbol}, TO: ${toToken?.token?.symbol}, Amount: $fromAmountFromUi")
+            Log.d("SwapViewModel", "  Legacy State - FROM: ${(fromAsset as? SelectedTokenUiState.Selected)?.tokenAsset?.symbol}, TO: ${(toAsset as? SelectedTokenUiState.Selected)?.tokenAsset?.symbol}, Amount: $fromAmountLegacy")
+            
             try {
                 // Check if we have valid tokens from the new UI state
                 val hasUiTokens = fromToken != null && toToken != null && !fromAmountFromUi.isNullOrBlank()
                 
+                Log.d("SwapViewModel", "🔍 Has UI tokens: $hasUiTokens")
+                
                 if (hasUiTokens) {
                     // Check if this is a cross-chain swap attempt
                     val isCrossChain = fromToken!!.token.chainId != toToken!!.token.chainId
+                    
+                    Log.d("SwapViewModel", "🌐 Cross-chain check:")
+                    Log.d("SwapViewModel", "  FROM chain: ${fromToken.token.chainId}")
+                    Log.d("SwapViewModel", "  TO chain: ${toToken.token.chainId}")
+                    Log.d("SwapViewModel", "  Is cross-chain: $isCrossChain")
                     
                     if (isCrossChain) {
                         // 0x API does NOT support cross-chain swaps
@@ -720,49 +1064,96 @@ class SwapViewModel @Inject constructor(
                                                (fromSymbol == "USDC" && toSymbol == "USDC")
                         
                         if (isValidBridgePair) {
+                            Log.w("SwapViewModel", "")
                             Log.w("SwapViewModel", "🌉 BRIDGING NEEDED!")
                             Log.w("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
                             Log.w("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
                             Log.w("SwapViewModel", "  AMOUNT: $fromAmountFromUi")
                             Log.w("SwapViewModel", "  NOTE: 0x API does not support cross-chain. Bridge protocol integration required.")
                             
-                            callback("Error: Bridging not yet implemented. 0x API only supports same-chain swaps. " +
+                            val errorMsg = "Bridging not yet implemented"
+                            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                            callback("Error: $errorMsg. 0x API only supports same-chain swaps. " +
                                     "Please integrate a bridge protocol (Across, LayerZero, etc.) for cross-chain functionality.")
                         } else {
+                            Log.e("SwapViewModel", "")
                             Log.e("SwapViewModel", "❌ INVALID CROSS-CHAIN PAIR!")
                             Log.e("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
                             Log.e("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
                             Log.e("SwapViewModel", "  NOTE: Cross-chain swaps are not supported by 0x API")
                             
-                            callback("Error: Cross-chain swaps are not supported. Please select tokens on the same chain.")
+                            val errorMsg = "Cross-chain swaps are not supported"
+                            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                            callback("Error: $errorMsg. Please select tokens on the same chain.")
                         }
                         return@launch
                     } else {
                         // Same chain - execute normal swap via 0x
+                        Log.d("SwapViewModel", "")
                         Log.d("SwapViewModel", "✅ SAME-CHAIN SWAP (via 0x API)")
-                        Log.d("SwapViewModel", "  FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
-                        Log.d("SwapViewModel", "  TO: ${toToken.token.symbol} (${toToken.token.address})")
-                        Log.d("SwapViewModel", "  CHAIN: ${fromToken.token.chainId}")
-                        Log.d("SwapViewModel", "  AMOUNT: $fromAmountFromUi")
+                        Log.d("SwapViewModel", "  FROM Token:")
+                        Log.d("SwapViewModel", "    Symbol: ${fromToken.token.symbol}")
+                        Log.d("SwapViewModel", "    Address: ${fromToken.token.address}")
+                        Log.d("SwapViewModel", "    Decimals: ${fromToken.token.decimals}")
+                        Log.d("SwapViewModel", "  TO Token:")
+                        Log.d("SwapViewModel", "    Symbol: ${toToken.token.symbol}")
+                        Log.d("SwapViewModel", "    Address: ${toToken.token.address}")
+                        Log.d("SwapViewModel", "    Decimals: ${toToken.token.decimals}")
+                        Log.d("SwapViewModel", "  Chain ID: ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "  Amount: $fromAmountFromUi")
+                        
+                        // Set status to PENDING before executing swap
+                        Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
+                        _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                        
+                        // If MAX was clicked, use 99.99% to avoid Double precision issues
+                        val exactSwapAmount = if (uiState.fromUseMaxAmount) {
+                            // Use 99.99% of max to handle precision issues (standard DeFi practice)
+                            val fullAmount = fromToken.formattedMaxAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                            val maxMultiplier = BigDecimal("0.9999")
+                            val adjustedAmount = fullAmount.multiply(maxMultiplier)
+                            Log.d("SwapViewModel", "Applied MAX safety multiplier for swap: 99.99%")
+                            Log.d("SwapViewModel", "  Original: ${fromToken.formattedMaxAmount}")
+                            Log.d("SwapViewModel", "  Adjusted: $adjustedAmount")
+                            adjustedAmount.toPlainString()
+                        } else {
+                            fromAmountFromUi
+                        }
+                        
+                        Log.d("SwapViewModel", "🚀 Executing swap...")
+                        Log.d("SwapViewModel", "  Display amount: $fromAmountFromUi")
+                        Log.d("SwapViewModel", "  Use MAX: ${uiState.fromUseMaxAmount}")
+                        Log.d("SwapViewModel", "  Exact amount for swap: $exactSwapAmount")
                         
                         executeSwap(
                             fromAddress = fromToken.token.address,
                             toAddress = toToken.token.address,
-                            amount = fromAmountFromUi,
+                            amount = exactSwapAmount,
                             callback = callback
                         )
                     }
                 } else if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
                     // Legacy state handling
-                    Log.d("SwapViewModel", "Using legacy swap state")
+                    Log.d("SwapViewModel", "")
+                    Log.d("SwapViewModel", "⚠️ Using LEGACY swap state")
+                    Log.d("SwapViewModel", "  FROM: ${fromAsset.tokenAsset.symbol} (${fromAsset.tokenAsset.address})")
+                    Log.d("SwapViewModel", "  TO: ${toAsset.tokenAsset.symbol} (${toAsset.tokenAsset.address})")
+                    Log.d("SwapViewModel", "  Amount: $fromAmountLegacy")
                     
                     // Check if cross-chain in legacy state too
                     if (fromAsset.tokenAsset.chainId != toAsset.tokenAsset.chainId) {
                         Log.e("SwapViewModel", "❌ Cross-chain swap attempted in legacy state (not supported)")
-                        callback("Error: Cross-chain swaps are not supported.")
+                        val errorMsg = "Cross-chain swaps are not supported"
+                        _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                        callback("Error: $errorMsg.")
                         return@launch
                     }
                     
+                    // Set status to PENDING before executing swap
+                    Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
+                    _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                    
+                    Log.d("SwapViewModel", "🚀 Executing swap (legacy path)...")
                     executeSwap(
                         fromAddress = fromAsset.tokenAsset.address,
                         toAddress = toAsset.tokenAsset.address,
@@ -770,19 +1161,35 @@ class SwapViewModel @Inject constructor(
                         callback = callback
                     )
                 } else {
-                    Log.e("SwapViewModel", "❌ No valid tokens selected")
-                    callback("Error: Please select both FROM and TO tokens")
+                    Log.e("SwapViewModel", "")
+                    Log.e("SwapViewModel", "❌ NO VALID TOKENS SELECTED")
+                    Log.e("SwapViewModel", "  FROM token: ${fromToken?.token?.symbol ?: "null"}")
+                    Log.e("SwapViewModel", "  TO token: ${toToken?.token?.symbol ?: "null"}")
+                    Log.e("SwapViewModel", "  FROM amount: $fromAmountFromUi")
+                    
+                    val errorMsg = "Please select both FROM and TO tokens"
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                    callback("Error: $errorMsg")
                 }
             } catch (e: Exception) {
-                Log.e("SwapViewModel", "Error during swap", e)
-                callback("Error: ${e.message}")
+                Log.e("SwapViewModel", "")
+                Log.e("SwapViewModel", "💥 EXCEPTION IN SWAP FUNCTION", e)
+                Log.e("SwapViewModel", "  Type: ${e::class.simpleName}")
+                Log.e("SwapViewModel", "  Message: ${e.message}")
                 e.printStackTrace()
+                
+                _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(e.message ?: "Unknown error")
+                callback("Error: ${e.message}")
             }
+            
+            Log.d("SwapViewModel", "═══════════════════════════════════════")
+            Log.d("SwapViewModel", "")
         }
     }
     
     /**
      * Execute a same-chain swap via 0x API
+     * This uses the SwapRepository which delegates to SwapHandler for 0x integration
      */
     private suspend fun executeSwap(
         fromAddress: String,
@@ -790,18 +1197,88 @@ class SwapViewModel @Inject constructor(
         amount: String,
         callback: (String) -> Unit
     ) {
-        val amt = amount.replace(",", ".").toDoubleOrNull() ?: 0.0
-        if (amt > 0) {
+        Log.d("SwapViewModel", "=== executeSwap called ===")
+        Log.d("SwapViewModel", "From address: $fromAddress")
+        Log.d("SwapViewModel", "To address: $toAddress")
+        Log.d("SwapViewModel", "Amount string: $amount")
+        
+        val amt = amount.replace(",", ".").toDoubleOrNull()
+        
+        if (amt == null || amt <= 0.0) {
+            Log.e("SwapViewModel", "❌ Invalid amount: $amount (parsed: $amt)")
+            val errorMsg = "Invalid amount: $amount"
+            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            callback("Error: $errorMsg")
+            return
+        }
+        
+        Log.d("SwapViewModel", "✅ Amount validated: $amt")
+        
+        try {
+            Log.d("SwapViewModel", "📞 Calling swapRepository.swap()...")
+            
+            // Call the swap method which uses SwapHandler internally
             val result = swapRepository.swap(
-                fromAddress,
-                toAddress,
-                amt
+                inputTokenAddress = fromAddress,
+                outputTokenAddress = toAddress,
+                amount = amt
             )
-            Log.d("SwapViewModel", "Swap result: $result")
-            callback(result)
-        } else {
-            Log.e("SwapViewModel", "Invalid amount: $amount")
-            callback("Error: Invalid amount")
+            
+            Log.d("SwapViewModel", "📬 Swap result received: '$result'")
+            
+            // Parse the result to determine success/failure
+            when {
+                result.startsWith("0x") -> {
+                    // Transaction hash returned - success!
+                    Log.d("SwapViewModel", "🟢 SWAP SUCCESS!")
+                    Log.d("SwapViewModel", "  Transaction hash: $result")
+                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    callback("Success: Transaction hash: $result")
+                }
+                result.equals("DECLINE", ignoreCase = true) -> {
+                    Log.w("SwapViewModel", "⚠️ USER DECLINED SWAP")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("User declined transaction")
+                    callback("User declined the transaction")
+                }
+                result.equals("ERROR", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 SWAP ERROR")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Swap failed")
+                    callback("Error: Swap failed")
+                }
+                result.contains("NOT_ENOUGH_GAS", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 INSUFFICIENT GAS")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Insufficient gas for transaction")
+                    callback("Error: Insufficient gas")
+                }
+                result.isEmpty() -> {
+                    Log.e("SwapViewModel", "🔴 EMPTY RESULT")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("No response from swap service")
+                    callback("Error: No response from swap service")
+                }
+                result.lowercase().contains("error") || 
+                result.lowercase().contains("failed") -> {
+                    Log.e("SwapViewModel", "🔴 SWAP FAILED: $result")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(result)
+                    callback("Error: $result")
+                }
+                else -> {
+                    // Unknown result format - assume success if it's not empty
+                    Log.w("SwapViewModel", "⚠️ UNKNOWN RESULT FORMAT: $result")
+                    Log.w("SwapViewModel", "  Assuming success since no error keywords detected")
+                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    callback("Success: $result")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e("SwapViewModel", "🔴 SWAP EXCEPTION", e)
+            Log.e("SwapViewModel", "  Exception type: ${e::class.simpleName}")
+            Log.e("SwapViewModel", "  Exception message: ${e.message}")
+            e.printStackTrace()
+            
+            val errorMsg = e.message ?: "Unknown error occurred"
+            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            callback("Error: $errorMsg")
         }
     }
 
@@ -833,6 +1310,9 @@ class SwapViewModel @Inject constructor(
     fun onSwapTerminalClosed() {
         viewModelScope.launch {
             try {
+                // Clear any pending transaction status when leaving swap screen
+                clearSwapTransactionStatus()
+                
                 // Use TerminalRepository to dismiss content
                 terminalRepository.dismissContent()
             } catch (e: Exception) {

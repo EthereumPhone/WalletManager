@@ -1,5 +1,6 @@
 package com.feature.swap
 
+import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -28,6 +29,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenAsset
 import com.core.model.SwapUIState
 import com.core.model.SwapToken
@@ -36,7 +40,10 @@ import com.core.ui.showDgenToast
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.feature.swap.ui.SwapInterface
+import com.feature.swap.ui.SwapTransactionStatus
+import com.feature.swap.ui.SwapTransactionStatusOverlay
 import com.feature.swap.ui.TokenSelectorOverlay
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun SwapRoute(
@@ -109,6 +116,7 @@ internal fun SwapScreen(
     val tokenListUi by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
+    val swapTransactionStatus by viewModel.swapTransactionStatus.collectAsStateWithLifecycle()
     
     // Show toast when message is set
     LaunchedEffect(toastMessage) {
@@ -116,6 +124,42 @@ internal fun SwapScreen(
             showDgenToast(context, message)
             viewModel.clearToastMessage()
         }
+    }
+    
+    // Handle transaction status changes and auto-navigation
+    LaunchedEffect(swapTransactionStatus) {
+        Log.d("SwapScreen", "=== TRANSACTION STATUS CHANGED ===")
+        Log.d("SwapScreen", "New swapTransactionStatus: $swapTransactionStatus")
+
+        when (swapTransactionStatus) {
+            SwapTransactionStatus.SUCCESS -> {
+                Log.d("SwapScreen", "🟢 SUCCESS status detected - swap successful")
+                delay(SwapTransactionTiming.SUCCESS_DISPLAY_DURATION)
+                Log.d("SwapScreen", "${SwapTransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
+                onBackClick()
+                delay(SwapTransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SwapScreen", "Fade transition complete, clearing overlay")
+                viewModel.clearSwapTransactionStatus()
+            }
+            is SwapTransactionStatus.FAILURE -> {
+                Log.d("SwapScreen", "🔴 FAILURE status detected - showing error state")
+                // Display failure overlay for a reasonable duration to acknowledge the error
+                delay(SwapTransactionTiming.FAILURE_DISPLAY_DURATION)
+                Log.d("SwapScreen", "${SwapTransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, starting fade navigation")
+
+                // Start navigation while overlay is still visible for smooth fade effect
+                onBackClick()
+
+                // Keep overlay visible during fade transition for seamless experience
+                delay(SwapTransactionTiming.FADE_TRANSITION_DURATION)
+                Log.d("SwapScreen", "Fade transition complete, clearing overlay")
+                viewModel.clearSwapTransactionStatus()
+            }
+            else -> {
+                Log.d("SwapScreen", "Other status: $swapTransactionStatus - no auto-navigation")
+            }
+        }
+        Log.d("SwapScreen", "=== TRANSACTION STATUS HANDLING ENDED ===")
     }
     
     // Debug logging
@@ -129,6 +173,16 @@ internal fun SwapScreen(
             viewModel.selectTokenFromCarousel(tokenId)
         }
     }
+    
+    // Create GIF-enabled ImageLoader for animations
+    val gifEnabledLoader = ImageLoader.Builder(context)
+        .components {
+            if (SDK_INT >= 28) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }.build()
 
     Column (
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -189,11 +243,31 @@ internal fun SwapScreen(
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
         groupedTokens = groupedTokens
     )
+    
+    // Swap Transaction Status Overlay - shows swap progress and results
+    SwapTransactionStatusOverlay(
+        status = swapTransactionStatus,
+        gifLoader = gifEnabledLoader,
+        onDismiss = { viewModel.clearSwapTransactionStatus() },
+        primaryColor = primaryColor,
+        secondaryColor = secondaryColor
+    )
 }
 
 fun isEthereumTransactionHash(input: String): Boolean {
     val transactionHashPattern = "^0x([A-Fa-f0-9]{64})$"
     return Regex(transactionHashPattern).matches(input)
+}
+
+object SwapTransactionTiming {
+    // How long to show the SUCCESS overlay before starting navigation (in milliseconds)
+    const val SUCCESS_DISPLAY_DURATION = 4000L // 4 seconds to enjoy the success
+
+    // How long to show the FAILURE overlay before starting navigation (in milliseconds)
+    const val FAILURE_DISPLAY_DURATION = 2500L // 2.5 seconds for failure state
+
+    // Delay between starting navigation and clearing the overlay for smooth fade transition (in milliseconds)
+    const val FADE_TRANSITION_DURATION = 1000L // 1 second fade overlap
 }
 
 @Preview

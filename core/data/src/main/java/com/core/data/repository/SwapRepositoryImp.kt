@@ -4,6 +4,7 @@ import android.util.Log
 import com.core.data.remote.UniswapApi
 import com.core.model.TokenMetadata
 import com.core.data.swap.SwapHandler
+import com.core.data.swap.ZeroXSwapQuoteResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.withContext
 import org.ethosmobile.uniswap_routing_sdk.Token
 import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
+import java.math.BigDecimal
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -61,6 +63,48 @@ class SwapRepositoryImp @Inject constructor(
                 receiverAddress,
                 chainId
             ) ?: 0.0
+        }
+    }
+
+    override suspend fun getSwapQuote(
+        inputTokenAddress: String,
+        outputTokenAddress: String,
+        amount: BigDecimal,
+        inputTokenDecimals: Int,
+        outputTokenDecimals: Int,
+        chainId: Int,
+        inputTokenSymbol: String,
+        outputTokenSymbol: String
+    ): ZeroXSwapQuoteResponse? = withContext(Dispatchers.IO) {
+        try {
+            Log.d("SwapRepositoryImp", "=== getSwapQuote called ===")
+            Log.d("SwapRepositoryImp", "Input: $inputTokenAddress ($inputTokenSymbol)")
+            Log.d("SwapRepositoryImp", "Output: $outputTokenAddress ($outputTokenSymbol)")
+            Log.d("SwapRepositoryImp", "Amount: $amount")
+            Log.d("SwapRepositoryImp", "Chain ID: $chainId")
+            
+            val handler = SwapHandler(context)
+            val quote = handler.getSwapQuote(
+                fromAddress = inputTokenAddress,
+                toAddress = outputTokenAddress,
+                fromDecimals = inputTokenDecimals,
+                toDecimals = outputTokenDecimals,
+                chainId = chainId,
+                fromSymbol = inputTokenSymbol,
+                toSymbol = outputTokenSymbol,
+                fromAmount = amount
+            )
+            
+            if (quote != null) {
+                Log.d("SwapRepositoryImp", "✅ Quote fetched successfully: buyAmount=${quote.buyAmount}")
+            } else {
+                Log.w("SwapRepositoryImp", "⚠️ Quote returned null")
+            }
+            
+            quote
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "❌ Failed to get swap quote", e)
+            null
         }
     }
 

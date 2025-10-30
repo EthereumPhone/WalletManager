@@ -190,6 +190,171 @@ class SwapHandler(private val context: Context) {
         return GasEstimationHelper.estimateGas(userOp, rpcUrl)
     }
 
+    /**
+     * Get a swap quote from 0x API to display expected output amount.
+     * Does NOT execute the swap - only returns quote information.
+     * 
+     * @param fromAddress Token address to swap from
+     * @param toAddress Token address to swap to
+     * @param fromDecimals Decimals of the from token
+     * @param toDecimals Decimals of the to token (used for formatting output)
+     * @param chainId Chain ID for the swap
+     * @param fromSymbol Symbol of from token (for ETH detection)
+     * @param toSymbol Symbol of to token (for ETH detection)
+     * @param fromAmount Amount to swap (human-readable format)
+     * @return ZeroXSwapQuoteResponse with buyAmount and other details, or null if failed
+     */
+    suspend fun getSwapQuote(
+        fromAddress: String,
+        toAddress: String,
+        fromDecimals: Int,
+        toDecimals: Int,
+        chainId: Int,
+        fromSymbol: String,
+        toSymbol: String,
+        fromAmount: BigDecimal
+    ): ZeroXSwapQuoteResponse? = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "=== Getting Swap Quote ===")
+            Log.d(TAG, "From: $fromAddress ($fromSymbol, decimals: $fromDecimals)")
+            Log.d(TAG, "To: $toAddress ($toSymbol, decimals: $toDecimals)")
+            Log.d(TAG, "Amount: $fromAmount")
+            Log.d(TAG, "Chain ID: $chainId")
+            
+            // Validate inputs
+            if (fromAmount <= BigDecimal.ZERO) {
+                Log.w(TAG, "Invalid amount: $fromAmount")
+                return@withContext null
+            }
+            
+            val isSellingETH = isEthLike(fromAddress, fromSymbol, chainId)
+            val isBuyingETH = isEthLike(toAddress, toSymbol, chainId)
+            
+            Log.d(TAG, "ETH Detection:")
+            Log.d(TAG, "  isSellingETH: $isSellingETH (fromAddress=$fromAddress, fromSymbol=$fromSymbol)")
+            Log.d(TAG, "  isBuyingETH: $isBuyingETH (toAddress=$toAddress, toSymbol=$toSymbol)")
+            
+            // Convert amount to smallest unit
+            val sellAmount = if (isSellingETH) {
+                Convert.toWei(fromAmount, Convert.Unit.ETHER).toBigInteger()
+            } else {
+                fromAmount.multiply(BigDecimal.TEN.pow(fromDecimals)).toBigInteger()
+            }
+            
+            Log.d(TAG, "Sell amount (smallest unit): $sellAmount")
+            
+            // Normalize token addresses for 0x API
+            val sellToken = if (isSellingETH) ETH_TOKEN_ADDRESS else fromAddress
+            val buyToken = if (isBuyingETH) ETH_TOKEN_ADDRESS else toAddress
+            
+            Log.d(TAG, "Normalized addresses for 0x:")
+            Log.d(TAG, "  sellToken: $sellToken")
+            Log.d(TAG, "  buyToken: $buyToken")
+            
+            val taker = walletSDK.getAddress()
+            
+            // Build the API URL with fee parameters
+            val url = "$ZEROX_API_BASE_URL/swap/allowance-holder/quote" +
+                "?chainId=$chainId" +
+                "&sellToken=$sellToken" +
+                "&buyToken=$buyToken" +
+                "&sellAmount=$sellAmount" +
+                "&taker=$taker" +
+                "&swapFeeRecipient=$SWAP_FEE_RECIPIENT" +
+                "&swapFeeBps=$SWAP_FEE_BPS" +
+                "&swapFeeToken=$sellToken"
+            
+            Log.d(TAG, "Calling 0x API for quote...")
+            Log.d(TAG, "URL: $url")
+            
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("0x-api-key", BuildConfig.ZEROX_API_KEY)
+                .addHeader("0x-version", ZEROX_API_VERSION)
+                .get()
+                .build()
+            
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string()
+            
+            Log.d(TAG, "0x API Response:")
+            Log.d(TAG, "  Status code: ${response.code}")
+            Log.d(TAG, "  Is successful: ${response.isSuccessful}")
+            Log.d(TAG, "  Body length: ${body?.length ?: 0}")
+            
+            if (!response.isSuccessful || body == null) {
+                Log.e(TAG, "❌ 0x API quote request FAILED")
+                Log.e(TAG, "  Status: ${response.code}")
+                Log.e(TAG, "  Response body: $body")
+                return@withContext null
+            }
+            
+            Log.d(TAG, "0x API response received (${body.length} bytes)")
+            Log.d(TAG, "Response body: $body")
+            
+            val adapter = moshi.adapter(ZeroXSwapQuoteResponse::class.java)
+            val quote = adapter.fromJson(body)
+            
+            if (quote == null) {
+                Log.e(TAG, "Failed to parse 0x quote response")
+                return@withContext null
+            }
+            
+            // Check for issues
+            quote.issues?.let { issues ->
+                Log.d(TAG, "Checking quote issues...")
+                
+                issues.balance?.let { balanceIssue ->
+                    Log.e(TAG, "❌ BALANCE ISSUE:")
+                    Log.e(TAG, "  Token: ${balanceIssue.token}")
+                    Log.e(TAG, "  Expected: ${balanceIssue.expected}")
+                    Log.e(TAG, "  Actual: ${balanceIssue.actual}")
+                    return@withContext null
+                }
+                
+                issues.allowance?.let { allowanceIssue ->
+                    Log.w(TAG, "⚠️ ALLOWANCE ISSUE (will handle with approval):")
+                    Log.w(TAG, "  Spender: ${allowanceIssue.spender}")
+                    Log.w(TAG, "  Token: ${allowanceIssue.token}")
+                    Log.w(TAG, "  Expected: ${allowanceIssue.expected}")
+                    Log.w(TAG, "  Actual: ${allowanceIssue.actual}")
+                }
+                
+                if (issues.simulationIncomplete == true) {
+                    Log.w(TAG, "⚠️ Simulation incomplete")
+                }
+                
+                issues.invalidSourcesPassed?.let { invalidSources ->
+                    Log.w(TAG, "⚠️ Invalid sources: ${invalidSources.joinToString(", ")}")
+                }
+            }
+            
+            if (quote.liquidityAvailable == false) {
+                Log.e(TAG, "❌ NO LIQUIDITY AVAILABLE for this swap pair")
+                return@withContext null
+            }
+            
+            Log.d(TAG, "✅ Quote received successfully:")
+            Log.d(TAG, "  Buy amount (smallest unit): ${quote.buyAmount}")
+            Log.d(TAG, "  Price: ${quote.price ?: "N/A"}")
+            Log.d(TAG, "  Estimated price impact: ${quote.estimatedPriceImpact ?: "N/A"}")
+            
+            // Log route information
+            quote.route?.fills?.let { fills ->
+                if (fills.isNotEmpty()) {
+                    val sources = fills.joinToString(" -> ") { it.source }
+                    Log.d(TAG, "  Route: $sources")
+                }
+            }
+            
+            return@withContext quote
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while fetching quote", e)
+            return@withContext null
+        }
+    }
+
     private fun isEthLike(address: String?, symbol: String?, chainId: Int): Boolean {
         if (address == null) return true
         return address == "0x0000000000000000000000000000000000000000" ||
