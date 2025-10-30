@@ -166,9 +166,15 @@ fun TokenRow(
         android.util.Log.d("TokenRow", "ETH Token - Symbol: ${token.symbol}, Balance: $balance, UnitPrice: $unitPriceUsd, USD Value: $usdValue")
     }
     
-    // Check if this token is native ETH by its address
+    // Check if this token is native ETH by its address or if address equals chainId (network token)
     val isNativeEth = token.address.equals("0x0000000000000000000000000000000000000000", ignoreCase = true) ||
-                      token.address.equals("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", ignoreCase = true)
+                      token.address.equals("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", ignoreCase = true) ||
+                      token.address == token.chainId.toString() || // Network token (address is chain ID)
+                      token.symbol.equals("ETH", ignoreCase = true)
+    
+    // Normalize ETH tokens to always show as "Ethereum" and "ETH" regardless of chain
+    val displayName = if (isNativeEth) "Ethereum" else token.name
+    val displaySymbol = if (isNativeEth) "ETH" else token.symbol
     
     // Use the token's logoUrl, but for native ETH we can construct it from the address
     val effectiveLogoUrl = if (isNativeEth && token.logoUrl.isNullOrEmpty()) {
@@ -178,8 +184,8 @@ fun TokenRow(
     }
     
     TokenRow(
-        name = token.name,
-        symbol = token.symbol,
+        name = displayName,
+        symbol = displaySymbol,
         logoUrl = effectiveLogoUrl,
         unitPriceUsd = unitPriceUsd,
         primaryColor = primaryColor,

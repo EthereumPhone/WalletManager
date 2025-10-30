@@ -185,7 +185,7 @@ fun TransactionStatusOverlay(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(top = 16.dp)
+                        modifier = Modifier.padding(top = 0.dp)
                     ) {
                         val mainText = when (targetStatus) {
                             is TransactionStatus.PENDING -> "Transaction Pending..."
