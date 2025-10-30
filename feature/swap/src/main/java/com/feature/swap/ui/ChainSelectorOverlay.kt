@@ -49,13 +49,12 @@ fun ChainSelectorOverlay(
 ) {
     if (!isVisible) return
 
-    // All available chains including "All Chains" option
+    // All available chains with BASE at the top
     val chains = listOf(
-        null to "ALL CHAINS",
+        NetworkChain.BASE.chainId to "BASE",
         NetworkChain.MAINNET.chainId to "ETHEREUM",
         NetworkChain.OPTIMISM.chainId to "OPTIMISM",
         NetworkChain.POLYGON.chainId to "POLYGON",
-        NetworkChain.BASE.chainId to "BASE",
         NetworkChain.ARBITRUM.chainId to "ARBITRUM",
         NetworkChain.ZORA.chainId to "ZORA"
     )

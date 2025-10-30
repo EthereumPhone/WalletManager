@@ -51,9 +51,15 @@ fun TokenRow(
 ) {
     val isOwned = owned || (amount != null && amount > 0.0)
 
+    // Check if this is native ETH by checking for zero address or EeeeeE address
+    val isNativeEth = logoUrl?.let { url ->
+        url.contains("0x0000000000000000000000000000000000000000", ignoreCase = true) ||
+        url.contains("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", ignoreCase = true)
+    } ?: symbol.equals("ETH", ignoreCase = true)
+
     // Create a lightweight token only for rendering the logo and optional chain overlay
     val logoToken = TokenAsset(
-        address = if (symbol.equals("ETH", ignoreCase = true)) {
+        address = if (isNativeEth) {
             "0x0000000000000000000000000000000000000000"
         } else {
             // Non-ETH placeholder address to avoid ETH detection in TokenLogoWithChain
@@ -155,10 +161,26 @@ fun TokenRow(
     val balance = token.balance
     val usdValue = if (balance > 0.0 && unitPriceUsd > 0.0) balance * unitPriceUsd else null
     
+    // Debug logging for ETH tokens
+    if (token.symbol.equals("ETH", ignoreCase = true)) {
+        android.util.Log.d("TokenRow", "ETH Token - Symbol: ${token.symbol}, Balance: $balance, UnitPrice: $unitPriceUsd, USD Value: $usdValue")
+    }
+    
+    // Check if this token is native ETH by its address
+    val isNativeEth = token.address.equals("0x0000000000000000000000000000000000000000", ignoreCase = true) ||
+                      token.address.equals("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", ignoreCase = true)
+    
+    // Use the token's logoUrl, but for native ETH we can construct it from the address
+    val effectiveLogoUrl = if (isNativeEth && token.logoUrl.isNullOrEmpty()) {
+        "0x0000000000000000000000000000000000000000"
+    } else {
+        token.logoUrl
+    }
+    
     TokenRow(
         name = token.name,
         symbol = token.symbol,
-        logoUrl = token.logoUrl,
+        logoUrl = effectiveLogoUrl,
         unitPriceUsd = unitPriceUsd,
         primaryColor = primaryColor,
         secondaryColor = secondaryColor,

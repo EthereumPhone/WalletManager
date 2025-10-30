@@ -32,6 +32,7 @@ import com.core.model.TokenAsset
 import com.core.model.SwapUIState
 import com.core.model.SwapToken
 import com.core.ui.HeaderBar
+import com.core.ui.showDgenToast
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.feature.swap.ui.SwapInterface
@@ -107,6 +108,15 @@ internal fun SwapScreen(
     val selectionMode by viewModel.tokenSelectionMode.collectAsStateWithLifecycle()
     val tokenListUi by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
     val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
+    val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
+    
+    // Show toast when message is set
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let { message ->
+            showDgenToast(context, message)
+            viewModel.clearToastMessage()
+        }
+    }
     
     // Debug logging
     LaunchedEffect(swapUIState) {
@@ -140,20 +150,19 @@ internal fun SwapScreen(
                 .weight(1f)
         )
         
-        // Debug button - TODO: Remove this later
+        // Debug button - Triggers the unified swap method
         Button(
             onClick = { 
-                Log.d("SwapScreen", "Debug button clicked")
-                Log.d("SwapScreen", "FROM: ${swapUIState.fromToken?.token?.symbol}")
-                Log.d("SwapScreen", "TO: ${swapUIState.toToken?.token?.symbol}")
-                Log.d("SwapScreen", "FROM Amount: ${swapUIState.fromCurrentAmount}")
-                Log.d("SwapScreen", "TO Amount: ${swapUIState.toCurrentAmount}")
+                Log.d("SwapScreen", "Debug swap button clicked")
+                viewModel.swap { result ->
+                    Log.d("SwapScreen", "Debug swap result: $result")
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         ) {
-            Text("DEBUG: Log Swap State")
+            Text("DEBUG: Execute Swap")
         }
     }
 
@@ -163,6 +172,7 @@ internal fun SwapScreen(
         is SwapTokenUiState.Success -> (tokenListUi as SwapTokenUiState.Success).tokenAssets
         else -> emptyList()
     }
+    val groupedTokens = (groupedAssetsUiState as? GroupedAssetsUiState.Success)?.assets ?: emptyList()
 
     TokenSelectorOverlay(
         isVisible = isTokenOverlayVisible,
@@ -176,7 +186,8 @@ internal fun SwapScreen(
         onDismiss = { viewModel.hideTokenOverlay() },
         currentChainId = toTokens.firstOrNull()?.chainId,
         selectedChainId = selectedTokenChainId,
-        onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) }
+        onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
+        groupedTokens = groupedTokens
     )
 }
 

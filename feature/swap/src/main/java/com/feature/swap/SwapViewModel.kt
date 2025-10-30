@@ -15,6 +15,7 @@ import com.core.domain.GetAllTokensUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetSwappableTokensForSelection
 import com.core.domain.QueryTokenAssetsByNetwork
+import com.core.model.NetworkChain
 import com.core.model.TokenAsset
 import com.core.model.TokenGroupAssetOverview
 import com.core.model.UserData
@@ -114,6 +115,10 @@ class SwapViewModel @Inject constructor(
     // SwapUIState management
     private val _swapUIState = MutableStateFlow(SwapUIState())
     val swapUIState: StateFlow<SwapUIState> = _swapUIState.asStateFlow()
+    
+    // Toast message state
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
     fun showTokenOverlay(mode: TokenSelectionMode = TokenSelectionMode.From) {
         Log.d("SwapViewModel", "showTokenOverlay: mode=$mode")
@@ -296,7 +301,67 @@ class SwapViewModel @Inject constructor(
 
     fun selectToTokenAsset(tokenAsset: TokenAsset) {
         viewModelScope.launch {
-            Log.d("SwapViewModel", "selectToTokenAsset: ${'$'}{tokenAsset.symbol} on chain ${'$'}{tokenAsset.chainId}")
+            Log.d("SwapViewModel", "selectToTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
+            
+            val currentFromToken = _swapUIState.value.fromToken
+            
+            // Check if this is a cross-chain swap attempt
+            if (currentFromToken != null && currentFromToken.token.chainId != tokenAsset.chainId) {
+                Log.d("SwapViewModel", "Cross-chain detected: FROM chain ${currentFromToken.token.chainId}, TO chain ${tokenAsset.chainId}")
+                
+                val fromSymbol = currentFromToken.token.symbol.uppercase()
+                val toSymbol = tokenAsset.symbol.uppercase()
+                
+                // Only allow cross-chain for ETH-ETH or USDC-USDC (preparing for future bridge integration)
+                val isValidBridgePair = (fromSymbol == "ETH" && toSymbol == "ETH") ||
+                                       (fromSymbol == "USDC" && toSymbol == "USDC")
+                
+                if (!isValidBridgePair) {
+                    Log.w("SwapViewModel", "Invalid cross-chain pair: $fromSymbol (chain ${currentFromToken.token.chainId}) -> $toSymbol (chain ${tokenAsset.chainId})")
+                    
+                    // Strategy: Try to find a same-chain alternative, otherwise unselect TO token
+                    val sameChainAlternative = findTokenBySymbolAndChain(toSymbol, currentFromToken.token.chainId)
+                    
+                    if (sameChainAlternative != null) {
+                        // Found same token on FROM chain - use that instead
+                        Log.d("SwapViewModel", "Auto-switching TO token to $toSymbol on chain ${currentFromToken.token.chainId} (same chain as FROM)")
+                        val swapToken = SwapToken(
+                            token = sameChainAlternative,
+                            balance = "",
+                            fiatBalance = "",
+                            formattedMaxAmount = "",
+                            formattedMaxFiatAmount = ""
+                        )
+                        _swapUIState.update { currentState ->
+                            currentState.copy(
+                                toToken = swapToken,
+                                toCurrentAmount = "",
+                                toCurrentFiatAmount = "",
+                                toUseMaxAmount = false
+                            )
+                        }
+                    } else {
+                        // No same-chain alternative found - unselect TO token
+                        Log.d("SwapViewModel", "No same-chain alternative found. Unselecting TO token.")
+                        _swapUIState.update { currentState ->
+                            currentState.copy(
+                                toToken = null,
+                                toCurrentAmount = "",
+                                toCurrentFiatAmount = "",
+                                toUseMaxAmount = false
+                            )
+                        }
+                        // Show toast notification with chain name
+                        val chainName = NetworkChain.getNetworkByChainId(currentFromToken.token.chainId)?.name ?: "chain ${currentFromToken.token.chainId}"
+                        _toastMessage.value = "Cross-chain swap not supported. Select a token on $chainName"
+                    }
+                    
+                    hideTokenOverlay()
+                    return@launch
+                }
+            }
+            
+            // Valid selection (same chain or valid bridge pair) - proceed normally
             val swapToken = SwapToken(
                 token = tokenAsset,
                 balance = "",
@@ -313,6 +378,29 @@ class SwapViewModel @Inject constructor(
                 )
             }
             hideTokenOverlay()
+        }
+    }
+    
+    /**
+     * Find a token by symbol and chain ID from the user's token list
+     * @param requireBalance If true, only returns tokens with balance > 0 (for FROM token selection)
+     *                       If false, returns any matching token (for TO token selection)
+     */
+    private suspend fun findTokenBySymbolAndChain(
+        symbol: String, 
+        chainId: Int,
+        requireBalance: Boolean = false
+    ): TokenAsset? {
+        return try {
+            val allTokens = getAllTokensUsecase().first()
+            allTokens.find { 
+                it.symbol.uppercase() == symbol.uppercase() && 
+                it.chainId == chainId &&
+                (!requireBalance || it.balance > 0.0)
+            }
+        } catch (e: Exception) {
+            Log.e("SwapViewModel", "Error finding token by symbol and chain", e)
+            null
         }
     }
     
@@ -591,50 +679,129 @@ class SwapViewModel @Inject constructor(
     fun updateSearchQuery(query: String) {
         savedStateHandle[SEARCH_QUERY] = query
     }
+    
+    fun clearToastMessage() {
+        _toastMessage.value = null
+    }
 
+    /**
+     * Unified swap entry point - called by both debug swap button and terminal swap button
+     * 
+     * IMPORTANT: The 0x API only supports same-chain swaps. Cross-chain swaps/bridging
+     * requires integration with a dedicated bridge protocol (e.g., Across Protocol, LayerZero).
+     */
     fun swap(callback: (String) -> Unit) {
         viewModelScope.launch {
+            Log.d("SwapViewModel", "=== SWAP INITIATED ===")
+            
             // Prefer the new unified UI state when available
             val uiState = swapUIState.value
-            val fromAddrFromUi = uiState.fromToken?.token?.address
-            val toAddrFromUi = uiState.toToken?.token?.address
+            val fromToken = uiState.fromToken
+            val toToken = uiState.toToken
             val fromAmountFromUi = uiState.fromCurrentAmount
 
+            // Legacy state fallback
             val (fromAsset, toAsset) = swapAssetsUiState.value
             val fromAmountLegacy = amountsUiState.value.fromAmount
+            
             try {
-                val hasUiTokens = !fromAddrFromUi.isNullOrBlank() && !toAddrFromUi.isNullOrBlank() && !fromAmountFromUi.isNullOrBlank()
+                // Check if we have valid tokens from the new UI state
+                val hasUiTokens = fromToken != null && toToken != null && !fromAmountFromUi.isNullOrBlank()
+                
                 if (hasUiTokens) {
-                    val amt = fromAmountFromUi.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    if (amt > 0) {
-                        val result = swapRepository.swap(
-                            fromAddrFromUi,
-                            toAddrFromUi,
-                            amt
+                    // Check if this is a cross-chain swap attempt
+                    val isCrossChain = fromToken!!.token.chainId != toToken!!.token.chainId
+                    
+                    if (isCrossChain) {
+                        // 0x API does NOT support cross-chain swaps
+                        val fromSymbol = fromToken.token.symbol.uppercase()
+                        val toSymbol = toToken.token.symbol.uppercase()
+                        val isValidBridgePair = (fromSymbol == "ETH" && toSymbol == "ETH") ||
+                                               (fromSymbol == "USDC" && toSymbol == "USDC")
+                        
+                        if (isValidBridgePair) {
+                            Log.w("SwapViewModel", "🌉 BRIDGING NEEDED!")
+                            Log.w("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
+                            Log.w("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
+                            Log.w("SwapViewModel", "  AMOUNT: $fromAmountFromUi")
+                            Log.w("SwapViewModel", "  NOTE: 0x API does not support cross-chain. Bridge protocol integration required.")
+                            
+                            callback("Error: Bridging not yet implemented. 0x API only supports same-chain swaps. " +
+                                    "Please integrate a bridge protocol (Across, LayerZero, etc.) for cross-chain functionality.")
+                        } else {
+                            Log.e("SwapViewModel", "❌ INVALID CROSS-CHAIN PAIR!")
+                            Log.e("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
+                            Log.e("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
+                            Log.e("SwapViewModel", "  NOTE: Cross-chain swaps are not supported by 0x API")
+                            
+                            callback("Error: Cross-chain swaps are not supported. Please select tokens on the same chain.")
+                        }
+                        return@launch
+                    } else {
+                        // Same chain - execute normal swap via 0x
+                        Log.d("SwapViewModel", "✅ SAME-CHAIN SWAP (via 0x API)")
+                        Log.d("SwapViewModel", "  FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
+                        Log.d("SwapViewModel", "  TO: ${toToken.token.symbol} (${toToken.token.address})")
+                        Log.d("SwapViewModel", "  CHAIN: ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "  AMOUNT: $fromAmountFromUi")
+                        
+                        executeSwap(
+                            fromAddress = fromToken.token.address,
+                            toAddress = toToken.token.address,
+                            amount = fromAmountFromUi,
+                            callback = callback
                         )
-                        callback(result)
+                    }
+                } else if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
+                    // Legacy state handling
+                    Log.d("SwapViewModel", "Using legacy swap state")
+                    
+                    // Check if cross-chain in legacy state too
+                    if (fromAsset.tokenAsset.chainId != toAsset.tokenAsset.chainId) {
+                        Log.e("SwapViewModel", "❌ Cross-chain swap attempted in legacy state (not supported)")
+                        callback("Error: Cross-chain swaps are not supported.")
                         return@launch
                     }
-                }
-
-                if (fromAsset is SelectedTokenUiState.Selected && toAsset is SelectedTokenUiState.Selected) {
-                    val amt = fromAmountLegacy.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    if (amt > 0) {
-                        val result = swapRepository.swap(
-                            fromAsset.tokenAsset.address,
-                            toAsset.tokenAsset.address,
-                            amt
-                        )
-                        callback(result)
-                    } else {
-                        callback("")
-                    }
+                    
+                    executeSwap(
+                        fromAddress = fromAsset.tokenAsset.address,
+                        toAddress = toAsset.tokenAsset.address,
+                        amount = fromAmountLegacy,
+                        callback = callback
+                    )
                 } else {
-                    callback("")
+                    Log.e("SwapViewModel", "❌ No valid tokens selected")
+                    callback("Error: Please select both FROM and TO tokens")
                 }
             } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error during swap", e)
+                callback("Error: ${e.message}")
                 e.printStackTrace()
             }
+        }
+    }
+    
+    /**
+     * Execute a same-chain swap via 0x API
+     */
+    private suspend fun executeSwap(
+        fromAddress: String,
+        toAddress: String,
+        amount: String,
+        callback: (String) -> Unit
+    ) {
+        val amt = amount.replace(",", ".").toDoubleOrNull() ?: 0.0
+        if (amt > 0) {
+            val result = swapRepository.swap(
+                fromAddress,
+                toAddress,
+                amt
+            )
+            Log.d("SwapViewModel", "Swap result: $result")
+            callback(result)
+        } else {
+            Log.e("SwapViewModel", "Invalid amount: $amount")
+            callback("Error: Invalid amount")
         }
     }
 
