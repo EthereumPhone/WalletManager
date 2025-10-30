@@ -48,11 +48,13 @@ import com.core.model.NetworkChain
 import com.core.ui.DgenSearchBar
 import com.core.ui.HeaderBar
 import com.core.ui.InfoScreen
+import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.formatWithSuffix
+import com.core.ui.util.neonOpacity
 import com.feature.swap.TokenSelectionMode
 
 
@@ -69,13 +71,14 @@ fun TokenSelectorOverlay(
     secondaryColor: Color,
     onDismiss: () -> Unit,
     currentChainId: Int?,
+    selectedChainId: Int,
+    onChainSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (!isVisible) return
 
     // Search and filtering state
     var searchQuery by remember { mutableStateOf("") }
-    var selectedChainId by remember { mutableStateOf<Int?>(null) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     var isFocused by remember { mutableStateOf(false) }
@@ -264,6 +267,15 @@ fun TokenSelectorOverlay(
                                 matchesSearch && matchesChain
                             }
                         }
+                        
+                        // Separate owned and non-owned tokens
+                        val ownedTokens = remember(filteredTokens) {
+                            filteredTokens.filter { it.balance > 0 }
+                        }
+                        
+                        val allTokens = remember(filteredTokens) {
+                            filteredTokens.filter { it.balance == 0.0 }
+                        }
 
                         Column(
                             modifier = Modifier.fillMaxSize()
@@ -304,19 +316,65 @@ fun TokenSelectorOverlay(
                                         item {
                                             Spacer(Modifier.fillMaxWidth().height(8.dp))
                                         }
-                                        items(filteredTokens, key = { it.address + "_" + it.chainId }) { token ->
-                                            val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
-                                            TokenRow(
-                                                token = token,
-                                                unitPriceUsd = unitPrice,
-                                                primaryColor = primaryColor,
-                                                secondaryColor = secondaryColor,
-                                                onClick = {
-                                                    selectToToken(token)
-                                                    onDismiss()
-                                                }
-                                            )
+                                        
+                                        // OWNED section
+                                        if (ownedTokens.isNotEmpty()) {
+                                            item {
+                                                Text(
+                                                    text = "OWNED",
+                                                    fontFamily = SpaceMono,
+                                                    color = primaryColor,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    letterSpacing = 1.sp,
+                                                )
+                                            }
+                                            items(ownedTokens, key = { it.address + "_" + it.chainId + "_owned" }) { token ->
+                                                val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                                TokenRow(
+                                                    token = token,
+                                                    unitPriceUsd = unitPrice,
+                                                    primaryColor = primaryColor,
+                                                    secondaryColor = secondaryColor,
+                                                    onClick = {
+                                                        selectToToken(token)
+                                                        onDismiss()
+                                                    }
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Spacer(Modifier.fillMaxWidth().height(16.dp))
+                                            }
                                         }
+                                        
+                                        // ALL section (non-owned tokens)
+                                        if (allTokens.isNotEmpty()) {
+                                            item {
+                                                Text(
+                                                    text = "ALL",
+                                                    fontFamily = SpaceMono,
+                                                    color = primaryColor,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    letterSpacing = 1.sp,
+                                                )
+                                            }
+                                            items(allTokens, key = { it.address + "_" + it.chainId + "_all" }) { token ->
+                                                val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                                TokenRow(
+                                                    token = token,
+                                                    unitPriceUsd = unitPrice,
+                                                    primaryColor = primaryColor,
+                                                    secondaryColor = secondaryColor,
+                                                    onClick = {
+                                                        selectToToken(token)
+                                                        onDismiss()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                        
                                         item {
                                             Spacer(Modifier.fillMaxWidth().height(24.dp))
                                         }
@@ -373,7 +431,8 @@ fun TokenSelectorOverlay(
         isVisible = isChainSelectorVisible,
         selectedChainId = selectedChainId,
         onChainSelected = { chainId ->
-            selectedChainId = chainId
+            // If null (All Chains) is selected, default to Base (8453)
+            onChainSelected(chainId ?: 8453)
         },
         onDismiss = { isChainSelectorVisible = false },
         primaryColor = primaryColor,

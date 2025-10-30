@@ -107,6 +107,10 @@ class SwapViewModel @Inject constructor(
     private val _tokenSelectionMode = MutableStateFlow<TokenSelectionMode>(TokenSelectionMode.None)
     val tokenSelectionMode: StateFlow<TokenSelectionMode> = _tokenSelectionMode.asStateFlow()
 
+    // Selected chain for token selector (default to Base)
+    private val _selectedTokenChainId = MutableStateFlow<Int>(8453)
+    val selectedTokenChainId: StateFlow<Int> = _selectedTokenChainId.asStateFlow()
+
     // SwapUIState management
     private val _swapUIState = MutableStateFlow(SwapUIState())
     val swapUIState: StateFlow<SwapUIState> = _swapUIState.asStateFlow()
@@ -121,6 +125,11 @@ class SwapViewModel @Inject constructor(
         Log.d("SwapViewModel", "hideTokenOverlay")
         _isTokenOverlayVisible.value = false
         _tokenSelectionMode.value = TokenSelectionMode.None
+    }
+    
+    fun setTokenSelectorChain(chainId: Int) {
+        Log.d("SwapViewModel", "setTokenSelectorChain: chainId=$chainId")
+        _selectedTokenChainId.value = chainId
     }
     
     init {
@@ -412,9 +421,9 @@ class SwapViewModel @Inject constructor(
     val swapTokenUiState: StateFlow<SwapTokenUiState> = combine(
         swapUIState,
         searchQuery,
-        userDataRepository.userData
-    ) { uiState, query, userData ->
-        Triple(uiState.fromToken?.token, query, userData.walletNetwork.toInt())
+        selectedTokenChainId
+    ) { uiState, query, chainId ->
+        Triple(uiState.fromToken?.token, query, chainId)
     }.flatMapLatest { (fromToken, query, chainId) ->
         getSwappableTokensForSelection(
             excludeToken = fromToken,

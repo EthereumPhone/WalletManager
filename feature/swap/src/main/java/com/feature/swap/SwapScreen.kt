@@ -106,6 +106,7 @@ internal fun SwapScreen(
     val swapUIState by viewModel.swapUIState.collectAsStateWithLifecycle()
     val selectionMode by viewModel.tokenSelectionMode.collectAsStateWithLifecycle()
     val tokenListUi by viewModel.swapTokenUiState.collectAsStateWithLifecycle()
+    val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
     
     // Debug logging
     LaunchedEffect(swapUIState) {
@@ -173,7 +174,9 @@ internal fun SwapScreen(
         primaryColor = primaryColor,
         secondaryColor = secondaryColor,
         onDismiss = { viewModel.hideTokenOverlay() },
-        currentChainId = toTokens.firstOrNull()?.chainId
+        currentChainId = toTokens.firstOrNull()?.chainId,
+        selectedChainId = selectedTokenChainId,
+        onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) }
     )
 }
 
