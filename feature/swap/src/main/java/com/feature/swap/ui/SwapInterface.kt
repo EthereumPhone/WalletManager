@@ -43,17 +43,20 @@ fun SwapInterface(
             formattedMaxFiatAmount = uiState.fromToken?.formattedMaxFiatAmount ?: "0.00",
             useMaxAmount = uiState.fromUseMaxAmount,
             title = uiState.fromTitle,
-            secondaryContent = { readOnly ->
+            secondaryContent = { isSelectable ->
                 TokenSelector(
                     token = uiState.fromToken,
                     primaryColor = primaryColor,
                     secondaryColor = secondaryColor,
                     onClick = uiState.fromOnTokenClick,
-                    isSelectable = !readOnly
+                    isSelectable = isSelectable
                 )
             },
             onAmountChange = uiState.fromOnAmountChange,
             onMaxClick = uiState.fromOnMaxClick,
+            readOnly = uiState.fromReadOnly,
+            maxClickable = !uiState.fromReadOnly,
+            secondarySelectable = true,
         )
 
         Box(
@@ -77,17 +80,20 @@ fun SwapInterface(
             useMaxAmount = uiState.toUseMaxAmount,
             title = uiState.toTitle,
             showMaxAmount = false,
-            secondaryContent = { readOnly ->
+            secondaryContent = { isSelectable ->
                 TokenSelector(
                     token = uiState.toToken,
                     primaryColor = primaryColor,
                     secondaryColor = secondaryColor,
                     onClick = uiState.toOnTokenClick,
-                    isSelectable = !readOnly
+                    isSelectable = isSelectable
                 )
             },
             onAmountChange = uiState.toOnAmountChange,
             onMaxClick = uiState.toOnMaxClick,
+            readOnly = uiState.toReadOnly,
+            maxClickable = false,
+            secondarySelectable = true,
         )
     }
 }

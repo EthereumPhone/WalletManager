@@ -11,6 +11,7 @@ import com.core.data.repository.GroupedTokenRepository
 import com.core.data.repository.TerminalRepository
 import com.core.data.repository.TerminalEvent
 import com.core.domain.GetAllGroupedTokensUsecase
+import com.core.domain.GetAllTokensUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetSwappableTokensForSelection
 import com.core.domain.QueryTokenAssetsByNetwork
@@ -51,6 +52,7 @@ class SwapViewModel @Inject constructor(
     private val swapRepository: SwapRepository,
     private val savedStateHandle: SavedStateHandle,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
+    private val getAllTokensUsecase: GetAllTokensUsecase,
     private val groupedTokenRepository: GroupedTokenRepository,
     private val getSwappableTokensForSelection: GetSwappableTokensForSelection,
     private val terminalRepository: TerminalRepository,
@@ -78,6 +80,23 @@ class SwapViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = GroupedAssetsUiState.Loading
+        )
+
+    // Individual tokens by chain for token selection overlay
+    val fromTokensState: StateFlow<FromTokensUiState> =
+        getAllTokensUsecase().map { tokens ->
+            if (tokens.isEmpty()) {
+                FromTokensUiState.Empty
+            } else {
+                // Filter tokens with balance > 0 and sort by balance descending
+                val tokensWithBalance = tokens.filter { it.balance > 0.0 }
+                    .sortedByDescending { it.balance }
+                FromTokensUiState.Success(tokensWithBalance)
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = FromTokensUiState.Loading
         )
 
     // Token overlay visibility state
@@ -133,15 +152,15 @@ class SwapViewModel @Inject constructor(
     
     private fun observeAndSetDefaultToken() {
         viewModelScope.launch {
-            // Only collect until we find a success state with assets
-            groupedTokenAssetState
-                .filter { it is GroupedAssetsUiState.Success && it.assets.isNotEmpty() }
+            // Only collect until we find a success state with tokens
+            fromTokensState
+                .filter { it is FromTokensUiState.Success && it.tokens.isNotEmpty() }
                 .first()
                 .let { state ->
-                    if (state is GroupedAssetsUiState.Success && _swapUIState.value.fromToken == null) {
-                        // Get the highest value token (first in the sorted list)
-                        val highestToken = state.assets.first()
-                        selectTokenFromCarousel(highestToken.groupId, setAsDefault = true)
+                    if (state is FromTokensUiState.Success && _swapUIState.value.fromToken == null) {
+                        // Get the highest balance token (first in the sorted list)
+                        val highestBalanceToken = state.tokens.first()
+                        selectFromTokenAsset(highestBalanceToken)
                     }
                 }
         }
@@ -284,6 +303,35 @@ class SwapViewModel @Inject constructor(
                     toUseMaxAmount = false
                 )
             }
+            hideTokenOverlay()
+        }
+    }
+    
+    fun selectFromTokenAsset(tokenAsset: TokenAsset) {
+        viewModelScope.launch {
+            Log.d("SwapViewModel", "selectFromTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
+            
+            // Format the balance for display
+            val formattedBalance = String.format("%.6f", tokenAsset.balance).trimEnd('0').trimEnd('.')
+            
+            val swapToken = SwapToken(
+                token = tokenAsset,
+                balance = formattedBalance,
+                fiatBalance = "", // TODO: Add price calculation
+                formattedMaxAmount = formattedBalance,
+                formattedMaxFiatAmount = "" // TODO: Add fiat calculation
+            )
+            
+            _swapUIState.update { currentState ->
+                currentState.copy(
+                    fromToken = swapToken,
+                    fromCurrentAmount = "",
+                    fromCurrentFiatAmount = "",
+                    fromUseMaxAmount = false
+                )
+            }
+            
+            Log.d("SwapViewModel", "FROM token updated. Current: ${_swapUIState.value.fromToken?.token?.symbol}")
             hideTokenOverlay()
         }
     }
@@ -685,4 +733,13 @@ sealed interface GroupedAssetsUiState {
     data class Success(
         val assets: List<TokenGroupAssetOverview>
     ) : GroupedAssetsUiState
+}
+
+sealed interface FromTokensUiState {
+    object Loading : FromTokensUiState
+    object Error : FromTokensUiState
+    object Empty : FromTokensUiState
+    data class Success(
+        val tokens: List<TokenAsset>
+    ) : FromTokensUiState
 }

@@ -101,6 +101,7 @@ internal fun SwapScreen(
 
     // Collect states from SwapViewModel
     val groupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
+    val fromTokensUiState by viewModel.fromTokensState.collectAsStateWithLifecycle()
     val isTokenOverlayVisible by viewModel.isTokenOverlayVisible.collectAsStateWithLifecycle()
     val swapUIState by viewModel.swapUIState.collectAsStateWithLifecycle()
     val selectionMode by viewModel.tokenSelectionMode.collectAsStateWithLifecycle()
@@ -156,7 +157,7 @@ internal fun SwapScreen(
     }
 
     // Unified Token Selector Overlay - handles both From and To selections
-    val fromAssets = (groupedAssetsUiState as? GroupedAssetsUiState.Success)?.assets ?: emptyList()
+    val fromTokens = (fromTokensUiState as? FromTokensUiState.Success)?.tokens ?: emptyList()
     val toTokens = when (tokenListUi) {
         is SwapTokenUiState.Success -> (tokenListUi as SwapTokenUiState.Success).tokenAssets
         else -> emptyList()
@@ -165,9 +166,9 @@ internal fun SwapScreen(
     TokenSelectorOverlay(
         isVisible = isTokenOverlayVisible,
         mode = selectionMode,
-        fromAssets = fromAssets,
+        fromTokens = fromTokens,
         toTokens = toTokens,
-        selectFromGroup = { groupId -> viewModel.selectTokenFromCarousel(groupId) },
+        selectFromToken = { token -> viewModel.selectFromTokenAsset(token) },
         selectToToken = { token -> viewModel.selectToTokenAsset(token) },
         primaryColor = primaryColor,
         secondaryColor = secondaryColor,

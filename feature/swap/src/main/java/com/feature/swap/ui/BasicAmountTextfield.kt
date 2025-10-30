@@ -53,12 +53,14 @@ fun AmountTextFieldBasic(
     onMaxClick: () -> Unit,
     readOnly: Boolean = false,
     showMaxAmount: Boolean = true,
+    maxClickable: Boolean = !readOnly,
+    secondarySelectable: Boolean = !readOnly,
 ) {
     val primaryColor = SystemColorManager.primaryColor
     var toggleFiat by remember { mutableStateOf(false) }
 
     val maxAlpha by animateFloatAsState(
-        targetValue = if (useMaxAmount && !readOnly) 1f else pulseOpacity,
+        targetValue = if (useMaxAmount && maxClickable) 1f else pulseOpacity,
         animationSpec = tween(smallDuration, easing = FastOutLinearInEasing),
     )
 
@@ -112,7 +114,7 @@ fun AmountTextFieldBasic(
                     modifier = Modifier
                         .offset(y = 2.dp)
                         .then(
-                            if (!readOnly && showMaxAmount) Modifier.clickable {
+                            if (maxClickable && showMaxAmount) Modifier.clickable {
                                 val target = if (toggleFiat) formattedMaxFiatAmount else formattedMaxAmount
                                 textFieldValue = TextFieldValue(
                                     text = target,
@@ -142,7 +144,7 @@ fun AmountTextFieldBasic(
                         modifier = Modifier
                             .offset(y = 2.dp)
                             .then(
-                                if (!readOnly && showMaxAmount) Modifier.clickable {
+                                if (maxClickable && showMaxAmount) Modifier.clickable {
                                     val target = if (toggleFiat) formattedMaxFiatAmount else formattedMaxAmount
                                     textFieldValue = TextFieldValue(
                                         text = target,
@@ -206,7 +208,7 @@ fun AmountTextFieldBasic(
                     readOnly = readOnly,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                secondaryContent(readOnly)
+                secondaryContent(secondarySelectable)
 
             }
 

@@ -61,9 +61,9 @@ import com.feature.swap.TokenSelectionMode
 fun TokenSelectorOverlay(
     isVisible: Boolean,
     mode: TokenSelectionMode,
-    fromAssets: List<TokenGroupAssetOverview>,
+    fromTokens: List<TokenAsset>,
     toTokens: List<TokenAsset>,
-    selectFromGroup: (groupId: String) -> Unit,
+    selectFromToken: (TokenAsset) -> Unit,
     selectToToken: (TokenAsset) -> Unit,
     primaryColor: Color,
     secondaryColor: Color,
@@ -96,31 +96,137 @@ fun TokenSelectorOverlay(
         Column(
             modifier = Modifier.fillMaxSize().background(dgenBlack)
         ) {
-            if(mode.equals(TokenSelectionMode.From)){
-                HeaderBar(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    text = "SELECT TOKEN",
-                    onClick = onDismiss,
-                    primaryColor = primaryColor
-                )
-            }
 
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
                 when (mode) {
                     TokenSelectionMode.From -> {
-                        if (fromAssets.isNotEmpty()) {
-                            TokenCardSwapCarousel(
-                                assets = fromAssets,
-                                navigateToSend = { groupId ->
-                                    selectFromGroup(groupId)
-                                    onDismiss()
-                                },
+                        val context = LocalContext.current
+                        var priceMap by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
+
+                        LaunchedEffect(isVisible) {
+                            // Collect prices from all chains that the user has tokens on
+                            val uniqueChainIds = fromTokens.map { it.chainId }.distinct()
+                            val allPrices = mutableMapOf<String, Double>()
+                            
+                            uniqueChainIds.forEach { chainId ->
+                                runCatching {
+                                    TokenMetadataProviderContract.getTokensByChain(
+                                        context.contentResolver,
+                                        chainId
+                                    )
+                                }.onSuccess { list ->
+                                    list.forEach { token ->
+                                        allPrices[token.contractAddress.lowercase()] = token.price
+                                    }
+                                }
+                            }
+                            priceMap = allPrices
+                        }
+
+                        // Filter tokens based on search query and selected chain
+                        val filteredFromTokens = remember(fromTokens, searchQuery, selectedChainId) {
+                            fromTokens.filter { token ->
+                                val matchesSearch = searchQuery.isEmpty() || 
+                                    token.name.contains(searchQuery, ignoreCase = true) || 
+                                    token.symbol.contains(searchQuery, ignoreCase = true) ||
+                                    token.address.contains(searchQuery, ignoreCase = true)
+                                
+                                val matchesChain = selectedChainId == null || token.chainId == selectedChainId
+                                
+                                matchesSearch && matchesChain
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            // Search bar
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                            ) {
+                                DgenSearchBar(
+                                    searchValue = searchQuery,
+                                    onSearchValueChange = { searchQuery = it },
+                                    focusedSearch = isFocused,
+                                    onFocusChanged = { isFocused = it },
+                                    textColor = primaryColor,
+                                    backgroundColor = secondaryColor,
+                                    primaryColor = primaryColor,
+                                    secondaryColor = secondaryColor,
+                                    focusRequester = focusRequester,
+                                    keyboardController = keyboardController,
+                                    onClear = { searchQuery = "" },
+                                    onNavigateBack = onDismiss,
+                                    selectedChainId = selectedChainId,
+                                    onNetworkClick = {
+                                        isChainSelectorVisible = true
+                                    }
+                                )
+                            }
+
+                            Box {
+                                if (filteredFromTokens.isNotEmpty()) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        item {
+                                            Spacer(Modifier.fillMaxWidth().height(8.dp))
+                                        }
+                                        
+                                        items(filteredFromTokens, key = { it.address + "_" + it.chainId }) { token ->
+                                            val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
+                                            TokenRow(
+                                                token = token,
+                                                unitPriceUsd = unitPrice,
                                 primaryColor = primaryColor,
                                 secondaryColor = secondaryColor,
-                                modifier = Modifier.fillMaxSize().offset(y = -8.dp)
-                            )
+                                                onClick = {
+                                                    selectFromToken(token)
+                                                    onDismiss()
+                                                }
+                                            )
+                                        }
+
+                                        item {
+                                            Spacer(Modifier.fillMaxWidth().height(24.dp))
+                                        }
+                                    }
+                                } else {
+                                    InfoScreen(
+                                        description = "No tokens available.",
+                                        primaryColor = primaryColor
+                                    )
+                                }
+
+                                // Top gradient fade
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(24.dp)
+                                        .align(Alignment.TopCenter)
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(dgenBlack, Color.Transparent)
+                                            )
+                                        ).zIndex(3f)
+                                )
+
+                                // Bottom gradient fade
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(32.dp)
+                                        .align(Alignment.BottomCenter).background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(Color.Transparent, dgenBlack)
+                                            )
+                                        )
+                                        .zIndex(3f)
+                                )
+                            }
                         }
                     }
                     TokenSelectionMode.To -> {
@@ -196,32 +302,11 @@ fun TokenSelectorOverlay(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         item {
-                                            Spacer(Modifier.fillMaxWidth().height(16.dp))
+                                            Spacer(Modifier.fillMaxWidth().height(8.dp))
                                         }
-                                        if (fromAssets.isNotEmpty()) {
-                                            items(fromAssets, key = { it.groupId }) { group ->
-                                                ToTokenRow(
-                                                    name = group.name,
-                                                    symbol = group.symbol,
-                                                    logoUrl = group.logoUrl,
-                                                    unitPriceUsd = 0.0,
-                                                    primaryColor = primaryColor,
-                                                    secondaryColor = secondaryColor,
-                                                    onClick = {
-                                                        selectFromGroup(group.groupId)
-                                                        onDismiss()
-                                                    },
-                                                    chainId = null,
-                                                    displayAmount = group.formattedBalance.toDouble().formatWithSuffix()+ " " + group.symbol,
-                                                    displayUsd = "$" + (group.formattedFiatBalance ?: "0.00"),
-                                                    owned = (group.totalBalance > 0.0)
-                                                )
-                                            }
-                                        }
-
                                         items(filteredTokens, key = { it.address + "_" + it.chainId }) { token ->
                                             val unitPrice = priceMap[token.address.lowercase()] ?: 0.0
-                                            ToTokenRow(
+                                            TokenRow(
                                                 token = token,
                                                 unitPriceUsd = unitPrice,
                                                 primaryColor = primaryColor,
@@ -231,6 +316,9 @@ fun TokenSelectorOverlay(
                                                     onDismiss()
                                                 }
                                             )
+                                        }
+                                        item {
+                                            Spacer(Modifier.fillMaxWidth().height(24.dp))
                                         }
                                     }
                                 }
