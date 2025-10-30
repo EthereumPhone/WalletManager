@@ -42,6 +42,7 @@ import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
 import com.core.ui.util.SystemColorManager
 import org.ethereumphone.walletmanager.ui.rememberWmAppState
+import com.core.data.service.WalletConnectService
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -129,12 +130,26 @@ class MainActivity() : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent) {
-        if (intent.action == Intent.ACTION_VIEW && intent.data?.scheme == "ethereum") {
-            Log.d("MainActivity", "Processing EIP-681 deep link: ${intent.data}")
-            coroutineScope.launch {
-                val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
-                withContext(Dispatchers.Main) {
-                    pendingDeepLink = result
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            when (uri?.scheme) {
+                "ethereum" -> {
+                    Log.d("MainActivity", "Processing EIP-681 deep link: $uri")
+                    coroutineScope.launch {
+                        val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
+                        withContext(Dispatchers.Main) {
+                            pendingDeepLink = result
+                        }
+                    }
+                }
+                "wc" -> {
+                    Log.d("MainActivity", "Processing WalletConnect URI: $uri")
+                    // Pass the WalletConnect URI to the service
+                    WalletConnectService.pair(this, uri.toString())
+                    
+                    // Close the activity immediately so user doesn't see the app open
+                    // The connection will happen in the background via the service
+                    finish()
                 }
             }
         }

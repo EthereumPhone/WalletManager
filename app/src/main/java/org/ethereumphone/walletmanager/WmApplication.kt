@@ -32,6 +32,9 @@ import okhttp3.OkHttpClient
 import org.ethereumphone.walletsdk.WalletSDK
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import com.reown.android.Core
+import com.reown.android.CoreClient
+import com.core.data.service.WalletConnectService
 
 @HiltAndroidApp
 class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObserver, ImageLoaderFactory {
@@ -57,11 +60,56 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
     override fun onCreate() {
         super<Application>.onCreate()
         
+        // Initialize WalletConnect CoreClient
+        initializeWalletConnect()
+        
         // Register lifecycle observer to track app foreground/background state
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         
         // Initialize workers early in the app lifecycle
         initializeWorkers()
+    }
+    
+    private fun initializeWalletConnect() {
+        try {
+            val projectId = com.core.data.BuildConfig.WALLETCONNECT_PROJECT_ID
+            if (projectId.isBlank()) {
+                Log.w(TAG, "WalletConnect Project ID not configured. WalletConnect features will not work.")
+                return
+            }
+            
+            Log.d(TAG, "Initializing WalletConnect CoreClient...")
+            
+            val serverUrl = "wss://relay.walletconnect.com?projectId=$projectId"
+            val appMetaData = Core.Model.AppMetaData(
+                name = "Wallet Manager",
+                description = "ethOS Wallet Manager",
+                url = "https://ethosmobile.org",
+                icons = listOf("https://ethosmobile.org/icon.png"),
+                redirect = "walletmanager://wc"
+            )
+            
+            // Initialize CoreClient
+            CoreClient.initialize(
+                metaData = appMetaData,
+                relayServerUrl = serverUrl,
+                application = this,
+                onError = { error ->
+                    Log.e(TAG, "WalletConnect CoreClient initialization error: ${error.throwable.message}", error.throwable)
+                }
+            )
+            
+            Log.d(TAG, "WalletConnect CoreClient initialized successfully")
+            
+            // Start the service after a delay to allow CoreClient to establish relay connection
+            applicationScope.launch {
+                delay(1500)
+                Log.d(TAG, "Starting WalletConnect service...")
+                WalletConnectService.start(this@WmApplication)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize WalletConnect", e)
+        }
     }
     
     private fun initializeWorkers() {
