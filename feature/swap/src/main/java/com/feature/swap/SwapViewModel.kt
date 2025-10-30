@@ -319,42 +319,19 @@ class SwapViewModel @Inject constructor(
                 if (!isValidBridgePair) {
                     Log.w("SwapViewModel", "Invalid cross-chain pair: $fromSymbol (chain ${currentFromToken.token.chainId}) -> $toSymbol (chain ${tokenAsset.chainId})")
                     
-                    // Strategy: Try to find a same-chain alternative, otherwise unselect TO token
-                    val sameChainAlternative = findTokenBySymbolAndChain(toSymbol, currentFromToken.token.chainId)
-                    
-                    if (sameChainAlternative != null) {
-                        // Found same token on FROM chain - use that instead
-                        Log.d("SwapViewModel", "Auto-switching TO token to $toSymbol on chain ${currentFromToken.token.chainId} (same chain as FROM)")
-                        val swapToken = SwapToken(
-                            token = sameChainAlternative,
-                            balance = "",
-                            fiatBalance = "",
-                            formattedMaxAmount = "",
-                            formattedMaxFiatAmount = ""
+                    // Unselect TO token
+                    Log.d("SwapViewModel", "Unselecting TO token due to cross-chain attempt")
+                    _swapUIState.update { currentState ->
+                        currentState.copy(
+                            toToken = null,
+                            toCurrentAmount = "",
+                            toCurrentFiatAmount = "",
+                            toUseMaxAmount = false
                         )
-                        _swapUIState.update { currentState ->
-                            currentState.copy(
-                                toToken = swapToken,
-                                toCurrentAmount = "",
-                                toCurrentFiatAmount = "",
-                                toUseMaxAmount = false
-                            )
-                        }
-                    } else {
-                        // No same-chain alternative found - unselect TO token
-                        Log.d("SwapViewModel", "No same-chain alternative found. Unselecting TO token.")
-                        _swapUIState.update { currentState ->
-                            currentState.copy(
-                                toToken = null,
-                                toCurrentAmount = "",
-                                toCurrentFiatAmount = "",
-                                toUseMaxAmount = false
-                            )
-                        }
-                        // Show toast notification with chain name
-                        val chainName = NetworkChain.getNetworkByChainId(currentFromToken.token.chainId)?.name ?: "chain ${currentFromToken.token.chainId}"
-                        _toastMessage.value = "Cross-chain swap not supported. Select a token on $chainName"
                     }
+                    
+                    // Show simple toast notification
+                    _toastMessage.value = "Cross-chain swaps not supported"
                     
                     hideTokenOverlay()
                     return@launch
@@ -362,12 +339,15 @@ class SwapViewModel @Inject constructor(
             }
             
             // Valid selection (same chain or valid bridge pair) - proceed normally
+            // Format the balance for display
+            val formattedBalance = String.format("%.6f", tokenAsset.balance).trimEnd('0').trimEnd('.')
+            
             val swapToken = SwapToken(
                 token = tokenAsset,
-                balance = "",
-                fiatBalance = "",
-                formattedMaxAmount = "",
-                formattedMaxFiatAmount = ""
+                balance = formattedBalance,
+                fiatBalance = "", // TODO: Add price calculation
+                formattedMaxAmount = formattedBalance,
+                formattedMaxFiatAmount = "" // TODO: Add fiat calculation
             )
             _swapUIState.update { currentState ->
                 currentState.copy(
@@ -393,11 +373,31 @@ class SwapViewModel @Inject constructor(
     ): TokenAsset? {
         return try {
             val allTokens = getAllTokensUsecase().first()
-            allTokens.find { 
+            
+            Log.d("SwapViewModel", "findTokenBySymbolAndChain - Looking for: symbol=$symbol, chainId=$chainId, requireBalance=$requireBalance")
+            Log.d("SwapViewModel", "findTokenBySymbolAndChain - Total tokens available: ${allTokens.size}")
+            
+            // Find all matching tokens
+            val matches = allTokens.filter { 
                 it.symbol.uppercase() == symbol.uppercase() && 
-                it.chainId == chainId &&
-                (!requireBalance || it.balance > 0.0)
+                it.chainId == chainId
             }
+            
+            Log.d("SwapViewModel", "findTokenBySymbolAndChain - Found ${matches.size} matches for $symbol on chain $chainId")
+            matches.forEach { token ->
+                Log.d("SwapViewModel", "  - Match: address=${token.address}, balance=${token.balance}, chainId=${token.chainId}")
+            }
+            
+            // Return the token with the highest balance (prefer owned tokens)
+            val result = if (requireBalance) {
+                matches.filter { it.balance > 0.0 }.maxByOrNull { it.balance }
+            } else {
+                // Even if not requiring balance, prefer tokens with balance
+                matches.maxByOrNull { it.balance } ?: matches.firstOrNull()
+            }
+            
+            Log.d("SwapViewModel", "findTokenBySymbolAndChain - Selected token: address=${result?.address}, balance=${result?.balance}")
+            result
         } catch (e: Exception) {
             Log.e("SwapViewModel", "Error finding token by symbol and chain", e)
             null
