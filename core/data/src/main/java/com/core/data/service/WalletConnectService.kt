@@ -96,7 +96,9 @@ class WalletConnectService : Service() {
         createNotificationChannel()
         
         // Start foreground service with initial notification
-        startForeground(NOTIFICATION_ID, createNotification("WalletConnect", "Ready to connect"))
+        val initialNotification = createNotification("WalletConnect", "Ready to connect")
+        startForeground(NOTIFICATION_ID, initialNotification)
+        Log.d(TAG, "Started foreground service with initial notification")
         
         // Observe connection state
         observeConnectionState()
@@ -106,6 +108,7 @@ class WalletConnectService : Service() {
         
         // Observe active sessions
         observeActiveSessions()
+        Log.d(TAG, "All observers set up")
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -231,16 +234,21 @@ class WalletConnectService : Service() {
     private fun observeActiveSessions() {
         activeSessionsJob = walletConnectManager.activeSessions
             .onEach { sessions ->
-                Log.d(TAG, "Active sessions updated: ${sessions.size} session(s)")
+                Log.d(TAG, "Active sessions flow update: ${sessions.size} session(s)")
+                sessions.forEach { session ->
+                    Log.d(TAG, "  - Session: ${session.peerName} (${session.topic})")
+                }
                 
                 if (sessions.isNotEmpty()) {
                     // Update notification to show connected dApps
                     val sessionNames = sessions.joinToString(", ") { it.peerName }
+                    Log.d(TAG, "Updating notification: Connected to ${sessions.size} dApp(s) - $sessionNames")
                     updateNotification(
                         "Connected to ${sessions.size} dApp(s)",
                         sessionNames
                     )
                 } else {
+                    Log.d(TAG, "Updating notification: Ready to connect")
                     updateNotification("WalletConnect", "Ready to connect")
                 }
             }
@@ -431,14 +439,17 @@ class WalletConnectService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "WalletConnect",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "WalletConnect session status"
-                setShowBadge(false)
+                setShowBadge(true)
+                enableVibration(false)
+                enableLights(false)
             }
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Notification channel created")
         }
     }
     
@@ -478,9 +489,15 @@ class WalletConnectService : Service() {
     }
     
     private fun updateNotification(title: String, content: String) {
-        val notification = createNotification(title, content)
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        Log.d(TAG, "updateNotification called: title='$title', content='$content'")
+        try {
+            val notification = createNotification(title, content)
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, notification)
+            Log.d(TAG, "Notification updated successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update notification", e)
+        }
     }
     
     // Helper functions

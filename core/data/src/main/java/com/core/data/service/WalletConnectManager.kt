@@ -184,7 +184,9 @@ class WalletConnectManager(private val application: Application) {
                             peerIcon = session.metaData?.icons?.firstOrNull() ?: "",
                             accounts = session.namespaces.values.flatMap { it.accounts }
                         )
+                        Log.d(TAG, "Adding session to active sessions: ${activeSession.peerName}")
                         _activeSessions.value = _activeSessions.value + activeSession
+                        Log.d(TAG, "Active sessions count after adding: ${_activeSessions.value.size}")
                     }
                     is Wallet.Model.SettledSessionResponse.Error -> {
                         Log.e(TAG, "Session settlement error: ${settleSessionResponse.errorMessage}")

@@ -44,6 +44,8 @@ import com.core.ui.util.SystemColorManager
 import org.ethereumphone.walletmanager.ui.rememberWmAppState
 import com.core.data.service.WalletConnectService
 import javax.inject.Inject
+import android.Manifest
+import android.os.Build
 
 @AndroidEntryPoint
 class MainActivity() : ComponentActivity() {
@@ -73,12 +75,24 @@ class MainActivity() : ComponentActivity() {
 
     private var pendingDeepLink by mutableStateOf<Eip681DeepLinkResult?>(null)
 
-    
+    // Notification permission launcher for Android 13+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            Log.d("MainActivity", "Notification permission granted")
+        } else {
+            Log.w("MainActivity", "Notification permission denied")
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        // Request notification permission for Android 13+
+        requestNotificationPermission()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         // Hide the status bar
@@ -183,6 +197,31 @@ class MainActivity() : ComponentActivity() {
         // Synchronously destroy the touch handler to ensure immediate cleanup
         terminalSDK?.destroyTouchHandlerSync()
 
+    }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d("MainActivity", "Notification permission already granted")
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // User previously denied, show rationale and request again
+                    Log.d("MainActivity", "Requesting notification permission (with rationale)")
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    // First time asking, request permission
+                    Log.d("MainActivity", "Requesting notification permission (first time)")
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            Log.d("MainActivity", "Notification permission not required (Android < 13)")
+        }
     }
 
 }
