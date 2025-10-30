@@ -92,13 +92,15 @@ class WalletConnectService : Service() {
             }
         }
         
-        // Create notification channel
+        // Create notification channels
         createNotificationChannel()
+        createErrorNotificationChannel()
         
-        // Start foreground service with initial notification
-        val initialNotification = createNotification("WalletConnect", "Ready to connect")
+        // Start foreground service with a temporary notification (will be updated when sessions connect)
+        // Use a basic notification that we'll cancel immediately if no sessions exist
+        val initialNotification = createSummaryNotification(0)
         startForeground(NOTIFICATION_ID, initialNotification)
-        Log.d(TAG, "Started foreground service with initial notification")
+        Log.d(TAG, "Started foreground service")
         
         // Observe connection state
         observeConnectionState()
@@ -207,11 +209,12 @@ class WalletConnectService : Service() {
                         Log.d(TAG, "Session connected: ${state.topic}")
                     }
                     is ConnectionState.Disconnected -> {
-                        updateNotification("WalletConnect", "Ready to connect")
+                        // Notification will be handled by observeActiveSessions based on remaining sessions
+                        Log.d(TAG, "Session disconnected")
                     }
                     is ConnectionState.Error -> {
                         Log.e(TAG, "Connection error: ${state.message}")
-                        updateNotification("WalletConnect", "Error: ${state.message}")
+                        showErrorNotification("WalletConnect Error", state.message)
                     }
                 }
             }
@@ -239,18 +242,7 @@ class WalletConnectService : Service() {
                     Log.d(TAG, "  - Session: ${session.peerName} (${session.topic})")
                 }
                 
-                if (sessions.isNotEmpty()) {
-                    // Update notification to show connected dApps
-                    val sessionNames = sessions.joinToString(", ") { it.peerName }
-                    Log.d(TAG, "Updating notification: Connected to ${sessions.size} dApp(s) - $sessionNames")
-                    updateNotification(
-                        "Connected to ${sessions.size} dApp(s)",
-                        sessionNames
-                    )
-                } else {
-                    Log.d(TAG, "Updating notification: Ready to connect")
-                    updateNotification("WalletConnect", "Ready to connect")
-                }
+                updateSessionNotifications(sessions)
             }
             .launchIn(serviceScope)
     }
@@ -305,7 +297,9 @@ class WalletConnectService : Service() {
                 // Check if WalletSDK is available
                 val sdk = walletSDK
                 if (sdk == null) {
-                    Log.e(TAG, "WalletSDK is not available (probably running on emulator)")
+                    val errorMsg = "WalletSDK is not available (probably running on emulator)"
+                    Log.e(TAG, errorMsg)
+                    showErrorNotification("Request Failed", errorMsg)
                     walletConnectManager.rejectRequest(request.topic, request.requestId, "WalletSDK not available")
                     return@launch
                 }
@@ -324,7 +318,9 @@ class WalletConnectService : Service() {
                         
                         val changeResult = sdk.changeChain(chainId, rpcUrl, bundlerUrl)
                         if (changeResult == WalletSDK.DECLINE) {
-                            Log.w(TAG, "User declined chain switch")
+                            val errorMsg = "User declined chain switch to chain $chainId"
+                            Log.w(TAG, errorMsg)
+                            showErrorNotification("Chain Switch Declined", errorMsg)
                             walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined chain switch")
                             return@withContext null
                         }
@@ -415,7 +411,9 @@ class WalletConnectService : Service() {
                             capabilities.toString()
                         }
                         else -> {
-                            Log.w(TAG, "Unsupported method: ${request.method}")
+                            val errorMsg = "Unsupported method: ${request.method}"
+                            Log.w(TAG, errorMsg)
+                            showErrorNotification("Unsupported Request", errorMsg)
                             walletConnectManager.rejectRequest(request.topic, request.requestId, "Unsupported method")
                             return@withContext null
                         }
@@ -428,7 +426,9 @@ class WalletConnectService : Service() {
                     Log.d(TAG, "Successfully processed and responded to ${request.method}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to process request ${request.method}: ${e.message}", e)
+                val errorMsg = "Failed to process ${request.method}: ${e.message}"
+                Log.e(TAG, errorMsg, e)
+                showErrorNotification("Request Processing Failed", errorMsg)
                 walletConnectManager.rejectRequest(request.topic, request.requestId, "Processing failed: ${e.message}")
             }
         }
@@ -438,10 +438,10 @@ class WalletConnectService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "WalletConnect",
+                "WalletConnect Sessions",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "WalletConnect session status"
+                description = "Active WalletConnect session connections"
                 setShowBadge(true)
                 enableVibration(false)
                 enableLights(false)
@@ -449,11 +449,66 @@ class WalletConnectService : Service() {
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "Notification channel created")
+            Log.d(TAG, "Session notification channel created")
         }
     }
     
-    private fun createNotification(title: String, content: String): Notification {
+    private fun createErrorNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID_ERRORS,
+                "WalletConnect Errors",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "WalletConnect connection and operation errors"
+                setShowBadge(true)
+                enableVibration(true)
+                enableLights(true)
+            }
+            
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Error notification channel created")
+        }
+    }
+    
+    private fun updateSessionNotifications(sessions: List<ActiveSession>) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        // Always clear all existing notifications first to avoid orphaned notifications
+        notificationManager.cancelAll()
+        
+        if (sessions.isEmpty()) {
+            Log.d(TAG, "No active sessions, stopping foreground and clearing notifications")
+            // Stop foreground mode when no sessions
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            return
+        }
+        
+        if (sessions.size == 1) {
+            // Single session - show simple notification with dApp name
+            val session = sessions.first()
+            Log.d(TAG, "Single session active: ${session.peerName}")
+            val notification = createSessionNotification(session, false)
+            startForeground(NOTIFICATION_ID, notification)
+        } else {
+            // Multiple sessions - use grouped notifications
+            Log.d(TAG, "Multiple sessions active (${sessions.size}), creating grouped notifications")
+            
+            // Create individual notifications for each session
+            sessions.forEachIndexed { index, session ->
+                val sessionNotification = createSessionNotification(session, true)
+                // Use unique ID for each session (starting from 1002 to avoid conflicts)
+                notificationManager.notify(1002 + index, sessionNotification)
+            }
+            
+            // Create summary notification
+            val summaryNotification = createSummaryNotification(sessions.size)
+            startForeground(SUMMARY_NOTIFICATION_ID, summaryNotification)
+        }
+    }
+    
+    private fun createSessionNotification(session: ActiveSession, isGrouped: Boolean): Notification {
         // Create intent to open the app
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         val pendingIntent = PendingIntent.getActivity(
@@ -463,7 +518,49 @@ class WalletConnectService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
-        // Create disconnect action
+        // Create disconnect action for this specific session
+        val disconnectIntent = Intent(this, WalletConnectService::class.java).apply {
+            action = ACTION_DISCONNECT
+            putExtra(EXTRA_TOPIC, session.topic)
+        }
+        val disconnectPendingIntent = PendingIntent.getService(
+            this,
+            session.topic.hashCode(), // Use topic hash as unique request code
+            disconnectIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(session.peerName)
+            .setContentText("Connected to ${session.peerName}")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Disconnect",
+                disconnectPendingIntent
+            )
+            .setOngoing(true)
+        
+        // Add to group if this is part of a grouped notification
+        if (isGrouped) {
+            builder.setGroup(GROUP_KEY_WALLETCONNECT)
+        }
+        
+        return builder.build()
+    }
+    
+    private fun createSummaryNotification(sessionCount: Int): Notification {
+        // Create intent to open the app
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        // Create disconnect all action
         val disconnectIntent = Intent(this, WalletConnectService::class.java).apply {
             action = ACTION_DISCONNECT_ALL
         }
@@ -474,30 +571,58 @@ class WalletConnectService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
+        val title = if (sessionCount > 0) {
+            "Connected to $sessionCount dApp${if (sessionCount > 1) "s" else ""}"
+        } else {
+            "WalletConnect"
+        }
+        
+        val content = if (sessionCount > 0) {
+            "$sessionCount active connection${if (sessionCount > 1) "s" else ""}"
+        } else {
+            "Starting..."
+        }
+        
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // TODO: Replace with proper icon
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
+            .setGroup(GROUP_KEY_WALLETCONNECT)
+            .setGroupSummary(true)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Disconnect",
+                "Disconnect All",
                 disconnectPendingIntent
             )
             .setOngoing(true)
             .build()
     }
     
-    private fun updateNotification(title: String, content: String) {
-        Log.d(TAG, "updateNotification called: title='$title', content='$content'")
-        try {
-            val notification = createNotification(title, content)
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(NOTIFICATION_ID, notification)
-            Log.d(TAG, "Notification updated successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to update notification", e)
-        }
+    private fun showErrorNotification(title: String, message: String) {
+        Log.d(TAG, "Showing error notification: $title - $message")
+        
+        // Create intent to open the app
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_ERRORS)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true) // Dismiss when tapped
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+        
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(ERROR_NOTIFICATION_ID, notification)
     }
     
     // Helper functions
@@ -595,7 +720,11 @@ class WalletConnectService : Service() {
     companion object {
         private const val TAG = "WalletConnectService"
         private const val CHANNEL_ID = "walletconnect_service"
+        private const val CHANNEL_ID_ERRORS = "walletconnect_errors"
         private const val NOTIFICATION_ID = 1001
+        private const val GROUP_KEY_WALLETCONNECT = "com.walletmanager.WALLETCONNECT_SESSIONS"
+        private const val SUMMARY_NOTIFICATION_ID = 1000
+        private const val ERROR_NOTIFICATION_ID = 1099
         
         const val ACTION_PAIR = "com.core.data.service.ACTION_PAIR"
         const val ACTION_DISCONNECT = "com.core.data.service.ACTION_DISCONNECT"
