@@ -480,7 +480,7 @@ class SendViewModel @Inject constructor(
 
             _amountUiState.update {
                 it.copy(
-                    currentAmount = amount.toDouble().formatWithSuffix(),
+                    currentAmount = amount.toPlainString(),  // Keep raw numeric value without suffix
                     currentFiatAmount = it.formattedMaxFiatAmount,
                     useMaxAmount = true
                 )
