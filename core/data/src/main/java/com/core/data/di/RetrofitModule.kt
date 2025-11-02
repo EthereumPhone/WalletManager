@@ -3,7 +3,9 @@ package com.core.data.di
 import androidx.tracing.trace
 import com.core.data.BuildConfig
 import com.core.data.remote.RetrofitTokenPrice
+import com.core.data.remote.RetrofitSponsorshipPrice
 import com.core.data.remote.TokenPriceDataSource
+import com.core.data.remote.SponsorshipPriceDataSource
 import com.core.data.repository.TokenExchangeRepository
 import dagger.Binds
 import dagger.Module
@@ -22,6 +24,9 @@ interface RetrofitModule {
 
     @Binds
     fun bindNetworkTokenPrice(impl: RetrofitTokenPrice): TokenPriceDataSource
+
+    @Binds
+    fun bindSponsorshipPrice(impl: RetrofitSponsorshipPrice): SponsorshipPriceDataSource
 
 
 

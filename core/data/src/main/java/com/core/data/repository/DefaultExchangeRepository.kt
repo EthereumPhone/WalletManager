@@ -3,6 +3,7 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.model.dto.TokenAddress
 import com.core.data.remote.TokenPriceDataSource
+import com.core.data.remote.SponsorshipPriceDataSource
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenGroupDao
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
+import kotlinx.datetime.Clock
 import okio.IOException
 import java.math.BigDecimal
 import javax.inject.Inject
@@ -25,6 +27,7 @@ import javax.inject.Inject
 
 class DefaultExchangeRepository @Inject constructor(
     private val tokenPriceDataSource: TokenPriceDataSource,
+    private val sponsorshipPriceDataSource: SponsorshipPriceDataSource,
     private val exchangeDao: TokenExchangeDao,
     private val tokenBalanceRepository: TokenBalanceRepository,
     private val groupedTokenRepository: GroupedTokenRepository,
@@ -127,8 +130,37 @@ class DefaultExchangeRepository @Inject constructor(
                 }
 
                 if (entities.isNotEmpty()) {
-
                     exchangeDao.insertAllExchanges(entities)
+                }
+
+                // FALLBACK: For any addresses in this batch that still lack a USD price, query sponsorship API
+                val requestedAddresses = batch.map { it.address.lowercase() }.toSet()
+                val receivedAddresses = entities.mapNotNull { it.address?.lowercase() }.toSet()
+                val missingAddresses = requestedAddresses.minus(receivedAddresses)
+
+                if (missingAddresses.isNotEmpty()) {
+                    try {
+                        val fallback = sponsorshipPriceDataSource.fetchPricesByAddresses(missingAddresses.toList())
+                        val fallbackEntities = fallback.data.mapNotNull { item ->
+                            val metadata = batch.find { it.address.equals(item.address, ignoreCase = true) }
+                            val value = item.price_usd
+                            if (metadata != null && value != null) {
+                                TokenExchangeEntity(
+                                    symbol = metadata.symbol,
+                                    address = metadata.address,
+                                    chainId = metadata.chainId,
+                                    currency = "usd",
+                                    value = value,
+                                    timestamp = Clock.System.now()
+                                )
+                            } else null
+                        }
+                        if (fallbackEntities.isNotEmpty()) {
+                            exchangeDao.insertAllExchanges(fallbackEntities)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("DefaultExchangeRepository", "Fallback sponsorship API failed for addresses: $missingAddresses", e)
+                    }
                 }
 
             } catch (e: Exception) {
