@@ -476,11 +476,19 @@ class SendViewModel @Inject constructor(
             val maxAmount = _amountUiState.value.maxAmount.toBigDecimal()
             val chainId = (_selectedAssetUiState.value as SelectedAssetUiState.Selected).tokenAsset.chainId
 
-            val amount = sendRepository.maxAllowedSend(maxAmount,chainId)
+            val selectedAsset = (_selectedAssetUiState.value as SelectedAssetUiState.Selected).tokenAsset
+            val isNativeAsset = selectedAsset.address == selectedAsset.chainId.toString()
+            val amount = if (isNativeAsset) {
+                // Native asset (address equals chainId): leave room for gas
+                sendRepository.maxAllowedSend(maxAmount, chainId)
+            } else {
+                // ERC20: no gas from token balance, use full amount
+                maxAmount.toPlainString()
+            }
 
             _amountUiState.update {
                 it.copy(
-                    currentAmount = amount.toPlainString(),  // Keep raw numeric value without suffix
+                    currentAmount = amount,  // Keep raw numeric value without suffix
                     currentFiatAmount = it.formattedMaxFiatAmount,
                     useMaxAmount = true
                 )
