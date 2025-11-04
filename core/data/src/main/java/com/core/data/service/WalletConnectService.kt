@@ -43,6 +43,8 @@ class WalletConnectService : Service() {
     
     private var walletAddress: String = ""
     private var isWalletReady = false
+    private var hasSessions = false // Track if we've ever had sessions
+    private var serviceStartTime = 0L // Track when service started
     
     // Jobs for flow collection
     private var connectionStateJob: Job? = null
@@ -51,23 +53,83 @@ class WalletConnectService : Service() {
     
     override fun onCreate() {
         super.onCreate()
+        serviceStartTime = System.currentTimeMillis()
         Log.d(TAG, "WalletConnectService onCreate")
         
-        // CRITICAL: Start foreground immediately to avoid timeout exception
-        // Create notification channels first (required for notification)
-        createNotificationChannel()
-        createErrorNotificationChannel()
+        try {
+            // CRITICAL: Start foreground IMMEDIATELY - before anything else!
+            // Don't wait for notification channels, create a basic notification first
+            val initialNotification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // For Android O+, we need a channel, but we'll create it inline for speed
+                try {
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val channel = NotificationChannel(
+                        CHANNEL_ID,
+                        "WalletConnect Sessions",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    ).apply {
+                        setShowBadge(false)
+                        enableVibration(false)
+                        enableLights(false)
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to create channel, notification may not work", e)
+                }
+                
+                NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle("WalletConnect")
+                    .setContentText("Initializing...")
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setOngoing(true)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .build()
+            } else {
+                // For pre-O, no channel needed
+                @Suppress("DEPRECATION")
+                NotificationCompat.Builder(this)
+                    .setContentTitle("WalletConnect")
+                    .setContentText("Initializing...")
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setOngoing(true)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .build()
+            }
+            
+            // Call startForeground IMMEDIATELY
+            startForeground(NOTIFICATION_ID, initialNotification)
+            Log.d(TAG, "Started foreground service (${System.currentTimeMillis() - serviceStartTime}ms)")
+        } catch (e: Exception) {
+            Log.e(TAG, "CRITICAL: Failed to start foreground service", e)
+            // Even if we fail, try to call startForeground with a minimal notification
+            try {
+                @Suppress("DEPRECATION")
+                val emergencyNotification = NotificationCompat.Builder(this)
+                    .setContentTitle("WalletConnect")
+                    .setContentText("Starting...")
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .build()
+                startForeground(NOTIFICATION_ID, emergencyNotification)
+            } catch (e2: Exception) {
+                Log.e(TAG, "Even emergency startForeground failed", e2)
+            }
+            stopSelf()
+            return
+        }
         
-        // Start foreground service immediately with a temporary notification
-        val initialNotification = createSummaryNotification(0)
-        startForeground(NOTIFICATION_ID, initialNotification)
-        Log.d(TAG, "Started foreground service")
+        // Now that we're safely in foreground, create the error notification channel
+        try {
+            createErrorNotificationChannel()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create error notification channel", e)
+        }
         
-        // Now do the heavy initialization work
-        // Initialize WalletConnect manager
-        // CoreClient is already initialized by WmApplication and had time to connect
-        Log.d(TAG, "Creating WalletConnectManager...")
-        walletConnectManager = WalletConnectManager(application)
+        // Now do the heavy initialization work in a try-catch to not crash the service
+        try {
+            // Initialize WalletConnect manager
+            // CoreClient is already initialized by WmApplication and had time to connect
+            Log.d(TAG, "Creating WalletConnectManager...")
+            walletConnectManager = WalletConnectManager(application)
         
         // Wait for WalletConnectManager to initialize (optimized)
         serviceScope.launch {
@@ -113,6 +175,11 @@ class WalletConnectService : Service() {
         // Observe active sessions
         observeActiveSessions()
         Log.d(TAG, "All observers set up")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize WalletConnectService", e)
+            // Service is already in foreground, so it won't crash
+            // But we should handle the error gracefully
+        }
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -251,7 +318,8 @@ class WalletConnectService : Service() {
     
     private fun handleSessionProposal(proposal: Wallet.Model.SessionProposal) {
         serviceScope.launch {
-            Log.d(TAG, "Auto-approving session from ${proposal.name}")
+            val displayName = proposal.name.takeIf { it.isNotBlank() } ?: proposal.url
+            Log.d(TAG, "Auto-approving session from $displayName")
             
             // Format accounts with chain ID in CAIP-10 format
             val accounts = mutableListOf<String>()
@@ -436,41 +504,26 @@ class WalletConnectService : Service() {
         }
     }
     
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "WalletConnect Sessions",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Active WalletConnect session connections"
-                setShowBadge(true)
-                enableVibration(false)
-                enableLights(false)
-            }
-            
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "Session notification channel created")
-        }
-    }
-    
     private fun createErrorNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID_ERRORS,
-                "WalletConnect Errors",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "WalletConnect connection and operation errors"
-                setShowBadge(true)
-                enableVibration(true)
-                enableLights(true)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID_ERRORS,
+                    "WalletConnect Errors",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "WalletConnect connection and operation errors"
+                    setShowBadge(true)
+                    enableVibration(true)
+                    enableLights(true)
+                }
+                
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.createNotificationChannel(channel)
+                Log.d(TAG, "Error notification channel created")
             }
-            
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "Error notification channel created")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create error notification channel", e)
         }
     }
     
@@ -481,11 +534,31 @@ class WalletConnectService : Service() {
         notificationManager.cancelAll()
         
         if (sessions.isEmpty()) {
-            Log.d(TAG, "No active sessions, stopping foreground and clearing notifications")
-            // Stop foreground mode when no sessions
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            // Don't stop foreground immediately after starting - Android requires we stay
+            // in foreground for a minimum time after calling startForegroundService()
+            val timeSinceStart = System.currentTimeMillis() - serviceStartTime
+            val minForegroundTime = 5000L // Stay in foreground for at least 5 seconds
+            
+            if (hasSessions || timeSinceStart > minForegroundTime) {
+                // We've had sessions before or enough time has passed, safe to stop foreground
+                Log.d(TAG, "No active sessions, stopping foreground and clearing notifications")
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                // Too soon after startup, keep showing initializing notification
+                Log.d(TAG, "No active sessions yet, but keeping foreground (${timeSinceStart}ms since start)")
+                val initNotification = NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle("WalletConnect")
+                    .setContentText("Ready for connections...")
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setOngoing(true)
+                    .build()
+                startForeground(NOTIFICATION_ID, initNotification)
+            }
             return
         }
+        
+        // We have sessions, remember this
+        hasSessions = true
         
         if (sessions.size == 1) {
             // Single session - show simple notification with dApp name

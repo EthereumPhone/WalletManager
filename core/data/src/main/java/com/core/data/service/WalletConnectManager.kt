@@ -177,9 +177,13 @@ class WalletConnectManager(private val application: Application) {
                         _connectionState.value = ConnectionState.Connected(session.topic)
                         
                         // Add to active sessions
+                        val peerName = session.metaData?.name?.takeIf { it.isNotBlank() }
+                            ?: extractDomainFromUrl(session.metaData?.url ?: "")
+                            ?: "Unknown dApp"
+                        
                         val activeSession = ActiveSession(
                             topic = session.topic,
-                            peerName = session.metaData?.name ?: "Unknown",
+                            peerName = peerName,
                             peerUrl = session.metaData?.url ?: "",
                             peerIcon = session.metaData?.icons?.firstOrNull() ?: "",
                             accounts = session.namespaces.values.flatMap { it.accounts }
@@ -454,9 +458,13 @@ class WalletConnectManager(private val application: Application) {
             Log.d(TAG, "Loaded ${sessions.size} active session(s)")
             
             val activeSessions = sessions.map { session ->
+                val peerName = session.metaData?.name?.takeIf { it.isNotBlank() }
+                    ?: extractDomainFromUrl(session.metaData?.url ?: "")
+                    ?: "Unknown dApp"
+                
                 ActiveSession(
                     topic = session.topic,
-                    peerName = session.metaData?.name ?: "Unknown",
+                    peerName = peerName,
                     peerUrl = session.metaData?.url ?: "",
                     peerIcon = session.metaData?.icons?.firstOrNull() ?: "",
                     accounts = session.namespaces.values.flatMap { it.accounts }
@@ -472,6 +480,28 @@ class WalletConnectManager(private val application: Application) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load active sessions", e)
+        }
+    }
+    
+    /**
+     * Extract a friendly domain name from a URL
+     * E.g., "https://zapper.xyz" -> "zapper.xyz"
+     */
+    private fun extractDomainFromUrl(url: String): String? {
+        return try {
+            if (url.isBlank()) return null
+            
+            // Remove protocol
+            val withoutProtocol = url.replace(Regex("^https?://"), "")
+            
+            // Remove path and query params
+            val domain = withoutProtocol.split("/", "?", "#").firstOrNull() ?: return null
+            
+            // Return the domain
+            domain.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to extract domain from URL: $url", e)
+            null
         }
     }
     
