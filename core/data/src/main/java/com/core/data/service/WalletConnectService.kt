@@ -53,26 +53,38 @@ class WalletConnectService : Service() {
         super.onCreate()
         Log.d(TAG, "WalletConnectService onCreate")
         
+        // CRITICAL: Start foreground immediately to avoid timeout exception
+        // Create notification channels first (required for notification)
+        createNotificationChannel()
+        createErrorNotificationChannel()
+        
+        // Start foreground service immediately with a temporary notification
+        val initialNotification = createSummaryNotification(0)
+        startForeground(NOTIFICATION_ID, initialNotification)
+        Log.d(TAG, "Started foreground service")
+        
+        // Now do the heavy initialization work
         // Initialize WalletConnect manager
         // CoreClient is already initialized by WmApplication and had time to connect
         Log.d(TAG, "Creating WalletConnectManager...")
         walletConnectManager = WalletConnectManager(application)
         
-        // Wait for WalletConnectManager to initialize
+        // Wait for WalletConnectManager to initialize (optimized)
         serviceScope.launch {
             Log.d(TAG, "Waiting for WalletConnectManager to initialize...")
             var attempts = 0
-            while (!walletConnectManager.isReady() && attempts < 40) {
-                kotlinx.coroutines.delay(500)
+            // Reduced polling interval from 500ms to 100ms and max wait from 20s to 5s
+            while (!walletConnectManager.isReady() && attempts < 50) {
+                kotlinx.coroutines.delay(100)
                 attempts++
-                if (attempts % 6 == 0) {
-                    Log.d(TAG, "Still waiting for WalletConnectManager... (${attempts * 500}ms elapsed)")
+                if (attempts % 10 == 0) {
+                    Log.d(TAG, "Still waiting for WalletConnectManager... (${attempts * 100}ms elapsed)")
                 }
             }
             if (walletConnectManager.isReady()) {
-                Log.d(TAG, "WalletConnectManager is ready after ${attempts * 500}ms")
+                Log.d(TAG, "WalletConnectManager is ready after ${attempts * 100}ms")
             } else {
-                Log.w(TAG, "WalletConnectManager not ready after ${attempts * 500}ms")
+                Log.w(TAG, "WalletConnectManager not ready after ${attempts * 100}ms")
             }
         }
         
@@ -91,16 +103,6 @@ class WalletConnectService : Service() {
                 Log.e(TAG, "Failed to get wallet address", e)
             }
         }
-        
-        // Create notification channels
-        createNotificationChannel()
-        createErrorNotificationChannel()
-        
-        // Start foreground service with a temporary notification (will be updated when sessions connect)
-        // Use a basic notification that we'll cancel immediately if no sessions exist
-        val initialNotification = createSummaryNotification(0)
-        startForeground(NOTIFICATION_ID, initialNotification)
-        Log.d(TAG, "Started foreground service")
         
         // Observe connection state
         observeConnectionState()
@@ -168,7 +170,7 @@ class WalletConnectService : Service() {
     
     private fun pairWithUri(uri: String) {
         serviceScope.launch {
-            // Wait for wallet to be ready
+            // Wait for wallet to be ready (optimized)
             var attempts = 0
             while (!isWalletReady && attempts < 30) {
                 kotlinx.coroutines.delay(100)
@@ -179,15 +181,15 @@ class WalletConnectService : Service() {
                 Log.w(TAG, "Wallet not ready after ${attempts * 100}ms, but proceeding with pairing")
             }
             
-            // Wait for WalletKit to be ready
+            // Wait for WalletKit to be ready (optimized - reduced from 500ms to 100ms intervals)
             attempts = 0
-            while (!walletConnectManager.isReady() && attempts < 40) {
-                kotlinx.coroutines.delay(500)
+            while (!walletConnectManager.isReady() && attempts < 50) {
+                kotlinx.coroutines.delay(100)
                 attempts++
             }
             
             if (!walletConnectManager.isReady()) {
-                Log.w(TAG, "WalletKit may not be fully ready after ${attempts * 500}ms, but proceeding with pairing")
+                Log.w(TAG, "WalletKit may not be fully ready after ${attempts * 100}ms, but proceeding with pairing")
             }
             
             Log.d(TAG, "Initiating WalletConnect pairing")

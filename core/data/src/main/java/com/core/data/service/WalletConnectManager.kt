@@ -48,8 +48,9 @@ class WalletConnectManager(private val application: Application) {
         kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
             Log.d(TAG, "Starting WalletKit initialization coroutine in GlobalScope")
             try {
-                // Wait longer for CoreClient (initialized in Application) to fully connect to relay
-                kotlinx.coroutines.delay(2000)
+                // Small delay to ensure CoreClient is ready - reduced from 2000ms to 800ms
+                // This is a safer middle ground that still provides significant speedup
+                kotlinx.coroutines.delay(800)
                 Log.d(TAG, "About to call initializeWalletKit()")
                 initializeWalletKit()
             } catch (e: Exception) {
@@ -81,13 +82,12 @@ class WalletConnectManager(private val application: Application) {
             
             isInitialized = true
             
-            // Give WalletKit additional time to fully connect to relay
+            // Mark as ready immediately - WalletKit will handle connection state internally
+            isWalletKitReady = true
+            Log.d(TAG, "WalletKit initialized and ready")
+            
+            // Load existing sessions
             scope.launch {
-                kotlinx.coroutines.delay(1000)
-                isWalletKitReady = true
-                Log.d(TAG, "WalletKit fully ready and connected")
-                
-                // Load existing sessions
                 loadActiveSessions()
             }
             
