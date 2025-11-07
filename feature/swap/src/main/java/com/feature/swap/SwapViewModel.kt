@@ -62,6 +62,8 @@ class SwapViewModel @Inject constructor(
     private val terminalRepository: TerminalRepository,
     ): ViewModel() {
 
+    private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
+
     val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
         WalletDataUiState.Success(it)
     }.stateIn(
@@ -153,6 +155,11 @@ class SwapViewModel @Inject constructor(
     
     fun setTokenSelectorChain(chainId: Int) {
         Log.d("SwapViewModel", "setTokenSelectorChain: chainId=$chainId")
+        if (chainId !in supportedSwapChainIds) {
+            Log.w("SwapViewModel", "Selected unsupported chain for swaps: $chainId")
+            _toastMessage.value = swapsUnsupportedMessage(chainId)
+            return
+        }
         _selectedTokenChainId.value = chainId
     }
     
@@ -565,6 +572,15 @@ class SwapViewModel @Inject constructor(
             val swapToken = convertToSwapToken(selectedAsset, groupId)
             Log.d("SwapViewModel", "Converted to SwapToken: ${swapToken.token.symbol} on chain ${swapToken.token.chainId}")
             
+            if (swapToken.token.chainId !in supportedSwapChainIds) {
+                Log.w("SwapViewModel", "Selected token on unsupported chain ${swapToken.token.chainId}")
+                _toastMessage.value = swapsUnsupportedMessage(swapToken.token.chainId)
+                if (!setAsDefault) {
+                    hideTokenOverlay()
+                }
+                return@launch
+            }
+            
             when (targetMode) {
                 TokenSelectionMode.From -> {
                     Log.d("SwapViewModel", "Updating FROM token to ${swapToken.token.symbol}")
@@ -607,6 +623,13 @@ class SwapViewModel @Inject constructor(
     fun selectToTokenAsset(tokenAsset: TokenAsset) {
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectToTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
+            
+            if (tokenAsset.chainId !in supportedSwapChainIds) {
+                Log.w("SwapViewModel", "Attempted to select TO token on unsupported chain ${tokenAsset.chainId}")
+                _toastMessage.value = swapsUnsupportedMessage(tokenAsset.chainId)
+                hideTokenOverlay()
+                return@launch
+            }
             
             lastFetchParams = null // Clear cached params when token changes
             val currentFromToken = _swapUIState.value.fromToken
@@ -717,6 +740,13 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectFromTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
+            if (tokenAsset.chainId !in supportedSwapChainIds) {
+                Log.w("SwapViewModel", "Attempted to select FROM token on unsupported chain ${tokenAsset.chainId}")
+                _toastMessage.value = swapsUnsupportedMessage(tokenAsset.chainId)
+                hideTokenOverlay()
+                return@launch
+            }
+            
             lastFetchParams = null // Clear cached params when token changes
             
             // Format the balance for display (showing 6 decimals max)
@@ -762,8 +792,10 @@ class SwapViewModel @Inject constructor(
             
             Log.d("SwapViewModel", "convertToSwapToken: Found ${tokensInGroup.size} tokens in group")
             
+            val supportedTokens = tokensInGroup.filter { supportedSwapChainIds.contains(it.chainId) }
+            
             // Get the token with the highest fiat balance (most valuable chain for this token)
-            val primaryToken = tokensInGroup.maxByOrNull { it.fiatAmount }
+            val primaryToken = (if (supportedTokens.isNotEmpty()) supportedTokens else tokensInGroup).maxByOrNull { it.fiatAmount }
             
             val tokenAsset = if (primaryToken != null) {
                 Log.d("SwapViewModel", "convertToSwapToken: Using primary token: ${primaryToken.symbol} on chain ${primaryToken.chainId}")
@@ -825,6 +857,19 @@ class SwapViewModel @Inject constructor(
             )
         }
     }
+
+    private fun chainDisplayName(chainId: Int): String = when (chainId) {
+        1 -> "Ethereum"
+        10 -> "Optimism"
+        137 -> "Polygon"
+        42161 -> "Arbitrum"
+        8453 -> "Base"
+        7777777 -> "Zora"
+        else -> "chain $chainId"
+    }
+
+    private fun swapsUnsupportedMessage(chainId: Int): String =
+        "Swaps on ${chainDisplayName(chainId)} are not supported yet."
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
 
