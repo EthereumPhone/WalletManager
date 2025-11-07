@@ -43,6 +43,13 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion "1.5.3"
     }
+    
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+        }
+    }
 }
 
 dependencies {
@@ -151,6 +158,10 @@ dependencies {
     implementation "androidx.core:core-splashscreen:1.0.1"
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:36e645b378'
+    
+    // WalletConnect (Reown SDK) - needed for CoreClient initialization
+    implementation("com.reown:android-core:1.4.11")
+    implementation("com.reown:walletkit:1.4.11")
 
     //implementation libs.core.splashscreen
 

@@ -42,7 +42,10 @@ import org.ethereumphone.walletmanager.ui.WmApp
 import org.ethereumphone.walletmanager.utils.SystemWalletAddressUpdater
 import com.core.ui.util.SystemColorManager
 import org.ethereumphone.walletmanager.ui.rememberWmAppState
+import com.core.data.service.WalletConnectService
 import javax.inject.Inject
+import android.Manifest
+import android.os.Build
 
 @AndroidEntryPoint
 class MainActivity() : ComponentActivity() {
@@ -72,12 +75,24 @@ class MainActivity() : ComponentActivity() {
 
     private var pendingDeepLink by mutableStateOf<Eip681DeepLinkResult?>(null)
 
-    
+    // Notification permission launcher for Android 13+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            Log.d("MainActivity", "Notification permission granted")
+        } else {
+            Log.w("MainActivity", "Notification permission denied")
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        // Request notification permission for Android 13+
+        requestNotificationPermission()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         // Hide the status bar
@@ -129,12 +144,26 @@ class MainActivity() : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent) {
-        if (intent.action == Intent.ACTION_VIEW && intent.data?.scheme == "ethereum") {
-            Log.d("MainActivity", "Processing EIP-681 deep link: ${intent.data}")
-            coroutineScope.launch {
-                val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
-                withContext(Dispatchers.Main) {
-                    pendingDeepLink = result
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            when (uri?.scheme) {
+                "ethereum" -> {
+                    Log.d("MainActivity", "Processing EIP-681 deep link: $uri")
+                    coroutineScope.launch {
+                        val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
+                        withContext(Dispatchers.Main) {
+                            pendingDeepLink = result
+                        }
+                    }
+                }
+                "wc" -> {
+                    Log.d("MainActivity", "Processing WalletConnect URI: $uri")
+                    // Pass the WalletConnect URI to the service
+                    WalletConnectService.pair(this, uri.toString())
+                    
+                    // Close the activity immediately so user doesn't see the app open
+                    // The connection will happen in the background via the service
+                    finish()
                 }
             }
         }
@@ -168,6 +197,31 @@ class MainActivity() : ComponentActivity() {
         // Synchronously destroy the touch handler to ensure immediate cleanup
         terminalSDK?.destroyTouchHandlerSync()
 
+    }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d("MainActivity", "Notification permission already granted")
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // User previously denied, show rationale and request again
+                    Log.d("MainActivity", "Requesting notification permission (with rationale)")
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    // First time asking, request permission
+                    Log.d("MainActivity", "Requesting notification permission (first time)")
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            Log.d("MainActivity", "Notification permission not required (Android < 13)")
+        }
     }
 
 }

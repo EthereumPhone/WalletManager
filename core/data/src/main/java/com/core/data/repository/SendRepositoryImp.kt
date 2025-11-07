@@ -312,6 +312,19 @@ class SendRepositoryImp @Inject constructor(
         }
     }
 
+    override suspend fun getMaxErc20AmountString(
+        contractAddress: String,
+        chainId: Int,
+        decimals: Int
+    ): String = withContext(Dispatchers.IO) {
+        val entity = tokenBalanceDao.getTokenBalanceEntity(contractAddress, chainId)
+        val raw = entity?.tokenBalance ?: BigDecimal.ZERO
+        raw
+            .movePointLeft(decimals)
+            .stripTrailingZeros()
+            .toPlainString()
+    }
+
     override fun restoreState() {
         currentTransactionHash.value = ""
         currentTransactionChainId.value = 0

@@ -9,6 +9,9 @@
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Custom permission for reading token metadata -->
     <permission
@@ -28,7 +31,10 @@
         android:theme="@style/Theme.WalletManager"
         android:fitsSystemWindows="true"
         android:screenOrientation="portrait"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="true"
         tools:targetApi="33"
+        tools:replace="android:dataExtractionRules"
         android:background="#050505"
         >
 
@@ -71,7 +77,23 @@
                     android:pathPrefix="/send_deep_link/" />
             </intent-filter>
 
+            <!-- WalletConnect URI scheme -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <data android:scheme="wc" />
+            </intent-filter>
+
         </activity>
+        
+        <!-- WalletConnect Service -->
+        <service
+            android:name="com.core.data.service.WalletConnectService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

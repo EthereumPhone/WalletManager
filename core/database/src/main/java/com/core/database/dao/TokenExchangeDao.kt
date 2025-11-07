@@ -93,7 +93,7 @@ interface TokenExchangeDao {
         SELECT * FROM token_exchange 
         WHERE (address = :address OR (address IS NULL AND symbol = :symbol))
         AND (chainId = :chainId OR chainId IS NULL)
-        AND currency = :currency
+        AND LOWER(currency) = LOWER(:currency)
         ORDER BY timestamp DESC 
         LIMIT 1
     """)

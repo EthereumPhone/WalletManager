@@ -153,12 +153,17 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(listOf(contractAddress)).first()
                     tokens.filter { it.chainId == chainId }.forEach { token ->
                         // Fetch the latest price for this token
-                        // Using the new suspend function signature
-                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(
+                        // Use getBestMatchingExchange to handle native tokens with null address/chainId
+                        android.util.Log.d("TokenMetadataProvider", "Querying price for token: symbol=${token.symbol}, address=${token.contractAddress}, chainId=${token.chainId}")
+                        val latestExchange = tokenExchangeDao.getBestMatchingExchange(
                             address = token.contractAddress,
-                            chainId = token.chainId
+                            symbol = token.symbol,
+                            chainId = token.chainId,
+                            currency = "usd"
                         )
+                        android.util.Log.d("TokenMetadataProvider", "Exchange result: $latestExchange, value=${latestExchange?.value}")
                         val priceValue = latestExchange?.value ?: 0.0
+                        android.util.Log.d("TokenMetadataProvider", "Final price for ${token.symbol}: $priceValue")
                         
                         cursor.addRow(
                             arrayOf<Any?>(
@@ -184,12 +189,17 @@ class TokenMetadataContentProvider : ContentProvider() {
                     val tokens = tokenMetadataDao.getTokenMetadata(chainId).first()
                     tokens.forEach { token ->
                         // Fetch the latest price for this token
-                        // Using the new suspend function signature
-                        val latestExchange = tokenExchangeDao.getLatestExchangeByAddressAndChain(
+                        // Use getBestMatchingExchange to handle native tokens with null address/chainId
+                        android.util.Log.d("TokenMetadataProvider", "Querying price for token: symbol=${token.symbol}, address=${token.contractAddress}, chainId=${token.chainId}")
+                        val latestExchange = tokenExchangeDao.getBestMatchingExchange(
                             address = token.contractAddress,
-                            chainId = token.chainId
+                            symbol = token.symbol,
+                            chainId = token.chainId,
+                            currency = "USD"
                         )
+                        android.util.Log.d("TokenMetadataProvider", "Exchange result: $latestExchange, value=${latestExchange?.value}")
                         val priceValue = latestExchange?.value ?: 0.0
+                        android.util.Log.d("TokenMetadataProvider", "Final price for ${token.symbol}: $priceValue")
                         
                         cursor.addRow(
                             arrayOf<Any?>(

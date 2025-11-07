@@ -2,6 +2,7 @@ plugins {
     alias libs.plugins.android.library
     alias libs.plugins.kotlin.android
     alias libs.plugins.ksp
+    alias libs.plugins.hilt.android
     id("kotlinx-serialization")
 }
 
@@ -32,11 +33,16 @@ android {
         def tokenPriceApi = properties.getProperty("TOKEN_PRICE_API")
         def bundlerApi = properties.getProperty("BUNDLER_API")
         def zeroXApi = properties.getProperty("ZEROX_API_KEY", "")
+        
+        // WalletConnect Project ID (optional, won't fail build if missing)
+        def walletConnectProjectId = properties.getProperty("walletconnect.projectId", "")
 
         buildConfigField "String", "ALCHEMY_API", "\"${alchemyApi}\""
         buildConfigField "String", "TOKEN_PRICE_API", "\"${tokenPriceApi}\""
         buildConfigField "String", "BUNDLER_API", "\"${bundlerApi}\""
         buildConfigField "String", "ZEROX_API_KEY", "\"${zeroXApi}\""
+        buildConfigField "String", "WALLETCONNECT_PROJECT_ID", "\"${walletConnectProjectId}\""
+
 
 
 
@@ -109,7 +115,9 @@ dependencies {
     implementation(libs.retrofit.kotlin.serialization)
     implementation(libs.kotlinx.serialization.json)
 
-
+    // WalletConnect (Reown SDK)
+    implementation("com.reown:android-core:1.4.11")
+    implementation("com.reown:walletkit:1.4.11")
 
 
 }
