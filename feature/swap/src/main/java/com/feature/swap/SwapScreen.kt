@@ -203,21 +203,6 @@ internal fun SwapScreen(
                 .fillMaxWidth()
                 .weight(1f)
         )
-        
-        // Debug button - Triggers the unified swap method
-        Button(
-            onClick = { 
-                Log.d("SwapScreen", "Debug swap button clicked")
-                viewModel.swap { result ->
-                    Log.d("SwapScreen", "Debug swap result: $result")
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Text("DEBUG: Execute Swap")
-        }
     }
 
     // Unified Token Selector Overlay - handles both From and To selections
