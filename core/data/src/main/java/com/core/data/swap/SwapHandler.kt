@@ -3,6 +3,8 @@ package com.core.data.swap
 import android.content.Context
 import android.util.Log
 import com.core.data.BuildConfig
+import com.core.data.util.chainIdToBundler
+import com.core.data.util.chainIdToRPC
 import com.core.data.utils.GasEstimationHelper
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -21,18 +23,13 @@ import org.web3j.protocol.http.HttpService
 import org.web3j.utils.Convert
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
  * Minimal 0x-based swap handler mirroring TokenLauncher behavior.
  */
 class SwapHandler(private val context: Context) {
-
-    private val walletSDK = WalletSDK(
-        context = context,
-        web3jInstance = Web3j.build(HttpService("https://base-mainnet.g.alchemy.com/v2/${BuildConfig.ALCHEMY_API}")),
-        bundlerRPCUrl = "https://api.pimlico.io/v2/8453/rpc?apikey=${BuildConfig.BUNDLER_API}"
-    )
 
     companion object {
         private const val TAG = "WM-SwapHandler"
@@ -41,7 +38,11 @@ class SwapHandler(private val context: Context) {
         private const val ETH_TOKEN_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
         private const val SWAP_FEE_BPS = 15 // 0.15%
         private const val SWAP_FEE_RECIPIENT = "0xF1F39090D2bE5010Cc1Dd633b6dCe476A38b5675"
+        private val ZEROX_SUPPORTED_CHAIN_IDS = setOf(1, 10, 137, 42161, 8453)
     }
+
+    private val web3jByChain = ConcurrentHashMap<Int, Web3j>()
+    private val walletSdkByChain = ConcurrentHashMap<Int, WalletSDK>()
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -52,6 +53,50 @@ class SwapHandler(private val context: Context) {
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
+
+    private fun isZeroXSupported(chainId: Int): Boolean =
+        ZEROX_SUPPORTED_CHAIN_IDS.contains(chainId)
+
+    private fun resolveRpcUrl(chainId: Int): String? = try {
+        chainIdToRPC(chainId)
+    } catch (t: Throwable) {
+        Log.e(TAG, "Unable to resolve RPC for chainId=$chainId", t)
+        null
+    }
+
+    private fun getWalletSdkForChain(chainId: Int): WalletSDK? {
+        if (!isZeroXSupported(chainId)) {
+            Log.e(TAG, "0x swap is not available on chainId=$chainId")
+            return null
+        }
+
+        val rpcUrl = resolveRpcUrl(chainId)
+        if (rpcUrl == null) {
+            Log.e(TAG, "RPC URL resolution failed for chainId=$chainId")
+            return null
+        }
+
+        val bundlerUrl = chainIdToBundler(chainId)
+        val web3j = web3jByChain.getOrPut(chainId) {
+            Web3j.build(HttpService(rpcUrl))
+        }
+
+        return walletSdkByChain.getOrPut(chainId) {
+            WalletSDK(
+                context = context,
+                web3jInstance = web3j,
+                bundlerRPCUrl = bundlerUrl
+            )
+        }.also { sdk ->
+            if (sdk.getChainId() != chainId) {
+                try {
+                    sdk.changeChain(chainId, rpcUrl, bundlerUrl)
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Failed to update WalletSDK chain to $chainId", t)
+                }
+            }
+        }
+    }
 
     /**
      * Execute swap via 0x. Returns tx hash on success, or error keyword.
@@ -67,6 +112,9 @@ class SwapHandler(private val context: Context) {
         fromAmount: BigDecimal
     ): String = withContext(Dispatchers.IO) {
         try {
+            val walletSDK = getWalletSdkForChain(chainId)
+                ?: return@withContext "ERROR_UNSUPPORTED_CHAIN"
+
             val isSellingETH = isEthLike(fromAddress, fromSymbol, chainId)
             val isBuyingETH = isEthLike(toAddress, toSymbol, chainId)
 
@@ -149,7 +197,7 @@ class SwapHandler(private val context: Context) {
                 txParamsList = txList,
                 callGas = null,
                 chainId = chainId,
-                gasProvider = ::gasProvider
+                gasProvider = { userOp -> gasProvider(chainId, userOp) }
             )
 
             return@withContext when {
@@ -185,8 +233,8 @@ class SwapHandler(private val context: Context) {
         )
     }
 
-    private suspend fun gasProvider(userOp: WalletSDK.UserOperation): WalletSDK.GasEstimation {
-        val rpcUrl = "https://base-mainnet.g.alchemy.com/v2/${BuildConfig.ALCHEMY_API}"
+    private suspend fun gasProvider(chainId: Int, userOp: WalletSDK.UserOperation): WalletSDK.GasEstimation {
+        val rpcUrl = resolveRpcUrl(chainId) ?: chainIdToRPC(8453)
         return GasEstimationHelper.estimateGas(userOp, rpcUrl)
     }
 
@@ -220,6 +268,9 @@ class SwapHandler(private val context: Context) {
             Log.d(TAG, "To: $toAddress ($toSymbol, decimals: $toDecimals)")
             Log.d(TAG, "Amount: $fromAmount")
             Log.d(TAG, "Chain ID: $chainId")
+            
+            val walletSDK = getWalletSdkForChain(chainId)
+                ?: return@withContext null
             
             // Validate inputs
             if (fromAmount <= BigDecimal.ZERO) {

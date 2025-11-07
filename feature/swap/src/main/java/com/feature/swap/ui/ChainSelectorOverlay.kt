@@ -51,12 +51,11 @@ fun ChainSelectorOverlay(
 
     // All available chains with BASE at the top
     val chains = listOf(
-        NetworkChain.BASE.chainId to "BASE",
-        NetworkChain.MAINNET.chainId to "ETHEREUM",
-        NetworkChain.OPTIMISM.chainId to "OPTIMISM",
-        NetworkChain.POLYGON.chainId to "POLYGON",
-        NetworkChain.ARBITRUM.chainId to "ARBITRUM",
-        NetworkChain.ZORA.chainId to "ZORA"
+        NetworkChain.BASE to "BASE",
+        NetworkChain.MAINNET to "ETHEREUM",
+        NetworkChain.OPTIMISM to "OPTIMISM",
+        NetworkChain.POLYGON to "POLYGON",
+        NetworkChain.ARBITRUM to "ARBITRUM"
     )
 
     Dialog(
@@ -96,15 +95,15 @@ fun ChainSelectorOverlay(
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
-                        items(chains) { (chainId, chainName) ->
+                        items(chains) { (networkChain, chainName) ->
                             ChainRow(
-                                chainId = chainId,
+                                chainId = networkChain.chainId,
                                 chainName = chainName,
-                                isSelected = selectedChainId == chainId,
+                                isSelected = selectedChainId == networkChain.chainId,
                                 primaryColor = primaryColor,
                                 secondaryColor = secondaryColor,
                                 onClick = {
-                                    onChainSelected(chainId)
+                                    onChainSelected(networkChain.chainId)
                                     onDismiss()
                                 }
                             )

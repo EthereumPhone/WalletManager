@@ -33,6 +33,8 @@ class SwapRepositoryImp @Inject constructor(
     @ApplicationContext private val context: Context,
 ): SwapRepository {
 
+    private val swapHandler: SwapHandler by lazy { SwapHandler(context) }
+
     override suspend fun getQuote(
         inputTokenAddress: String,
         outputTokenAddress: String,
@@ -83,8 +85,7 @@ class SwapRepositoryImp @Inject constructor(
             Log.d("SwapRepositoryImp", "Amount: $amount")
             Log.d("SwapRepositoryImp", "Chain ID: $chainId")
             
-            val handler = SwapHandler(context)
-            val quote = handler.getSwapQuote(
+            val quote = swapHandler.getSwapQuote(
                 fromAddress = inputTokenAddress,
                 toAddress = outputTokenAddress,
                 fromDecimals = inputTokenDecimals,
@@ -121,21 +122,50 @@ class SwapRepositoryImp @Inject constructor(
             val fromMeta = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
             val toMeta = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
 
-            val isFromEthAlias = (inputTokenAddress == "1" || inputTokenAddress == "10")
-            val isToEthAlias = (outputTokenAddress == "1" || outputTokenAddress == "10")
+            val fromAliasChain = inputTokenAddress.toIntOrNull()
+            val toAliasChain = outputTokenAddress.toIntOrNull()
+            val chainId = fromMeta?.chainId
+                ?: toMeta?.chainId
+                ?: fromAliasChain
+                ?: toAliasChain
+                ?: run {
+                    Log.e("SwapRepositoryImp", "Unable to resolve chainId for swap request")
+                    return@withContext "ERROR_UNSUPPORTED_CHAIN"
+                }
 
-            val fromAddress = if (isFromEthAlias) "0x0000000000000000000000000000000000000000" else (fromMeta?.contractAddress ?: inputTokenAddress)
-            val toAddress = if (isToEthAlias) "0x0000000000000000000000000000000000000000" else (toMeta?.contractAddress ?: outputTokenAddress)
+            val fromIsNativeAlias = fromAliasChain != null && !inputTokenAddress.startsWith("0x", ignoreCase = true)
+            val toIsNativeAlias = toAliasChain != null && !outputTokenAddress.startsWith("0x", ignoreCase = true)
+
+            val fromAddress = when {
+                fromMeta?.contractAddress != null -> fromMeta.contractAddress
+                fromIsNativeAlias -> "0x0000000000000000000000000000000000000000"
+                inputTokenAddress.startsWith("0x", ignoreCase = true) -> inputTokenAddress
+                else -> "0x0000000000000000000000000000000000000000"
+            }
+
+            val toAddress = when {
+                toMeta?.contractAddress != null -> toMeta.contractAddress
+                toIsNativeAlias -> "0x0000000000000000000000000000000000000000"
+                outputTokenAddress.startsWith("0x", ignoreCase = true) -> outputTokenAddress
+                else -> "0x0000000000000000000000000000000000000000"
+            }
 
             val fromDecimals = fromMeta?.decimals ?: 18
             val toDecimals = toMeta?.decimals ?: 18
-            val chainId = (fromMeta?.chainId ?: toMeta?.chainId) ?: 8453
 
-            val fromSymbol = fromMeta?.symbol ?: if (isFromEthAlias) "ETH" else ""
-            val toSymbol = toMeta?.symbol ?: if (isToEthAlias) "ETH" else ""
+            val fromSymbol = when {
+                fromMeta?.symbol != null -> fromMeta.symbol
+                fromIsNativeAlias -> nativeSymbolForChain(chainId)
+                else -> ""
+            }
 
-            val handler = SwapHandler(context)
-            handler.executeSwap(
+            val toSymbol = when {
+                toMeta?.symbol != null -> toMeta.symbol
+                toIsNativeAlias -> nativeSymbolForChain(chainId)
+                else -> ""
+            }
+            
+            swapHandler.executeSwap(
                 fromAddress = fromAddress,
                 toAddress = toAddress,
                 fromDecimals = fromDecimals,
@@ -162,3 +192,8 @@ private fun toToken(
     symbol = tokenMetadata.symbol,
     name = tokenMetadata.name
 )
+
+private fun nativeSymbolForChain(chainId: Int): String = when (chainId) {
+    137 -> "MATIC"
+    else -> "ETH"
+}
