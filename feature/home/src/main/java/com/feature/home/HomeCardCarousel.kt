@@ -131,13 +131,7 @@ fun HomeScreen2(
     hasTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Log HomeScreen2 recomposition
-    SideEffect {
-        Log.d("RECOMPOSE", "HomeScreen2 recomposed")
-        Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${groupedAssetsUiState::class.simpleName}")
-        Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
-        Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
-    }
+    // (Removed excessive recomposition logs)
 
     val context = LocalContext.current
 
@@ -195,13 +189,7 @@ fun HomeScreen2(
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content Assets"
             ) { groupedAssetsState ->
-                // Log state changes
-                SideEffect {
-                    Log.d(
-                        "RECOMPOSE",
-                        "AnimatedContent - assetState changed to: ${groupedAssetsState::class.simpleName}"
-                    )
-                }
+                // (Removed excessive AnimatedContent state change logs)
 
                 if (isOffline) {
                     NoInternetHomeScreen(
@@ -232,11 +220,7 @@ fun HomeScreen2(
                             )
                         }
                         is GroupedAssetsUiState.Success -> {
-                            Log.d("DEBUG","AssetsUiState.SUCCESS")
-                            Log.d(
-                                "RECOMPOSE",
-                                "Success state - assets count: ${groupedAssetsState.assets.size}"
-                            )
+                            // (Removed excessive success state logs)
                             HomeScreenContent(
                                 areAssetsVisible = groupedAssetsState.assets.isNotEmpty() ,
                                 primaryContent = {
