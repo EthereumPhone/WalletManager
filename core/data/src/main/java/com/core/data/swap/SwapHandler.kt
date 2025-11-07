@@ -64,7 +64,7 @@ class SwapHandler(private val context: Context) {
         null
     }
 
-    private fun getWalletSdkForChain(chainId: Int): WalletSDK? {
+    private suspend fun getWalletSdkForChain(chainId: Int): WalletSDK? {
         if (!isZeroXSupported(chainId)) {
             Log.e(TAG, "0x swap is not available on chainId=$chainId")
             return null
@@ -81,21 +81,24 @@ class SwapHandler(private val context: Context) {
             Web3j.build(HttpService(rpcUrl))
         }
 
-        return walletSdkByChain.getOrPut(chainId) {
+        val sdk = walletSdkByChain.getOrPut(chainId) {
             WalletSDK(
                 context = context,
                 web3jInstance = web3j,
                 bundlerRPCUrl = bundlerUrl
             )
-        }.also { sdk ->
-            if (sdk.getChainId() != chainId) {
-                try {
-                    sdk.changeChain(chainId, rpcUrl, bundlerUrl)
-                } catch (t: Throwable) {
-                    Log.e(TAG, "Failed to update WalletSDK chain to $chainId", t)
-                }
-            }
         }
+
+        try {
+            val currentChainId = sdk.getChainId()
+            if (currentChainId != chainId) {
+                sdk.changeChain(chainId, rpcUrl, bundlerUrl)
+            }
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to update WalletSDK chain to $chainId", t)
+        }
+
+        return sdk
     }
 
     /**

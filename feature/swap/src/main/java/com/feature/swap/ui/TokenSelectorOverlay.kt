@@ -188,6 +188,20 @@ fun TokenSelectorOverlay(
                                 matchesSearch && matchesChain
                             }
                         }
+                        // Ensure unique items by address+chain to avoid duplicate LazyColumn keys
+                        val dedupedFromTokens = remember(filteredFromTokens) {
+                            filteredFromTokens.distinctBy { it.address.lowercase() + "_" + it.chainId }
+                        }
+                        
+                        // Sort by highest-dollar value owned (balance * unit price)
+                        val sortedFromTokens = remember(dedupedFromTokens, priceMap) {
+                            dedupedFromTokens.sortedByDescending { token ->
+                                val unitPrice = priceMap[token.address.lowercase()] 
+                                    ?: priceMap[token.chainId.toString()] 
+                                    ?: 0.0
+                                token.balance * unitPrice
+                            }
+                        }
 
                         Column(
                             modifier = Modifier.fillMaxSize()
@@ -217,7 +231,7 @@ fun TokenSelectorOverlay(
                             }
 
                             Box {
-                                if (filteredFromTokens.isNotEmpty()) {
+                                if (sortedFromTokens.isNotEmpty()) {
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -226,7 +240,7 @@ fun TokenSelectorOverlay(
                                             Spacer(Modifier.fillMaxWidth().height(8.dp))
                                         }
                                         
-                                        items(filteredFromTokens, key = { it.address + "_" + it.chainId }) { token ->
+                                        items(sortedFromTokens, key = { it.address + "_" + it.chainId }) { token ->
                                             // For network tokens (ETH), the address is the chain ID
                                             // Try lookup by address first, then by chain ID as fallback
                                             val unitPrice = priceMap[token.address.lowercase()] 
@@ -376,11 +390,23 @@ fun TokenSelectorOverlay(
                         
                         // Separate owned and non-owned tokens
                         val ownedTokens = remember(filteredTokens) {
-                            filteredTokens.filter { it.balance > 0 }
+                            filteredTokens
+                                .filter { it.balance > 0 }
+                                .distinctBy { it.address.lowercase() + "_" + it.chainId }
+                        }
+                        val ownedTokensSorted = remember(ownedTokens, priceMap) {
+                            ownedTokens.sortedByDescending { token ->
+                                val unitPrice = priceMap[token.address.lowercase()] 
+                                    ?: priceMap[token.chainId.toString()] 
+                                    ?: 0.0
+                                token.balance * unitPrice
+                            }
                         }
                         
                         val allTokens = remember(filteredTokens) {
-                            filteredTokens.filter { it.balance == 0.0 }
+                            filteredTokens
+                                .filter { it.balance == 0.0 }
+                                .distinctBy { it.address.lowercase() + "_" + it.chainId }
                         }
 
                         Column(
@@ -424,7 +450,7 @@ fun TokenSelectorOverlay(
                                         }
                                         
                                         // OWNED section
-                                        if (ownedTokens.isNotEmpty()) {
+                                        if (ownedTokensSorted.isNotEmpty()) {
                                             item {
                                                 Text(
                                                     text = "OWNED",
@@ -435,7 +461,7 @@ fun TokenSelectorOverlay(
                                                     letterSpacing = 1.sp,
                                                 )
                                             }
-                                            items(ownedTokens, key = { it.address + "_" + it.chainId + "_owned" }) { token ->
+                                            items(ownedTokensSorted, key = { it.address + "_" + it.chainId + "_owned" }) { token ->
                                                 // For network tokens (ETH), the address is the chain ID
                                                 // Try lookup by address first, then by chain ID as fallback
                                                 val unitPrice = priceMap[token.address.lowercase()] 

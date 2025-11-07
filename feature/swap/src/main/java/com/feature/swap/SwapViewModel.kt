@@ -95,8 +95,14 @@ class SwapViewModel @Inject constructor(
             if (tokens.isEmpty()) {
                 FromTokensUiState.Empty
             } else {
+                // Apply the same spam filter used on Home (filter out tokens with URL-like patterns)
+                val spamFiltered = tokens.filter { token ->
+                    DEFAULT_EXCLUDE_LIST.none { pattern ->
+                        token.name.contains(pattern) || token.symbol.contains(pattern)
+                    }
+                }
                 // Filter tokens with balance > 0 and sort by balance descending for display
-                val tokensWithBalance = tokens.filter { it.balance > 0.0 }
+                val tokensWithBalance = spamFiltered.filter { it.balance > 0.0 }
                     .sortedByDescending { it.balance }
                 FromTokensUiState.Success(tokensWithBalance)
             }
@@ -195,65 +201,23 @@ class SwapViewModel @Inject constructor(
     
     private fun observeAndSetDefaultToken() {
         viewModelScope.launch {
-            // Wait for both tokens and grouped tokens (with prices) to be ready
-            combine(
-                fromTokensState.filter { it is FromTokensUiState.Success && it.tokens.isNotEmpty() },
-                groupedTokenAssetState.filter { it is GroupedAssetsUiState.Success }
-            ) { tokensState, groupedState ->
-                Pair(tokensState, groupedState)
-            }.first().let { (tokensState, groupedState) ->
-                if (tokensState is FromTokensUiState.Success && 
-                    groupedState is GroupedAssetsUiState.Success &&
-                    _swapUIState.value.fromToken == null) {
-                    
-                    // Filter tokens on Base network (chainId 8453) with balance > 0
-                    val baseTokens = tokensState.tokens.filter { it.chainId == 8453 && it.balance > 0.0 }
-                    
-                    if (baseTokens.isEmpty()) {
-                        Log.w("SwapViewModel", "No tokens with balance on Base network, using highest balance token instead")
-                        // Fallback to highest balance token if no Base tokens
-                        selectFromTokenAsset(tokensState.tokens.first())
-                        return@let
-                    }
-                    
-                    // Calculate unit prices for Base tokens by matching with grouped token data
-                    val tokensWithPrices = baseTokens.mapNotNull { token ->
-                        // Find the grouped token that matches this token's symbol
-                        val groupedToken = groupedState.assets.find { 
-                            it.symbol.equals(token.symbol, ignoreCase = true)
-                        }
-                        
-                        val unitPrice = groupedToken?.let { group ->
-                            // Calculate unit price: totalFiatBalance / totalBalance
-                            // Store in local variable to avoid smart cast issues
-                            val fiatBalance = group.totalFiatBalance
-                            if (group.totalBalance > 0.0 && fiatBalance != null && fiatBalance > 0.0) {
-                                fiatBalance / group.totalBalance
-                            } else {
-                                null
-                            }
-                        }
-                        
-                        if (unitPrice != null && unitPrice > 0.0) {
-                            Pair(token, unitPrice)
+            // Wait until grouped tokens (already sorted by total fiat descending) are available
+            groupedTokenAssetState
+                .filter { it is GroupedAssetsUiState.Success }
+                .first()
+                .let { groupedState ->
+                    if (_swapUIState.value.fromToken == null) {
+                        val success = groupedState as GroupedAssetsUiState.Success
+                        val topAsset = success.assets.firstOrNull()
+                        if (topAsset != null) {
+                            Log.d("SwapViewModel", "Selecting default FROM token from highest-value asset group: ${topAsset.symbol}")
+                            // Use group conversion to pick the chain variant with the highest fiat amount
+                            selectTokenFromCarousel(topAsset.groupId, setAsDefault = true)
                         } else {
-                            null
+                            Log.w("SwapViewModel", "Grouped assets empty; cannot auto-select default FROM token")
                         }
-                    }
-                    
-                    // Select the token with the highest unit price on Base
-                    val highestPricedToken = tokensWithPrices.maxByOrNull { it.second }
-                    
-                    if (highestPricedToken != null) {
-                        Log.d("SwapViewModel", "Selected default token: ${highestPricedToken.first.symbol} on Base with unit price: $${highestPricedToken.second}")
-                        selectFromTokenAsset(highestPricedToken.first)
-                    } else {
-                        // Fallback if no tokens have price data
-                        Log.w("SwapViewModel", "No Base tokens with price data, selecting first Base token by balance")
-                        selectFromTokenAsset(baseTokens.first())
                     }
                 }
-            }
         }
     }
     
