@@ -473,17 +473,19 @@ class SendViewModel @Inject constructor(
     fun setMaxAmount() {
         viewModelScope.launch {
 
-            val maxAmount = _amountUiState.value.maxAmount.toBigDecimal()
-            val chainId = (_selectedAssetUiState.value as SelectedAssetUiState.Selected).tokenAsset.chainId
-
             val selectedAsset = (_selectedAssetUiState.value as SelectedAssetUiState.Selected).tokenAsset
+            val chainId = selectedAsset.chainId
             val isNativeAsset = selectedAsset.address == selectedAsset.chainId.toString()
             val amount = if (isNativeAsset) {
-                // Native asset (address equals chainId): leave room for gas
-                sendRepository.maxAllowedSend(maxAmount, chainId)
+                // Native asset (address equals chainId): leave room for gas using precise math
+                sendRepository.maxAllowedSend(BigDecimal.valueOf(selectedAsset.balance), chainId)
             } else {
-                // ERC20: no gas from token balance, use full amount
-                maxAmount.toPlainString()
+                // ERC20: use exact on-chain balance scaled by decimals without rounding up
+                sendRepository.getMaxErc20AmountString(
+                    contractAddress = selectedAsset.address,
+                    chainId = selectedAsset.chainId,
+                    decimals = selectedAsset.decimals
+                )
             }
 
             _amountUiState.update {
