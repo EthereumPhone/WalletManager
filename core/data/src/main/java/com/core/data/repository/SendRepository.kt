@@ -30,4 +30,9 @@ interface SendRepository {
     ): String
 
     fun restoreState()
+    suspend fun getMaxErc20AmountString(
+        contractAddress: String,
+        chainId: Int,
+        decimals: Int
+    ): String
 }
