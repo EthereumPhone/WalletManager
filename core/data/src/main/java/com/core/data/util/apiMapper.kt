@@ -11,12 +11,15 @@ fun chainIdToName(chainId: Int): String = when(chainId) {
     42161 -> "arb-mainnet"
     137 -> "polygon-mainnet"
     8453 -> "base-mainnet"
+    7777777 -> "zora-mainnet"
     5 -> "eth-goerli"
     else -> ""
 }
 
 fun chainIdToRPC(chainId: Int): String {
-    return "https://${chainIdToName(chainId)}.g.alchemy.com/v2/${chainToApiKey(chainIdToName(chainId))}"
+    val networkName = chainIdToName(chainId)
+    require(networkName.isNotBlank()) { "Unsupported chainId: $chainId" }
+    return "https://${networkName}.g.alchemy.com/v2/${chainToApiKey(networkName)}"
 }
 
 fun chainIdToBundler(chainId: Int): String {

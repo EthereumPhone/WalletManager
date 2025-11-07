@@ -304,7 +304,7 @@ fun AssetListDetailItem(
                         Image(
                             modifier = Modifier,
                             contentScale = ContentScale.Crop,
-                            painter = painterResource(id = R.drawable.polygon_logo),
+                            painter = painterResource(id = R.drawable.polygon),
                             contentDescription = null
                         )
 

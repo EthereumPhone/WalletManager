@@ -323,57 +323,74 @@ fun PayMasterScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val amounts = listOf(10, 25,50,100)
+            val amounts = listOf(10, 25, 50, 100)
             amounts.forEach { amount ->
                 val amountText = "$amount"
                 val isSelected = topUpAmount.text == amountText
 
-                Box(
-                    modifier = Modifier
-                        .width(64.dp)
-                        .aspectRatio(16f / 9f)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (isSelected) primaryColor else Color.Transparent)
-                        .border(BorderStroke(1.dp, primaryColor), RoundedCornerShape(4.dp))
-                        .clickable {
-                            onTopUpAmountChanged(
-                                TextFieldValue(
-                                    text = amountText,
-                                    selection = TextRange(amountText.length)
-                                )
+                AmountButton(
+                    amount = amount,
+                    isSelected = isSelected,
+                    primaryColor = primaryColor,
+                    secondaryColor = secondaryColor,
+                    onClick = {
+                        onTopUpAmountChanged(
+                            TextFieldValue(
+                                text = amountText,
+                                selection = TextRange(amountText.length)
                             )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = if (isSelected) secondaryColor else primaryColor,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 18.sp,
-                                    letterSpacing = 0.sp,
-                                    textDecoration = TextDecoration.None
-                                )
-                            ) {
-                                append("\$")
-                            }
-                            append(amountText)
-                        },
-
-                        style = TextStyle(
-                            fontFamily = SpaceMono,
-                            color = if (isSelected) secondaryColor else primaryColor,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp
                         )
-                    )
-                }
+                    }
+                )
             }
         }
     }
 
+}
+
+@Composable
+fun AmountButton(
+    amount: Int,
+    isSelected: Boolean,
+    primaryColor: Color,
+    secondaryColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .width(64.dp)
+            .aspectRatio(16f / 9f)
+            .clip(RoundedCornerShape(4.dp))
+            .background(if (isSelected) primaryColor else Color.Transparent)
+            .border(BorderStroke(1.dp, primaryColor), RoundedCornerShape(4.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        fontFamily = PitagonsSans,
+                        color = if (isSelected) secondaryColor else primaryColor,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                ) {
+                    append("\$")
+                }
+                append("$amount")
+            },
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = if (isSelected) secondaryColor else primaryColor,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp
+            )
+        )
+    }
 }
 
 @Preview(device = "spec:width=720px,height=720px,dpi=240", name = "DDevice")

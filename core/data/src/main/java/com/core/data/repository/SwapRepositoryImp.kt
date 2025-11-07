@@ -3,6 +3,10 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.remote.UniswapApi
 import com.core.model.TokenMetadata
+import com.core.data.swap.SwapHandler
+import com.core.data.swap.ZeroXSwapQuoteResponse
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.withContext
 import org.ethosmobile.uniswap_routing_sdk.Token
 import org.ethosmobile.uniswap_routing_sdk.UniswapRoutingSDK
+import java.math.BigDecimal
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -25,7 +30,10 @@ import kotlin.coroutines.suspendCoroutine
 class SwapRepositoryImp @Inject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val uniswapApi: UniswapApi?,
+    @ApplicationContext private val context: Context,
 ): SwapRepository {
+
+    private val swapHandler: SwapHandler by lazy { SwapHandler(context) }
 
     override suspend fun getQuote(
         inputTokenAddress: String,
@@ -60,56 +68,117 @@ class SwapRepositoryImp @Inject constructor(
         }
     }
 
+    override suspend fun getSwapQuote(
+        inputTokenAddress: String,
+        outputTokenAddress: String,
+        amount: BigDecimal,
+        inputTokenDecimals: Int,
+        outputTokenDecimals: Int,
+        chainId: Int,
+        inputTokenSymbol: String,
+        outputTokenSymbol: String
+    ): ZeroXSwapQuoteResponse? = withContext(Dispatchers.IO) {
+        try {
+            Log.d("SwapRepositoryImp", "=== getSwapQuote called ===")
+            Log.d("SwapRepositoryImp", "Input: $inputTokenAddress ($inputTokenSymbol)")
+            Log.d("SwapRepositoryImp", "Output: $outputTokenAddress ($outputTokenSymbol)")
+            Log.d("SwapRepositoryImp", "Amount: $amount")
+            Log.d("SwapRepositoryImp", "Chain ID: $chainId")
+            
+            val quote = swapHandler.getSwapQuote(
+                fromAddress = inputTokenAddress,
+                toAddress = outputTokenAddress,
+                fromDecimals = inputTokenDecimals,
+                toDecimals = outputTokenDecimals,
+                chainId = chainId,
+                fromSymbol = inputTokenSymbol,
+                toSymbol = outputTokenSymbol,
+                fromAmount = amount
+            )
+            
+            if (quote != null) {
+                Log.d("SwapRepositoryImp", "✅ Quote fetched successfully: buyAmount=${quote.buyAmount}")
+            } else {
+                Log.w("SwapRepositoryImp", "⚠️ Quote returned null")
+            }
+            
+            quote
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "❌ Failed to get swap quote", e)
+            null
+        }
+    }
+
     override suspend fun swap(
         inputTokenAddress: String,
         outputTokenAddress: String,
         amount: Double
     ): String = withContext(Dispatchers.IO) {
-        val tokenMetadataList = tokenMetadataRepository.getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
-            .first()
-        println("TokenMetadatalist: $tokenMetadataList")
-        val inputToken = when (inputTokenAddress) {
-            "1" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            "10" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            else -> {
-                val inputTokenMetadata = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
-                Token(
-                    chainId = inputTokenMetadata?.chainId!!,
-                    address = inputTokenMetadata.contractAddress,
-                    decimals = inputTokenMetadata.decimals,
-                    name = inputTokenMetadata.name,
-                    symbol = inputTokenMetadata.symbol
-                )
-            }
-        }
-        val outputToken = when (outputTokenAddress) {
-            "1" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            "10" -> {
-                UniswapRoutingSDK.ETH_MAINNET
-            }
-            else -> {
-                val outputTokenMetadata = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
-                Token(
-                    chainId = outputTokenMetadata?.chainId!!,
-                    address = outputTokenMetadata.contractAddress,
-                    decimals = outputTokenMetadata.decimals,
-                    name = outputTokenMetadata.name,
-                    symbol = outputTokenMetadata.symbol
-                )
-            }
-        }
+        try {
+            val tokenMetadataList = tokenMetadataRepository
+                .getTokensMetadata(listOf(inputTokenAddress, outputTokenAddress))
+                .first()
 
-        uniswapApi?.swap(
-            fromToken = inputToken,
-            toToken = outputToken,
-            amount = amount
-        ) ?: ""
+            val fromMeta = tokenMetadataList.find { it.contractAddress == inputTokenAddress }
+            val toMeta = tokenMetadataList.find { it.contractAddress == outputTokenAddress }
+
+            val fromAliasChain = inputTokenAddress.toIntOrNull()
+            val toAliasChain = outputTokenAddress.toIntOrNull()
+            val chainId = fromMeta?.chainId
+                ?: toMeta?.chainId
+                ?: fromAliasChain
+                ?: toAliasChain
+                ?: run {
+                    Log.e("SwapRepositoryImp", "Unable to resolve chainId for swap request")
+                    return@withContext "ERROR_UNSUPPORTED_CHAIN"
+                }
+
+            val fromIsNativeAlias = fromAliasChain != null && !inputTokenAddress.startsWith("0x", ignoreCase = true)
+            val toIsNativeAlias = toAliasChain != null && !outputTokenAddress.startsWith("0x", ignoreCase = true)
+
+            val fromAddress = when {
+                fromMeta?.contractAddress != null -> fromMeta.contractAddress
+                fromIsNativeAlias -> "0x0000000000000000000000000000000000000000"
+                inputTokenAddress.startsWith("0x", ignoreCase = true) -> inputTokenAddress
+                else -> "0x0000000000000000000000000000000000000000"
+            }
+
+            val toAddress = when {
+                toMeta?.contractAddress != null -> toMeta.contractAddress
+                toIsNativeAlias -> "0x0000000000000000000000000000000000000000"
+                outputTokenAddress.startsWith("0x", ignoreCase = true) -> outputTokenAddress
+                else -> "0x0000000000000000000000000000000000000000"
+            }
+
+            val fromDecimals = fromMeta?.decimals ?: 18
+            val toDecimals = toMeta?.decimals ?: 18
+
+            val fromSymbol = when {
+                fromMeta?.symbol != null -> fromMeta.symbol
+                fromIsNativeAlias -> nativeSymbolForChain(chainId)
+                else -> ""
+            }
+
+            val toSymbol = when {
+                toMeta?.symbol != null -> toMeta.symbol
+                toIsNativeAlias -> nativeSymbolForChain(chainId)
+                else -> ""
+            }
+            
+            swapHandler.executeSwap(
+                fromAddress = fromAddress,
+                toAddress = toAddress,
+                fromDecimals = fromDecimals,
+                toDecimals = toDecimals,
+                chainId = chainId,
+                fromSymbol = fromSymbol,
+                toSymbol = toSymbol,
+                fromAmount = amount.toBigDecimal()
+            )
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "0x swap failed, returning empty string", e)
+            ""
+        }
     }
 }
 
@@ -123,3 +192,8 @@ private fun toToken(
     symbol = tokenMetadata.symbol,
     name = tokenMetadata.name
 )
+
+private fun nativeSymbolForChain(chainId: Int): String = when (chainId) {
+    137 -> "MATIC"
+    else -> "ETH"
+}

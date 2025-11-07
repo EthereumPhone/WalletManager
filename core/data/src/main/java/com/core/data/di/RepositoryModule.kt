@@ -1,6 +1,8 @@
 package com.core.data.di
 
 import com.core.data.repository.AlchemyTokenBalanceRepository
+import com.core.data.exchange.ExchangeRepository
+import com.core.data.exchange.ExchangeRepositoryImpl
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
 import com.core.data.repository.DefaultExchangeRepository
@@ -73,6 +75,11 @@ interface RepositoryModule {
     fun bindsSwapRepository(
         swapRepository: SwapRepositoryImp
     ): SwapRepository
+
+    @Binds
+    fun bindsExchangeRepository(
+        impl: ExchangeRepositoryImpl
+    ): ExchangeRepository
 
     @Binds
     fun bindsNetworkMonitor(

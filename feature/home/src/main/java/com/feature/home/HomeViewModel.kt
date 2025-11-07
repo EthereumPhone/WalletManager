@@ -107,6 +107,18 @@ class HomeViewModel @Inject constructor(
     private val _selectedTokenAsset = MutableStateFlow<TokenAsset?>(null)
     val selectedTokenAsset: StateFlow<TokenAsset?> = _selectedTokenAsset.asStateFlow()
 
+    // Token Carousel Overlay State Management
+    private val _isTokenOverlayVisible = MutableStateFlow(false)
+    val isTokenOverlayVisible: StateFlow<Boolean> = _isTokenOverlayVisible.asStateFlow()
+
+    fun showTokenOverlay() {
+        _isTokenOverlayVisible.value = true
+    }
+
+    fun hideTokenOverlay() {
+        _isTokenOverlayVisible.value = false
+    }
+
 
     suspend fun getLink(uri: String): String? {
         // Check for internet connectivity first

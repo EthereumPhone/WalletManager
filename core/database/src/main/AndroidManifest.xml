@@ -18,7 +18,7 @@
             android:authorities="com.walletmanager.tokenmetadata.provider"
             android:enabled="true"
             android:exported="true"
-            android:grantUriPermissions="true" />
+            android:grantUriPermissions="true" /> 
     </application>
 
 </manifest>

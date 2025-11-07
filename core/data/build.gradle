@@ -32,6 +32,7 @@ android {
         def alchemyApi = properties.getProperty("ALCHEMY_API")
         def tokenPriceApi = properties.getProperty("TOKEN_PRICE_API")
         def bundlerApi = properties.getProperty("BUNDLER_API")
+        def zeroXApi = properties.getProperty("ZEROX_API_KEY", "")
         
         // WalletConnect Project ID (optional, won't fail build if missing)
         def walletConnectProjectId = properties.getProperty("walletconnect.projectId", "")
@@ -39,7 +40,9 @@ android {
         buildConfigField "String", "ALCHEMY_API", "\"${alchemyApi}\""
         buildConfigField "String", "TOKEN_PRICE_API", "\"${tokenPriceApi}\""
         buildConfigField "String", "BUNDLER_API", "\"${bundlerApi}\""
+        buildConfigField "String", "ZEROX_API_KEY", "\"${zeroXApi}\""
         buildConfigField "String", "WALLETCONNECT_PROJECT_ID", "\"${walletConnectProjectId}\""
+
 
 
 
@@ -95,6 +98,7 @@ dependencies {
     implementation libs.hilt.android
     ksp libs.hilt.compiler
     implementation libs.gson
+    implementation libs.okhttp
 
     implementation libs.moshi
     implementation libs.kotlinx.datetime

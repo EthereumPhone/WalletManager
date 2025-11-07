@@ -131,13 +131,7 @@ fun HomeScreen2(
     hasTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Log HomeScreen2 recomposition
-    SideEffect {
-        Log.d("RECOMPOSE", "HomeScreen2 recomposed")
-        Log.d("RECOMPOSE", "HomeScreen2 - assetsUiState: ${groupedAssetsUiState::class.simpleName}")
-        Log.d("RECOMPOSE", "HomeScreen2 - hasTransfer: $hasTransfer")
-        Log.d("RECOMPOSE", "HomeScreen2 - isOffline: $isOffline")
-    }
+    // (Removed excessive recomposition logs)
 
     val context = LocalContext.current
 
@@ -195,13 +189,7 @@ fun HomeScreen2(
                 modifier = Modifier.fillMaxSize(),
                 label = "Animated Content Assets"
             ) { groupedAssetsState ->
-                // Log state changes
-                SideEffect {
-                    Log.d(
-                        "RECOMPOSE",
-                        "AnimatedContent - assetState changed to: ${groupedAssetsState::class.simpleName}"
-                    )
-                }
+                // (Removed excessive AnimatedContent state change logs)
 
                 if (isOffline) {
                     NoInternetHomeScreen(
@@ -232,11 +220,7 @@ fun HomeScreen2(
                             )
                         }
                         is GroupedAssetsUiState.Success -> {
-                            Log.d("DEBUG","AssetsUiState.SUCCESS")
-                            Log.d(
-                                "RECOMPOSE",
-                                "Success state - assets count: ${groupedAssetsState.assets.size}"
-                            )
+                            // (Removed excessive success state logs)
                             HomeScreenContent(
                                 areAssetsVisible = groupedAssetsState.assets.isNotEmpty() ,
                                 primaryContent = {
@@ -340,28 +324,7 @@ fun HomeScreen2(
                 },
                 navigateToBuy = {
                     debouncedClickHandler {
-                        try {
-                            val intent = Intent().apply {
-                                setClassName(
-                                    "org.ethosmobile.webpwaemul",              // WebPWA Emulator package
-                                    "org.ethosmobile.webpwaemul.MainActivity"   // Main activity
-                                )
-                                data = Uri.parse("https://app.uniswap.org")                   // Pass the URL as data
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)         // Launch in new task
-                            }
-
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // If the specific app is not installed, open in default browser
-                            try {
-                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.uniswap.org"))
-                                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(browserIntent)
-                            } catch (ex: Exception) {
-                                // Show error if no browser is available
-                                showDgenToast(context, "Unable to open Uniswap")
-                            }
-                        }
+                        navigateToSwap()
                     }
                 },
                 navigateToPayMaster = {

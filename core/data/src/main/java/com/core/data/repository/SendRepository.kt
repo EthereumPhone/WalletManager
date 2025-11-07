@@ -29,15 +29,5 @@ interface SendRepository {
         chainId: Int
     ): String
 
-    /**
-     * Returns the precise ERC20 token balance for the given contract and chain as a human-readable
-     * string, scaled by [decimals] without rounding up (never exceeds on-chain balance).
-     */
-    suspend fun getMaxErc20AmountString(
-        contractAddress: String,
-        chainId: Int,
-        decimals: Int
-    ): String
-
     fun restoreState()
 }

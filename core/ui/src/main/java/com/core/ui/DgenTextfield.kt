@@ -58,7 +58,7 @@ fun DgenBasicTextfield(
     onValueChange: (TextFieldValue) -> Unit,
     keyboardtype: KeyboardType =  KeyboardType.Text,
     autoCorrectEnabled: Boolean = true,
-    isAnyFieldFocused: MutableState<Boolean>,
+    isAnyFieldFocused: MutableState<Boolean> = remember { mutableStateOf(false) },
     textfieldFocusManager: FocusManager? = null,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

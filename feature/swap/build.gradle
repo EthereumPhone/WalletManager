@@ -43,10 +43,12 @@ android {
 dependencies {
     implementation project(path: ':core:data')
     implementation project(path: ':core:domain')
+    implementation project(path: ':core:database')
     implementation project(path: ':core:model')
     implementation project(path: ':core:common')
     implementation project(path: ':core:ui')
     implementation project(path: ':core:designsystem')
+    implementation project(path: ':feature:home')
 
 
     implementation libs.androidx.core
@@ -75,7 +77,15 @@ dependencies {
 
     implementation 'com.github.EthereumPhone:ethOS-Component-Library:9c7ef3ee91'
 
+    // Coil for image loading
+    implementation libs.coil.compose
+    implementation libs.coil.network.okhttp
+    implementation "io.coil-kt:coil-compose:2.6.0"   // Compose image loading
+    implementation "io.coil-kt:coil-gif:2.6.0"       // GIF decoding
 
+
+    implementation project(':feature:home')
+    implementation project(':feature:assets')
 
 
 }
