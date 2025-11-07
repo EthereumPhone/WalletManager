@@ -48,8 +48,9 @@ class WalletConnectManager(private val application: Application) {
         kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
             Log.d(TAG, "Starting WalletKit initialization coroutine in GlobalScope")
             try {
-                // Wait longer for CoreClient (initialized in Application) to fully connect to relay
-                kotlinx.coroutines.delay(2000)
+                // Small delay to ensure CoreClient is ready - reduced from 2000ms to 800ms
+                // This is a safer middle ground that still provides significant speedup
+                kotlinx.coroutines.delay(800)
                 Log.d(TAG, "About to call initializeWalletKit()")
                 initializeWalletKit()
             } catch (e: Exception) {
@@ -81,13 +82,12 @@ class WalletConnectManager(private val application: Application) {
             
             isInitialized = true
             
-            // Give WalletKit additional time to fully connect to relay
+            // Mark as ready immediately - WalletKit will handle connection state internally
+            isWalletKitReady = true
+            Log.d(TAG, "WalletKit initialized and ready")
+            
+            // Load existing sessions
             scope.launch {
-                kotlinx.coroutines.delay(1000)
-                isWalletKitReady = true
-                Log.d(TAG, "WalletKit fully ready and connected")
-                
-                // Load existing sessions
                 loadActiveSessions()
             }
             
@@ -177,9 +177,13 @@ class WalletConnectManager(private val application: Application) {
                         _connectionState.value = ConnectionState.Connected(session.topic)
                         
                         // Add to active sessions
+                        val peerName = session.metaData?.name?.takeIf { it.isNotBlank() }
+                            ?: extractDomainFromUrl(session.metaData?.url ?: "")
+                            ?: "Unknown dApp"
+                        
                         val activeSession = ActiveSession(
                             topic = session.topic,
-                            peerName = session.metaData?.name ?: "Unknown",
+                            peerName = peerName,
                             peerUrl = session.metaData?.url ?: "",
                             peerIcon = session.metaData?.icons?.firstOrNull() ?: "",
                             accounts = session.namespaces.values.flatMap { it.accounts }
@@ -454,9 +458,13 @@ class WalletConnectManager(private val application: Application) {
             Log.d(TAG, "Loaded ${sessions.size} active session(s)")
             
             val activeSessions = sessions.map { session ->
+                val peerName = session.metaData?.name?.takeIf { it.isNotBlank() }
+                    ?: extractDomainFromUrl(session.metaData?.url ?: "")
+                    ?: "Unknown dApp"
+                
                 ActiveSession(
                     topic = session.topic,
-                    peerName = session.metaData?.name ?: "Unknown",
+                    peerName = peerName,
                     peerUrl = session.metaData?.url ?: "",
                     peerIcon = session.metaData?.icons?.firstOrNull() ?: "",
                     accounts = session.namespaces.values.flatMap { it.accounts }
@@ -472,6 +480,28 @@ class WalletConnectManager(private val application: Application) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load active sessions", e)
+        }
+    }
+    
+    /**
+     * Extract a friendly domain name from a URL
+     * E.g., "https://zapper.xyz" -> "zapper.xyz"
+     */
+    private fun extractDomainFromUrl(url: String): String? {
+        return try {
+            if (url.isBlank()) return null
+            
+            // Remove protocol
+            val withoutProtocol = url.replace(Regex("^https?://"), "")
+            
+            // Remove path and query params
+            val domain = withoutProtocol.split("/", "?", "#").firstOrNull() ?: return null
+            
+            // Return the domain
+            domain.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to extract domain from URL: $url", e)
+            null
         }
     }
     
