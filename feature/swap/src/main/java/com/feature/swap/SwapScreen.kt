@@ -174,6 +174,11 @@ internal fun SwapScreen(
         }
     }
     
+    // Ensure terminal renders swap content on initial open
+    LaunchedEffect(Unit) {
+        viewModel.onScreenOpenedAfterResume()
+    }
+    
     // Create GIF-enabled ImageLoader for animations
     val gifEnabledLoader = ImageLoader.Builder(context)
         .components {
