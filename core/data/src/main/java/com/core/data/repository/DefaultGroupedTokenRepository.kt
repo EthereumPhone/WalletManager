@@ -62,9 +62,15 @@ class DefaultGroupedTokenRepository @Inject constructor(
         }
         
         return tokenGroupDao.observeAllTokensInGroupWithLatestExchange(groupId).map { tokens ->
+            // Deduplicate tokens by address+chainId to fix Room @Relation bug
+            // where it matches balances only by address, ignoring chainId
+            val dedupedTokens = tokens.distinctBy { 
+                "${it.contractAddress.lowercase()}_${it.chainId}" 
+            }
+            
             val mappedTokens = if (groupId.startsWith("network_")) {
                 // For network tokens, balance is already in ETH/MATIC units, not wei
-                tokens.mapNotNull { token ->
+                dedupedTokens.mapNotNull { token ->
                     val metadata = token.tokenMetadataEntity
                     val balance = token.tokenBalanceEntity?.tokenBalance?.toDouble() ?: 0.0
                     
@@ -97,7 +103,7 @@ class DefaultGroupedTokenRepository @Inject constructor(
                     )
                 }
             } else {
-                tokens.map { it.toExternalModelWithPrice() }
+                dedupedTokens.map { it.toExternalModelWithPrice() }
             }
             
             // Filter network tokens to only show chains with balance
