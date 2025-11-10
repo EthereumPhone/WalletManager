@@ -11,7 +11,20 @@ data class TokenAsset(
     val decimals: Int = 0,
     val logoUrl: String? = "",
     val swappable: Boolean = false
-)
+) {
+    fun toTokenAssetWithPrice(fiatAmount: Double): TokenAssetWithPrice =
+        TokenAssetWithPrice(
+            address,
+            chainId,
+            symbol,
+            name,
+            balance,
+            decimals,
+            logoUrl,
+            swappable,
+            fiatAmount = fiatAmount
+        )
+}
 
 
 data class TokenAssetWithPrice(
@@ -24,4 +37,16 @@ data class TokenAssetWithPrice(
     val logoUrl: String? = "",
     val swappable: Boolean = false,
     val fiatAmount: Double = 0.0
-)
+) {
+    fun toTokenAsset(): TokenAsset =
+        TokenAsset(
+            address,
+            chainId,
+            symbol,
+            name,
+            balance,
+            decimals,
+            logoUrl,
+            swappable,
+        )
+}

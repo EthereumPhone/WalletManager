@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.core.model.TokenAsset
+import com.core.model.TokenAssetWithPrice
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenRed
@@ -151,19 +152,20 @@ fun TokenRow(
 // Convenience overload that accepts a TokenAsset directly
 @Composable
 fun TokenRow(
-    token: TokenAsset,
+    token: TokenAssetWithPrice,
     unitPriceUsd: Double,
+    fiatAmount: Double = 0.0,
     primaryColor: Color,
     secondaryColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val balance = token.balance
-    val usdValue = if (balance > 0.0 && unitPriceUsd > 0.0) balance * unitPriceUsd else null
+    //val usdValue = if (balance > 0.0 && unitPriceUsd > 0.0) balance * unitPriceUsd else null
     
     // Debug logging for ETH tokens
     if (token.symbol.equals("ETH", ignoreCase = true)) {
-        android.util.Log.d("TokenRow", "ETH Token - Symbol: ${token.symbol}, Balance: $balance, UnitPrice: $unitPriceUsd, USD Value: $usdValue")
+        //android.util.Log.d("TokenRow", "ETH Token - Symbol: ${token.symbol}, Balance: $balance, UnitPrice: $unitPriceUsd, USD Value: $usdValue")
     }
     
     // Check if this token is native ETH by its address or if address equals chainId (network token)
@@ -194,7 +196,7 @@ fun TokenRow(
         modifier = modifier,
         chainId = token.chainId,
         amount = if (balance > 0.0) balance else null,
-        usdValue = usdValue,
+        usdValue = fiatAmount,
         owned = balance > 0.0
     )
 }
@@ -202,7 +204,7 @@ fun TokenRow(
 @Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
 @Composable
 private fun TokenRowPreview_Owned() {
-    val sampleToken = TokenAsset(
+    val sampleToken = TokenAssetWithPrice(
         address = "0x1234567890123456789012345678901234567890",
         chainId = 1,
         symbol = "USDC",
@@ -225,7 +227,7 @@ private fun TokenRowPreview_Owned() {
 @Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
 @Composable
 private fun TokenRowPreview_NotOwned() {
-    val sampleToken = TokenAsset(
+    val sampleToken = TokenAssetWithPrice(
         address = "0x1234567890123456789012345678901234567890",
         chainId = 1,
         symbol = "LINK",

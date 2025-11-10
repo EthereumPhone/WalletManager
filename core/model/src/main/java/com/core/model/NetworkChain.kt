@@ -28,6 +28,14 @@ enum class NetworkChain(
     ZORA(
         chainId = 7777777,
         chainName = "zora-mainnet"
+    ),
+    BNB(
+        chainId = 56,
+        chainName = "bnb-mainnet"
+    ),
+    AVALANCHE(
+        chainId = 43114,
+        chainName = "avax-mainnet"
     );
 
     companion object {

@@ -12,6 +12,7 @@ import com.core.data.repository.TerminalRepository
 import com.core.data.repository.TerminalEvent
 import com.core.domain.GetAllGroupedTokensUsecase
 import com.core.domain.GetAllTokensUsecase
+import com.core.domain.GetAllTokensWithExchangeUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetSwappableTokensForSelection
 import com.core.domain.QueryTokenAssetsByNetwork
@@ -21,6 +22,7 @@ import com.core.model.TokenGroupAssetOverview
 import com.core.model.UserData
 import com.core.model.SwapUIState
 import com.core.model.SwapToken
+import com.core.model.TokenAssetWithPrice
 import com.core.result.Result
 import com.core.result.asResult
 import com.feature.swap.ui.SwapTransactionStatus
@@ -57,6 +59,7 @@ class SwapViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val getAllTokensUsecase: GetAllTokensUsecase,
+    private val getAllTokensWithExchangeUsecase: GetAllTokensWithExchangeUsecase,
     private val groupedTokenRepository: GroupedTokenRepository,
     private val getSwappableTokensForSelection: GetSwappableTokensForSelection,
     private val terminalRepository: TerminalRepository,
@@ -91,7 +94,7 @@ class SwapViewModel @Inject constructor(
     // Individual tokens by chain for token selection overlay
     // Note: Default FROM token is selected by highest USD price on Base (chainId 8453)
     val fromTokensState: StateFlow<FromTokensUiState> =
-        getAllTokensUsecase().map { tokens ->
+        getAllTokensWithExchangeUsecase().map { tokens ->
             if (tokens.isEmpty()) {
                 FromTokensUiState.Empty
             } else {
@@ -584,7 +587,7 @@ class SwapViewModel @Inject constructor(
         }
     }
 
-    fun selectToTokenAsset(tokenAsset: TokenAsset) {
+    fun selectToTokenAsset(tokenAsset: TokenAssetWithPrice) {
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectToTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
@@ -639,7 +642,7 @@ class SwapViewModel @Inject constructor(
             val maxAmountFullPrecision = tokenAsset.balance.toString()
             
             val swapToken = SwapToken(
-                token = tokenAsset,
+                token = tokenAsset.toTokenAsset(),
                 balance = formattedBalance,
                 fiatBalance = "", // TODO: Add price calculation
                 formattedMaxAmount = maxAmountFullPrecision, // Use full precision for MAX
@@ -700,7 +703,7 @@ class SwapViewModel @Inject constructor(
         }
     }
     
-    fun selectFromTokenAsset(tokenAsset: TokenAsset) {
+    fun selectFromTokenAsset(tokenAsset: TokenAssetWithPrice) {
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectFromTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
@@ -725,7 +728,7 @@ class SwapViewModel @Inject constructor(
             Log.d("SwapViewModel", "  Max amount (full precision): $maxAmountFullPrecision")
             
             val swapToken = SwapToken(
-                token = tokenAsset,
+                token = tokenAsset.toTokenAsset(),
                 balance = formattedBalance,
                 fiatBalance = "", // TODO: Add price calculation
                 formattedMaxAmount = maxAmountFullPrecision, // Use full precision for MAX
@@ -850,10 +853,17 @@ class SwapViewModel @Inject constructor(
             targetChainId = chainId,
             query = query
         ).asResult().map { result ->
+
             when(result) {
                 is Result.Error -> SwapTokenUiState.Error
                 is Result.Loading -> SwapTokenUiState.Loading
-                is Result.Success -> SwapTokenUiState.Success(result.data)
+                is Result.Success -> {
+
+                    val newTokens = result.data.map { it.toTokenAssetWithPrice(0.0) }
+
+
+                    SwapTokenUiState.Success(newTokens)
+                }
             }
         }
     }.stateIn(
@@ -1342,31 +1352,10 @@ enum class TokenSelectionMode {
 private const val SEARCH_QUERY = "searchQuery"
 
 
-// Legacy helper function - no longer used, replaced by enhanced getSwappableTokensForSelection
-// Keeping for reference in case rollback is needed
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun swapTokenUiState(
-    userDataRepository: UserDataRepository,
-    getSwapTokens: GetSwapTokens,
-    searchQuery: Flow<String>
-): Flow<SwapTokenUiState> = searchQuery.flatMapLatest { query ->
-        getSwapTokens(
-            query,
-            userDataRepository.userData.first().walletNetwork.toInt()
-        ).asResult()
-            .mapLatest { result ->
-                when(result) {
-                    is Result.Error -> { SwapTokenUiState.Error }
-                    is Result.Loading -> { SwapTokenUiState.Loading }
-                    is Result.Success -> { SwapTokenUiState.Success(result.data) }
-                }
-            }
-}
-
 sealed interface SwapTokenUiState {
     object Loading: SwapTokenUiState
     object Error: SwapTokenUiState
-    data class Success(val tokenAssets: List<TokenAsset>): SwapTokenUiState
+    data class Success(val tokenAssets: List<TokenAssetWithPrice>): SwapTokenUiState
 }
 
 data class AmountsUiState(
@@ -1405,6 +1394,6 @@ sealed interface FromTokensUiState {
     object Error : FromTokensUiState
     object Empty : FromTokensUiState
     data class Success(
-        val tokens: List<TokenAsset>
+        val tokens: List<TokenAssetWithPrice>
     ) : FromTokensUiState
 }

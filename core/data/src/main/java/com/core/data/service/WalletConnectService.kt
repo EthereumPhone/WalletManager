@@ -713,6 +713,8 @@ class WalletConnectService : Service() {
             42161 -> "https://arb-mainnet.g.alchemy.com/v2/$alchemyKey"
             8453 -> "https://base-mainnet.g.alchemy.com/v2/$alchemyKey"
             84532 -> "https://base-sepolia.g.alchemy.com/v2/$alchemyKey"
+            56 -> "https://bnb-mainnet.g.alchemy.com/v2/$alchemyKey"
+            43114 -> "https://avax-mainnet.g.alchemy.com/v2/$alchemyKey"
             else -> {
                 Log.w(TAG, "Unknown chainId $chainId, using public RPC")
                 when (chainId) {

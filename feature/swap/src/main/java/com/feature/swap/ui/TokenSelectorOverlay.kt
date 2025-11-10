@@ -45,6 +45,7 @@ import com.core.database.provider.TokenMetadataProviderContract
 import com.core.model.TokenAsset
 import com.core.model.TokenGroupAssetOverview
 import com.core.model.NetworkChain
+import com.core.model.TokenAssetWithPrice
 import com.core.ui.DgenSearchBar
 import com.core.ui.HeaderBar
 import com.core.ui.InfoScreen
@@ -63,10 +64,10 @@ import com.feature.swap.TokenSelectionMode
 fun TokenSelectorOverlay(
     isVisible: Boolean,
     mode: TokenSelectionMode,
-    fromTokens: List<TokenAsset>,
-    toTokens: List<TokenAsset>,
-    selectFromToken: (TokenAsset) -> Unit,
-    selectToToken: (TokenAsset) -> Unit,
+    fromTokens: List<TokenAssetWithPrice>,
+    toTokens: List<TokenAssetWithPrice>,
+    selectFromToken: (TokenAssetWithPrice) -> Unit,
+    selectToToken: (TokenAssetWithPrice) -> Unit,
     primaryColor: Color,
     secondaryColor: Color,
     onDismiss: () -> Unit,
@@ -107,7 +108,6 @@ fun TokenSelectorOverlay(
                 when (mode) {
                     TokenSelectionMode.From -> {
                         val context = LocalContext.current
-                        var priceMap by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
 
                         LaunchedEffect(isVisible, groupedTokens) {
                             // Collect prices from all chains that the user has tokens on
@@ -171,8 +171,7 @@ fun TokenSelectorOverlay(
                             fromTokens.filter { it.symbol.equals("ETH", ignoreCase = true) }.forEach { token ->
                                 android.util.Log.d("TokenSelector", "ETH Token - Address: ${token.address}, Chain: ${token.chainId}, Balance: ${token.balance}")
                             }
-                            
-                            priceMap = allPrices
+
                         }
 
                         // Filter tokens based on search query and selected chain
@@ -192,14 +191,11 @@ fun TokenSelectorOverlay(
                         val dedupedFromTokens = remember(filteredFromTokens) {
                             filteredFromTokens.distinctBy { it.address.lowercase() + "_" + it.chainId }
                         }
-                        
+
                         // Sort by highest-dollar value owned (balance * unit price)
-                        val sortedFromTokens = remember(dedupedFromTokens, priceMap) {
+                        val sortedFromTokens = remember(dedupedFromTokens) {
                             dedupedFromTokens.sortedByDescending { token ->
-                                val unitPrice = priceMap[token.address.lowercase()] 
-                                    ?: priceMap[token.chainId.toString()] 
-                                    ?: 0.0
-                                token.balance * unitPrice
+                                token.fiatAmount
                             }
                         }
 
@@ -241,20 +237,11 @@ fun TokenSelectorOverlay(
                                         }
                                         
                                         items(sortedFromTokens, key = { it.address + "_" + it.chainId }) { token ->
-                                            // For network tokens (ETH), the address is the chain ID
-                                            // Try lookup by address first, then by chain ID as fallback
-                                            val unitPrice = priceMap[token.address.lowercase()] 
-                                                ?: priceMap[token.chainId.toString()] 
-                                                ?: 0.0
-                                            
-                                            // Debug logging for ETH tokens
-                                            if (token.symbol.equals("ETH", ignoreCase = true)) {
-                                                android.util.Log.d("TokenSelector", "Rendering ETH - Address: ${token.address.lowercase()}, Unit Price: $unitPrice, Balance: ${token.balance}, USD Value: ${token.balance * unitPrice}")
-                                            }
-                                            
+
                                             TokenRow(
                                                 token = token,
-                                                unitPriceUsd = unitPrice,
+                                                fiatAmount = token.fiatAmount,
+                                                unitPriceUsd = 0.0, // TODO: Not needed anymore
                                 primaryColor = primaryColor,
                                 secondaryColor = secondaryColor,
                                                 onClick = {
@@ -266,10 +253,7 @@ fun TokenSelectorOverlay(
                                                         |Address (lowercase): ${token.address.lowercase()}
                                                         |Chain ID: ${token.chainId}
                                                         |Balance: ${token.balance}
-                                                        |Unit Price USD: $unitPrice
-                                                        |Calculated USD Value: ${token.balance * unitPrice}
-                                                        |Price in Map (by address): ${priceMap[token.address.lowercase()]}
-                                                        |Price in Map (by chainId): ${priceMap[token.chainId.toString()]}
+                                                        |Calculated USD Value: ${token.fiatAmount}
                                                         |Is Network Token (ETH): ${token.address == token.chainId.toString()}
                                                     """.trimMargin())
                                                     selectFromToken(token)

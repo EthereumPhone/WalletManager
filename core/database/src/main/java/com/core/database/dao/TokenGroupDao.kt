@@ -168,10 +168,18 @@ interface TokenGroupDao {
     
     /**
      * Get all tokens in a group with their latest exchange rates.
+     * Note: This query manually joins token_balance on both contractAddress AND chainId
+     * to avoid Room's @Relation limitation (which only matches on single column).
+     * 
+     * Strategy: Find ANY exchange rate for the group (by symbol) and apply it to ALL members.
+     * Tokens in the same group share the same symbol and should have the same price.
      */
     @Query("""
         SELECT 
             tm.*,
+            tb.contractAddress as balance_contractAddress,
+            tb.chainId as balance_chainId,
+            tb.tokenBalance as balance_tokenBalance,
             te.id as exchange_id,
             te.address as exchange_address,
             te.symbol as exchange_symbol,
@@ -180,20 +188,21 @@ interface TokenGroupDao {
             te.value as exchange_value,
             te.timestamp as exchange_timestamp
         FROM token_metadata tm
-        LEFT JOIN (
-            SELECT te1.* FROM token_exchange te1
-            WHERE te1.id IN (
-                SELECT MAX(id) 
-                FROM token_exchange 
-                GROUP BY COALESCE(address, symbol), COALESCE(chainId, -1)
-            )
-        ) te ON (
-            -- Join by address for ERC20 tokens
-            (te.address = tm.contractAddress AND te.chainId = tm.chainId) 
-            OR 
-            -- Join by symbol for native tokens (where address is null)
-            (te.address IS NULL AND te.symbol = tm.symbol)
+        LEFT JOIN token_balance tb ON (
+            tb.contractAddress = tm.contractAddress AND tb.chainId = tm.chainId
         )
+        -- Join to the latest exchange rate for this group's symbol
+        -- This applies the same exchange rate to all tokens in the group
+        LEFT JOIN (
+            SELECT * FROM token_exchange 
+            WHERE id = (
+                SELECT MAX(id) 
+                FROM token_exchange te_inner
+                WHERE te_inner.symbol = (
+                    SELECT symbol FROM token_metadata WHERE groupId = :groupId LIMIT 1
+                )
+            )
+        ) te ON 1=1
         WHERE tm.groupId = :groupId
     """)
     suspend fun getTokensInGroupWithLatestExchange(groupId: String): List<CompositeTokenWithExchange>
