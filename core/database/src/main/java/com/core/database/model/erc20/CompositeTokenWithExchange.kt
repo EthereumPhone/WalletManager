@@ -9,25 +9,30 @@ import java.math.RoundingMode
 /**
  * Composite data class that includes a token with its latest exchange rate.
  * This is more efficient than loading all historical exchange data.
+ * 
+ * Note: Balance fields are embedded with "balance_" prefix to avoid Room's @Relation
+ * limitation (which only matches on single column, not composite keys).
  */
 data class CompositeTokenWithExchange(
     @Embedded
-    val compositeToken: CompositeToken,
+    val tokenMetadataEntity: TokenMetadataEntity?,
+    
+    @Embedded(prefix = "balance_")
+    val tokenBalanceEntity: TokenBalanceEntity? = null,
     
     @Embedded(prefix = "exchange_")
     val latestExchangeEntity: TokenExchangeEntity? = null
 ) {
-    val tokenMetadataEntity: TokenMetadataEntity?
-        get() = compositeToken.tokenMetadataEntity
-    
-    val tokenBalanceEntity: TokenBalanceEntity?
-        get() = compositeToken.tokenBalanceEntity
-    
+
     val contractAddress: String
-        get() = compositeToken.contractAddress
+        get() = tokenBalanceEntity?.contractAddress 
+            ?: tokenMetadataEntity?.contractAddress 
+            ?: ""
     
     val chainId: Int
-        get() = compositeToken.chainId
+        get() = tokenBalanceEntity?.chainId 
+            ?: tokenMetadataEntity?.chainId 
+            ?: 0
     
     /**
      * Get the current USD value of this token's balance.
