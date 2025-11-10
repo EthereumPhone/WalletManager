@@ -193,7 +193,7 @@ interface TokenGroupDao {
         )
         -- Join to the latest exchange rate for this group's symbol
         -- This applies the same exchange rate to all tokens in the group
-        LEFT JOIN (
+        LEFT JOIN (                                                                 
             SELECT * FROM token_exchange 
             WHERE id = (
                 SELECT MAX(id) 

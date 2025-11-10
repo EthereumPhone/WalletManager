@@ -378,12 +378,9 @@ fun TokenSelectorOverlay(
                                 .filter { it.balance > 0 }
                                 .distinctBy { it.address.lowercase() + "_" + it.chainId }
                         }
-                        val ownedTokensSorted = remember(ownedTokens, priceMap) {
+                        val ownedTokensSorted = remember(ownedTokens) {
                             ownedTokens.sortedByDescending { token ->
-                                val unitPrice = priceMap[token.address.lowercase()] 
-                                    ?: priceMap[token.chainId.toString()] 
-                                    ?: 0.0
-                                token.balance * unitPrice
+                                token.fiatAmount
                             }
                         }
                         
@@ -448,12 +445,10 @@ fun TokenSelectorOverlay(
                                             items(ownedTokensSorted, key = { it.address + "_" + it.chainId + "_owned" }) { token ->
                                                 // For network tokens (ETH), the address is the chain ID
                                                 // Try lookup by address first, then by chain ID as fallback
-                                                val unitPrice = priceMap[token.address.lowercase()] 
-                                                    ?: priceMap[token.chainId.toString()] 
-                                                    ?: 0.0
                                                 TokenRow(
                                                     token = token,
-                                                    unitPriceUsd = unitPrice,
+                                                    unitPriceUsd = 0.0, //TODO: REMOVE THIS
+                                                    fiatAmount = token.fiatAmount,
                                                     primaryColor = primaryColor,
                                                     secondaryColor = secondaryColor,
                                                     onClick = {
@@ -465,8 +460,6 @@ fun TokenSelectorOverlay(
                                                             |Address (lowercase): ${token.address.lowercase()}
                                                             |Chain ID: ${token.chainId}
                                                             |Balance: ${token.balance}
-                                                            |Unit Price USD: $unitPrice
-                                                            |Calculated USD Value: ${token.balance * unitPrice}
                                                             |Price in Map (by address): ${priceMap[token.address.lowercase()]}
                                                             |Price in Map (by chainId): ${priceMap[token.chainId.toString()]}
                                                             |Is Network Token (ETH): ${token.address == token.chainId.toString()}
