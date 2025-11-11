@@ -3,13 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application>
-        <!-- Remove exported providers from test APK to avoid INSTALL_FAILED_CONFLICTING_PROVIDER -->
+        <!-- Remove exported real providers from test APK to avoid INSTALL_FAILED_CONFLICTING_PROVIDER -->
         <provider
             android:name="com.core.database.provider.TokenBalanceContentProvider"
             tools:node="remove" />
         <provider
             android:name="com.core.database.provider.TokenMetadataContentProvider"
             tools:node="remove" />
+
+        <!-- Add fake providers with test-only authorities -->
+        <provider
+            android:name="com.feature.home.fakes.FakeTokenBalanceContentProvider"
+            android:authorities="com.feature.home.test.tokenbalance.fake"
+            android:exported="true" />
+        <provider
+            android:name="com.feature.home.fakes.FakeTokenMetadataContentProvider"
+            android:authorities="com.feature.home.test.tokenmetadata.fake"
+            android:exported="true" />
     </application>
 
 </manifest>
