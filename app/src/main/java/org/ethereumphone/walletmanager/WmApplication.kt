@@ -45,6 +45,25 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
         private const val KEY_SEED_COMPLETED = "seedWorkCompleted"
         private const val UPDATE_INTERVAL_MS = 90_000L // 1.5 minutes for token updates
         private const val TAG = "WmApplication"
+        
+        @Volatile
+        private var _isCoreClientInitialized = false
+        
+        /**
+         * Check if WalletConnect CoreClient is initialized and ready to use
+         */
+        fun isCoreClientInitialized(): Boolean = _isCoreClientInitialized
+        
+        /**
+         * Suspend until CoreClient is initialized, with timeout
+         */
+        suspend fun waitForCoreClientInitialization(timeoutMs: Long = 5000): Boolean {
+            val startTime = System.currentTimeMillis()
+            while (!_isCoreClientInitialized && (System.currentTimeMillis() - startTime) < timeoutMs) {
+                delay(100)
+            }
+            return _isCoreClientInitialized
+        }
     }
     
     @Inject
@@ -99,6 +118,8 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
                 }
             )
             
+            // Mark CoreClient as initialized
+            _isCoreClientInitialized = true
             Log.d(TAG, "WalletConnect CoreClient initialized successfully")
             
             // Start the service after a delay to allow CoreClient to establish relay connection
@@ -109,6 +130,7 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize WalletConnect", e)
+            _isCoreClientInitialized = false
         }
     }
     

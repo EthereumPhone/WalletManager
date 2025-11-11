@@ -241,20 +241,49 @@ class WalletConnectManager(private val application: Application) {
     fun isReady(): Boolean = isWalletKitReady
     
     fun pair(uri: String) {
-        try {
-            if (!isWalletKitReady) {
-                Log.w(TAG, "WalletKit not fully ready yet, pairing may fail")
+        scope.launch {
+            try {
+                // Wait for CoreClient to be initialized (with timeout)
+                Log.d(TAG, "Checking if CoreClient is initialized...")
+                val isCoreClientReady = try {
+                    val appClass = Class.forName("org.ethereumphone.walletmanager.WmApplication")
+                    val waitMethod = appClass.getMethod("waitForCoreClientInitialization", Long::class.java)
+                    waitMethod.invoke(null, 5000L) as Boolean
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not check CoreClient initialization status, proceeding anyway", e)
+                    true // Assume it's ready if we can't check
+                }
+                
+                if (!isCoreClientReady) {
+                    Log.e(TAG, "CoreClient not initialized after timeout")
+                    _connectionState.value = ConnectionState.Error("WalletConnect not ready. Please try again.")
+                    return@launch
+                }
+                
+                if (!isWalletKitReady) {
+                    Log.w(TAG, "WalletKit not fully ready yet, pairing may fail")
+                }
+                
+                Log.d(TAG, "Attempting to pair with URI: $uri")
+                val pairingParams = Core.Params.Pair(uri)
+                
+                CoreClient.Pairing.pair(pairingParams) { error ->
+                    Log.e(TAG, "Pairing error: ${error.throwable.message}")
+                    _connectionState.value = ConnectionState.Error(error.throwable.message ?: "Pairing failed")
+                }
+            } catch (e: IllegalStateException) {
+                // Catch the specific error when CoreClient is not initialized
+                if (e.message?.contains("CoreClient needs to be initialized") == true) {
+                    Log.e(TAG, "CoreClient not initialized", e)
+                    _connectionState.value = ConnectionState.Error("WalletConnect not ready. Please wait and try again.")
+                } else {
+                    Log.e(TAG, "Failed to pair", e)
+                    _connectionState.value = ConnectionState.Error(e.message ?: "Failed to pair")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to pair", e)
+                _connectionState.value = ConnectionState.Error(e.message ?: "Failed to pair")
             }
-            Log.d(TAG, "Attempting to pair with URI: $uri")
-            val pairingParams = Core.Params.Pair(uri)
-            
-            CoreClient.Pairing.pair(pairingParams) { error ->
-                Log.e(TAG, "Pairing error: ${error.throwable.message}")
-                _connectionState.value = ConnectionState.Error(error.throwable.message ?: "Pairing failed")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to pair", e)
-            _connectionState.value = ConnectionState.Error(e.message ?: "Failed to pair")
         }
     }
     

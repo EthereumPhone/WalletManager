@@ -158,12 +158,24 @@ class MainActivity() : ComponentActivity() {
                 }
                 "wc" -> {
                     Log.d("MainActivity", "Processing WalletConnect URI: $uri")
-                    // Pass the WalletConnect URI to the service
-                    WalletConnectService.pair(this, uri.toString())
-                    
-                    // Close the activity immediately so user doesn't see the app open
-                    // The connection will happen in the background via the service
-                    finish()
+                    // Wait for CoreClient to be initialized before pairing
+                    coroutineScope.launch {
+                        Log.d("MainActivity", "Waiting for CoreClient initialization...")
+                        val isReady = WmApplication.waitForCoreClientInitialization(5000)
+                        
+                        if (isReady) {
+                            Log.d("MainActivity", "CoreClient ready, initiating pairing")
+                            // Pass the WalletConnect URI to the service
+                            WalletConnectService.pair(this@MainActivity, uri.toString())
+                        } else {
+                            Log.e("MainActivity", "CoreClient not ready after timeout")
+                            // Optionally show an error message to the user
+                        }
+                        
+                        // Close the activity so user doesn't see the app open
+                        // The connection will happen in the background via the service
+                        finish()
+                    }
                 }
             }
         }
