@@ -74,13 +74,4 @@ class WmAppState(
             }
         } ?: previousDestination.value
     }
-
-
-    val isOffline = networkMonitor.isOnline
-        .map(Boolean::not)
-        .stateIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = false,
-        )
 }
