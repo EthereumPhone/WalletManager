@@ -4,11 +4,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <!-- Custom permission for token balance updates -->
-    <permission 
+    <!-- <permission 
         android:name="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE"
-        android:protectionLevel="signature" />
+        android:protectionLevel="signature" /> -->
     
-    <uses-permission android:name="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" />
+    <!-- <uses-permission android:name="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" /> -->
     
     <application>
         <!-- BroadcastReceiver for token balance updates from TokenLauncher -->

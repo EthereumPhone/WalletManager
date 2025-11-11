@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- Remove exported providers from test APK to avoid INSTALL_FAILED_CONFLICTING_PROVIDER -->
+        <provider
+            android:name="com.core.database.provider.TokenBalanceContentProvider"
+            tools:node="remove" />
+        <provider
+            android:name="com.core.database.provider.TokenMetadataContentProvider"
+            tools:node="remove" />
+    </application>
+
+</manifest>
+
+

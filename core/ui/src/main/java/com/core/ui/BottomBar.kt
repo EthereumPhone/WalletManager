@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenTurqoise
@@ -103,6 +104,7 @@ fun BottomBar(
         )
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
+            modifier = Modifier.testTag(UiTestTags.SWAP_BUTTON),
             primaryColor = primaryColor,
             onClick = navigateToBuy,
             icon = {

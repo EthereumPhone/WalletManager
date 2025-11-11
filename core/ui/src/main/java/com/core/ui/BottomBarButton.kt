@@ -31,7 +31,7 @@ fun BottomBarButton(
     primaryColor: Color
 ) {
     Button(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(0.dp))
             .padding(bottom = 0.dp)
             .width(IntrinsicSize.Min),
