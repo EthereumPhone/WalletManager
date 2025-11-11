@@ -1,33 +1,51 @@
 package com.core.domain
 
 import com.core.data.repository.GroupedTokenRepository
+import com.core.data.repository.NetworkBalanceRepository
 import com.core.model.TokenAssetWithPrice
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class GetAllTokensWithExchangeUsecase @Inject constructor(
-    private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val groupedTokenRepository: GroupedTokenRepository,
+    private val networkBalanceRepository: NetworkBalanceRepository,
 ){
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<List<TokenAssetWithPrice>> =
-        getAllGroupedTokensUsecase().flatMapLatest { groups ->
-            val flows = groups.map { group ->
-                groupedTokenRepository.observeAllTokensWithPriceInGroup(group.groupId)
+        combine(
+            groupedTokenRepository.observeGroupTokensWithExchange(),
+            networkBalanceRepository.getGroupedNetworkTokensOverview()
+        ) { groupAssetWithExchanges, networkTokensOverview ->
+            // Process ERC20 grouped tokens
+            val erc20Tokens = groupAssetWithExchanges.flatMap { group ->
+                val commonIcon = group.tokens.firstOrNull { !it.logoUrl.isNullOrEmpty() }?.logoUrl
+
+                group.tokens
+                    .map { it.copy(logoUrl = commonIcon) }
             }
-            if (flows.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                combine(flows) { tokenLists ->
-                    tokenLists
-                        .flatMap { it }
-                        .distinctBy { it.address.lowercase() + "_" + it.chainId }
-                }
+            
+            // Convert network tokens overview to TokenAssetWithPrice
+            val networkTokens = networkTokensOverview.map { overview ->
+                TokenAssetWithPrice(
+                    address = overview.groupId,
+                    chainId = if (overview.symbol == "MATIC") 137 else 1,
+                    symbol = overview.symbol,
+                    name = overview.name,
+                    balance = overview.totalBalance,
+                    decimals = 18,
+                    logoUrl = overview.logoUrl,
+                    swappable = true,
+                    fiatAmount = overview.totalFiatBalance ?: 0.0
+                )
             }
+            
+            // Combine both lists
+            networkTokens + erc20Tokens
         }
 }
 

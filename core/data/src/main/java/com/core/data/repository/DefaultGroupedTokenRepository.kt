@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import android.util.Log
+import com.core.database.model.erc20.CompositeTokenGroupWithExchange
 
 class DefaultGroupedTokenRepository @Inject constructor(
     val tokenGroupDao: TokenGroupDao
@@ -54,6 +55,10 @@ class DefaultGroupedTokenRepository @Inject constructor(
     override fun observeGroupedTokens(): Flow<List<TokenGroupAsset>> {
         TODO("Not yet implemented")
     }
+
+    override fun observeGroupTokensWithExchange(): Flow<List<TokenGroupAssetWithExchange>> =
+        tokenGroupDao.observeAllTokenGroupsWithExchange().map { group -> group.map{ it.toExternalModelWithPrice() } }
+
 
     override fun observeAllTokensWithPriceInGroup(groupId: String, filterZeroBalance: Boolean): Flow<List<TokenAssetWithPrice>> {
         // Return empty flow if groupId is empty

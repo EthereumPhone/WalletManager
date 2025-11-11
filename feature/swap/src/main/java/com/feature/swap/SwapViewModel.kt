@@ -67,14 +67,6 @@ class SwapViewModel @Inject constructor(
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
 
-    val walletDataState: StateFlow<WalletDataUiState> = userDataRepository.userData.map {
-        WalletDataUiState.Success(it)
-    }.stateIn(
-        scope = viewModelScope,
-        initialValue = WalletDataUiState.Loading,
-        started = SharingStarted.WhileSubscribed(5_000)
-    )
-
     // Grouped tokens for token selection overlay
     val groupedTokenAssetState: StateFlow<GroupedAssetsUiState> =
         getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST).map {

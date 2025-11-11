@@ -251,7 +251,8 @@ interface TokenGroupDao {
             )
         }
     }
-    
+
+
     /**
      * Get active token groups (with balances) including latest exchange rates.
      */
@@ -279,6 +280,34 @@ interface TokenGroupDao {
         // Combine the active groups flow with exchange table changes to ensure proper invalidation
         return combine(
             getActiveCompositeTokenGroups(),
+            observeExchangeTableChanges()
+        ) { groups, _ ->
+            groups
+        }.flatMapLatest { groups ->
+            if (groups.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                // Create a Flow for each group that combines the group with its tokens
+                val groupFlows = groups.map { group ->
+                    observeAllTokensInGroupWithLatestExchange(group.tokenGroup.groupId).map { tokensWithExchange ->
+                        CompositeTokenGroupWithExchange(
+                            tokenGroup = group.tokenGroup,
+                            tokensWithExchange = tokensWithExchange
+                        )
+                    }
+                }
+                
+                // Combine all group flows into a single Flow
+                combine(groupFlows) { it.toList() }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeAllTokenGroupsWithExchange(): Flow<List<CompositeTokenGroupWithExchange>> {
+        // Combine all groups flow with exchange table changes to ensure proper invalidation
+        return combine(
+            getAllCompositeTokenGroups(),
             observeExchangeTableChanges()
         ) { groups, _ ->
             groups
