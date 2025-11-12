@@ -1,6 +1,5 @@
 package com.feature.send
 
-import android.Manifest
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -33,6 +32,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.core.data.model.dto.Contact
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -46,6 +46,7 @@ import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.pulseOpacity
 import com.feature.send.ui.AmountTextField
+import com.feature.send.ui.ContactPickerCard
 import com.feature.send.ui.CustomCaptureActivity
 import com.feature.send.ui.NetworkSelector
 import com.feature.send.ui.RecipientSection
@@ -58,6 +59,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
+import android.Manifest
 
 
 @Composable
@@ -73,6 +75,9 @@ fun SendRoute(
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
     val shouldDismissKeyboard by viewModel.shouldDismissKeyboard.collectAsStateWithLifecycle()
+    val selectedContact by viewModel.selectedContact.collectAsStateWithLifecycle()
+    val contactsWithEth by viewModel.contactsWithEth.collectAsStateWithLifecycle()
+    val shouldRequestContactsPermission by viewModel.shouldRequestContactsPermission.collectAsStateWithLifecycle()
 
 
 
@@ -169,10 +174,17 @@ fun SendRoute(
         transactionStatus = transactionStatus,
         qrScannerTriggered = qrScannerTriggered,
         shouldDismissKeyboard = shouldDismissKeyboard,
+        selectedContact = selectedContact,
+        contactsWithEth = contactsWithEth,
+        shouldRequestContactsPermission = shouldRequestContactsPermission,
         onNetworkSelected = viewModel::changeSelectedAsset,
         onAmountChange = viewModel::updateAmount,
         maxAmountClicked = viewModel::setMaxAmount,
         onRecipientChange = viewModel::updateAddress,
+        onContactSelected = viewModel::selectContact,
+        onClearContact = viewModel::clearSelectedContact,
+        onContactIconClick = viewModel::onContactIconClick,
+        onContactsPermissionResult = viewModel::onContactsPermissionResult,
         clearTransactionStatus = viewModel::clearTransactionStatus,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         onKeyboardDismissed = viewModel::onKeyboardDismissed,
@@ -196,15 +208,45 @@ fun SendScreen(
     transactionStatus: TransactionStatus?, // TODO: Change this
     qrScannerTriggered: Boolean, // TODO: Change this
     shouldDismissKeyboard: Boolean,
+    selectedContact: Contact? = null,
+    contactsWithEth: List<Contact> = emptyList(),
+    shouldRequestContactsPermission: Boolean = false,
     onNetworkSelected: (Int) -> Unit,
     onAmountChange: (String, Boolean) -> Unit,
     maxAmountClicked: () -> Unit,
     onRecipientChange: (String) -> Unit,
+    onContactSelected: (Contact) -> Unit = {},
+    onClearContact: () -> Unit = {},
+    onContactIconClick: () -> Unit = {},
+    onContactsPermissionResult: (Boolean) -> Unit = {},
     clearTransactionStatus: () -> Unit,
     resetQrScannerTrigger: () -> Unit,
     onKeyboardDismissed: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    // State for showing contact picker
+    var showContactPicker by remember { mutableStateOf(false) }
+    
+    // Handle contacts permission request
+    val contactsPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(Manifest.permission.READ_CONTACTS)
+    )
+    
+    LaunchedEffect(shouldRequestContactsPermission) {
+        if (shouldRequestContactsPermission) {
+            contactsPermissionState.launchMultiplePermissionRequest()
+        }
+    }
+    
+    LaunchedEffect(contactsPermissionState.allPermissionsGranted) {
+        if (contactsPermissionState.allPermissionsGranted && shouldRequestContactsPermission) {
+            onContactsPermissionResult(true)
+            showContactPicker = true
+        } else if (!contactsPermissionState.allPermissionsGranted && 
+                   contactsPermissionState.shouldShowRationale) {
+            onContactsPermissionResult(false)
+        }
+    }
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
 
@@ -282,7 +324,16 @@ fun SendScreen(
 
             RecipientSection(
                 recipientUiState = recipientUiState,
+                selectedContact = selectedContact,
+                hasContactsWithEth = contactsWithEth.isNotEmpty(),
                 onContentChanged = onRecipientChange,
+                onContactIconClick = {
+                    onContactIconClick()
+                    if (contactsWithEth.isNotEmpty()) {
+                        showContactPicker = true
+                    }
+                },
+                onClearContact = onClearContact,
                 shouldDismissKeyboard = shouldDismissKeyboard,
                 onKeyboardDismissed = onKeyboardDismissed
             )
@@ -295,6 +346,18 @@ fun SendScreen(
             primaryColor = primaryColor,
             secondaryColor = secondaryColor
         )
+        
+        // Show contact picker dialog
+        if (showContactPicker) {
+            ContactPickerCard(
+                contacts = contactsWithEth,
+                onContactSelected = { contact ->
+                    onContactSelected(contact)
+                    showContactPicker = false
+                },
+                onDismiss = { showContactPicker = false }
+            )
+        }
     }
 
 
@@ -408,10 +471,16 @@ fun PreviewSendScreen() {
         transactionStatus = null,
         qrScannerTriggered = false,
         shouldDismissKeyboard = false,
+        selectedContact = null,
+        contactsWithEth = emptyList(),
         onNetworkSelected = {},
         onAmountChange = {_,_ ->},
         maxAmountClicked = {},
         onRecipientChange = {},
+        onContactSelected = {},
+        onClearContact = {},
+        onContactIconClick = {},
+        onContactsPermissionResult = {},
         clearTransactionStatus = {},
         resetQrScannerTrigger = {},
         onKeyboardDismissed = {},

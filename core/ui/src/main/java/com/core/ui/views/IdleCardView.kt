@@ -265,7 +265,20 @@ fun IdleView(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ){
-                val formattedAmount = amount.formatWithSuffix() //formatSmart(amount)
+                // Format amount for Home cards: up to 5 decimals rounding UP.
+                // For tiny non-zero values, display threshold string.
+                val formattedAmount = run {
+                    val absAmount = kotlin.math.abs(amount)
+                    when {
+                        amount == 0.0 -> "0"
+                        absAmount in 0.0..0.00001 && absAmount > 0.0 -> ">0.00001"
+                        absAmount >= 1000.0 -> amount.formatWithSuffix() // keep suffix behavior for large values
+                        else -> java.math.BigDecimal(amount)
+                            .setScale(5, java.math.RoundingMode.UP)
+                            .stripTrailingZeros()
+                            .toPlainString()
+                    }
+                }
                 val fontSize = calculateFontSize(formattedAmount)
 
                 Text(

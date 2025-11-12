@@ -121,13 +121,8 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
             // Mark CoreClient as initialized
             _isCoreClientInitialized = true
             Log.d(TAG, "WalletConnect CoreClient initialized successfully")
-            
-            // Start the service after a delay to allow CoreClient to establish relay connection
-            applicationScope.launch {
-                delay(1500)
-                Log.d(TAG, "Starting WalletConnect service...")
-                WalletConnectService.start(this@WmApplication)
-            }
+            // Do not auto-start WalletConnectService at app launch to avoid foreground notification.
+            // The service will be started on demand (e.g., when pairing is initiated).
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize WalletConnect", e)
             _isCoreClientInitialized = false

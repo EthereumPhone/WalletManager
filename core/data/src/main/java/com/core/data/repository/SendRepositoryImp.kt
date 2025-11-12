@@ -204,8 +204,8 @@ class SendRepositoryImp @Inject constructor(
             val currentBalance = currentBalances.firstOrNull { it.contractAddress == tokenAsset.address && it.chainId == chainId }
             
             val finalAmount = if (currentBalance != null) {
-                // Convert the UI amount to the smallest unit (e.g., wei)
-                val amountInSmallestUnit = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                // Convert the UI amount to the smallest unit (e.g., wei) using precise BigDecimal
+                val amountInSmallestUnit = BigDecimal.valueOf(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
                 
                 // If the amount exceeds the database balance, use the exact database balance
                 if (amountInSmallestUnit > currentBalance.tokenBalance) {
@@ -230,8 +230,8 @@ class SendRepositoryImp @Inject constructor(
                 // If the transaction was successful (we got a valid transaction hash)
                 if (txHash.isNotEmpty() && txHash != "error" && txHash != "decline") {
                     if (currentBalance != null) {
-                        // Convert the final amount to the smallest unit (e.g., wei) using the token's decimals
-                        val amountInSmallestUnit = BigDecimal(finalAmount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
+                        // Convert the final amount to the smallest unit (e.g., wei) using the token's decimals (precise)
+                        val amountInSmallestUnit = BigDecimal.valueOf(finalAmount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals))
                         
                         // Calculate the new balance by subtracting the sent amount
                         val newBalance = currentBalance.tokenBalance - amountInSmallestUnit
@@ -255,7 +255,7 @@ class SendRepositoryImp @Inject constructor(
                         rawContract = RawContract(
                             address = tokenAsset.address,
                             decimal = tokenAsset.decimals.toString(),
-                            value = BigDecimal(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals)).toBigInteger().toString()
+                            value = BigDecimal.valueOf(amount).multiply(BigDecimal.TEN.pow(tokenAsset.decimals)).toBigInteger().toString()
                         ),
                         toaddress = toAddress,
                         tokenId = tokenAsset.address,

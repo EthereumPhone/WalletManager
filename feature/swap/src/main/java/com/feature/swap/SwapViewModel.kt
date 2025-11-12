@@ -49,6 +49,13 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
 import javax.inject.Inject
+import com.core.database.dao.TokenBalanceDao
+import com.core.database.dao.TransferDao
+import com.core.database.model.TransferEntity
+import com.core.database.model.RawContract
+import com.core.database.model.Erc1155MetadataObject
+import kotlinx.datetime.Clock
+import kotlinx.coroutines.Dispatchers
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
@@ -63,6 +70,8 @@ class SwapViewModel @Inject constructor(
     private val groupedTokenRepository: GroupedTokenRepository,
     private val getSwappableTokensForSelection: GetSwappableTokensForSelection,
     private val terminalRepository: TerminalRepository,
+    private val tokenBalanceDao: TokenBalanceDao,
+    private val transferDao: TransferDao,
     ): ViewModel() {
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
@@ -1245,6 +1254,15 @@ class SwapViewModel @Inject constructor(
                     Log.d("SwapViewModel", "  Transaction hash: $result")
                     _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
                     callback("Success: Transaction hash: $result")
+                    // Apply local adjustments and log entries
+                    try {
+                        applyLocalSwapAdjustments(
+                            fromAmountStr = amount,
+                            txHash = result
+                        )
+                    } catch (e: Exception) {
+                        Log.e("SwapViewModel", "Failed to apply local swap adjustments", e)
+                    }
                 }
                 result.equals("DECLINE", ignoreCase = true) -> {
                     Log.w("SwapViewModel", "⚠️ USER DECLINED SWAP")
@@ -1278,6 +1296,14 @@ class SwapViewModel @Inject constructor(
                     Log.w("SwapViewModel", "  Assuming success since no error keywords detected")
                     _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
                     callback("Success: $result")
+                    try {
+                        applyLocalSwapAdjustments(
+                            fromAmountStr = amount,
+                            txHash = if (result.startsWith("0x")) result else null
+                        )
+                    } catch (e: Exception) {
+                        Log.e("SwapViewModel", "Failed to apply local swap adjustments (unknown result)", e)
+                    }
                 }
             }
             
@@ -1290,6 +1316,124 @@ class SwapViewModel @Inject constructor(
             val errorMsg = e.message ?: "Unknown error occurred"
             _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
             callback("Error: $errorMsg")
+        }
+    }
+
+    private fun applyLocalSwapAdjustments(fromAmountStr: String, txHash: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val state = _swapUIState.value
+                val fromToken = state.fromToken?.token
+                val toToken = state.toToken?.token
+                if (fromToken == null || toToken == null) return@launch
+
+                val fromAmount = fromAmountStr.replace(",", ".").toBigDecimalOrNull()
+                // Prefer UI "to" amount; fallback to last quote buyAmount
+                val toAmountUi = state.toCurrentAmount.replace(",", ".").toBigDecimalOrNull()
+                val toAmount = toAmountUi ?: run {
+                    val quote = _lastQuote.value
+                    if (quote != null) {
+                        val toDecimals = toToken.decimals
+                        val buyAmount = quote.buyAmount.toBigIntegerOrNull()
+                        if (buyAmount != null) {
+                            java.math.BigDecimal(buyAmount).movePointLeft(toDecimals)
+                        } else null
+                    } else null
+                }
+                if (fromAmount == null) return@launch
+
+                // Helper to detect network/native tokens: address equals chainId as string
+                fun isNetworkToken(address: String, chainId: Int): Boolean = address.equals(chainId.toString(), ignoreCase = true)
+
+                // Convert human amount to stored units for a given token
+                fun toStoredUnits(amount: java.math.BigDecimal, address: String, chainId: Int, decimals: Int): java.math.BigDecimal {
+                    return if (isNetworkToken(address, chainId)) {
+                        // Native token stored in Ether units
+                        amount
+                    } else {
+                        amount.movePointRight(decimals)
+                    }
+                }
+
+                // Adjust FROM balance (subtract)
+                run {
+                    val current = tokenBalanceDao.getTokenBalanceEntity(fromToken.address.lowercase(), fromToken.chainId)
+                    val delta = toStoredUnits(fromAmount, fromToken.address, fromToken.chainId, fromToken.decimals)
+                    val newBal = (current?.tokenBalance ?: java.math.BigDecimal.ZERO).subtract(delta)
+                        .let { if (it.signum() < 0) java.math.BigDecimal.ZERO else it }
+                    tokenBalanceDao.upsertTokenBalances(listOf(
+                        com.core.database.model.erc20.TokenBalanceEntity(
+                            contractAddress = fromToken.address.lowercase(),
+                            chainId = fromToken.chainId,
+                            tokenBalance = newBal
+                        )
+                    ))
+                }
+
+                // Adjust TO balance (add)
+                if (toAmount != null) {
+                    val current = tokenBalanceDao.getTokenBalanceEntity(toToken.address.lowercase(), toToken.chainId)
+                    val delta = toStoredUnits(toAmount, toToken.address, toToken.chainId, toToken.decimals)
+                    val newBal = (current?.tokenBalance ?: java.math.BigDecimal.ZERO).add(delta)
+                    tokenBalanceDao.upsertTokenBalances(listOf(
+                        com.core.database.model.erc20.TokenBalanceEntity(
+                            contractAddress = toToken.address.lowercase(),
+                            chainId = toToken.chainId,
+                            tokenBalance = newBal
+                        )
+                    ))
+                }
+
+                // Insert synthetic transfer entries for Logs: OUT (from token) and IN (to token)
+                val walletAddress = try { userDataRepository.userData.first().walletAddress } catch (_: Exception) { "" }
+                val now = Clock.System.now()
+
+                // Outgoing entry
+                transferDao.insertTransfer(
+                    TransferEntity(
+                        uniqueId = "local_swap_out_${System.currentTimeMillis()}",
+                        asset = fromToken.symbol,
+                        chainId = fromToken.chainId,
+                        blockNum = "0",
+                        category = if (isNetworkToken(fromToken.address, fromToken.chainId)) "external" else "erc20",
+                        erc1155Metadata = emptyList<Erc1155MetadataObject>(),
+                        erc721TokenId = "",
+                        fromaddress = walletAddress,
+                        hash = txHash ?: "",
+                        rawContract = RawContract(address = fromToken.address, decimal = fromToken.decimals.toString(), value = fromAmount.toPlainString()),
+                        toaddress = toToken.address,
+                        tokenId = "",
+                        value = fromAmount.toDouble(),
+                        blockTimestamp = now,
+                        userIsSender = true
+                    )
+                )
+
+                // Incoming entry
+                if (toAmount != null) {
+                    transferDao.insertTransfer(
+                        TransferEntity(
+                            uniqueId = "local_swap_in_${System.currentTimeMillis()}",
+                            asset = toToken.symbol,
+                            chainId = toToken.chainId,
+                            blockNum = "0",
+                            category = if (isNetworkToken(toToken.address, toToken.chainId)) "external" else "erc20",
+                            erc1155Metadata = emptyList<Erc1155MetadataObject>(),
+                            erc721TokenId = "",
+                            fromaddress = fromToken.address,
+                            hash = txHash ?: "",
+                            rawContract = RawContract(address = toToken.address, decimal = toToken.decimals.toString(), value = toAmount.toPlainString()),
+                            toaddress = walletAddress,
+                            tokenId = "",
+                            value = toAmount.toDouble(),
+                            blockTimestamp = now,
+                            userIsSender = false
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "applyLocalSwapAdjustments failed", e)
+            }
         }
     }
 

@@ -220,13 +220,14 @@ fun HomeScreen2(
                             )
                         }
                         is GroupedAssetsUiState.Success -> {
-                            // (Removed excessive success state logs)
+                            // Filter out zero-balance tokens to avoid showing empty cards when returning
+                            val nonZeroAssets = groupedAssetsState.assets.filter { it.totalBalance > 0.0 }
                             HomeScreenContent(
-                                areAssetsVisible = groupedAssetsState.assets.isNotEmpty() ,
+                                areAssetsVisible = nonZeroAssets.isNotEmpty(),
                                 primaryContent = {
                                     TokenCardCarousel(
                                         modifier = Modifier.padding(bottom = 24.dp),
-                                        assets = groupedAssetsState.assets,
+                                        assets = nonZeroAssets,
                                         navigateToSend = navigateToSend,
                                         primaryColor = primaryColor,
                                         secondaryColor = secondaryColor

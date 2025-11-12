@@ -1,19 +1,16 @@
 package com.feature.send
 
-import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.Context
-import android.provider.ContactsContract
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.core.data.model.dto.Contact
+import com.core.data.repository.ContactsRepository
 import com.core.data.repository.SendRepository
 import com.core.data.repository.UserDataRepository
 import com.core.model.TokenAsset
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -77,6 +74,7 @@ class SendViewModel @Inject constructor(
     private val terminalRepository: TerminalRepository,
     private val terminalSDK: TerminalSDK?,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
+    private val contactsRepository: ContactsRepository,
     @ApplicationContext private val context: Context
 ): ViewModel() {
     val groupId: String = savedStateHandle[GROUP_NAV_ARGUMENT] ?: ""
@@ -99,6 +97,18 @@ class SendViewModel @Inject constructor(
     private val _recipientUiState = MutableStateFlow<RecipientUiState>(RecipientUiState(recipientAddress = address))
     val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState
     
+    // Selected contact state
+    private val _selectedContact = MutableStateFlow<Contact?>(null)
+    val selectedContact: StateFlow<Contact?> = _selectedContact.asStateFlow()
+    
+    // Contacts with ETH addresses
+    private val _contactsWithEth = MutableStateFlow<List<Contact>>(emptyList())
+    val contactsWithEth: StateFlow<List<Contact>> = _contactsWithEth.asStateFlow()
+    
+    // Permission state for triggering permission request
+    private val _shouldRequestContactsPermission = MutableStateFlow(false)
+    val shouldRequestContactsPermission: StateFlow<Boolean> = _shouldRequestContactsPermission.asStateFlow()
+    
     // Keyboard dismissal state - triggered when ENS resolution succeeds
     private val _shouldDismissKeyboard = MutableStateFlow(false)
     val shouldDismissKeyboard: StateFlow<Boolean> = _shouldDismissKeyboard.asStateFlow()
@@ -107,6 +117,13 @@ class SendViewModel @Inject constructor(
         Log.d("SendViewModel", "INIT - groupId=$groupId, address=$address, initialAmount=$initialAmount, preferredChainId=$preferredChainId")
         // Track if we've already initialized the selection (to avoid overwriting user changes)
         var hasInitializedSelection = false
+        
+        // Load contacts or request permission on first open
+        if (!contactsRepository.hasContactsPermission()) {
+            _shouldRequestContactsPermission.value = true
+        } else {
+            loadContactsIfPermitted()
+        }
         
         // Continuously observe assets state and auto-select when they load
         viewModelScope.launch {
@@ -230,9 +247,6 @@ class SendViewModel @Inject constructor(
 
     private val _txComplete = MutableStateFlow<TxCompleteUiState>(TxCompleteUiState.UnComplete)
     val txComplete: StateFlow<TxCompleteUiState> = _txComplete.asStateFlow()
-
-    private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
-    val contacts: Flow<List<Contact>> = _contacts
 
     // Add QR scanner trigger state
     private val _qrScannerTriggered = MutableStateFlow(false)
@@ -413,7 +427,55 @@ class SendViewModel @Inject constructor(
 
     fun updateAddress(address: String) {
         _recipientUiState.update { it.copy(address) }
+        // Clear selected contact if address is manually changed
+        _selectedContact.value = null
         resolveEns()
+    }
+    
+    fun selectContact(contact: Contact) {
+        _selectedContact.value = contact
+        // Update recipient with contact's address
+        _recipientUiState.update { it.copy(
+            recipientAddress = contact.address,
+            isResolving = false,
+            ensError = ""
+        ) }
+        // Trigger keyboard dismissal
+        _shouldDismissKeyboard.value = true
+    }
+    
+    fun clearSelectedContact() {
+        _selectedContact.value = null
+        _recipientUiState.update { it.copy(recipientAddress = "") }
+    }
+    
+    fun onContactIconClick() {
+        // Check if we have permission, if not, request it
+        if (!contactsRepository.hasContactsPermission()) {
+            _shouldRequestContactsPermission.value = true
+        } else {
+            // Permission already granted, just show the picker
+            // This is handled in the UI by showing the ContactPickerCard
+        }
+    }
+    
+    fun onContactsPermissionResult(granted: Boolean) {
+        _shouldRequestContactsPermission.value = false
+        if (granted) {
+            // Permission granted, load contacts
+            loadContactsIfPermitted()
+        }
+    }
+    
+    private fun loadContactsIfPermitted() {
+        if (contactsRepository.hasContactsPermission()) {
+            viewModelScope.launch {
+                contactsRepository.getContactsWithEthAddress().collect { contacts ->
+                    _contactsWithEth.value = contacts
+                    Log.d("SendViewModel", "Loaded ${contacts.size} contacts with ETH addresses")
+                }
+            }
+        }
     }
     
     fun onKeyboardDismissed() {
@@ -578,106 +640,7 @@ class SendViewModel @Inject constructor(
         }
     }
 
-    //Contacts
-    @SuppressLint("Range")
-    fun getContacts(context: Context) {
-        val contactsList = mutableListOf<Contact>()
-
-        val contentResolver: ContentResolver = context.contentResolver // Obtain the ContentResolver
-
-        val cursor = contentResolver.query(
-            ContactsContract.Contacts.CONTENT_URI,
-            null,
-            null,
-            null,
-            null
-        )
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                val contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID))
-                val contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
-
-                // Get the phone number for the contact
-                val phoneNumber = getPhoneNumber(contentResolver, contactId)
-
-                // Get eth address for the contact
-                val res = getData15ForContact(contactId,contentResolver)
-                val address = if(res?.isNotEmpty() == true) res else ""
-
-                // Get Image for the contact
-
-
-                val contact = Contact(
-                    id = contactId,
-                    name = contactName,
-                    phone = phoneNumber,
-                    address = address,
-                    image = getPhotoUriForContact(contactId, contentResolver)
-                        ?: ""
-                )
-                contactsList.add(contact)
-            } while (cursor.moveToNext())
-            cursor.close()
-        }
-
-        _contacts.value = contactsList
-    }
-
-    @SuppressLint("Range")
-    private fun getPhoneNumber(contentResolver: ContentResolver, contactId: String): String {
-        var phoneNumber = ""
-
-        val cursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            null,
-            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-            arrayOf(contactId),
-            null
-        )
-
-        if (cursor != null && cursor.moveToFirst()) {
-            phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
-            cursor.close()
-        }
-
-        return phoneNumber
-    }
-
-    @SuppressLint("Range")
-    private fun getPhotoUriForContact(contactId: String,contentResolver: ContentResolver): String? {
-        val photoCursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
-            ContactsContract.Data.CONTACT_ID + " = ?",
-            arrayOf(contactId), null
-        )
-
-        photoCursor?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI))
-                if (photoUri != null) {
-                    return photoUri
-                }
-            }
-        }
-
-        return null
-    }
-
-    @SuppressLint("Range")
-    fun getData15ForContact(contactId: String,contentResolver: ContentResolver): String? {
-        val uri = ContactsContract.Data.CONTENT_URI
-        val projection = arrayOf(ContactsContract.Data.DATA15)
-        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
-        val selectionArgs = arrayOf(contactId, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-
-        contentResolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                return cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA15))
-            }
-        }
-        return null
-    }
+    // Contact-related functions are now handled by ContactsRepository
 
     private fun formatSmallBalance(balance: Double): Double {
         if (balance == 0.0) return 0.0
