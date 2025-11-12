@@ -67,6 +67,28 @@ class HomeScreenUiTest {
         composeRule.onNodeWithText(cdOfflineText).assertIsDisplayed()
     }
 
+    /**
+    Check if the token carousel is visible with fake data on the home screen
+     */
+    @Test
+    fun homeScreen_showsTokenCarousel_withFakeData() {
+        composeRule.setContent {
+            HomeScreen2(
+                groupedAssetsUiState = FakeData.groupedSuccess(),
+                navigateToSwap = {},
+                navigateToSend = {},
+                navigateToLog = {},
+                navigateToReceive = {},
+                navigateToPayMaster = {},
+                isOffline = false,
+                hasTransfer = false
+            )
+        }
+
+        // Assert at least one token from FakeData is shown (carousel items)
+        composeRule.onNodeWithText("DAI").assertIsDisplayed()
+    }
+
 
 }
 

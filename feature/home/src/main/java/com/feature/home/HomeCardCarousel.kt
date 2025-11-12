@@ -166,6 +166,7 @@ fun HomeScreen2(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxSize()
+                .background(dgenBlack)
             //.weight(1f) // Allows it to take up remaining space
 
         ) {
