@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenTurqoise
@@ -67,11 +67,11 @@ fun BottomBar(
                     Icon(
                         modifier = Modifier.size(24.dp),
                         painter = painterResource(R.drawable.baseline_swap_vert_24),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.cd_back),
                         tint = primaryColor
                     )
                 },
-                text = "Log"
+                text = stringResource(R.string.label_log)
             )
 
         }
@@ -96,15 +96,14 @@ fun BottomBar(
                         .size(24.dp)
                         .rotate(180f),
                     imageVector = Icons.Outlined.ArrowOutward,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.cd_back),
                     tint = primaryColor
                 )
             },
-            text = "Receive"
+            text = stringResource(R.string.label_receive)
         )
         Spacer(modifier = Modifier.width(8.dp))
         BottomBarButton(
-            modifier = Modifier.testTag(UiTestTags.SWAP_BUTTON),
             primaryColor = primaryColor,
             onClick = navigateToBuy,
             icon = {
@@ -113,11 +112,11 @@ fun BottomBar(
                         .size(24.dp)
                         .rotate(90f),
                     painter = painterResource(R.drawable.baseline_swap_vert_24),
-                    contentDescription = "Swap",
+                    contentDescription = stringResource(R.string.cd_swap),
                     tint = primaryColor
                 )
             },
-            text = "Swap"
+            text = stringResource(R.string.label_swap)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -129,13 +128,13 @@ fun BottomBar(
                     Icon(
                         modifier = Modifier.size(16.dp),
                         painter = painterResource(R.drawable.gas_icon),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.cd_back),
                         tint = primaryColor
                     )
                 }
 
             },
-            text = "Gas"
+            text = stringResource(R.string.label_gas)
         )
     }
 }

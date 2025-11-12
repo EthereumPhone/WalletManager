@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.core.ui.R
@@ -45,13 +46,13 @@ fun NoInternetHomeScreen(
             AsyncImage(
                 imageLoader = gifEnabledLoader,
                 model = R.drawable.wireframe_torus,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.cd_wireframe_globe),
                 modifier = Modifier.size(275.dp),
                 colorFilter = ColorFilter.tint(primaryColor.copy(pulseOpacity))
             )
 
             Text(
-                text = "Connect to the internet to see your tokens.",
+                text = stringResource(R.string.offline_connect_internet),
                 style = TextStyle(
                     fontFamily = PitagonsSans,
                     color = primaryColor.copy(neonOpacity),

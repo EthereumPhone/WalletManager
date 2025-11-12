@@ -1,0 +1,17 @@
+<resources>
+    <!-- Content descriptions -->
+    <string name="cd_wireframe_globe">Wireframe globe animation</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_gas">Top Up Button</string>
+    <string name="cd_receive">Receive Button</string>
+    <string name="cd_log">Log Button</string>
+    <string name="cd_swap">Swap Button</string>
+
+    <!-- Common text -->
+    <string name="offline_connect_internet">Connect to the internet to see your tokens.</string>
+    <string name="label_log">Log</string>
+    <string name="label_receive">Receive</string>
+    <string name="label_swap">Swap</string>
+    <string name="label_gas">Gas</string>
+</resources>
+

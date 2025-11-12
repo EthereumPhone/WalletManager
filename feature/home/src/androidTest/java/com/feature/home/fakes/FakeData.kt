@@ -1,10 +1,11 @@
-package com.feature.home
+package com.feature.home.fakes
 
 import com.core.model.SwapToken
 import com.core.model.SwapUIState
 import com.core.model.TokenAsset
 import com.core.model.TokenAssetWithPrice
 import com.core.model.TokenGroupAssetOverview
+import com.feature.home.GroupedAssetsUiState
 
 /**
  * Centralized test fixtures for wallet assets and related UI models.
