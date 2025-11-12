@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.core.data.utils.GasEstimationHelper
+import com.google.gson.JsonParser
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,11 @@ import org.json.JSONObject
 import java.math.BigInteger
 import javax.inject.Inject
 import com.reown.walletkit.client.Wallet
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Foreground service that manages WalletConnect sessions.
@@ -315,6 +322,92 @@ class WalletConnectService : Service() {
             }
             .launchIn(serviceScope)
     }
+
+    suspend fun getTxHashForUserOp(bundlerRPC: String, userOpHash: String, chainId: Int): String {
+        val client = OkHttpClient()
+        var attempts = 0
+
+        while (attempts < 10) {
+            try {
+                val requestBody = """
+                {
+                    "jsonrpc": "2.0",
+                    "method": "pimlico_getUserOperationStatus",
+                    "params": ["$userOpHash"],
+                    "id": 1
+                }
+                """.trimIndent()
+
+                val url = bundlerRPC
+
+                val request = Request.Builder()
+                    .url(url)
+                    .post(requestBody.toRequestBody("application/json; charset=utf-8".toMediaType()))
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw Exception("API request failed with response code: ${response.code}")
+                    }
+
+                    val jsonResponse = response.body?.string() ?: throw Exception("Empty response body")
+                    val jsonElement = JsonParser.parseString(jsonResponse)
+
+                    // Check for JSON-RPC error
+                    val error = jsonElement.asJsonObject.get("error")
+                    if (error != null && !error.isJsonNull) {
+                        throw Exception("JSON-RPC error: ${error.asJsonObject.get("message")?.asString ?: "Unknown error"}")
+                    }
+
+                    val result = jsonElement.asJsonObject.get("result")
+                    if (result == null || result.isJsonNull) {
+                        throw Exception("No result in response")
+                    }
+
+                    val resultObj = result.asJsonObject
+                    val status = resultObj.get("status")?.asString ?: throw Exception("No status in response")
+
+                    when (status) {
+                        "submitted", "included" -> {
+                            val transactionHash = resultObj.get("transactionHash")?.asString
+                            if (transactionHash != null) {
+                                return transactionHash
+                            } else {
+                                throw Exception("Transaction hash not found in response despite status: $status")
+                            }
+                        }
+                        "not_found" -> {
+                            attempts++
+                            if (attempts >= 3) {
+                                throw Exception("UserOp not found after 3 attempts")
+                            }
+                            // Wait for 3 seconds before retrying
+                            withContext(Dispatchers.IO) {
+                                Thread.sleep(3000)
+                            }
+                        }
+                        "failed", "rejected" -> {
+                            throw Exception("UserOp failed with status: $status")
+                        }
+                        else -> {
+                            throw Exception("Unknown or unsupported status: $status")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (attempts >= 10) {  // On the third attempt, throw the error
+                    throw Exception("Failed to get transaction hash for UserOp: ${e.message}", e)
+                }
+                attempts++
+                // Wait before retrying on error
+                withContext(Dispatchers.IO) {
+                    Thread.sleep(3000)
+                }
+            }
+        }
+
+        throw Exception("Failed to get transaction hash after maximum attempts")
+    }
     
     private fun handleSessionProposal(proposal: Wallet.Model.SessionProposal) {
         serviceScope.launch {
@@ -395,15 +488,18 @@ class WalletConnectService : Service() {
                     when (request.method) {
                         "personal_sign" -> {
                             val message = parsePersonalSignParams(request.params)
-                            sdk.signMessage(message, chainId)
+                            val signature = sdk.signMessage(message, chainId)
+                            signature
                         }
                         "eth_sign" -> {
                             val message = parseEthSignParams(request.params)
-                            sdk.signMessage(message, chainId)
+                            val signature = sdk.signMessage(message, chainId)
+                            signature
                         }
                         "eth_signTypedData", "eth_signTypedData_v4" -> {
                             val typedData = parseTypedDataParams(request.params)
-                            sdk.signMessage(typedData, chainId)
+                            val signature = sdk.signMessage(typedData, chainId)
+                            signature
                         }
                         "eth_sendTransaction" -> {
                             val tx = parseTransactionParams(request.params)
@@ -431,12 +527,8 @@ class WalletConnectService : Service() {
                                 }
                             }
                             
-                            val gasProvider: suspend (WalletSDK.UserOperation) -> WalletSDK.GasEstimation = { _ ->
-                                WalletSDK.GasEstimation(
-                                    preVerificationGas = BigInteger.valueOf(70000),
-                                    verificationGasLimit = BigInteger.valueOf(400000),
-                                    callGasLimit = BigInteger.valueOf(200000)
-                                )
+                            val gasProvider: suspend (WalletSDK.UserOperation) -> WalletSDK.GasEstimation = { userOp ->
+                                GasEstimationHelper.estimateGas(userOp, rpcUrl)
                             }
                             
                             val userOpHash = sdk.sendTransaction(
@@ -449,13 +541,22 @@ class WalletConnectService : Service() {
                             )
                             
                             Log.d(TAG, "UserOp submitted with hash: $userOpHash")
-                            userOpHash
+
+                            Log.d(TAG, "Getting tx hash now")
+                            // Return plain string; SDK will serialize correctly.
+                            val txHash = getTxHashForUserOp(
+                                bundlerRPC = bundlerUrl,
+                                chainId = chainId,
+                                userOpHash = userOpHash
+                            )
+                            Log.d(TAG, "Got tx hash $txHash")
+                            txHash
                         }
                         "wallet_getCapabilities" -> {
                             val capabilities = JSONObject().apply {
                                 val smartWalletCapabilities = JSONObject().apply {
                                     put("atomic", JSONObject().apply {
-                                        put("supported", "supported")
+                                        put("supported", true)
                                     })
                                     put("paymasterService", JSONObject().apply {
                                         put("supported", false)
@@ -487,7 +588,7 @@ class WalletConnectService : Service() {
                 // Only respond if we have a result
                 if (result != null) {
                     walletConnectManager.respondToRequest(request.topic, request.requestId, result)
-                    Log.d(TAG, "Successfully processed and responded to ${request.method}")
+                    Log.d(TAG, "Successfully processed and responded to ${request.method} with result: $result")
                 }
             } catch (e: Exception) {
                 val errorMsg = "Failed to process ${request.method}: ${e.message}"
