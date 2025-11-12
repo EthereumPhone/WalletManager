@@ -380,24 +380,18 @@ class WalletConnectService : Service() {
                 // Run all WalletSDK operations on IO dispatcher
                 val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
                     // Ensure WalletSDK is on the correct chain
-                    val currentChainId = sdk.getChainId()
-                    if (currentChainId != chainId) {
-                        Log.d(TAG, "Switching from chain $currentChainId to $chainId")
-                        val rpcUrl = getChainRpcUrl(chainId)
-                        val bundlerUrl = getBundlerUrl(chainId)
-                        
-                        val changeResult = sdk.changeChain(chainId, rpcUrl, bundlerUrl)
-                        if (changeResult == WalletSDK.DECLINE) {
-                            val errorMsg = "User declined chain switch to chain $chainId"
-                            Log.w(TAG, errorMsg)
-                            showErrorNotification("Chain Switch Declined", errorMsg)
-                            walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined chain switch")
-                            return@withContext null
-                        }
-                        
-                        Log.d(TAG, "Switched to chain $chainId")
+                    Log.d(TAG, "Switching to $chainId")
+                    val rpcUrl = getChainRpcUrl(chainId)
+                    val bundlerUrl = getBundlerUrl(chainId)
+
+                    val changeResult = sdk.changeChain(chainId, rpcUrl, bundlerUrl)
+                    if (changeResult == WalletSDK.DECLINE) {
+                        val errorMsg = "User declined chain switch to chain $chainId"
+                        Log.w(TAG, errorMsg)
+                        showErrorNotification("Chain Switch Declined", errorMsg)
+                        walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined chain switch")
+                        return@withContext null
                     }
-                    
                     when (request.method) {
                         "personal_sign" -> {
                             val message = parsePersonalSignParams(request.params)
