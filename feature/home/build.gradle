@@ -4,6 +4,7 @@ plugins {
     alias libs.plugins.hilt.android
     alias libs.plugins.ksp
     alias(libs.plugins.kotlin.compose)
+    id 'io.github.takahirom.roborazzi'
 
 }
 
@@ -23,6 +24,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
         }
     }
     compileOptions {
@@ -85,11 +91,20 @@ dependencies {
     implementation "androidx.compose.ui:ui:1.4.3"
     debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.3")
 
     // Hilt testing
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.55")
     kspAndroidTest libs.hilt.compiler
+    
+    // Roborazzi for screenshot tests (instrumented and Robolectric)
+    androidTestImplementation "io.github.takahirom.roborazzi:roborazzi:1.51.0"
+    androidTestImplementation "io.github.takahirom.roborazzi:roborazzi-compose:1.51.0"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi:1.51.0"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi-compose:1.51.0"
+    testImplementation("org.robolectric:robolectric:4.16")
+
 
     // Web3j needed for the WalletSDK
     implementation libs.web3j.android
@@ -121,4 +136,8 @@ dependencies {
     implementation "io.coil-kt:coil-gif:2.6.0"       // GIF decoding
 
     implementation "dev.chrisbanes.snapper:snapper:0.3.0"
+}
+
+roborazzi {
+    outputDir = file("$rootDir/screenshots")
 }
