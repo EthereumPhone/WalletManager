@@ -5,6 +5,10 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -44,9 +48,10 @@ import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenAssetWithPrice
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
+import com.core.ui.util.mediumEnterDuration
 import com.core.ui.util.pulseOpacity
 import com.feature.send.ui.AmountTextField
-import com.feature.send.ui.ContactPickerCard
+import com.feature.send.ui.ContactPickerOverlay
 import com.feature.send.ui.CustomCaptureActivity
 import com.feature.send.ui.NetworkSelector
 import com.feature.send.ui.RecipientSection
@@ -347,9 +352,13 @@ fun SendScreen(
             secondaryColor = secondaryColor
         )
         
-        // Show contact picker dialog
-        if (showContactPicker) {
-            ContactPickerCard(
+        // Contact picker overlay with fade in/out like send screen overlays
+        AnimatedVisibility(
+            visible = showContactPicker,
+            enter = fadeIn(animationSpec = tween(durationMillis = mediumEnterDuration)),
+            exit = fadeOut(animationSpec = tween(durationMillis = mediumEnterDuration))
+        ) {
+            ContactPickerOverlay(
                 contacts = contactsWithEth,
                 onContactSelected = { contact ->
                     onContactSelected(contact)

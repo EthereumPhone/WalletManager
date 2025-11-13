@@ -77,9 +77,11 @@ fun BoxScope.DgenSearchBar(
     keyboardController: SoftwareKeyboardController?,
     onClear: () -> Unit,
     onNavigateBack: () -> Unit = {},
+    leadingIconResId: Int = R.drawable.backicon,
     selectedChainId: Int? = null,
     onNetworkClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showChainButton: Boolean = true
 ) {
 
     var internalTfv by remember {
@@ -135,7 +137,7 @@ fun BoxScope.DgenSearchBar(
                 }
             ){
                 Icon(
-                    painter = painterResource(R.drawable.backicon),
+                    painter = painterResource(leadingIconResId),
                     contentDescription = "Search",
                     tint = primaryColor,
                     modifier = modifier.size(24.dp)
@@ -232,13 +234,15 @@ fun BoxScope.DgenSearchBar(
                             }
                         )
                     } else {
-                        ChainButton(
-                            chainId = selectedChainId,
-                            isSelected = false,
-                            primaryColor = primaryColor,
-                            onClick = onNetworkClick,
-                            modifier = modifier
-                        )
+                        if (showChainButton) {
+                            ChainButton(
+                                chainId = selectedChainId,
+                                isSelected = false,
+                                primaryColor = primaryColor,
+                                onClick = onNetworkClick,
+                                modifier = modifier
+                            )
+                        }
                     }
                 }
 

@@ -56,6 +56,7 @@ import com.core.ui.util.dgenGray
 import com.core.ui.util.dgenGreen
 import com.core.ui.util.dgenOrche
 import com.core.ui.util.dgenRed
+import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.label_fontSize
 import com.core.ui.util.pulseOpacity
@@ -73,20 +74,21 @@ fun RecipientSection(
     onKeyboardDismissed: () -> Unit = {}
 ) {
     val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
     val view = LocalView.current
     val focusManager = LocalFocusManager.current
 
 
     
     val (headerText, headerColor) = when {
-        selectedContact != null -> "SENDING TO CONTACT" to dgenGreen
+        selectedContact != null -> "SENDING TO CONTACT" to primaryColor
         recipientUiState.ensError.isNotEmpty() -> "ENS ERROR" to dgenRed
         recipientUiState.isResolving -> "RESOLVING ENS..." to dgenOrche
         recipientUiState.recipientAddress.endsWith(".eth") -> "ENS RESOLVED" to dgenGreen
         else -> "TARGET ADDRESS" to primaryColor
     }
 
-    Column(Modifier.offset(x = (-12).dp)) {
+    Column {
         // Header with contacts icon
         Row(
             modifier = Modifier
@@ -128,11 +130,20 @@ fun RecipientSection(
         
         // Show contact UI if a contact is selected
         if (selectedContact != null) {
-            ContactSelectedUI(
-                contact = selectedContact,
-                primaryColor = primaryColor,
-                onClear = onClearContact
-            )
+
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ){
+                Spacer(modifier = Modifier.fillMaxWidth().height(4.dp))
+                SelectedContact(
+                    contact = selectedContact,
+                    primaryColor = primaryColor,
+                    secondaryColor = secondaryColor,
+                    onClear = onClearContact
+                )
+
+            }
+
         } else {
         // trick to keep cursor position
         var textFieldValue by remember { mutableStateOf(TextFieldValue(recipientUiState.recipientAddress)) }
@@ -173,7 +184,7 @@ fun RecipientSection(
             activeColor = primaryColor,
             placeholder = {
                 Text(
-                    modifier = Modifier,
+                    modifier = Modifier.offset(x = (-12).dp),
                     text = "Address",
                     style = TextStyle(
                         fontFamily = PitagonsSans,
@@ -197,102 +208,7 @@ fun RecipientSection(
     }
 }
 
-@Composable
-private fun ContactSelectedUI(
-    contact: Contact,
-    primaryColor: Color,
-    onClear: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF1A1A1A))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            // Profile Image
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(dgenGray.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (contact.image.isNotEmpty()) {
-                    AsyncImage(
-                        model = contact.image,
-                        contentDescription = "Contact photo",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text = contact.name.firstOrNull()?.uppercase() ?: "?",
-                        style = TextStyle(
-                            fontFamily = PitagonsSans,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = dgenWhite
-                        )
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = contact.name,
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
-                        color = dgenWhite
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = when {
-                        contact.ens.isNotEmpty() -> contact.ens
-                        contact.address.length > 10 -> "${contact.address.take(6)}...${contact.address.takeLast(4)}"
-                        else -> contact.address
-                    },
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        fontSize = 12.sp,
-                        color = if (contact.ens.isNotEmpty()) primaryColor else dgenGray
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        
-        IconButton(
-            onClick = onClear,
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Close,
-                contentDescription = "Clear contact",
-                tint = dgenGray,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
+
 
 @Preview
 @Composable
@@ -301,6 +217,26 @@ fun PreviewRecipientSection() {
         recipientUiState = RecipientUiState(),
         selectedContact = null,
         hasContactsWithEth = false,
+        onContentChanged = {},
+        onContactIconClick = {},
+        onClearContact = {}
+    )
+}
+
+@Preview(name = "RecipientSection - Selected Contact")
+@Composable
+fun PreviewRecipientSectionSelected() {
+    val sampleContact = Contact(
+        id = "1",
+        name = "Alice Wonderland",
+        ens = "alice.eth",
+        address = "0x1234567890abcdef1234567890abcdef12345678",
+        image = ""
+    )
+    RecipientSection(
+        recipientUiState = RecipientUiState(),
+        selectedContact = sampleContact,
+        hasContactsWithEth = true,
         onContentChanged = {},
         onContactIconClick = {},
         onClearContact = {}
