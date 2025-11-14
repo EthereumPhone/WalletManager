@@ -26,11 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.core.model.TokenAssetWithPrice
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.lazerCore
@@ -136,8 +138,10 @@ private fun networkSymbolResolver(chainId: Int): Int {
         1 -> R.drawable.mainnet
         10 -> R.drawable.optimism
         137 -> R.drawable.polygon
+        56 -> R.drawable.bnb
         8453 -> R.drawable.base_square
         42161 -> R.drawable.arbitrum
+        43114 -> R.drawable.avalanche
         7777777 -> R.drawable.zorb
         else -> R.drawable.mainnet //TODO change to something different?
     }
@@ -148,9 +152,125 @@ private fun networkNameResolver(chainId: Int): String {
         1 -> "MAIN"
         10 -> "OP"
         137 -> "POL"
+        56 -> "BNB"
         8453 -> "BASE"
         42161 -> "ARB"
+        43114 -> "AVAX"
         7777777 -> "ZORA"
         else -> "MAINNET" //TODO change to something different?
     }
+}
+
+@Preview(name = "Network Selector - BNB", showBackground = true)
+@Composable
+private fun NetworkSelectorPreview_BNB() {
+    val assets = sampleNetworkAssets()
+    NetworkSelector(
+        modifier = Modifier.fillMaxWidth(),
+        itemWidth = 120.dp,
+        itemHeight = 100.dp,
+        assetsUiState = AssetsUiState.Success(assets),
+        selectedAssetUiState = SelectedAssetUiState.Selected(
+            assets.first { it.chainId == 56 }
+        ),
+        onNetworkSelected = {}
+    )
+}
+
+@Preview(name = "Network Selector - AVAX", showBackground = true)
+@Composable
+private fun NetworkSelectorPreview_AVAX() {
+    val assets = sampleNetworkAssets()
+    NetworkSelector(
+        modifier = Modifier.fillMaxWidth(),
+        itemWidth = 120.dp,
+        itemHeight = 100.dp,
+        assetsUiState = AssetsUiState.Success(assets),
+        selectedAssetUiState = SelectedAssetUiState.Selected(
+            assets.first { it.chainId == 43114 }
+        ),
+        onNetworkSelected = {}
+    )
+}
+
+private fun sampleNetworkAssets(): List<TokenAssetWithPrice> {
+    return listOf(
+//        TokenAssetWithPrice(
+//            address = "0x0000000000000000000000000000000000000000",
+//            chainId = 1,
+//            symbol = "ETH",
+//            name = "Ethereum",
+//            balance = 0.0,
+//            decimals = 18,
+//            logoUrl = null,
+//            swappable = false,
+//            fiatAmount = 0.0
+//        ),
+//        TokenAssetWithPrice(
+//            address = "0x0000000000000000000000000000000000000000",
+//            chainId = 10,
+//            symbol = "OP",
+//            name = "Optimism",
+//            balance = 0.0,
+//            decimals = 18,
+//            logoUrl = null,
+//            swappable = false,
+//            fiatAmount = 0.0
+//        ),
+//        TokenAssetWithPrice(
+//            address = "0x0000000000000000000000000000000000000000",
+//            chainId = 137,
+//            symbol = "POL",
+//            name = "Polygon",
+//            balance = 0.0,
+//            decimals = 18,
+//            logoUrl = null,
+//            swappable = false,
+//            fiatAmount = 0.0
+//        ),
+        TokenAssetWithPrice(
+            address = "0x0000000000000000000000000000000000000000",
+            chainId = 56,
+            symbol = "BNB",
+            name = "Binance",
+            balance = 0.0,
+            decimals = 18,
+            logoUrl = null,
+            swappable = false,
+            fiatAmount = 0.0
+        ),
+        TokenAssetWithPrice(
+            address = "0x0000000000000000000000000000000000000000",
+            chainId = 8453,
+            symbol = "BASE",
+            name = "Base",
+            balance = 0.0,
+            decimals = 18,
+            logoUrl = null,
+            swappable = false,
+            fiatAmount = 0.0
+        ),
+        TokenAssetWithPrice(
+            address = "0x0000000000000000000000000000000000000000",
+            chainId = 43114,
+            symbol = "AVAX",
+            name = "Avalanche",
+            balance = 0.0,
+            decimals = 18,
+            logoUrl = null,
+            swappable = false,
+            fiatAmount = 0.0
+        ),
+        TokenAssetWithPrice(
+            address = "0x0000000000000000000000000000000000000000",
+            chainId = 7777777,
+            symbol = "ZORA",
+            name = "Zora",
+            balance = 0.0,
+            decimals = 18,
+            logoUrl = null,
+            swappable = false,
+            fiatAmount = 0.0
+        )
+    )
 }
