@@ -56,6 +56,8 @@ import com.core.database.model.RawContract
 import com.core.database.model.Erc1155MetadataObject
 import kotlinx.datetime.Clock
 import kotlinx.coroutines.Dispatchers
+import com.core.terminalsdk.ReflectiveLedPattern
+import com.core.terminalsdk.TerminalLEDController
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
@@ -72,6 +74,7 @@ class SwapViewModel @Inject constructor(
     private val terminalRepository: TerminalRepository,
     private val tokenBalanceDao: TokenBalanceDao,
     private val transferDao: TransferDao,
+    private val reflectiveLedPattern: ReflectiveLedPattern?,
     ): ViewModel() {
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
@@ -201,6 +204,21 @@ class SwapViewModel @Inject constructor(
         
         // Initialize quote fetching with debouncing
         setupQuoteFetching()
+
+        // Observe transaction status and reflect on terminal LEDs
+        viewModelScope.launch {
+            swapTransactionStatus.collect { status ->
+                when (status) {
+                    SwapTransactionStatus.SUCCESS -> {
+                        showSuccessMatrix()
+                    }
+                    is SwapTransactionStatus.FAILURE -> {
+                        showFailedMatrix()
+                    }
+                    else -> { /* no-op */ }
+                }
+            }
+        }
     }
     
     private fun observeAndSetDefaultToken() {
@@ -1032,6 +1050,24 @@ class SwapViewModel @Inject constructor(
      */
     fun clearSwapTransactionStatus() {
         _swapTransactionStatus.value = null
+    }
+
+    private fun showFailedMatrix() {
+        viewModelScope.launch {
+            reflectiveLedPattern?.displayError()
+            delay(2000)
+            reflectiveLedPattern?.clear()
+            reflectiveLedPattern?.displayChad(TerminalLEDController.getColorHex())
+        }
+    }
+
+    private fun showSuccessMatrix() {
+        viewModelScope.launch {
+            reflectiveLedPattern?.displaySuccess()
+            delay(2000)
+            reflectiveLedPattern?.clear()
+            reflectiveLedPattern?.displayChad(TerminalLEDController.getColorHex())
+        }
     }
 
     /**
