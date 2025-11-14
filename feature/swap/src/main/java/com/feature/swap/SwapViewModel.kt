@@ -1057,7 +1057,7 @@ class SwapViewModel @Inject constructor(
             reflectiveLedPattern?.displayError()
             delay(2000)
             reflectiveLedPattern?.clear()
-            reflectiveLedPattern?.displayChad(TerminalLEDController.getColorHex())
+            reflectiveLedPattern?.displaySwap()//.displayChad(TerminalLEDController.getColorHex())
         }
     }
 
@@ -1066,7 +1066,7 @@ class SwapViewModel @Inject constructor(
             reflectiveLedPattern?.displaySuccess()
             delay(2000)
             reflectiveLedPattern?.clear()
-            reflectiveLedPattern?.displayChad(TerminalLEDController.getColorHex())
+            reflectiveLedPattern?.displaySwap()//.displayChad(TerminalLEDController.getColorHex())
         }
     }
 
@@ -1481,6 +1481,7 @@ class SwapViewModel @Inject constructor(
         try {
             // Use TerminalRepository to generate swap screen
             terminalRepository.generateSwap()
+            reflectiveLedPattern?.displaySwap()
         } catch (e: Exception) {
             Log.e("SwapViewModel", "Error displaying swap terminal screen", e)
         }
@@ -1492,6 +1493,7 @@ class SwapViewModel @Inject constructor(
                 // Redraw the terminal content after resume
                 delay(300)
                 terminalRepository.generateSwap()
+                reflectiveLedPattern?.displaySwap()
             } catch (e: Exception) {
                 Log.e("SwapViewModel", "Error redrawing swap terminal screen after resume", e)
             }
