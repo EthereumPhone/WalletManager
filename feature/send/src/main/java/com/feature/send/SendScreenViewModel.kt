@@ -633,7 +633,7 @@ class SendViewModel @Inject constructor(
 
     fun showSuccessMatrix() {
         viewModelScope.launch {
-            reflectiveLedPattern?.displayError()
+            reflectiveLedPattern?.displaySuccess()
             delay(2000)
             reflectiveLedPattern?.clear()
             reflectiveLedPattern?.displayArrowUp()
