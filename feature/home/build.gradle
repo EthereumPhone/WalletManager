@@ -98,6 +98,9 @@ dependencies {
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.55")
     kspAndroidTest libs.hilt.compiler
     
+    // Coroutines testing
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
+    
     // Roborazzi for screenshot tests (instrumented and Robolectric)
     androidTestImplementation "io.github.takahirom.roborazzi:roborazzi:1.51.0"
     androidTestImplementation "io.github.takahirom.roborazzi:roborazzi-compose:1.51.0"
