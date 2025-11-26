@@ -9,13 +9,19 @@ plugins {
 
 android {
     namespace 'com.feature.send'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdk 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
     }
 
     buildTypes {
@@ -114,6 +120,15 @@ dependencies {
 
     implementation "io.coil-kt:coil-compose:2.6.0"   // Compose image loading
     implementation "io.coil-kt:coil-gif:2.6.0"
+
+    // Roborazzi for screenshot tests (instrumented and Robolectric)
+    androidTestImplementation "io.github.takahirom.roborazzi:roborazzi:1.51.0"
+    androidTestImplementation "io.github.takahirom.roborazzi:roborazzi-compose:1.51.0"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi:1.51.0"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi-compose:1.51.0"
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
+
 
 
 }
