@@ -22,18 +22,18 @@ import javax.inject.Singleton
 class TerminalRepository @Inject constructor(
     terminalSDKWrapper: TerminalSDKWrapper,
     @ApplicationContext private val context: Context
-) {
+): TerminalContentRepository {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     
     private val _events = MutableSharedFlow<TerminalEvent>()
-    val events: SharedFlow<TerminalEvent> = _events
+    override val events: SharedFlow<TerminalEvent> = _events
 
     private val sdk: TerminalSDK? = when (terminalSDKWrapper) {
         is TerminalSDKWrapper.Available -> terminalSDKWrapper.sdk
         TerminalSDKWrapper.Unavailable -> null
     }
 
-    suspend fun dismissContent() {
+    override suspend fun dismissContent() {
         sdk?.apply {
             destroyTouchHandler()
             finishScreen()
@@ -119,7 +119,7 @@ class TerminalRepository @Inject constructor(
         }
     }
 
-    suspend fun generateTopUp() {
+    override suspend fun generateTopUp() {
         sdk?.apply {
             destroyTouchHandler()
 
