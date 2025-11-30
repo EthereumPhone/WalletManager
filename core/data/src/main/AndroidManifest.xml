@@ -21,5 +21,21 @@
                 <action android:name="org.ethereumphone.walletmanager.DEDUCT_TOKEN_BALANCE" />
             </intent-filter>
         </receiver>
+        
+        <!-- Content Provider for Swap Quotes -->
+        <provider
+            android:name=".provider.SwapQuoteContentProvider"
+            android:authorities="com.walletmanager.swapquote.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+        
+        <!-- Content Provider for Swap Transaction Data -->
+        <provider
+            android:name=".provider.SwapDataContentProvider"
+            android:authorities="com.walletmanager.swapdata.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>
