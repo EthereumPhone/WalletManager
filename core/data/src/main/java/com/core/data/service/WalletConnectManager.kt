@@ -247,8 +247,19 @@ class WalletConnectManager(private val application: Application) {
                 Log.d(TAG, "Checking if CoreClient is initialized...")
                 val isCoreClientReady = try {
                     val appClass = Class.forName("org.ethereumphone.walletmanager.WmApplication")
-                    val waitMethod = appClass.getMethod("waitForCoreClientInitialization", Long::class.java)
-                    waitMethod.invoke(null, 5000L) as Boolean
+                    val isInitMethod = appClass.getMethod("isCoreClientInitialized")
+                    
+                    // Poll isCoreClientInitialized() for up to 5 seconds
+                    val startTime = System.currentTimeMillis()
+                    var isReady = false
+                    
+                    while (!isReady && (System.currentTimeMillis() - startTime) < 5000) {
+                        isReady = isInitMethod.invoke(null) as Boolean
+                        if (!isReady) {
+                            kotlinx.coroutines.delay(100)
+                        }
+                    }
+                    isReady
                 } catch (e: Exception) {
                     Log.w(TAG, "Could not check CoreClient initialization status, proceeding anyway", e)
                     true // Assume it's ready if we can't check
