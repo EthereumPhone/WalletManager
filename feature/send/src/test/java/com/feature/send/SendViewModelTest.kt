@@ -535,6 +535,228 @@ class SendViewModelTest {
         assertEquals("1.234", viewModel.amountUiState.value.currentAmount)
     }
 
+    // ==================== Additional Amount Input Validation Tests ====================
+
+    @Test
+    fun updateAmount_givenEmptyString_shouldSetEmptyAmount() {
+        viewModel.updateAmount("", isFiat = false)
+        assertEquals("", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenJustZero_shouldAcceptIt() {
+        viewModel.updateAmount("0", isFiat = false)
+        assertEquals("0", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenTrailingDecimal_shouldAcceptIt() {
+        viewModel.updateAmount("5.", isFiat = false)
+        assertEquals("5.", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenLeadingDecimalWithDigits_shouldAcceptIt() {
+        viewModel.updateAmount(".5", isFiat = false)
+        assertEquals(".5", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenVeryLongDecimalPlaces_shouldAcceptIt() {
+        viewModel.updateAmount("1.123456789012345", isFiat = false)
+        assertEquals("1.123456789012345", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenVeryLargeNumber_shouldAcceptIt() {
+        viewModel.updateAmount("999999999999", isFiat = false)
+        assertEquals("999999999999", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenConsecutiveDots_shouldRemoveSecondDot() {
+        viewModel.updateAmount("1..5", isFiat = false)
+        assertEquals("1.5", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenMultipleZeros_shouldAcceptThem() {
+        viewModel.updateAmount("00", isFiat = false)
+        assertEquals("00", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenZeroPointZero_shouldAcceptIt() {
+        viewModel.updateAmount("0.0", isFiat = false)
+        assertEquals("0.0", viewModel.amountUiState.value.currentAmount)
+    }
+
+    // ==================== Fiat Mode Input Validation Tests ====================
+
+    @Test
+    fun updateAmount_givenDotInFiatMode_shouldNormalizeToZeroDot() {
+        viewModel.updateAmount(".", isFiat = true)
+        assertEquals("0.", viewModel.amountUiState.value.currentFiatAmount)
+        assertEquals("", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenMultipleDotsInFiatMode_shouldRemoveSecondDot() {
+        viewModel.updateAmount("100.50.25", isFiat = true)
+        assertEquals("100.5025", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    @Test
+    fun updateAmount_givenEmptyStringInFiatMode_shouldSetEmptyFiatAmount() {
+        viewModel.updateAmount("", isFiat = true)
+        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    @Test
+    fun updateAmount_givenLeadingDecimalInFiatMode_shouldAcceptIt() {
+        viewModel.updateAmount(".99", isFiat = true)
+        assertEquals(".99", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    @Test
+    fun updateAmount_givenTrailingDecimalInFiatMode_shouldAcceptIt() {
+        viewModel.updateAmount("100.", isFiat = true)
+        assertEquals("100.", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    // ==================== Max Amount Boundary Tests ====================
+
+    @Test
+    fun updateAmount_givenAmountExceedingBalance_shouldStillStoreIt() = runTest {
+        setupNativeEthAsset() // balance = 2.5 ETH
+        advanceUntilIdle()
+
+        // Amount exceeds balance
+        viewModel.updateAmount("10.0", isFiat = false)
+
+        // Amount is stored (UI would show it in red, but value is stored)
+        assertEquals("10.0", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenAmountAtExactBalance_shouldStoreIt() = runTest {
+        setupNativeEthAsset() // balance = 2.5 ETH
+        advanceUntilIdle()
+
+        viewModel.updateAmount("2.5", isFiat = false)
+        assertEquals("2.5", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenAmountBelowBalance_shouldStoreIt() = runTest {
+        setupNativeEthAsset() // balance = 2.5 ETH
+        advanceUntilIdle()
+
+        viewModel.updateAmount("1.0", isFiat = false)
+        assertEquals("1.0", viewModel.amountUiState.value.currentAmount)
+    }
+
+    // ==================== Send Validation Edge Cases ====================
+
+    @Test
+    fun send_givenLeadingDecimalAmount_shouldProcessCorrectly() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount(".5", isFiat = false) // 0.5 ETH
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Transfer should be called
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        assertEquals(".5", sendRepository.transferEthCalls[0].value)
+    }
+
+    @Test
+    fun send_givenTrailingDecimalAmount_shouldProcessCorrectly() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1.", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Transfer should be called
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        assertEquals("1.", sendRepository.transferEthCalls[0].value)
+    }
+
+    @Test
+    fun send_givenZeroAmount_shouldProcessIt() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("0", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Transfer should be called (blockchain will handle 0 amount)
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        assertEquals("0", sendRepository.transferEthCalls[0].value)
+    }
+
+    @Test
+    fun send_givenDotOnlyInFiatMode_shouldNotInitiateTransfer() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAmount(".", isFiat = true) // Becomes "0." in fiat field
+        viewModel.updateAddress("0xRecipient")
+        viewModel.send()
+        advanceUntilIdle()
+
+        // "0." is invalid for sending
+        assertNull(viewModel.transactionStatus.value)
+        assertTrue(sendRepository.transferEthCalls.isEmpty())
+    }
+
+    @Test
+    fun send_givenValidFiatOnlyAmount_shouldConvertAndSend() = runTest {
+        // Setup asset with known price: 2.5 ETH = $7500, so 1 ETH = $3000
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1500", isFiat = true) // $1500 = 0.5 ETH
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Transfer should be called with converted amount
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        // $1500 / $3000 per ETH = 0.5 ETH
+        assertEquals(0.5, sendRepository.transferEthCalls[0].value.toDouble(), 0.001)
+    }
+
+    // ==================== Rapid Input Change Tests ====================
+
+    @Test
+    fun updateAmount_givenRapidInputChanges_shouldOnlyKeepLastValue() {
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.updateAmount("12", isFiat = false)
+        viewModel.updateAmount("123", isFiat = false)
+        viewModel.updateAmount("1234", isFiat = false)
+
+        assertEquals("1234", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_givenRapidModeSwitch_shouldMaintainCorrectField() {
+        viewModel.updateAmount("1.5", isFiat = false)
+        viewModel.updateAmount("100", isFiat = true)
+        viewModel.updateAmount("2.0", isFiat = false)
+
+        assertEquals("2.0", viewModel.amountUiState.value.currentAmount)
+        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
     @Test
     fun updateAmount_afterSetMaxAmount_shouldResetUseMaxFlag() = runTest {
         setupNativeEthAsset()
