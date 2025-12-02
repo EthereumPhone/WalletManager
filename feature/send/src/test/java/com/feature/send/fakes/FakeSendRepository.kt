@@ -17,6 +17,9 @@ class FakeSendRepository : SendRepository {
 
     private val maxNativeByChainId = mutableMapOf<Int, String>()
     private val maxErc20ByKey = mutableMapOf<Triple<String, Int, Int>, String>()
+    
+    // Stubbed transaction result - if set, overrides the default behavior
+    private var stubbedTransactionResult: String? = null
 
     override val currentTransactionHash: Flow<String> = txHashState.asStateFlow()
     override val currentTransactionChainId: Flow<Int> = txChainIdState.asStateFlow()
@@ -33,7 +36,7 @@ class FakeSendRepository : SendRepository {
             TransferEthCall(chainId, toAddress, value, data, gasPrice, gasAmount)
         )
         txChainIdState.value = chainId
-        txHashState.value = "0xFAKE_ETH_TX_${transferEthCalls.size}"
+        txHashState.value = stubbedTransactionResult ?: "0xFAKE_ETH_TX_${transferEthCalls.size}"
     }
 
     override suspend fun transferErc20(
@@ -46,7 +49,34 @@ class FakeSendRepository : SendRepository {
             TransferErc20Call(chainId, tokenAsset, amount, toAddress)
         )
         txChainIdState.value = chainId
-        txHashState.value = "0xFAKE_ERC20_TX_${transferErc20Calls.size}"
+        txHashState.value = stubbedTransactionResult ?: "0xFAKE_ERC20_TX_${transferErc20Calls.size}"
+    }
+    
+    /**
+     * Stub the transaction result that will be returned after transfer calls.
+     * Use "decline" to simulate user declining, "error" for errors, or a valid hash for success.
+     */
+    fun stubTransactionResult(result: String) {
+        stubbedTransactionResult = result
+    }
+    
+    /**
+     * Clear the stubbed transaction result to restore default behavior.
+     */
+    fun clearTransactionResultStub() {
+        stubbedTransactionResult = null
+    }
+    
+    /**
+     * Reset all recorded calls and stubs for a fresh test state.
+     */
+    fun reset() {
+        transferEthCalls.clear()
+        transferErc20Calls.clear()
+        stubbedTransactionResult = null
+        maxNativeByChainId.clear()
+        maxErc20ByKey.clear()
+        restoreState()
     }
 
     override suspend fun maxAllowedSend(

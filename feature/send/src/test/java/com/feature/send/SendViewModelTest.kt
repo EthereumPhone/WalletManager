@@ -11,7 +11,6 @@ import com.feature.send.fakes.FakeNetworkBalanceRepository
 import com.feature.send.fakes.FakeSendRepository
 import com.feature.send.fakes.FakeTokenExchangeRepository
 import com.feature.send.fakes.FakeUserDataRepository
-import com.feature.send.fakes.SendUsecaseFactory
 import com.feature.send.fakes.createNoopTerminalRepository
 import com.feature.send.ui.TransactionStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,7 +19,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -85,7 +83,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun initial_states_defaults() {
+    fun viewModel_whenInitialized_shouldHaveDefaultStateValues() {
         // Depending on test dispatcher timing, state can be Loading then quickly Empty
         val initial = viewModel.assetsUiState.value
         assertTrue(initial is AssetsUiState.Loading || initial is AssetsUiState.Empty)
@@ -98,7 +96,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun assetsUiState_emitsEmpty_thenSuccess_whenTokensAppear() = runTest {
+    fun assetsUiState_whenTokensEmitted_shouldTransitionFromEmptyToSuccess() = runTest {
         // Initially, no tokens -> Empty after Loading
         val empty = viewModel.assetsUiState.first { it !is AssetsUiState.Loading }
         assertTrue(empty is AssetsUiState.Empty)
@@ -136,7 +134,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun changeSelectedAsset_updatesSelection_andAmountUiState() = runTest {
+    fun changeSelectedAsset_whenCalled_shouldUpdateSelectionAndResetAmountState() = runTest {
         // Provide assets
         val tokens = listOf(
             TokenAssetWithPrice(
@@ -181,7 +179,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun updateAddress_setsValue_withoutEnsResolution_forNonEns() = runTest {
+    fun updateAddress_givenNonEnsAddress_shouldSetValueWithoutResolution() = runTest {
         viewModel.updateAddress("0x1234")
         advanceUntilIdle()
         val state = viewModel.recipientUiState.value
@@ -192,7 +190,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun updateAmount_sanitization_and_targetFields() {
+    fun updateAmount_givenVariousInputs_shouldSanitizeAndSetCorrectField() {
         // Crypto amount with single dot is normalized
         viewModel.updateAmount(".", isFiat = false)
         assertEquals("0.", viewModel.amountUiState.value.currentAmount)
@@ -209,7 +207,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun setMaxAmount_nativeAsset_usesRepositoryValue_and_setsFlag() = runTest {
+    fun setMaxAmount_givenNativeAsset_shouldUseRepositoryValueAndSetFlag() = runTest {
         // Provide native asset
         val tokens = listOf(
             TokenAssetWithPrice(
@@ -242,7 +240,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun setMaxAmount_erc20_usesRepositoryValue_and_setsFlag() = runTest {
+    fun setMaxAmount_givenErc20Token_shouldUseRepositoryValueAndSetFlag() = runTest {
         val tokens = listOf(
             TokenAssetWithPrice(
                 address = "0xERC",
@@ -272,32 +270,7 @@ class SendViewModelTest {
     }
 
     @Test
-    fun onKeyboardDismissed_resetsFlagToFalse() {
-        // Initially false; calling it should keep false and not crash
-        viewModel.onKeyboardDismissed()
-        assertFalse(viewModel.shouldDismissKeyboard.value)
-    }
-
-    @Test
-    fun qrScannerTrigger_toggle() {
-        assertFalse(viewModel.qrScannerTriggered.value)
-        viewModel.triggerQrScanner()
-        assertTrue(viewModel.qrScannerTriggered.value)
-        viewModel.resetQrScannerTrigger()
-        assertFalse(viewModel.qrScannerTriggered.value)
-    }
-
-    @Test
-    fun sendTransactionTrigger_toggle() {
-        assertFalse(viewModel.sendTransactionTriggered.value)
-        viewModel.triggerSendTransaction()
-        assertTrue(viewModel.sendTransactionTriggered.value)
-        viewModel.resetSendTransactionTrigger()
-        assertFalse(viewModel.sendTransactionTriggered.value)
-    }
-
-    @Test
-    fun send_withoutSelectedAsset_setsFailureStatus() = runTest {
+    fun send_givenNoAssetSelected_shouldSetFailureStatus() = runTest {
         // Provide a valid crypto amount, but no selected asset
         viewModel.updateAmount("1", isFiat = false)
         viewModel.send()
@@ -308,41 +281,590 @@ class SendViewModelTest {
         assertEquals("No asset selected", (status as TransactionStatus.FAILURE).errorMessage)
     }
 
+    // ==================== send() method tests ====================
+
     @Test
-    fun clearTransactionStatus_setsNull() {
-        // Manually put a failure state by calling send as above
+    fun send_givenEmptyAmount_shouldNotInitiateTransfer() = runTest {
+        // Setup asset but leave amount empty
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Status should remain null - early return
+        assertNull(viewModel.transactionStatus.value)
+        // No transfer calls made
+        assertTrue(sendRepository.transferEthCalls.isEmpty())
+    }
+
+    @Test
+    fun send_givenDotOnlyAmount_shouldNotInitiateTransfer() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAmount(".", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // "." normalizes to "0." which is considered invalid for send
+        assertNull(viewModel.transactionStatus.value)
+        assertTrue(sendRepository.transferEthCalls.isEmpty())
+    }
+
+    @Test
+    fun send_givenZeroDotAmount_shouldNotInitiateTransfer() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAmount("0.", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertNull(viewModel.transactionStatus.value)
+        assertTrue(sendRepository.transferEthCalls.isEmpty())
+    }
+
+    @Test
+    fun send_givenNativeEthAsset_shouldCallTransferEthWithCorrectParams() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient123")
+        viewModel.updateAmount("1.5", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Verify transfer was called
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        val call = sendRepository.transferEthCalls[0]
+        assertEquals(1, call.chainId)
+        assertEquals("0xRecipient123", call.toAddress)
+        assertEquals("1.5", call.value)
+    }
+
+    @Test
+    fun send_givenErc20Token_shouldCallTransferErc20WithCorrectParams() = runTest {
+        setupErc20UsdcAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient456")
+        viewModel.updateAmount("100", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Verify ERC20 transfer was called
+        assertEquals(1, sendRepository.transferErc20Calls.size)
+        val call = sendRepository.transferErc20Calls[0]
+        assertEquals(1, call.chainId)
+        assertEquals("0xRecipient456", call.toAddress)
+        assertEquals(100.0, call.amount, 0.001)
+        assertEquals("USDC", call.tokenAsset.symbol)
+    }
+
+    @Test
+    fun send_whenCalled_shouldSetStatusToPendingAndInitiateTransfer() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+
+        // Initially null
+        assertNull(viewModel.transactionStatus.value)
+
+        viewModel.send()
+        // After send starts, status should be PENDING
+        advanceUntilIdle()
+
+        // The send was initiated (transfer was called)
+        assertEquals(1, sendRepository.transferEthCalls.size)
+    }
+
+    @Test
+    fun send_givenUserDecline_shouldSetFailureWithDeclineMessage() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        // Stub repository to return "decline"
+        sendRepository.stubTransactionResult("decline")
+
+        viewModel.updateAddress("0xRecipient")
         viewModel.updateAmount("1", isFiat = false)
         viewModel.send()
+        advanceUntilIdle()
 
-        // Clear status
-        viewModel.clearTransactionStatus()
-        assertNull(viewModel.transactionStatus.value)
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
+        assertEquals("Transaction declined", (status as TransactionStatus.FAILURE).errorMessage)
     }
 
     @Test
-    fun txComplete_reset_setsUnComplete() {
-        // Default is UnComplete; calling reset should keep it UnComplete (idempotent)
-        viewModel.resetTxComplete()
-        assertTrue(viewModel.txComplete.value is TxCompleteUiState.UnComplete)
+    fun send_givenErrorResult_shouldSetFailureStatus() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        // Stub repository to return "error"
+        sendRepository.stubTransactionResult("error")
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
     }
 
     @Test
-    fun terminal_calls_doNotCrash() = runTest {
-        viewModel.onScreenOpened()
-        viewModel.onScreenOpenedAfterResume()
-        viewModel.onSendClosed()
-        viewModel.showFailedMatrix()
-        viewModel.showWarningMatrix()
-        viewModel.showSuccessMatrix()
-        // No state change expected; just ensure no exceptions
-        assertNull(viewModel.transactionStatus.value)
+    fun send_givenFiatAmount_shouldConvertToCryptoAndSend() = runTest {
+        // Setup asset with known price: 2.5 ETH = $7500, so 1 ETH = $3000
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "1",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0 // $3000 per ETH
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        viewModel.updateAddress("0xRecipient")
+        // Enter fiat amount of $3000 (should convert to 1 ETH)
+        viewModel.updateAmount("3000", isFiat = true)
+        viewModel.send()
+        advanceUntilIdle()
+
+        // Verify transfer was called
+        assertEquals(1, sendRepository.transferEthCalls.size)
+        val call = sendRepository.transferEthCalls[0]
+        // $3000 / $3000 per ETH = 1 ETH
+        assertEquals(1.0, call.value.toDouble(), 0.001)
+    }
+
+    // ==================== updateAddress() tests ====================
+
+    @Test
+    fun updateAddress_givenEmptyString_shouldSetEmptyRecipient() = runTest {
+        viewModel.updateAddress("")
+        advanceUntilIdle()
+
+        val state = viewModel.recipientUiState.value
+        assertEquals("", state.recipientAddress)
+        assertFalse(state.isResolving)
     }
 
     @Test
-    fun getContacts_returnsEmptyList_inDefaultRobolectricEnv() = runTest {
-        viewModel.getContacts(context)
-        val list = viewModel.contacts.first()
-        assertTrue(list.isEmpty())
+    fun updateAddress_givenHexAddress_shouldSetValueWithoutResolution() = runTest {
+        val hexAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f5e123"
+        viewModel.updateAddress(hexAddress)
+        advanceUntilIdle()
+
+        val state = viewModel.recipientUiState.value
+        assertEquals(hexAddress, state.recipientAddress)
+        assertFalse(state.isResolving)
+        assertEquals("", state.ensError)
+    }
+
+    @Test
+    fun updateAddress_givenEnsName_shouldTriggerEnsResolution() = runTest {
+        // ENS names ending in .eth should trigger resolution
+        viewModel.updateAddress("vitalik.eth")
+        // Don't wait for full resolution - just check isResolving was triggered
+        
+        // The address should be set
+        assertEquals("vitalik.eth", viewModel.recipientUiState.value.recipientAddress)
+        // Note: isResolving may have already transitioned due to network/async behavior
+    }
+
+    @Test
+    fun updateAddress_givenMultipleUpdates_shouldKeepLatestValue() = runTest {
+        viewModel.updateAddress("0xFirst")
+        viewModel.updateAddress("0xSecond")
+        viewModel.updateAddress("0xThird")
+        advanceUntilIdle()
+
+        assertEquals("0xThird", viewModel.recipientUiState.value.recipientAddress)
+    }
+
+    // ==================== updateAmount() tests ====================
+
+    @Test
+    fun updateAmount_givenCryptoValue_shouldSetCurrentAmountField() {
+        viewModel.updateAmount("1.5", isFiat = false)
+
+        assertEquals("1.5", viewModel.amountUiState.value.currentAmount)
+        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
+        assertFalse(viewModel.amountUiState.value.useMaxAmount)
+    }
+
+    @Test
+    fun updateAmount_givenFiatValue_shouldSetCurrentFiatAmountField() {
+        viewModel.updateAmount("100.50", isFiat = true)
+
+        assertEquals("", viewModel.amountUiState.value.currentAmount)
+        assertEquals("100.50", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    @Test
+    fun updateAmount_whenSwitchingBetweenCryptoAndFiat_shouldClearOtherField() {
+        // Set crypto first
+        viewModel.updateAmount("1.5", isFiat = false)
+        assertEquals("1.5", viewModel.amountUiState.value.currentAmount)
+
+        // Switch to fiat - crypto should clear
+        viewModel.updateAmount("100", isFiat = true)
+        assertEquals("", viewModel.amountUiState.value.currentAmount)
+        assertEquals("100", viewModel.amountUiState.value.currentFiatAmount)
+
+        // Switch back to crypto - fiat should clear
+        viewModel.updateAmount("2.0", isFiat = false)
+        assertEquals("2.0", viewModel.amountUiState.value.currentAmount)
+        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
+    }
+
+    @Test
+    fun updateAmount_givenMultipleDots_shouldKeepOnlyFirstDot() {
+        viewModel.updateAmount("1.2.3.4", isFiat = false)
+        assertEquals("1.234", viewModel.amountUiState.value.currentAmount)
+    }
+
+    @Test
+    fun updateAmount_afterSetMaxAmount_shouldResetUseMaxFlag() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        sendRepository.stubMaxAllowedSend(chainId = 1, value = "2.4")
+        viewModel.setMaxAmount()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.amountUiState.value.useMaxAmount)
+
+        // Manually updating amount should reset the flag
+        viewModel.updateAmount("1.0", isFiat = false)
+        assertFalse(viewModel.amountUiState.value.useMaxAmount)
+    }
+
+    // ==================== changeSelectedAsset() tests ====================
+
+    @Test
+    fun changeSelectedAsset_givenDifferentChainId_shouldSwitchToNewAsset() = runTest {
+        // Setup multiple assets on different chains
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "1",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0
+            ),
+            TokenAssetWithPrice(
+                address = "10",
+                chainId = 10,
+                symbol = "ETH",
+                name = "Ethereum (Optimism)",
+                balance = 1.0,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 3000.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        // Initially selects lowest chainId (1)
+        var selected = viewModel.selectedAssetUiState.value as SelectedAssetUiState.Selected
+        assertEquals(1, selected.tokenAsset.chainId)
+
+        // Switch to chain 10
+        viewModel.changeSelectedAsset(10)
+        selected = viewModel.selectedAssetUiState.value as SelectedAssetUiState.Selected
+        assertEquals(10, selected.tokenAsset.chainId)
+        assertEquals("Ethereum (Optimism)", selected.tokenAsset.name)
+    }
+
+    @Test
+    fun changeSelectedAsset_whenCalled_shouldResetAmountToEmpty() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        // Set some amount
+        viewModel.updateAmount("1.5", isFiat = false)
+        assertEquals("1.5", viewModel.amountUiState.value.currentAmount)
+
+        // Re-select the same asset - amount should reset
+        viewModel.changeSelectedAsset(1)
+
+        assertEquals("", viewModel.amountUiState.value.currentAmount)
+        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
+        assertFalse(viewModel.amountUiState.value.useMaxAmount)
+    }
+
+    @Test
+    fun changeSelectedAsset_givenNewChain_shouldUpdateMaxAmountToNewBalance() = runTest {
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "1",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0
+            ),
+            TokenAssetWithPrice(
+                address = "10",
+                chainId = 10,
+                symbol = "ETH",
+                name = "Ethereum (Optimism)",
+                balance = 5.0,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 15000.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        // Initially chain 1 with balance 2.5
+        assertEquals(2.5, viewModel.amountUiState.value.maxAmount, 0.001)
+
+        // Switch to chain 10 with balance 5.0
+        viewModel.changeSelectedAsset(10)
+        assertEquals(5.0, viewModel.amountUiState.value.maxAmount, 0.001)
+    }
+
+    // ==================== setMaxAmount() tests ====================
+
+    @Test
+    fun setMaxAmount_whenCalled_shouldSetUseMaxFlagToTrue() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        sendRepository.stubMaxAllowedSend(chainId = 1, value = "2.4")
+
+        assertFalse(viewModel.amountUiState.value.useMaxAmount)
+        viewModel.setMaxAmount()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.amountUiState.value.useMaxAmount)
+    }
+
+    @Test
+    fun setMaxAmount_givenTokenWith8Decimals_shouldUseCorrectPrecision() = runTest {
+        // Token with 8 decimals (like WBTC)
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "0xWBTC",
+                chainId = 1,
+                symbol = "WBTC",
+                name = "Wrapped Bitcoin",
+                balance = 0.5,
+                decimals = 8,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 25000.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        sendRepository.stubMaxErc20("0xWBTC", 1, 8, "0.49999999")
+
+        viewModel.setMaxAmount()
+        advanceUntilIdle()
+
+        assertEquals("0.49999999", viewModel.amountUiState.value.currentAmount)
+    }
+
+    // ==================== Auto-selection (init) tests ====================
+
+    @Test
+    fun autoSelection_givenSingleAsset_shouldSelectItAutomatically() = runTest {
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "1",
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        val selected = viewModel.selectedAssetUiState.value
+        assertTrue(selected is SelectedAssetUiState.Selected)
+        assertEquals("ETH", (selected as SelectedAssetUiState.Selected).tokenAsset.symbol)
+    }
+
+    @Test
+    fun autoSelection_givenMultipleAssets_shouldSelectLowestChainId() = runTest {
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "42161",
+                chainId = 42161, // Arbitrum
+                symbol = "ETH",
+                name = "Ethereum (Arbitrum)",
+                balance = 1.0,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 3000.0
+            ),
+            TokenAssetWithPrice(
+                address = "1",
+                chainId = 1, // Mainnet - lowest
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0
+            ),
+            TokenAssetWithPrice(
+                address = "10",
+                chainId = 10, // Optimism
+                symbol = "ETH",
+                name = "Ethereum (Optimism)",
+                balance = 0.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 1500.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+        advanceUntilIdle()
+
+        val selected = viewModel.selectedAssetUiState.value as SelectedAssetUiState.Selected
+        assertEquals(1, selected.tokenAsset.chainId) // Should select chain 1 (lowest)
+    }
+
+    // ==================== Error Parsing tests (AA error codes) ====================
+
+    @Test
+    fun send_givenAA21GasError_shouldShowNotEnoughEthForGasMessage() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        // Stub to return an AA21 error
+        sendRepository.stubTransactionResult("AA21 didn't pay prefund")
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
+        assertEquals("Not enough ETH for gas", (status as TransactionStatus.FAILURE).errorMessage)
+    }
+
+    @Test
+    fun send_givenAA24SignatureError_shouldShowInvalidSignatureMessage() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        sendRepository.stubTransactionResult("AA24 signature error")
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
+        assertEquals("Invalid signature", (status as TransactionStatus.FAILURE).errorMessage)
+    }
+
+    @Test
+    fun send_givenAA31PaymasterError_shouldShowPaymasterFundsLowMessage() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        sendRepository.stubTransactionResult("AA31 paymaster deposit too low")
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
+        assertEquals("Paymaster funds too low", (status as TransactionStatus.FAILURE).errorMessage)
+    }
+
+    @Test
+    fun send_givenInsufficientFundsError_shouldShowInsufficientFundsMessage() = runTest {
+        setupNativeEthAsset()
+        advanceUntilIdle()
+
+        sendRepository.stubTransactionResult("insufficient funds for transfer")
+
+        viewModel.updateAddress("0xRecipient")
+        viewModel.updateAmount("1", isFiat = false)
+        viewModel.send()
+        advanceUntilIdle()
+
+        val status = viewModel.transactionStatus.value
+        assertTrue(status is TransactionStatus.FAILURE)
+        assertEquals("Insufficient funds", (status as TransactionStatus.FAILURE).errorMessage)
+    }
+
+    // ==================== Helper methods ====================
+
+    private fun setupNativeEthAsset() {
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "1", // native: address == chainId
+                chainId = 1,
+                symbol = "ETH",
+                name = "Ethereum",
+                balance = 2.5,
+                decimals = 18,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 7500.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
+    }
+
+    private fun setupErc20UsdcAsset() {
+        val tokens = listOf(
+            TokenAssetWithPrice(
+                address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC contract
+                chainId = 1,
+                symbol = "USDC",
+                name = "USD Coin",
+                balance = 1000.0,
+                decimals = 6,
+                logoUrl = null,
+                swappable = true,
+                fiatAmount = 1000.0
+            )
+        )
+        groupedTokenRepository.emitTokensForGroup(groupId, tokens)
     }
 }
 

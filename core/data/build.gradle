@@ -9,13 +9,15 @@ plugins {
 
 android {
     namespace 'com.core.data'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdk 34
         targetSdk 34
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Use a custom Hilt test runner so ContentProviders that rely on Hilt
+        // (e.g. TokenMetadataContentProvider) can access a Hilt-enabled Application
+        testInstrumentationRunner "com.core.data.HiltTestRunner"
         consumerProguardFiles "consumer-rules.pro"
 
         Properties properties = new Properties()
@@ -69,6 +71,16 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    
+    // Resolve duplicate META-INF resources coming from transitive dependencies
+    // (e.g. jspecify and BouncyCastle both providing
+    //  META-INF/versions/9/OSGI-INF/MANIFEST.MF)
+    packaging {
+        resources {
+            // Keep the first occurrence of this manifest to avoid mergeDebugAndroidTestJavaResource failures
+            pickFirsts += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        }
+    }
 }
 
 dependencies {
@@ -83,6 +95,11 @@ dependencies {
     implementation project(path: ':core:terminalsdk')
     implementation project(path: ':uniswap-routing-sdk')
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+    testImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    testImplementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    testImplementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+    testImplementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
@@ -114,6 +131,9 @@ dependencies {
     implementation(libs.androidx.tracing.ktx)
     implementation(libs.retrofit.kotlin.serialization)
     implementation(libs.kotlinx.serialization.json)
+    
+    // Hilt test utilities (provides HiltTestApplication used by the custom test runner)
+    androidTestImplementation "com.google.dagger:hilt-android-testing:2.55"
 
     // WalletConnect (Reown SDK)
     implementation("com.reown:android-core:1.4.11")
