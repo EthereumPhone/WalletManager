@@ -5,6 +5,8 @@ import com.core.data.exchange.ExchangeRepository
 import com.core.data.exchange.ExchangeRepositoryImpl
 import com.core.data.repository.AlchemyTokenMetadataRepository
 import com.core.data.repository.AlchemyTransferRepository
+import com.core.data.repository.ClaimDataRepository
+import com.core.data.repository.DefaultClaimDataRepository
 import com.core.data.repository.DefaultExchangeRepository
 import com.core.data.repository.DefaultGroupedTokenRepository
 import com.core.data.repository.EnsRepository
@@ -95,4 +97,9 @@ interface RepositoryModule {
     fun bindsGroupedTokenRepository(
         groupedTokenRepository: DefaultGroupedTokenRepository
     ): GroupedTokenRepository
+
+    @Binds
+    fun bindsClaimDataRepository(
+        claimDataRepository: DefaultClaimDataRepository
+    ): ClaimDataRepository
 }
