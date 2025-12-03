@@ -137,15 +137,14 @@ class AmountInputValidationTest {
     // SECTION 3: REMOVE DOTS FUNCTION TESTS
     // ============================================
 
-    /**
-     * Tests the removeDots function logic that removes the second decimal point.
-     * This mirrors the private function in SendScreenViewModel.
-     */
     private fun removeDots(s: String): String {
-        val secondDot = s.indexOf('.', s.indexOf('.') + 1)
-        return if (secondDot != -1) {
-            s.removeRange(secondDot, secondDot + 1)
-        } else s
+        val firstDotIndex = s.indexOf('.')
+        if (firstDotIndex == -1) return s
+
+        val beforeFirstDot = s.substring(0, firstDotIndex + 1)
+        val afterFirstDot = s.substring(firstDotIndex + 1).replace(".", "")
+
+        return beforeFirstDot + afterFirstDot
     }
 
     @Test
@@ -178,11 +177,10 @@ class AmountInputValidationTest {
     }
 
     @Test
-    fun `removeDots should only remove one dot at a time`() {
-        // If there are 3+ dots, only the second is removed per call
-        assertEquals("1.2.4", removeDots("1.2.3.4"))
-        // Apply twice to remove both extra dots
-        assertEquals("1.24", removeDots(removeDots("1.2.3.4")))
+    fun `removeDots should keep only the first dot when multiple dots are present`() {
+        assertEquals("1.249", removeDots("1.2.4.9"))
+        assertEquals("1.234", removeDots("1.2.3.4"))
+        assertEquals(".12", removeDots(".1.2."))
     }
 
     // ============================================
@@ -215,11 +213,11 @@ class AmountInputValidationTest {
     // ============================================
 
     /**
-     * Tests the dot normalization logic (converting "." to "0.")
+     * Tests the dot normalization logic (converting ".X" to "0.X")
      * This mirrors behavior in updateAmount()
      */
     private fun normalizeLeadingDot(amount: String): String {
-        return if (amount == ".") "0." else amount
+        return if (amount.startsWith(".")) "0$amount" else amount
     }
 
     @Test
@@ -228,11 +226,18 @@ class AmountInputValidationTest {
     }
 
     @Test
-    fun `normalizeLeadingDot should not modify other inputs`() {
+    fun `normalizeLeadingDot should add leading zero when starting with dot`() {
+        assertEquals("0.5", normalizeLeadingDot(".5"))
+        assertEquals("0.12", normalizeLeadingDot(".12"))
+        assertEquals("0.123456", normalizeLeadingDot(".123456"))
+    }
+
+    @Test
+    fun `normalizeLeadingDot should not modify inputs not starting with dot`() {
         assertEquals("1.5", normalizeLeadingDot("1.5"))
-        assertEquals(".5", normalizeLeadingDot(".5"))
         assertEquals("0.5", normalizeLeadingDot("0.5"))
         assertEquals("", normalizeLeadingDot(""))
+        assertEquals("123", normalizeLeadingDot("123"))
     }
 
     // ============================================
@@ -243,7 +248,7 @@ class AmountInputValidationTest {
      * Full sanitization pipeline as used in updateAmount()
      */
     private fun sanitizeAmount(amount: String): String {
-        val normalized = if (amount == ".") "0." else amount
+        val normalized = if (amount.startsWith(".")) "0$amount" else amount
         return removeDots(normalized)
     }
 
@@ -256,9 +261,24 @@ class AmountInputValidationTest {
     }
 
     @Test
+    fun `sanitizeAmount should add leading zero for inputs starting with dot`() {
+        assertEquals("0.12", sanitizeAmount(".12"))
+        assertEquals("0.5", sanitizeAmount(".5"))
+        assertEquals("0.123456", sanitizeAmount(".123456"))
+    }
+
+    @Test
     fun `sanitizeAmount should handle malformed inputs`() {
         assertEquals("1.5", sanitizeAmount("1..5"))
         assertEquals("0.12", sanitizeAmount("0.1.2"))
+    }
+
+    @Test
+    fun `sanitizeAmount should handle leading dot with multiple dots`() {
+        // ".1.2" -> "0.1.2" -> "0.12"
+        assertEquals("0.12", sanitizeAmount(".1.2"))
+        // ".1.2.3" -> "0.1.2.3" -> "0.123"
+        assertEquals("0.123", sanitizeAmount(".1.2.3"))
     }
 }
 
