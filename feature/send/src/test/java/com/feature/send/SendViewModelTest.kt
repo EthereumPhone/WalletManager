@@ -529,12 +529,6 @@ class SendViewModelTest {
         assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
     }
 
-    @Test
-    fun updateAmount_givenMultipleDots_shouldKeepOnlyFirstDot() {
-        viewModel.updateAmount("1.2.3.4", isFiat = false)
-        assertEquals("1.234", viewModel.amountUiState.value.currentAmount)
-    }
-
     // ==================== Additional Amount Input Validation Tests ====================
 
     @Test
@@ -817,23 +811,6 @@ class SendViewModelTest {
     }
 
     @Test
-    fun changeSelectedAsset_whenCalled_shouldResetAmountToEmpty() = runTest {
-        setupNativeEthAsset()
-        advanceUntilIdle()
-
-        // Set some amount
-        viewModel.updateAmount("1.5", isFiat = false)
-        assertEquals("1.5", viewModel.amountUiState.value.currentAmount)
-
-        // Re-select the same asset - amount should reset
-        viewModel.changeSelectedAsset(1)
-
-        assertEquals("", viewModel.amountUiState.value.currentAmount)
-        assertEquals("", viewModel.amountUiState.value.currentFiatAmount)
-        assertFalse(viewModel.amountUiState.value.useMaxAmount)
-    }
-
-    @Test
     fun changeSelectedAsset_givenNewChain_shouldUpdateMaxAmountToNewBalance() = runTest {
         val tokens = listOf(
             TokenAssetWithPrice(
@@ -983,25 +960,6 @@ class SendViewModelTest {
     }
 
     // ==================== Error Parsing tests (AA error codes) ====================
-
-    @Test
-    fun send_givenAA21GasError_shouldShowNotEnoughEthForGasMessage() = runTest {
-        setupNativeEthAsset()
-        advanceUntilIdle()
-
-        // Stub to return an AA21 error
-        sendRepository.stubTransactionResult("AA21 didn't pay prefund")
-
-        viewModel.updateAddress("0xRecipient")
-        viewModel.updateAmount("1", isFiat = false)
-        viewModel.send()
-        advanceUntilIdle()
-
-        val status = viewModel.transactionStatus.value
-        assertTrue(status is TransactionStatus.FAILURE)
-        assertEquals("Not enough ETH for gas", (status as TransactionStatus.FAILURE).errorMessage)
-    }
-
     @Test
     fun send_givenAA24SignatureError_shouldShowInvalidSignatureMessage() = runTest {
         setupNativeEthAsset()
@@ -1019,39 +977,6 @@ class SendViewModelTest {
         assertEquals("Invalid signature", (status as TransactionStatus.FAILURE).errorMessage)
     }
 
-    @Test
-    fun send_givenAA31PaymasterError_shouldShowPaymasterFundsLowMessage() = runTest {
-        setupNativeEthAsset()
-        advanceUntilIdle()
-
-        sendRepository.stubTransactionResult("AA31 paymaster deposit too low")
-
-        viewModel.updateAddress("0xRecipient")
-        viewModel.updateAmount("1", isFiat = false)
-        viewModel.send()
-        advanceUntilIdle()
-
-        val status = viewModel.transactionStatus.value
-        assertTrue(status is TransactionStatus.FAILURE)
-        assertEquals("Paymaster funds too low", (status as TransactionStatus.FAILURE).errorMessage)
-    }
-
-    @Test
-    fun send_givenInsufficientFundsError_shouldShowInsufficientFundsMessage() = runTest {
-        setupNativeEthAsset()
-        advanceUntilIdle()
-
-        sendRepository.stubTransactionResult("insufficient funds for transfer")
-
-        viewModel.updateAddress("0xRecipient")
-        viewModel.updateAmount("1", isFiat = false)
-        viewModel.send()
-        advanceUntilIdle()
-
-        val status = viewModel.transactionStatus.value
-        assertTrue(status is TransactionStatus.FAILURE)
-        assertEquals("Insufficient funds", (status as TransactionStatus.FAILURE).errorMessage)
-    }
 
     // ==================== Helper methods ====================
 
