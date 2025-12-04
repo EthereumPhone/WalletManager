@@ -52,6 +52,7 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
         /**
          * Check if WalletConnect CoreClient is initialized and ready to use
          */
+        @JvmStatic
         fun isCoreClientInitialized(): Boolean = _isCoreClientInitialized
         
         /**
