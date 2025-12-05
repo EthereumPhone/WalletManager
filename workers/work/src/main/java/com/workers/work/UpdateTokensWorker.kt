@@ -68,12 +68,12 @@ class UpdateTokensWorker @AssistedInject constructor(
             
             // Use supervisorScope to handle individual failures without cancelling other operations
             supervisorScope {
-                // Refresh claim token metadata first (non-blocking, adds metadata for claim tokens)
+                // Refresh claim token metadata and balances (non-blocking, adds metadata and checks on-chain balances for claim tokens)
                 val claimDataJob = async {
                     try {
-                        Log.d(TAG, "Refreshing claim token metadata...")
-                        claimDataRepository.refreshClaimTokens()
-                        Log.d(TAG, "Claim token metadata refresh completed")
+                        Log.d(TAG, "Refreshing claim token metadata and balances...")
+                        claimDataRepository.refreshClaimTokens(address)
+                        Log.d(TAG, "Claim token metadata and balance refresh completed")
                     } catch (e: Exception) {
                         Log.e(TAG, "Error refreshing claim tokens (non-fatal)", e)
                         // Don't throw - claim data is supplementary
@@ -223,7 +223,3 @@ class UpdateTokensWorker @AssistedInject constructor(
     }
 
 }
-
-
-
-
