@@ -130,82 +130,102 @@ fun TokenCardCarousel(
         }
     }
 
-    LazyColumn(
-        state = listState,
-        modifier = modifier
-            .fillMaxSize()
-            .offset(0.dp,15.dp)
-            .nestedScroll(nestedScrollConnection)
-            .zIndex(3f),
-        verticalArrangement = Arrangement.spacedBy(overlap-32.dp),
-        contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp)
+    val topPadding = 72.dp
+    val baseBottomPadding = 16.dp
+    val itemSpacing = overlap - 32.dp
+    val extraScrollMargin = cardHeight / 2
+
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize()
     ) {
-        itemsIndexed(assets, key = { _, asset -> asset.groupId}) { index, item ->
-            val rotX: Float by animateFloatAsState ( -25f , label = "rotX")
+        val containerHeight = this.maxHeight
+        val baseContentHeight = (cardHeight * assets.size) +
+                (itemSpacing * (assets.size - 1).coerceAtLeast(0)) +
+                topPadding
 
-            val firstVisibleIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-            val isFirstCard = index == firstVisibleIndex
+        // Guarantee enough scrollable area so back cards are reachable on tall screens.
+        val bottomPadding = maxOf(
+            baseBottomPadding,
+            (containerHeight + extraScrollMargin - baseContentHeight)
+        )
 
-            LaunchedEffect(isFirstCard, item.groupId, listState.isScrollInProgress) {
-                if (isFirstCard && !listState.isScrollInProgress && !isUserScrolling) {
-                    Log.d("FirstCard", "Card $index (${item.symbol}) is first & settled. setSelectedToken.")
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(0.dp,15.dp)
+                .nestedScroll(nestedScrollConnection)
+                .zIndex(3f),
+            verticalArrangement = Arrangement.spacedBy(itemSpacing),
+            contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding)
+        ) {
+            itemsIndexed(assets, key = { _, asset -> asset.groupId}) { index, item ->
+                val rotX: Float by animateFloatAsState ( -25f , label = "rotX")
+
+                val firstVisibleIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+                val isFirstCard = index == firstVisibleIndex
+
+                LaunchedEffect(isFirstCard, item.groupId, listState.isScrollInProgress) {
+                    if (isFirstCard && !listState.isScrollInProgress && !isUserScrolling) {
+                        Log.d("FirstCard", "Card $index (${item.symbol}) is first & settled. setSelectedToken.")
+                    }
                 }
-            }
 
-            val firstVisibleOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
-            val scrollOffset = firstVisibleIndex + firstVisibleOffset / 1000f
-            val relIdx = (index - scrollOffset).coerceIn(-clampRange, clampRange)
+                val firstVisibleOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
+                val scrollOffset = firstVisibleIndex + firstVisibleOffset / 1000f
+                val relIdx = (index - scrollOffset).coerceIn(-clampRange, clampRange)
 
-            val scale by animateFloatAsState(
-                targetValue = when {
-                    abs(relIdx) <= 0.5f       -> 0.8f
-                    abs(relIdx) <= clampRange -> lerp(0.8f, 0.55f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
-                    else                      -> 0.55f
-                },
-                animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "scaleAnimation"
-            )
-
-            val alphafactor by animateFloatAsState(
-                targetValue = when {
-                    abs(relIdx) <= 0.5f       -> 1f
-                    abs(relIdx) <= clampRange -> lerp(1f, 0f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
-                    else                      -> 0f
-                },
-                animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "alphaAnimation"
-            )
-
-            val frontCardTranslation by animateFloatAsState(
-                targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)),
-                animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
-            )
-
-                Card(
-                    isFirst = isFirstCard,
-                    modifier = Modifier
-                        .height(cardHeight)
-                        .fillMaxWidth()
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = alphafactor
-                            rotationX = rotX
-                            translationY = frontCardTranslation
-                            cameraDistance = 32f * density
-                        },
-                    frontSide = {
-                        IdleView(
-                            amount = item.totalBalance,
-                            tokenName = item.symbol,
-                            fiatAmount = item.totalFiatBalance ?: 0.0,
-                            icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
-                            navigateToSend = { navigateToSend(item.groupId) },
-                            enableSend = item.totalBalance > 0,
-                            primaryColor = primaryColor,
-                        )
+                val scale by animateFloatAsState(
+                    targetValue = when {
+                        abs(relIdx) <= 0.5f       -> 0.8f
+                        abs(relIdx) <= clampRange -> lerp(0.8f, 0.55f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
+                        else                      -> 0.55f
                     },
-                    primaryColor = primaryColor,
-                    secondaryColor = secondaryColor
+                    animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "scaleAnimation"
                 )
+
+                val alphafactor by animateFloatAsState(
+                    targetValue = when {
+                        abs(relIdx) <= 0.5f       -> 1f
+                        abs(relIdx) <= clampRange -> lerp(1f, 0f, (abs(relIdx)-0.5f)/(clampRange-0.5f))
+                        else                      -> 0f
+                    },
+                    animationSpec = tween(smallDuration, easing = FastOutSlowInEasing), label = "alphaAnimation"
+                )
+
+                val frontCardTranslation by animateFloatAsState(
+                    targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)),
+                    animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
+                )
+
+                    Card(
+                        isFirst = isFirstCard,
+                        modifier = Modifier
+                            .height(cardHeight)
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = alphafactor
+                                rotationX = rotX
+                                translationY = frontCardTranslation
+                                cameraDistance = 32f * density
+                            },
+                        frontSide = {
+                            IdleView(
+                                amount = item.totalBalance,
+                                tokenName = item.symbol,
+                                fiatAmount = item.totalFiatBalance ?: 0.0,
+                                icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
+                                navigateToSend = { navigateToSend(item.groupId) },
+                                enableSend = item.totalBalance > 0,
+                                primaryColor = primaryColor,
+                            )
+                        },
+                        primaryColor = primaryColor,
+                        secondaryColor = secondaryColor
+                    )
+            }
         }
     }
 }
