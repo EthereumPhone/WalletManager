@@ -133,7 +133,8 @@ fun TokenCardCarousel(
     val topPadding = 72.dp
     val baseBottomPadding = 16.dp
     val itemSpacing = overlap - 32.dp
-    val extraScrollMargin = cardHeight / 2
+    // Small extra space so the last card can fully settle without lifting the stack too high.
+    val extraScrollMargin = cardHeight * 0.3f
 
     BoxWithConstraints(
         modifier = modifier.fillMaxSize()
