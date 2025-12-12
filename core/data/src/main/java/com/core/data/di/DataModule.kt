@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.tracing.trace
 import com.core.data.BuildConfig
+import com.core.data.remote.ClaimDataApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
@@ -127,6 +128,21 @@ object DataModule {
     @Provides
     fun provideNetworkBalanceApi(): NetworkBalanceApi {
         return NetworkBalanceApi()
+    }
+
+    @Singleton
+    @Provides
+    fun provideClaimDataApi(
+        moshi: Moshi
+    ): ClaimDataApi {
+        val client: OkHttpClient = OkHttpClient.Builder()
+            .build()
+        return Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("https://api.markushaas.com/")
+            .client(client)
+            .build()
+            .create(ClaimDataApi::class.java)
     }
 
     @Singleton

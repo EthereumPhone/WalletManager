@@ -9,6 +9,7 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.WorkerParameters
+import com.core.data.repository.ClaimDataRepository
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenExchangeRepository
@@ -38,6 +39,7 @@ class UpdateTokensWorker @AssistedInject constructor(
     private val tokenMetadataRepository: TokenMetadataRepository,
     private val tokenBalanceRepository: TokenBalanceRepository,
     private val networkBalanceRepository: NetworkBalanceRepository,
+    private val claimDataRepository: ClaimDataRepository,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -66,6 +68,18 @@ class UpdateTokensWorker @AssistedInject constructor(
             
             // Use supervisorScope to handle individual failures without cancelling other operations
             supervisorScope {
+                // Refresh claim token metadata and balances (non-blocking, adds metadata and checks on-chain balances for claim tokens)
+                val claimDataJob = async {
+                    try {
+                        Log.d(TAG, "Refreshing claim token metadata and balances...")
+                        claimDataRepository.refreshClaimTokens(address)
+                        Log.d(TAG, "Claim token metadata and balance refresh completed")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error refreshing claim tokens (non-fatal)", e)
+                        // Don't throw - claim data is supplementary
+                    }
+                }
+                
                 // Run balance and metadata operations in parallel
                 val balanceJob = async { 
                     try {
@@ -86,6 +100,9 @@ class UpdateTokensWorker @AssistedInject constructor(
                         throw e
                     }
                 }
+                
+                // Wait for claim data to complete (non-blocking errors already handled)
+                claimDataJob.await()
                 
                 // Wait for both operations to complete
                 try {
@@ -206,7 +223,3 @@ class UpdateTokensWorker @AssistedInject constructor(
     }
 
 }
-
-
-
-

@@ -52,6 +52,7 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
         /**
          * Check if WalletConnect CoreClient is initialized and ready to use
          */
+        @JvmStatic
         fun isCoreClientInitialized(): Boolean = _isCoreClientInitialized
         
         /**
@@ -197,6 +198,15 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
         Configuration.Builder()
             .setMinimumLoggingLevel(Log.VERBOSE)
             .setWorkerFactory(workerFactory)
+            // Handle TooManyRequestsException from ConnectivityManager when scheduling
+            // network-constrained work. This can occur when many work items are scheduled
+            // simultaneously and Android's limit on network callbacks is exceeded.
+            .setSchedulingExceptionHandler(androidx.core.util.Consumer<Throwable> { throwable ->
+                Log.w(TAG, "WorkManager scheduling exception (will retry automatically)", throwable)
+            })
+            .setInitializationExceptionHandler(androidx.core.util.Consumer<Throwable> { throwable ->
+                Log.e(TAG, "WorkManager initialization exception", throwable)
+            })
             .build()
     
     override fun newImageLoader(): ImageLoader {
@@ -256,9 +266,15 @@ class WmApplication: Application(), Configuration.Provider, DefaultLifecycleObse
         // Only start periodic updates if we have a wallet address
         if (hasWalletAddress) {
             // Run an immediate update when entering foreground
+            // Use REPLACE to ensure only one update work runs at a time, avoiding
+            // TooManyRequestsException from excessive network callback registrations
             val updateWork = UpdateTokensWorker.createUpdateWork()
             WorkManager.getInstance(applicationContext)
-                .enqueue(updateWork)
+                .enqueueUniqueWork(
+                    UpdateTokensWorker.UPDATE_WORK_NAME,
+                    ExistingWorkPolicy.REPLACE,
+                    updateWork
+                )
                 
             // Start periodic updates
             startPeriodicTokenUpdates()

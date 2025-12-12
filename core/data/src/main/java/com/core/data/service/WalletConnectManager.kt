@@ -308,21 +308,53 @@ class WalletConnectManager(private val application: Application) {
             // Handle required namespaces
             proposal.requiredNamespaces.forEach { (key, namespace) ->
                 val chains = namespace.chains ?: listOf()
+                // Filter accounts to only include those whose chain is in this namespace's chains list
+                // Account format is "namespace:chainId:address" (CAIP-10)
+                // Chain format is "namespace:chainId"
+                val namespaceAccounts = accounts.filter { account ->
+                    // Extract chain from account (e.g., "eip155:1" from "eip155:1:0x123...")
+                    val accountChain = account.substringBeforeLast(":")
+                    chains.contains(accountChain)
+                }
+                Log.d(TAG, "Namespace '$key' chains: $chains, filtered accounts: $namespaceAccounts")
                 sessionNamespaces[key] = Wallet.Model.Namespace.Session(
                     chains = chains,
-                    accounts = accounts,
+                    accounts = namespaceAccounts,
                     methods = namespace.methods,
                     events = namespace.events
                 )
             }
             
-            // Optionally handle optional namespaces
+            // Handle optional namespaces - merge with existing namespace if present
             proposal.optionalNamespaces?.forEach { (key, namespace) ->
-                if (!sessionNamespaces.containsKey(key)) {
-                    val chains = namespace.chains ?: listOf()
+                val chains = namespace.chains ?: listOf()
+                // Filter accounts to only include those whose chain is in this namespace's chains list
+                val namespaceAccounts = accounts.filter { account ->
+                    val accountChain = account.substringBeforeLast(":")
+                    chains.contains(accountChain)
+                }
+                Log.d(TAG, "Optional namespace '$key' chains: $chains, filtered accounts: $namespaceAccounts")
+                
+                val existingNamespace = sessionNamespaces[key]
+                if (existingNamespace != null) {
+                    // Merge with existing namespace from required namespaces
+                    val mergedChains = (existingNamespace.chains.orEmpty() + chains).distinct()
+                    val mergedAccounts = (existingNamespace.accounts + namespaceAccounts).distinct()
+                    val mergedMethods = (existingNamespace.methods + namespace.methods).distinct()
+                    val mergedEvents = (existingNamespace.events + namespace.events).distinct()
+                    
+                    sessionNamespaces[key] = Wallet.Model.Namespace.Session(
+                        chains = mergedChains,
+                        accounts = mergedAccounts,
+                        methods = mergedMethods,
+                        events = mergedEvents
+                    )
+                    Log.d(TAG, "Merged namespace '$key' - chains: $mergedChains, accounts: ${mergedAccounts.size}")
+                } else {
+                    // Create new namespace for optional
                     sessionNamespaces[key] = Wallet.Model.Namespace.Session(
                         chains = chains,
-                        accounts = accounts,
+                        accounts = namespaceAccounts,
                         methods = namespace.methods,
                         events = namespace.events
                     )
