@@ -214,37 +214,51 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             networks.map {
                 if(it.chainId != 7777777) {
                     async {
-                        val newNetworkBalance = networkBalanceApi
-                            .getNetworkCurrency(
-                                toAddress,
-                                "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
-                            )
-                        
-                        tokenBalanceDao.upsertTokenBalances(
-                            listOf(
-                                TokenBalanceEntity(
-                                    contractAddress = it.chainId.toString(),
-                                    chainId = it.chainId,
-                                    tokenBalance = newNetworkBalance
+                        try {
+                            val newNetworkBalance = networkBalanceApi
+                                .getNetworkCurrency(
+                                    toAddress,
+                                    "https://${it.chainName}.g.alchemy.com/v2/${chainToApiKey(it.chainName)}"
+                                )
+                            
+                            tokenBalanceDao.upsertTokenBalances(
+                                listOf(
+                                    TokenBalanceEntity(
+                                        contractAddress = it.chainId.toString(),
+                                        chainId = it.chainId,
+                                        tokenBalance = newNetworkBalance
+                                    )
                                 )
                             )
-                        )
+                        } catch (e: Exception) {
+                            Log.e("Web3jNetworkBalanceRepository", "Failed to fetch balance for chain ${it.chainId}: ${e.message}")
+                            // Don't crash - just skip this network's balance update
+                        }
                     }
                 } else {
+                    async {
+                        var zoraFetcher: Web3j? = null
+                        try {
+                            zoraFetcher = Web3j.build(HttpService("https://rpc.zora.energy"))
+                            val amount = zoraFetcher.ethGetBalance(toAddress, DefaultBlockParameterName.LATEST)
+                                .sendAsync().get()
 
-                    val zoraFetcher = Web3j.build(HttpService("https://rpc.zora.energy"))
-                    val amount = zoraFetcher.ethGetBalance(toAddress, DefaultBlockParameterName.LATEST
-                    ).sendAsync().get()
-
-                    tokenBalanceDao.upsertTokenBalances(
-                        listOf(
-                            TokenBalanceEntity(
-                                contractAddress = it.chainId.toString(),
-                                chainId = it.chainId,
-                                tokenBalance = Convert.fromWei(amount.balance.toString(), Convert.Unit.ETHER)
+                            tokenBalanceDao.upsertTokenBalances(
+                                listOf(
+                                    TokenBalanceEntity(
+                                        contractAddress = it.chainId.toString(),
+                                        chainId = it.chainId,
+                                        tokenBalance = Convert.fromWei(amount.balance.toString(), Convert.Unit.ETHER)
+                                    )
+                                )
                             )
-                        )
-                    )
+                        } catch (e: Exception) {
+                            Log.e("Web3jNetworkBalanceRepository", "Failed to fetch Zora balance: ${e.message}")
+                            // Don't crash - Zora RPC may be blocked in some regions (e.g., China)
+                        } finally {
+                            zoraFetcher?.shutdown()
+                        }
+                    }
                 }
             }
         }
