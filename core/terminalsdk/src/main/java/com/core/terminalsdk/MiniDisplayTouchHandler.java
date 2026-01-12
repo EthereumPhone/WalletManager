@@ -106,7 +106,8 @@ public class MiniDisplayTouchHandler {
             
             if (serviceBinder == null) {
                 Log.e(TAG, "Mini display touch service not found");
-                throw new IllegalStateException("Mini display touch service not available");
+                return;
+                //throw new IllegalStateException("Mini display touch service not available");
             }
             
             // Create proxy for the service

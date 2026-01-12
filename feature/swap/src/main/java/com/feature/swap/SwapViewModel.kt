@@ -58,6 +58,8 @@ import kotlinx.datetime.Clock
 import kotlinx.coroutines.Dispatchers
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalLEDController
+import com.core.data.remote.DexScreenerDataSource
+import com.core.data.remote.DexScreenerSearchResult
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
@@ -75,6 +77,7 @@ class SwapViewModel @Inject constructor(
     private val tokenBalanceDao: TokenBalanceDao,
     private val transferDao: TransferDao,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
+    private val dexScreenerDataSource: DexScreenerDataSource,
     ): ViewModel() {
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
@@ -1039,6 +1042,64 @@ class SwapViewModel @Inject constructor(
 
     fun updateSearchQuery(query: String) {
         savedStateHandle[SEARCH_QUERY] = query
+    }
+    
+    // DexScreener search results
+    private val _dexScreenerResults = MutableStateFlow<List<TokenAssetWithPrice>>(emptyList())
+    val dexScreenerResults: StateFlow<List<TokenAssetWithPrice>> = _dexScreenerResults.asStateFlow()
+    
+    private val _isDexScreenerLoading = MutableStateFlow(false)
+    val isDexScreenerLoading: StateFlow<Boolean> = _isDexScreenerLoading.asStateFlow()
+    
+    /**
+     * Search DexScreener API for tokens by name, symbol, or contract address.
+     * Results are filtered to only include supported swap chains.
+     */
+    fun searchDexScreener(query: String) {
+        viewModelScope.launch {
+            if (query.isBlank() || query.length < 2) {
+                _dexScreenerResults.value = emptyList()
+                return@launch
+            }
+            
+            _isDexScreenerLoading.value = true
+            try {
+                val results = dexScreenerDataSource.searchTokens(query)
+                
+                // Filter to only supported chains and convert to TokenAssetWithPrice
+                val filteredResults = results
+                    .filter { it.chainId in supportedSwapChainIds }
+                    .map { result ->
+                        TokenAssetWithPrice(
+                            address = result.address,
+                            chainId = result.chainId,
+                            symbol = result.symbol,
+                            name = result.name,
+                            balance = 0.0, // User doesn't own these (they come from search)
+                            decimals = 18, // Default decimals, will be updated when selected
+                            logoUrl = null,
+                            swappable = true,
+                            fiatAmount = 0.0
+                        )
+                    }
+                    .take(20) // Limit results to prevent overwhelming the UI
+                
+                _dexScreenerResults.value = filteredResults
+                Log.d("SwapViewModel", "DexScreener search returned ${filteredResults.size} results for query: $query")
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "DexScreener search failed for query: $query", e)
+                _dexScreenerResults.value = emptyList()
+            } finally {
+                _isDexScreenerLoading.value = false
+            }
+        }
+    }
+    
+    /**
+     * Clear DexScreener search results
+     */
+    fun clearDexScreenerResults() {
+        _dexScreenerResults.value = emptyList()
     }
     
     fun clearToastMessage() {

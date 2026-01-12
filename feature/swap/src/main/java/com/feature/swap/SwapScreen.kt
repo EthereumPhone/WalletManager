@@ -117,6 +117,8 @@ internal fun SwapScreen(
     val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
     val swapTransactionStatus by viewModel.swapTransactionStatus.collectAsStateWithLifecycle()
+    val dexScreenerResults by viewModel.dexScreenerResults.collectAsStateWithLifecycle()
+    val isDexScreenerLoading by viewModel.isDexScreenerLoading.collectAsStateWithLifecycle()
     
     // Show toast when message is set
     LaunchedEffect(toastMessage) {
@@ -227,11 +229,18 @@ internal fun SwapScreen(
         selectToToken = { token -> viewModel.selectToTokenAsset(token) },
         primaryColor = primaryColor,
         secondaryColor = secondaryColor,
-        onDismiss = { viewModel.hideTokenOverlay() },
+        onDismiss = { 
+            viewModel.hideTokenOverlay()
+            viewModel.clearDexScreenerResults()
+        },
         currentChainId = toTokens.firstOrNull()?.chainId,
         selectedChainId = selectedTokenChainId,
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
-        groupedTokens = groupedTokens
+        groupedTokens = groupedTokens,
+        dexScreenerResults = dexScreenerResults,
+        isDexScreenerLoading = isDexScreenerLoading,
+        onSearchDexScreener = { query -> viewModel.searchDexScreener(query) },
+        onClearDexScreenerResults = { viewModel.clearDexScreenerResults() }
     )
     
     // Swap Transaction Status Overlay - shows swap progress and results
