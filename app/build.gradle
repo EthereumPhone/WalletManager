@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "org.ethereumphone.walletmanager"
+        applicationId "org.ethereumphone.walletmanager.testing123"
         minSdk 34
         targetSdk 35
         versionCode 147
