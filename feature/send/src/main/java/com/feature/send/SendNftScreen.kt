@@ -26,7 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -95,23 +97,43 @@ fun SendNftRoute(
         viewModel.loadNft(contractAddress, tokenId, chainId)
     }
 
+    // Flag to ensure the first ON_RESUME (which happens on the initial screen launch) is ignored
+    var hasHandledInitialResume by remember { mutableStateOf(false) }
+
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, transactionStatus) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    // Clean up if needed
+                Lifecycle.Event.ON_RESUME -> {
+                    // Skip the very first ON_RESUME that occurs when the screen is opened for the first time
+                    if (!hasHandledInitialResume) {
+                        hasHandledInitialResume = true
+                    } else if (nft != null && transactionStatus == null) {
+                        // Only call onScreenOpenedAfterResume on subsequent resumes when no transaction is running
+                        viewModel.onScreenOpenedAfterResume()
+                    }
                 }
                 else -> {}
             }
         }
+
         lifecycleOwner.lifecycle.addObserver(observer)
+
         onDispose {
+            viewModel.onSendNftClosed()
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
+    // Display terminal layout when NFT is loaded and no transaction is active
+    LaunchedEffect(nft, transactionStatus) {
+        if (nft != null && transactionStatus == null) {
+            viewModel.onScreenOpened()
+        }
+    }
+
     BackHandler {
+        viewModel.onSendNftClosed()
         onBackClick()
     }
 
@@ -144,7 +166,10 @@ fun SendNftRoute(
         clearTransactionStatus = viewModel::clearTransactionStatus,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
         onKeyboardDismissed = viewModel::onKeyboardDismissed,
-        onBackClick = onBackClick
+        onBackClick = {
+            viewModel.onSendNftClosed()
+            onBackClick()
+        }
     )
 }
 

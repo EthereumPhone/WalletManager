@@ -71,8 +71,9 @@ class SendNftViewModel @Inject constructor(
         viewModelScope.launch {
             terminalRepository.events.collect { event ->
                 when (event) {
-                    TerminalEvent.SendTapped -> sendNft()
-                    else -> triggerQrScanner()
+                    TerminalEvent.SendNftTapped -> sendNft()
+                    TerminalEvent.QrTapped -> triggerQrScanner()
+                    else -> { /* Ignore other events */ }
                 }
             }
         }
@@ -242,6 +243,36 @@ class SendNftViewModel @Inject constructor(
      */
     fun onKeyboardDismissed() {
         _shouldDismissKeyboard.value = false
+    }
+
+    /**
+     * Called when the Send NFT screen is opened to display terminal layout
+     */
+    fun onScreenOpened() {
+        viewModelScope.launch {
+            terminalRepository.generateSendNft()
+            reflectiveLedPattern?.displayArrowUp()
+        }
+    }
+
+    /**
+     * Called when screen resumes to restore terminal layout
+     */
+    fun onScreenOpenedAfterResume() {
+        viewModelScope.launch {
+            delay(300)
+            terminalRepository.generateSendNft()
+            reflectiveLedPattern?.displayArrowUp()
+        }
+    }
+
+    /**
+     * Called when the Send NFT screen is closed to dismiss terminal content
+     */
+    fun onSendNftClosed() {
+        viewModelScope.launch {
+            terminalRepository.dismissContent()
+        }
     }
 
     /**
