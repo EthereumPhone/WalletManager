@@ -423,9 +423,8 @@ class SendViewModel @Inject constructor(
 
     fun updateAmount(amount: String, isFiat: Boolean) {
 
-
-        val sanitizedAmount = if (amount == ".") "0."
-            else removeDots(amount)
+        val normalized = if (amount.startsWith(".")) "0$amount" else amount
+        val sanitizedAmount = removeDots(normalized)
 
         _amountUiState.update {
             it.copy(
@@ -928,10 +927,13 @@ class SendViewModel @Inject constructor(
 
 
 private fun removeDots(s: String): String {
-    val secondDot = s.indexOf('.', s.indexOf('.') + 1) // 2nd dot position
-    return if (secondDot != -1) {
-        s.removeRange(secondDot, secondDot + 1)
-    } else s
+    val firstDotIndex = s.indexOf('.')
+    if (firstDotIndex == -1) return s
+
+    val beforeFirstDot = s.substring(0, firstDotIndex + 1)
+    val afterFirstDot = s.substring(firstDotIndex + 1).replace(".", "")
+
+    return beforeFirstDot + afterFirstDot
 }
 
 

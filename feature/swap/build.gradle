@@ -67,6 +67,8 @@ dependencies {
     androidTestImplementation libs.androidx.test.junit
     androidTestImplementation libs.androidx.espresso.core
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.3")
 
     implementation libs.androidx.navigation.compose
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- Remove content providers that require Hilt for pure UI tests -->
+        <provider
+            android:name="com.core.database.provider.TokenMetadataContentProvider"
+            android:authorities="${applicationId}.tokenmetadata.provider"
+            tools:node="remove" />
+
+        <provider
+            android:name="com.core.database.provider.TokenBalanceContentProvider"
+            android:authorities="${applicationId}.tokenbalance.provider"
+            tools:node="remove" />
+    </application>
+
+</manifest>
+
+
+

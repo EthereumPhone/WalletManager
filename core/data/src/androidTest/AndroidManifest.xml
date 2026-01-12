@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.core.data.test">
+
+    <application>
+        <!-- Override TokenBalanceContentProvider authority in tests to avoid
+             INSTALL_FAILED_CONFLICTING_PROVIDER with other installed apps
+             using the same provider name. Uses dynamic applicationId for test APK. -->
+        <provider
+            android:name="com.core.database.provider.TokenBalanceContentProvider"
+            android:authorities="${applicationId}.tokenbalance.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:writePermission="${applicationId}.permission.UPDATE_TOKEN_BALANCE"
+            tools:node="replace" />
+
+        <!-- Similarly override TokenMetadataContentProvider authority for tests. -->
+        <provider
+            android:name="com.core.database.provider.TokenMetadataContentProvider"
+            android:authorities="${applicationId}.tokenmetadata.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            tools:node="replace" />
+    </application>
+
+</manifest>
+
+
+
+

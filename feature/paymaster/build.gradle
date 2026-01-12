@@ -7,10 +7,10 @@ plugins {
 
 android {
     namespace 'com.feature.paymaster'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
-        minSdk 33
+        minSdk 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -64,8 +64,9 @@ dependencies {
     implementation libs.kotlinx.datetime
 
     debugImplementation("androidx.compose.ui:ui-tooling:1.2.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.3")
     implementation "androidx.compose.ui:ui:1.2.1"
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.2.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
 
     implementation project(path: ':core:ui')
 
