@@ -35,4 +35,14 @@ interface SendRepository {
         chainId: Int,
         decimals: Int
     ): String
+
+    /**
+     * Transfer an NFT (ERC721) to another address
+     */
+    suspend fun transferNft(
+        chainId: Int,
+        contractAddress: String,
+        tokenId: String,
+        toAddress: String
+    )
 }

@@ -8,6 +8,7 @@ import com.core.data.remote.ClaimDataApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
+import com.core.data.remote.NftApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
@@ -233,6 +234,21 @@ object DataModule {
     @Provides
     fun provideEnsApi(): EnsApi {
         return EnsApi()
+    }
+
+    @Singleton
+    @Provides
+    fun provideNftApi(
+        moshi: Moshi
+    ): NftApi {
+        val client: OkHttpClient = OkHttpClient.Builder()
+            .build()
+        return Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("http://localhost/")
+            .client(client)
+            .build()
+            .create(NftApi::class.java)
     }
 
     @Singleton

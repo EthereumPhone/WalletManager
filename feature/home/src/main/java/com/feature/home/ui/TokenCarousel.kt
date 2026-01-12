@@ -6,6 +6,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -28,12 +29,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.core.model.TokenGroupAssetOverview
+import com.core.ui.util.dgenBlack
+import com.core.ui.util.dgenGreen
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -130,8 +135,8 @@ fun TokenCardCarousel(
         }
     }
 
-    val topPadding = 72.dp
-    val baseBottomPadding = 16.dp
+    val topPadding = 64.dp
+    val baseBottomPadding = 48.dp
     val itemSpacing = overlap - 32.dp
     // Small extra space so the last card can fully settle without lifting the stack too high.
     val extraScrollMargin = cardHeight * 0.3f
@@ -154,12 +159,12 @@ fun TokenCardCarousel(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .offset(0.dp,15.dp)
                 .nestedScroll(nestedScrollConnection)
                 .zIndex(3f),
             verticalArrangement = Arrangement.spacedBy(itemSpacing),
             contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding)
-        ) {
+        )
+        {
             itemsIndexed(assets, key = { _, asset -> asset.groupId}) { index, item ->
                 val rotX: Float by animateFloatAsState ( -25f , label = "rotX")
 
@@ -195,7 +200,7 @@ fun TokenCardCarousel(
                 )
 
                 val frontCardTranslation by animateFloatAsState(
-                    targetValue = lerp(0f, 800f, (relIdx / 2).coerceIn(0f, 1f)),
+                    targetValue = lerp(0f, 1200f, (relIdx / 2).coerceIn(0f, 1f)),
                     animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
                 )
 
@@ -228,5 +233,18 @@ fun TokenCardCarousel(
                     )
             }
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp) // Adjust thickness of fading border
+                .align(Alignment.TopCenter)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(dgenBlack, Color.Transparent)
+                    )
+                )
+
+        )
     }
 }

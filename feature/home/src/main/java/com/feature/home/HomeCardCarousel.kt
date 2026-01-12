@@ -66,6 +66,7 @@ import coil.decode.ImageDecoderDecoder
 import com.core.terminalsdk.TerminalLEDController
 import com.core.ui.R
 import com.core.ui.initializeFontMap
+import com.core.model.NFT
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
@@ -81,6 +82,7 @@ import com.core.ui.util.pulseOpacity
 import com.core.ui.util.rememberDebouncedClickHandler
 import com.feature.home.screens.EmptyHomeScreen
 import com.feature.home.screens.NoInternetHomeScreen
+import com.feature.home.ui.AssetPager
 import com.feature.home.ui.TokenCardCarousel
 import kotlinx.coroutines.launch
 import kotlin.reflect.KSuspendFunction1
@@ -93,6 +95,7 @@ internal fun HomeRoute2(
     modifier: Modifier = Modifier,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
+    navigateToSendNft: (contractAddress: String, tokenId: String, chainId: Int) -> Unit = { _, _, _ -> },
     navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
@@ -101,14 +104,17 @@ internal fun HomeRoute2(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val groupedAssetsUiState: GroupedAssetsUiState by viewModel.groupedTokenAssetState.collectAsStateWithLifecycle()
+    val nftUiState: NftUiState by viewModel.nftState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
     val hasTransfer by viewModel.hasTransfers.collectAsState()
     initializeFontMap(SpaceMono, PitagonsSans)
 
     HomeScreen2(
         groupedAssetsUiState = groupedAssetsUiState,
+        nftUiState = nftUiState,
         navigateToSwap = navigateToSwap,
         navigateToSend = navigateToSend,
+        navigateToSendNft = navigateToSendNft,
         navigateToLog = navigateToLog,
         navigateToReceive = navigateToReceive,
         isOffline = isOffline,
@@ -122,8 +128,10 @@ internal fun HomeRoute2(
 @Composable
 fun HomeScreen2(
     groupedAssetsUiState: GroupedAssetsUiState,
+    nftUiState: NftUiState = NftUiState.Empty,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
+    navigateToSendNft: (contractAddress: String, tokenId: String, chainId: Int) -> Unit = { _, _, _ -> },
     navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
@@ -222,13 +230,19 @@ fun HomeScreen2(
                         is GroupedAssetsUiState.Success -> {
                             // Filter out zero-balance tokens to avoid showing empty cards when returning
                             val nonZeroAssets = groupedAssetsState.assets.filter { it.totalBalance > 0.0 }
+                            val nfts = when (nftUiState) {
+                                is NftUiState.Success -> nftUiState.nfts
+                                else -> emptyList()
+                            }
                             HomeScreenContent(
-                                areAssetsVisible = nonZeroAssets.isNotEmpty(),
+                                areAssetsVisible = nonZeroAssets.isNotEmpty() || nfts.isNotEmpty(),
                                 primaryContent = {
-                                    TokenCardCarousel(
+                                    AssetPager(
                                         modifier = Modifier.padding(bottom = 24.dp),
-                                        assets = nonZeroAssets,
+                                        tokens = nonZeroAssets,
+                                        nfts = nfts,
                                         navigateToSend = navigateToSend,
+                                        navigateToSendNft = navigateToSendNft,
                                         primaryColor = primaryColor,
                                         secondaryColor = secondaryColor
                                     )
@@ -272,18 +286,18 @@ fun HomeScreen2(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp) // Adjust thickness of fading border
-                    .align(Alignment.TopCenter)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(dgenBlack, Color.Transparent)
-                        )
-                    )
-
-            )
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(48.dp) // Adjust thickness of fading border
+//                    .align(Alignment.TopCenter)
+//                    .background(
+//                        brush = Brush.verticalGradient(
+//                            colors = listOf(dgenBlack, Color.Transparent)
+//                        )
+//                    )
+//
+//            )
 
         }
         Column(

@@ -138,6 +138,81 @@ fun String.overflowWithEllipses(amount: Int = 10): String {
     return this
 }
 
+/**
+ * SendHeader variant for NFT sending
+ */
+@Composable
+fun SendHeader(
+    modifier: Modifier = Modifier,
+    nftName: String,
+    nftImageUrl: String?,
+    onBackClick: () -> Unit
+) {
+    val primaryColor = SystemColorManager.primaryColor
+    var enabled by remember { mutableStateOf(true) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        Text(
+            text = "SEND",
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                letterSpacing = 0.sp,
+                textDecoration = TextDecoration.None
+            )
+        )
+
+        AsyncImage(
+            model = nftImageUrl,
+            contentDescription = nftName,
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape),
+            placeholder = painterResource(R.drawable.placeholer_icon_5),
+            error = painterResource(R.drawable.placeholer_icon_5),
+            colorFilter = if (nftImageUrl.isNullOrEmpty()) ColorFilter.tint(primaryColor) else null
+        )
+
+        Text(
+            text = nftName.overflowWithEllipses(12).uppercase(),
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                letterSpacing = 0.sp,
+                textDecoration = TextDecoration.None
+            ),
+            modifier = Modifier.weight(1f)
+        )
+
+        // back icon
+        IconButton(
+            modifier = Modifier.size(56.dp),
+            onClick = dropUnlessResumed {
+                if (!enabled) return@dropUnlessResumed
+                enabled = false
+                onBackClick()
+            }
+        ) {
+            Box(modifier = Modifier.size(56.dp)) {
+                Icon(
+                    modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
+                    painter = painterResource(com.core.ui.R.drawable.baseline_close_24),
+                    contentDescription = "Back",
+                    tint = primaryColor
+                )
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 fun PreviewSendHeader() {

@@ -329,6 +329,98 @@ class SendRepositoryImp @Inject constructor(
         currentTransactionHash.value = ""
         currentTransactionChainId.value = 0
     }
+
+    override suspend fun transferNft(
+        chainId: Int,
+        contractAddress: String,
+        tokenId: String,
+        toAddress: String
+    ) {
+        withContext(Dispatchers.IO) {
+            currentChainId = chainId
+
+            val rpc = NetworkChain.getNetworkByChainId(chainId)
+            val walletSDK = if (rpc != null) {
+                WalletSDK(
+                    context = mContext,
+                    web3jInstance = Web3j.build(HttpService("https://${rpc.chainName}.g.alchemy.com/v2/${chainToApiKey(rpc.chainName)}")),
+                    bundlerRPCUrl = chainIdToBundler(chainId)
+                )
+            } else {
+                WalletSDK(mContext, bundlerRPCUrl = chainIdToBundler(chainId))
+            }
+
+            if (chainId != walletSDK.getChainId()) {
+                rpc?.let {
+                    walletSDK.changeChain(
+                        chainId,
+                        "https://${rpc.chainName}.g.alchemy.com/v2/${chainToApiKey(rpc.chainName)}",
+                        chainIdToBundler(chainId)
+                    )
+                }
+            }
+
+            terminalSDK?.finishScreen()
+            reflectiveLedPattern?.displayArrowUp()
+
+            // Encode ERC721 safeTransferFrom(address,address,uint256) call data
+            // Function selector: 0x42842e0e (for safeTransferFrom without data)
+            val fromAddress = walletSDK.getAddress()
+            val tokenIdBigInt = BigInteger(tokenId)
+            
+            // Encode the function call: safeTransferFrom(from, to, tokenId)
+            // Method ID: 0x42842e0e
+            val methodId = "42842e0e"
+            val fromAddressPadded = fromAddress.removePrefix("0x").lowercase().padStart(64, '0')
+            val toAddressPadded = toAddress.removePrefix("0x").lowercase().padStart(64, '0')
+            val tokenIdHex = tokenIdBigInt.toString(16).padStart(64, '0')
+            
+            val data = "0x$methodId$fromAddressPadded$toAddressPadded$tokenIdHex"
+
+            val res = try {
+                walletSDK.sendTransaction(
+                    to = contractAddress,
+                    value = "0",
+                    data = data,
+                    callGas = null,
+                    chainId = chainId,
+                    gasProvider = ::gasProvider
+                )
+            } catch (exception: Exception) {
+                android.util.Log.e("SendRepository", "NFT transfer failed", exception)
+                "error"
+            }
+
+            // If successful, insert provisional transfer entry
+            if (res.isNotEmpty() && res != "error" && res != "decline") {
+                val transferEntity = TransferEntity(
+                    uniqueId = "temp_${res}",
+                    asset = "NFT",
+                    chainId = chainId,
+                    blockNum = "",
+                    category = "erc721",
+                    erc1155Metadata = emptyList(),
+                    erc721TokenId = tokenId,
+                    fromaddress = fromAddress,
+                    hash = res,
+                    rawContract = RawContract(
+                        address = contractAddress,
+                        decimal = "0",
+                        value = "1"
+                    ),
+                    toaddress = toAddress,
+                    tokenId = tokenId,
+                    value = 1.0,
+                    blockTimestamp = Clock.System.now(),
+                    userIsSender = true
+                )
+                transferDao.insertTransfer(transferEntity)
+            }
+
+            currentTransactionHash.value = res
+            currentTransactionChainId.value = chainId
+        }
+    }
     
     /**
      * Gas provider for ETH transfers using the shared GasEstimationHelper
