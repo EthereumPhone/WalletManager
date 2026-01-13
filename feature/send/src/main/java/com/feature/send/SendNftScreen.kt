@@ -320,7 +320,7 @@ fun SendNftScreen(
                             modifier = Modifier
                                 .size(96.dp)
                                 .clip(RoundedCornerShape(8.dp))
-//                            
+//
                         ) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
@@ -331,6 +331,18 @@ fun SendNftScreen(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
+                            Box(modifier = Modifier.fillMaxSize()
+                                .background(dgenBlack.copy(0.25f))
+                                .clickable{ showNftImageOverlay = true }
+                            ){
+
+                                Icon(
+                                            modifier = Modifier.size(40.dp).align(Alignment.Center),
+                                            painter = painterResource(R.drawable.expand_content),
+                                            contentDescription = "Back",
+                                            tint = primaryColor
+                                        )
+                            }
                         }
 
                         // NFT Name and Collection
@@ -380,19 +392,19 @@ fun SendNftScreen(
                                 )
                             }
 
-                            IconButton(
-                                onClick = { showNftImageOverlay = true },
-                            ) {
-                                Box(modifier = Modifier.size(56.dp)) {
-                                    Icon(
-                                        modifier = Modifier.size(40.dp).align(Alignment.Center),
-                                        painter = painterResource(R.drawable.expand_content),
-                                        contentDescription = "Back",
-                                        tint = primaryColor
-                                    )
-                                }
-
-                            }
+//                            IconButton(
+//                                onClick = { showNftImageOverlay = true },
+//                            ) {
+//                                Box(modifier = Modifier.size(56.dp)) {
+//                                    Icon(
+//                                        modifier = Modifier.size(40.dp).align(Alignment.Center),
+//                                        painter = painterResource(R.drawable.expand_content),
+//                                        contentDescription = "Back",
+//                                        tint = primaryColor
+//                                    )
+//                                }
+//
+//                            }
                         }
 
                     }

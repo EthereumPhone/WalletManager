@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -17,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -80,34 +84,53 @@ fun NftCardView(
         }.build()
 
     Box(modifier = modifier.fillMaxSize()) {
-        // NFT Image Background
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .crossfade(true)
-                .build(),
-            imageLoader = gifEnabledLoader,
-            contentDescription = nftName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            placeholder = painterResource(R.drawable.placeholer_icon_5),
-            error = painterResource(R.drawable.placeholer_icon_5)
-        )
+        // NFT Image Background - only show if imageUrl is available
+        if (!imageUrl.isNullOrEmpty()) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = gifEnabledLoader,
+                contentDescription = nftName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            // Same background as token card - wireframe torus decoration
+            Box(
+                modifier = Modifier
+                    .alpha(0.2f)
+                    .offset(x = 100.dp, y = 100.dp)
+                    .scale(0.9f)
+                    .aspectRatio(1f),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                AsyncImage(
+                    imageLoader = gifEnabledLoader,
+                    model = R.drawable.wireframe_torus,
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(primaryColor)
+                )
+            }
+        }
 
-        // Dark overlay for readability
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.3f),
-                            Color.Black.copy(alpha = 0.6f),
-                            Color.Black.copy(alpha = 0.8f)
+        // Dark overlay for readability - only needed when there's an image background
+        if (!imageUrl.isNullOrEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.4f),
+                                Color.Black.copy(alpha = 0.7f),
+                                Color.Black.copy(alpha = 0.9f)
+                            )
                         )
                     )
-                )
-        )
+            )
+        }
 
         // Content
         Column(
@@ -150,8 +173,8 @@ fun NftCardView(
                             collectionName
                         },
                         style = TextStyle(
-                            fontFamily = PitagonsSans,
-                            color = dgenWhite.copy(alpha = 0.7f),
+                            fontFamily = SpaceMono,
+                            color = dgenWhite,
                             fontWeight = FontWeight.Normal,
                             fontSize = 14.sp,
                         ),
