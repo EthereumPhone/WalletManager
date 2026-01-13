@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -197,6 +198,7 @@ fun SimpleHeader(
     onCloseClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
+    val secondaryColor = SystemColorManager.secondaryColor
     var enabled by remember { mutableStateOf(true) }
 
     Row(
@@ -208,7 +210,12 @@ fun SimpleHeader(
 
         // Close icon
         IconButton(
-            modifier = Modifier.size(56.dp),
+            modifier = Modifier
+                .offset(12.dp)
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(secondaryColor.copy(0.15f))
+            ,
             onClick = {
                 if (!enabled) return@IconButton
                 enabled = false
@@ -219,7 +226,7 @@ fun SimpleHeader(
                 Icon(
                     modifier = Modifier
                         .size(32.dp)
-                        .align(Alignment.CenterEnd),
+                        .align(Alignment.Center),
                     painter = painterResource(com.core.ui.R.drawable.baseline_close_24),
                     contentDescription = "Close",
                     tint = primaryColor
@@ -252,7 +259,7 @@ fun ZoomControls(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(primaryColor.copy(alpha = 0.15f))
+                .background(dgenBlack.copy(alpha = 0.15f))
         ) {
             Text(
                 text = "−",
@@ -271,7 +278,7 @@ fun ZoomControls(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(primaryColor.copy(alpha = 0.15f))
+                .background(dgenBlack.copy(alpha = 0.15f))
         ) {
             Text(
                 text = "⊙",
@@ -290,7 +297,7 @@ fun ZoomControls(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(primaryColor.copy(alpha = 0.15f))
+                .background(dgenBlack.copy(alpha = 0.15f))
         ) {
             Text(
                 text = "+",
