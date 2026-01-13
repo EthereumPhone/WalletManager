@@ -14,6 +14,8 @@ import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
 import com.core.data.remote.DexScreenerApiClient
 import com.core.data.remote.DexScreenerDataSource
+import com.core.data.service.OnChainTokenMetadataFetcher
+import com.core.data.service.TokenMetadataFetcher
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.datastore.ExclusionListProtoSerializer
@@ -242,6 +244,14 @@ object DataModule {
         moshi: Moshi
     ): DexScreenerDataSource {
         return DexScreenerApiClient(okHttpClient, moshi)
+    }
+
+    @Singleton
+    @Provides
+    fun provideTokenMetadataFetcher(
+        onChainTokenMetadataFetcher: OnChainTokenMetadataFetcher
+    ): TokenMetadataFetcher {
+        return onChainTokenMetadataFetcher
     }
 
 

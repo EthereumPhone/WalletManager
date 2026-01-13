@@ -117,7 +117,6 @@ internal fun SwapScreen(
     val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
     val swapTransactionStatus by viewModel.swapTransactionStatus.collectAsStateWithLifecycle()
-    val dexScreenerResults by viewModel.dexScreenerResults.collectAsStateWithLifecycle()
     val isDexScreenerLoading by viewModel.isDexScreenerLoading.collectAsStateWithLifecycle()
     
     // Show toast when message is set
@@ -237,7 +236,6 @@ internal fun SwapScreen(
         selectedChainId = selectedTokenChainId,
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
         groupedTokens = groupedTokens,
-        dexScreenerResults = dexScreenerResults,
         isDexScreenerLoading = isDexScreenerLoading,
         onSearchDexScreener = { query -> viewModel.searchDexScreener(query) },
         onClearDexScreenerResults = { viewModel.clearDexScreenerResults() }

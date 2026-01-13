@@ -76,7 +76,6 @@ fun TokenSelectorOverlay(
     selectedChainId: Int,
     onChainSelected: (Int) -> Unit,
     groupedTokens: List<TokenGroupAssetOverview> = emptyList(),
-    dexScreenerResults: List<TokenAssetWithPrice> = emptyList(),
     isDexScreenerLoading: Boolean = false,
     onSearchDexScreener: (String) -> Unit = {},
     onClearDexScreenerResults: () -> Unit = {},
@@ -396,11 +395,7 @@ fun TokenSelectorOverlay(
                         }
                         
                         // Filter DexScreener results by selected chain
-                        val filteredDexScreenerResults = remember(dexScreenerResults, selectedChainId) {
-                            dexScreenerResults.filter { token ->
-                                selectedChainId == null || token.chainId == selectedChainId
-                            }
-                        }
+
                         
                         // Separate owned and non-owned tokens
                         val ownedTokens = remember(filteredTokens) {
@@ -420,21 +415,12 @@ fun TokenSelectorOverlay(
                             filteredTokens.map { "${it.address.lowercase()}_${it.chainId}" }.toSet()
                         }
                         
-                        val allTokens = remember(filteredTokens, filteredDexScreenerResults, searchQuery) {
-                            val existingNonOwned = filteredTokens
+                        val allTokens = remember(filteredTokens, searchQuery) {
+                            filteredTokens
                                 .filter { it.balance == 0.0 }
                                 .distinctBy { it.address.lowercase() + "_" + it.chainId }
                             
-                            if (searchQuery.length >= 2 && filteredDexScreenerResults.isNotEmpty()) {
-                                // When searching, show DexScreener results first, then existing tokens
-                                // Filter out DexScreener results that already exist in local tokens
-                                val newFromDexScreener = filteredDexScreenerResults.filter { dexToken ->
-                                    "${dexToken.address.lowercase()}_${dexToken.chainId}" !in existingAddresses
-                                }
-                                (newFromDexScreener + existingNonOwned).distinctBy { it.address.lowercase() + "_" + it.chainId }
-                            } else {
-                                existingNonOwned
-                            }
+
                         }
 
                         Column(
