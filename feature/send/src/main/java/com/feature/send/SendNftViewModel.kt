@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.model.dto.Contact
+import com.core.data.repository.ContactsRepository
 import com.core.data.repository.NftRepository
 import com.core.data.repository.SendRepository
 import com.core.data.repository.TerminalEvent
@@ -48,6 +50,7 @@ class SendNftViewModel @Inject constructor(
     private val terminalRepository: TerminalRepository,
     private val terminalSDK: TerminalSDK?,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
+    private val contactsRepository: ContactsRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -66,7 +69,23 @@ class SendNftViewModel @Inject constructor(
     private val _shouldDismissKeyboard = MutableStateFlow(false)
     val shouldDismissKeyboard: StateFlow<Boolean> = _shouldDismissKeyboard.asStateFlow()
 
+    // Contact-related state
+    private val _selectedContact = MutableStateFlow<Contact?>(null)
+    val selectedContact: StateFlow<Contact?> = _selectedContact.asStateFlow()
+
+    private val _contactsWithEth = MutableStateFlow<List<Contact>>(emptyList())
+    val contactsWithEth: StateFlow<List<Contact>> = _contactsWithEth.asStateFlow()
+
+    private val _shouldRequestContactsPermission = MutableStateFlow(false)
+    val shouldRequestContactsPermission: StateFlow<Boolean> = _shouldRequestContactsPermission.asStateFlow()
+
     init {
+        // Load contacts or request permission on first open
+        if (!contactsRepository.hasContactsPermission()) {
+            _shouldRequestContactsPermission.value = true
+        } else {
+            loadContactsIfPermitted()
+        }
         // Observe terminal events
         viewModelScope.launch {
             terminalRepository.events.collect { event ->
@@ -95,6 +114,8 @@ class SendNftViewModel @Inject constructor(
      */
     fun updateAddress(address: String) {
         _recipientUiState.update { it.copy(recipientAddress = address, ensError = "") }
+        // Clear selected contact if address is manually changed
+        _selectedContact.value = null
         resolveEns()
     }
 
@@ -243,6 +264,64 @@ class SendNftViewModel @Inject constructor(
      */
     fun onKeyboardDismissed() {
         _shouldDismissKeyboard.value = false
+    }
+
+    /**
+     * Select a contact and update recipient address
+     */
+    fun selectContact(contact: Contact) {
+        _selectedContact.value = contact
+        // Update recipient with contact's address
+        _recipientUiState.update { it.copy(
+            recipientAddress = contact.address,
+            isResolving = false,
+            ensError = ""
+        ) }
+        // Trigger keyboard dismissal
+        _shouldDismissKeyboard.value = true
+    }
+
+    /**
+     * Clear selected contact
+     */
+    fun clearSelectedContact() {
+        _selectedContact.value = null
+        _recipientUiState.update { it.copy(recipientAddress = "") }
+    }
+
+    /**
+     * Handle contact icon click
+     */
+    fun onContactIconClick() {
+        // Check if we have permission, if not, request it
+        if (!contactsRepository.hasContactsPermission()) {
+            _shouldRequestContactsPermission.value = true
+        }
+        // Permission already granted - UI will show the picker
+    }
+
+    /**
+     * Handle contacts permission result
+     */
+    fun onContactsPermissionResult(granted: Boolean) {
+        _shouldRequestContactsPermission.value = false
+        if (granted) {
+            loadContactsIfPermitted()
+        }
+    }
+
+    /**
+     * Load contacts if permission is granted
+     */
+    private fun loadContactsIfPermitted() {
+        if (contactsRepository.hasContactsPermission()) {
+            viewModelScope.launch {
+                contactsRepository.getContactsWithEthAddress().collect { contacts ->
+                    _contactsWithEth.value = contacts
+                    Log.d("SendNftViewModel", "Loaded ${contacts.size} contacts with ETH addresses")
+                }
+            }
+        }
     }
 
     /**

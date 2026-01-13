@@ -58,13 +58,22 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.core.model.NFT
 import com.core.model.NftTokenType
+import com.core.ui.DetailItem
 import com.core.ui.SwipeButton
+import com.core.ui.getChainName
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.pulseOpacity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import com.core.data.model.dto.Contact
+import com.core.ui.util.mediumEnterDuration
+import com.feature.send.ui.ContactPickerOverlay
 import com.feature.send.ui.RecipientSection
 import com.feature.send.ui.SendHeader
 import com.feature.send.ui.TransactionStatus
@@ -72,6 +81,7 @@ import com.feature.send.ui.TransactionStatusOverlay
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
+import android.util.Log
 import kotlinx.coroutines.delay
 
 /**
@@ -91,6 +101,9 @@ fun SendNftRoute(
     val qrScannerTriggered by viewModel.qrScannerTriggered.collectAsStateWithLifecycle()
     val transactionStatus by viewModel.transactionStatus.collectAsStateWithLifecycle()
     val shouldDismissKeyboard by viewModel.shouldDismissKeyboard.collectAsStateWithLifecycle()
+    val selectedContact by viewModel.selectedContact.collectAsStateWithLifecycle()
+    val contactsWithEth by viewModel.contactsWithEth.collectAsStateWithLifecycle()
+    val shouldRequestContactsPermission by viewModel.shouldRequestContactsPermission.collectAsStateWithLifecycle()
 
     // Load NFT on first composition
     LaunchedEffect(contractAddress, tokenId, chainId) {
@@ -161,7 +174,14 @@ fun SendNftRoute(
         transactionStatus = transactionStatus,
         qrScannerTriggered = qrScannerTriggered,
         shouldDismissKeyboard = shouldDismissKeyboard,
+        selectedContact = selectedContact,
+        contactsWithEth = contactsWithEth,
+        shouldRequestContactsPermission = shouldRequestContactsPermission,
         onRecipientChange = viewModel::updateAddress,
+        onContactSelected = viewModel::selectContact,
+        onClearContact = viewModel::clearSelectedContact,
+        onContactIconClick = viewModel::onContactIconClick,
+        onContactsPermissionResult = viewModel::onContactsPermissionResult,
         onSendNft = viewModel::sendNft,
         clearTransactionStatus = viewModel::clearTransactionStatus,
         resetQrScannerTrigger = viewModel::resetQrScannerTrigger,
@@ -181,13 +201,43 @@ fun SendNftScreen(
     transactionStatus: TransactionStatus?,
     qrScannerTriggered: Boolean,
     shouldDismissKeyboard: Boolean,
+    selectedContact: Contact? = null,
+    contactsWithEth: List<Contact> = emptyList(),
+    shouldRequestContactsPermission: Boolean = false,
     onRecipientChange: (String) -> Unit,
+    onContactSelected: (Contact) -> Unit = {},
+    onClearContact: () -> Unit = {},
+    onContactIconClick: () -> Unit = {},
+    onContactsPermissionResult: (Boolean) -> Unit = {},
     onSendNft: () -> Unit,
     clearTransactionStatus: () -> Unit,
     resetQrScannerTrigger: () -> Unit,
     onKeyboardDismissed: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    // State for showing contact picker
+    var showContactPicker by remember { mutableStateOf(false) }
+
+    // Handle contacts permission request
+    val contactsPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(Manifest.permission.READ_CONTACTS)
+    )
+
+    LaunchedEffect(shouldRequestContactsPermission) {
+        if (shouldRequestContactsPermission) {
+            contactsPermissionState.launchMultiplePermissionRequest()
+        }
+    }
+
+    LaunchedEffect(contactsPermissionState.allPermissionsGranted) {
+        if (contactsPermissionState.allPermissionsGranted && shouldRequestContactsPermission) {
+            onContactsPermissionResult(true)
+            showContactPicker = true
+        } else if (!contactsPermissionState.allPermissionsGranted &&
+            contactsPermissionState.shouldShowRationale) {
+            onContactsPermissionResult(false)
+        }
+    }
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
 
@@ -265,11 +315,9 @@ fun SendNftScreen(
                 .padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top section
-            Column {
                 // Header - using the same SendHeader pattern as SendScreen
                 SendHeader(
-                    modifier = Modifier.padding(bottom = 48.dp),
+                    modifier = Modifier.padding(bottom = 0.dp),
                     nftName = nft?.name ?: "NFT",
                     nftImageUrl = nft?.thumbnailUrl ?: nft?.imageUrl,
                     onBackClick = onBackClick
@@ -277,53 +325,125 @@ fun SendNftScreen(
 
                 // NFT Info Card
                 if (nft != null) {
-                    NftInfoCard(
-                        nft = nft,
-                        primaryColor = primaryColor,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                    // NFT Image and Basic Info
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = primaryColor.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    )
+                    {
+                        // NFT Thumbnail
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(nft.thumbnailUrl ?: nft.imageUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = nft.name,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+
+                        // NFT Name and Collection
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f)
+                        )
+                        {
+                            Text(
+                                text = nft.name,
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = primaryColor,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Text(
+                                text = nft.collectionName,
+                                style = TextStyle(
+                                    fontFamily = PitagonsSans,
+                                    color = dgenWhite.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 14.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            // Token ID
+                            Text(
+                                text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = dgenWhite.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        }
+                    }
+
+                    DetailItem(
+                        label = "Network",
+                        value = getChainName(nft.chainId),
+                        primaryColor = primaryColor
+                    )
+
+                    // Floor Price
+                    val floorPrice = nft.floorPriceEth
+                    val floorPriceText = if (floorPrice != null && floorPrice > 0) {
+                        String.format("%.4f ETH", floorPrice)
+                    } else {
+                        "---"
+                    }
+
+                    DetailItem(
+                        label = "Floor Price",
+                        value = floorPriceText,
+                        primaryColor = primaryColor
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+
+
+                // #region agent log
+                Log.d("DEBUG_AGENT", "SendNftScreen:RecipientSection - hasContactsWithEth=${contactsWithEth.isNotEmpty()}, selectedContact=${selectedContact?.name ?: "null"}, hypothesisId=A")
+                // #endregion
 
                 // Recipient Section
                 RecipientSection(
                     recipientUiState = recipientUiState,
-                    selectedContact = null,
-                    hasContactsWithEth = false,
+                    selectedContact = selectedContact,
+                    hasContactsWithEth = contactsWithEth.isNotEmpty(),
                     onContentChanged = onRecipientChange,
-                    onContactIconClick = {},
-                    onClearContact = {},
+                    onContactIconClick = {
+                        onContactIconClick()
+                        if (contactsWithEth.isNotEmpty()) {
+                            showContactPicker = true
+                        }
+                    },
+                    onClearContact = onClearContact,
                     shouldDismissKeyboard = shouldDismissKeyboard,
                     onKeyboardDismissed = onKeyboardDismissed
                 )
-            }
 
-            // Bottom section - Send Button
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Validate recipient address: must be a valid Ethereum address (0x followed by 40 hex chars)
-                val isValidRecipient = recipientUiState.recipientAddress.matches(
-                    Regex("^0x[a-fA-F0-9]{40}$")
-                ) && recipientUiState.ensError.isEmpty()
 
-//                SwipeButton(
-//                    text = "SEND NFT",
-//                    isComplete = transactionStatus == TransactionStatus.SUCCESS,
-//                    onSwipe = {
-//                        if (isValidRecipient) {
-//                            onSendNft()
-//                        }
-//                    },
-//                    primaryColor = primaryColor,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(vertical = 16.dp)
-//                        .alpha(if (isValidRecipient) 1f else 0.5f)
-//                )
-            }
+            // Validate recipient address: must be a valid Ethereum address (0x followed by 40 hex chars)
+            val isValidRecipient = recipientUiState.recipientAddress.matches(
+                Regex("^0x[a-fA-F0-9]{40}$")
+            ) && recipientUiState.ensError.isEmpty()
+
         }
 
         // Transaction Status Overlay
@@ -334,6 +454,22 @@ fun SendNftScreen(
             primaryColor = primaryColor,
             secondaryColor = secondaryColor
         )
+
+        // Contact picker overlay with fade in/out
+        AnimatedVisibility(
+            visible = showContactPicker,
+            enter = fadeIn(animationSpec = tween(durationMillis = mediumEnterDuration)),
+            exit = fadeOut(animationSpec = tween(durationMillis = mediumEnterDuration))
+        ) {
+            ContactPickerOverlay(
+                contacts = contactsWithEth,
+                onContactSelected = { contact ->
+                    onContactSelected(contact)
+                    showContactPicker = false
+                },
+                onDismiss = { showContactPicker = false }
+            )
+        }
     }
 
     // QR Scanner handling
@@ -365,99 +501,6 @@ fun SendNftScreen(
 }
 
 
-@Composable
-private fun NftInfoCard(
-    nft: NFT,
-    primaryColor: Color,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = primaryColor.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // NFT Thumbnail
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(nft.thumbnailUrl ?: nft.imageUrl)
-                .crossfade(true)
-                .build(),
-            contentDescription = nft.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
-
-        // NFT Details
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = nft.name,
-                style = TextStyle(
-                    fontFamily = SpaceMono,
-                    color = primaryColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = nft.collectionName,
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = dgenWhite.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Token ID
-                Text(
-                    text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = dgenWhite.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 12.sp
-                    )
-                )
-
-                // Floor price if available
-                nft.floorPriceEth?.let { price ->
-                    Text(
-                        text = "Floor: ${String.format("%.4f", price)} ETH",
-                        style = TextStyle(
-                            fontFamily = PitagonsSans,
-                            color = primaryColor.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 12.sp
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Preview(device = "spec:width=720px,height=720px,dpi=240")
 @Composable
 fun PreviewSendNftScreen() {
@@ -481,7 +524,13 @@ fun PreviewSendNftScreen() {
         transactionStatus = null,
         qrScannerTriggered = false,
         shouldDismissKeyboard = false,
+        selectedContact = null,
+        contactsWithEth = emptyList(),
         onRecipientChange = {},
+        onContactSelected = {},
+        onClearContact = {},
+        onContactIconClick = {},
+        onContactsPermissionResult = {},
         onSendNft = {},
         clearTransactionStatus = {},
         resetQrScannerTrigger = {},
