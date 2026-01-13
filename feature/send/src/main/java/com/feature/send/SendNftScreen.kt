@@ -305,17 +305,20 @@ fun SendNftScreen(
                 .padding(start = horizontalPadding, end = horizontalPadding, bottom = bottomPadding, top = topPadding),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-                // Header - using the same SendHeader pattern as SendScreen
-                SendHeader(
-                    modifier = Modifier.padding(bottom = 0.dp),
-                    nftName = nft?.name ?: "NFT",
-                    nftImageUrl = nft?.thumbnailUrl ?: nft?.imageUrl,
-                    onBackClick = onBackClick
-                )
 
                 Column(
                     Modifier.fillMaxWidth()
                 ){
+                    // Header - using the same SendHeader pattern as SendScreen
+                    SendHeader(
+                        modifier = Modifier.padding(bottom = 0.dp),
+                        nftName = nft?.name ?: "NFT",
+                        nftImageUrl = nft?.thumbnailUrl ?: nft?.imageUrl,
+                        onBackClick = onBackClick
+                    )
+
+                    Spacer(Modifier.fillMaxWidth().height(24.dp))
+
                     // NFT Info Card
                     if (nft != null) {
                         // NFT Image and Basic Info
@@ -435,6 +438,9 @@ fun SendNftScreen(
                         } else {
                             "---"
                         }
+
+                        Spacer(Modifier.fillMaxWidth().height(24.dp))
+
 
                         DetailItem(
                             label = "Floor Price",
