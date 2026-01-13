@@ -79,6 +79,8 @@ fun NftImageOverlay(
         // Zoom and pan state
         var scale by remember { mutableFloatStateOf(1f) }
         var offset by remember { mutableStateOf(Offset.Zero) }
+        // Controls visibility state - visible by default
+        var controlsVisible by remember { mutableStateOf(true) }
         
         val minScale = 0.5f
         val maxScale = 5f
@@ -89,16 +91,7 @@ fun NftImageOverlay(
                 .background(dgenBlack)
                 .statusBarsPadding()
         ) {
-            // Header - simplified version without right-side text
-            NftOverlayHeader(
-                onCloseClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp)
-            )
-
-            // Zoomable/Pannable Image
+            // Zoomable/Pannable Image - rendered first (bottom layer)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -117,6 +110,10 @@ fun NftImageOverlay(
                     }
                     .pointerInput(Unit) {
                         detectTapGestures(
+                            onTap = {
+                                // Single tap toggles controls visibility
+                                controlsVisible = !controlsVisible
+                            },
                             onDoubleTap = {
                                 // Double tap to reset or zoom in
                                 if (scale > 1f) {
@@ -150,22 +147,43 @@ fun NftImageOverlay(
                 )
             }
 
-            // Zoom Controls
-            ZoomControls(
-                onZoomIn = {
-                    scale = (scale * 1.5f).coerceAtMost(maxScale)
-                },
-                onZoomOut = {
-                    scale = (scale / 1.5f).coerceAtLeast(minScale)
-                },
-                onReset = {
-                    scale = 1f
-                    offset = Offset.Zero
-                },
+            // Header - rendered on top with fade animation
+            AnimatedVisibility(
+                visible = controlsVisible,
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+                modifier = Modifier.align(Alignment.TopStart)
+            ) {
+                SimpleHeader(
+                    onCloseClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, top = 12.dp)
+                )
+            }
+
+            // Zoom Controls with fade animation
+            AnimatedVisibility(
+                visible = controlsVisible,
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 200)),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 48.dp)
-            )
+            ) {
+                ZoomControls(
+                    onZoomIn = {
+                        scale = (scale * 1.5f).coerceAtMost(maxScale)
+                    },
+                    onZoomOut = {
+                        scale = (scale / 1.5f).coerceAtLeast(minScale)
+                    },
+                    onReset = {
+                        scale = 1f
+                        offset = Offset.Zero
+                    }
+                )
+            }
         }
     }
 }
@@ -174,7 +192,7 @@ fun NftImageOverlay(
  * Simplified header for the NFT overlay - just "VIEW" text and close button
  */
 @Composable
-fun NftOverlayHeader(
+fun SimpleHeader(
     modifier: Modifier = Modifier,
     onCloseClick: () -> Unit
 ) {
@@ -183,21 +201,10 @@ fun NftOverlayHeader(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = modifier
+        horizontalArrangement = Arrangement.End,
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(
-            text = "VIEW",
-            style = TextStyle(
-                fontFamily = SpaceMono,
-                color = primaryColor,
-                fontWeight = FontWeight.Medium,
-                fontSize = 24.sp,
-                letterSpacing = 0.sp,
-                textDecoration = TextDecoration.None
-            ),
-            modifier = Modifier.weight(1f)
-        )
+
 
         // Close icon
         IconButton(

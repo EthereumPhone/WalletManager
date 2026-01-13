@@ -320,7 +320,7 @@ fun SendNftScreen(
                             modifier = Modifier
                                 .size(96.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable { showNftImageOverlay = true }
+//                            
                         ) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
@@ -331,23 +331,6 @@ fun SendNftScreen(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
-                            
-                            // Expand icon overlay
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(dgenBlack.copy(alpha = 0.3f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "⤢",
-                                    style = TextStyle(
-                                        color = dgenWhite,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
                         }
 
                         // NFT Name and Collection
@@ -457,13 +440,6 @@ fun SendNftScreen(
                     shouldDismissKeyboard = shouldDismissKeyboard,
                     onKeyboardDismissed = onKeyboardDismissed
                 )
-
-
-            // Validate recipient address: must be a valid Ethereum address (0x followed by 40 hex chars)
-            val isValidRecipient = recipientUiState.recipientAddress.matches(
-                Regex("^0x[a-fA-F0-9]{40}$")
-            ) && recipientUiState.ensError.isEmpty()
-
         }
 
         // Transaction Status Overlay
