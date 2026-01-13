@@ -16,12 +16,20 @@ class DexScreenerSearchRepository @Inject constructor(
 
     companion object {
         private const val TAG = "DexScreenerSearchRepo"
+        
+        // Supported chain IDs that have RPC endpoints configured
+        private val SUPPORTED_CHAIN_IDS = setOf(1, 10, 137, 42161, 8453, 56, 43114)
     }
 
     override suspend fun queryTokens(q: String) = coroutineScope {
-        val results = api.searchTokens(q).groupBy { it.chainId }
+        val allResults = api.searchTokens(q)
+        
+        // Filter to only supported chains
+        val results = allResults
+            .filter { it.chainId in SUPPORTED_CHAIN_IDS }
+            .groupBy { it.chainId }
 
-        Log.d(TAG, "FETCHED ${results.toString()}")
+        Log.d(TAG, "FETCHED ${allResults.size} tokens, ${results.values.flatten().size} on supported chains")
 
         results.forEach { group ->
             async {
