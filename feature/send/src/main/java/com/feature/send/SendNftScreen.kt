@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -74,6 +73,7 @@ import androidx.compose.animation.fadeOut
 import com.core.data.model.dto.Contact
 import com.core.ui.util.mediumEnterDuration
 import com.feature.send.ui.ContactPickerOverlay
+import com.feature.send.ui.NftImageOverlay
 import com.feature.send.ui.RecipientSection
 import com.feature.send.ui.SendHeader
 import com.feature.send.ui.TransactionStatus
@@ -82,6 +82,14 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
 import android.util.Log
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.core.ui.util.body1_fontSize
+import com.core.ui.util.button_fontSize
+import com.core.ui.util.label_fontSize
+import com.core.ui.util.neonOpacity
 import kotlinx.coroutines.delay
 
 /**
@@ -217,6 +225,9 @@ fun SendNftScreen(
 ) {
     // State for showing contact picker
     var showContactPicker by remember { mutableStateOf(false) }
+    
+    // State for showing NFT image overlay
+    var showNftImageOverlay by remember { mutableStateOf(false) }
 
     // Handle contacts permission request
     val contactsPermissionState = rememberMultiplePermissionsState(
@@ -266,48 +277,18 @@ fun SendNftScreen(
                 focusManager.clearFocus()
             }
     ) {
-        // NFT Image as background with overlay
-        if (nft?.imageUrl != null || nft?.thumbnailUrl != null) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(nft.imageUrl ?: nft.thumbnailUrl)
-                    .crossfade(true)
-                    .build(),
-                imageLoader = gifEnabledLoader,
-                contentDescription = nft?.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.3f)
-            )
-            // Dark gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                dgenBlack.copy(alpha = 0.7f),
-                                dgenBlack.copy(alpha = 0.9f),
-                                dgenBlack
-                            )
-                        )
-                    )
-            )
-        } else {
-            // Wireframe background if no NFT image
-            AsyncImage(
-                modifier = Modifier
-                    .alpha(pulseOpacity)
-                    .offset(x = 250.dp, y = 20.dp)
-                    .scale(1.3f)
-                    .aspectRatio(1f),
-                imageLoader = gifEnabledLoader,
-                model = R.drawable.globe_wireframe,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(primaryColor)
-            )
-        }
+        AsyncImage(
+            modifier = Modifier
+                .alpha(pulseOpacity)
+                .offset(x = 250.dp, y = 20.dp)
+                .scale(1.3f)
+                .aspectRatio(1f),
+            imageLoader = gifEnabledLoader,
+            model = R.drawable.globe_wireframe,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(primaryColor)
+        )
+    
 
         Column(
             Modifier
@@ -329,69 +310,108 @@ fun SendNftScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = primaryColor.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(16.dp),
+                            .padding(end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     )
                     {
-                        // NFT Thumbnail
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(nft.thumbnailUrl ?: nft.imageUrl)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = nft.name,
-                            contentScale = ContentScale.Crop,
+                        // NFT Thumbnail - Clickable to open fullscreen view
+                        Box(
                             modifier = Modifier
-                                .size(80.dp)
+                                .size(96.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                        )
+                                .clickable { showNftImageOverlay = true }
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(nft.thumbnailUrl ?: nft.imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = nft.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            
+                            // Expand icon overlay
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(dgenBlack.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "⤢",
+                                    style = TextStyle(
+                                        color = dgenWhite,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
 
                         // NFT Name and Collection
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.weight(1f)
-                        )
-                        {
-                            Text(
-                                text = nft.name,
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = primaryColor,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(0.dp),
+                                modifier = Modifier.weight(1f)
                             )
-
-                            Text(
-                                text = nft.collectionName,
-                                style = TextStyle(
-                                    fontFamily = PitagonsSans,
-                                    color = dgenWhite.copy(alpha = 0.7f),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 14.sp
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-
-                            // Token ID
-                            Text(
-                                text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
-                                style = TextStyle(
-                                    fontFamily = SpaceMono,
-                                    color = dgenWhite.copy(alpha = 0.5f),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 12.sp
+                            {
+                                Text(
+                                    text = nft.name,
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = primaryColor,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = body1_fontSize
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                            )
+
+                                Text(
+                                    text = nft.collectionName,
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenWhite,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = button_fontSize
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Spacer(modifier = Modifier.fillMaxWidth().height(4.dp))
+                                // Token ID
+                                Text(
+                                    text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = primaryColor.copy(neonOpacity),
+                                        fontWeight = FontWeight.Light,
+                                        fontSize = 16.sp
+                                    )
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { showNftImageOverlay = true },
+                            ) {
+                                Box(modifier = Modifier.size(56.dp)) {
+                                    Icon(
+                                        modifier = Modifier.size(40.dp).align(Alignment.Center),
+                                        painter = painterResource(R.drawable.expand_content),
+                                        contentDescription = "Back",
+                                        tint = primaryColor
+                                    )
+                                }
+
+                            }
                         }
+
                     }
 
                     DetailItem(
@@ -470,6 +490,13 @@ fun SendNftScreen(
                 onDismiss = { showContactPicker = false }
             )
         }
+        
+        // NFT Image Overlay with zoom and pan
+        NftImageOverlay(
+            visible = showNftImageOverlay,
+            imageUrl = nft?.imageUrl ?: nft?.thumbnailUrl,
+            onDismiss = { showNftImageOverlay = false }
+        )
     }
 
     // QR Scanner handling
