@@ -133,10 +133,10 @@ fun NftCardCarousel(
         }
     }
 
-    val topPadding = 64.dp
-    val baseBottomPadding = 48.dp
+    val topPadding = 32.dp
+    val baseBottomPadding = 120.dp
     val itemSpacing = overlap - 32.dp
-    val extraScrollMargin = cardHeight * 0.3f
+    val extraScrollMargin = cardHeight * 0.5f
 
     BoxWithConstraints(
         modifier = modifier.fillMaxSize()
@@ -228,5 +228,17 @@ fun NftCardCarousel(
                 )
             }
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp) // Adjust thickness of fading border
+                .align(Alignment.TopCenter)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(dgenBlack, Color.Transparent)
+                    )
+                )
+        )
     }
 }

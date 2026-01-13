@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -290,10 +293,16 @@ fun SendNftScreen(
         )
     
 
+        val configuration = LocalConfiguration.current
+        val horizontalPadding = (configuration.screenWidthDp * 0.06f).dp
+        val bottomPadding = (configuration.screenHeightDp * 0.04f).dp
+        val topPadding = (configuration.screenHeightDp * 0.015f).dp
+
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 12.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(start = horizontalPadding, end = horizontalPadding, bottom = bottomPadding, top = topPadding),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
                 // Header - using the same SendHeader pattern as SendScreen
@@ -304,93 +313,97 @@ fun SendNftScreen(
                     onBackClick = onBackClick
                 )
 
-                // NFT Info Card
-                if (nft != null) {
-                    // NFT Image and Basic Info
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    )
-                    {
-                        // NFT Thumbnail - Clickable to open fullscreen view
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(RoundedCornerShape(8.dp))
-//
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(nft.thumbnailUrl ?: nft.imageUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = nft.name,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            Box(modifier = Modifier.fillMaxSize()
-                                .background(dgenBlack.copy(0.25f))
-                                .clickable{ showNftImageOverlay = true }
-                            ){
-
-                                Icon(
-                                            modifier = Modifier.size(40.dp).align(Alignment.Center),
-                                            painter = painterResource(R.drawable.expand_content),
-                                            contentDescription = "Back",
-                                            tint = primaryColor
-                                        )
-                            }
-                        }
-
-                        // NFT Name and Collection
+                Column(
+                    Modifier.fillMaxWidth()
+                ){
+                    // NFT Info Card
+                    if (nft != null) {
+                        // NFT Image and Basic Info
                         Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(0.dp),
-                                modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        )
+                        {
+                            // NFT Thumbnail - Clickable to open fullscreen view
+                            Box(
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+//
+                            ) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(context)
+                                        .data(nft.thumbnailUrl ?: nft.imageUrl)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = nft.name,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                Box(modifier = Modifier.fillMaxSize()
+                                    .background(dgenBlack.copy(0.25f))
+                                    .clickable{ showNftImageOverlay = true }
+                                ){
+
+                                    Icon(
+                                        modifier = Modifier.size(40.dp).align(Alignment.Center),
+                                        painter = painterResource(R.drawable.expand_content),
+                                        contentDescription = "Back",
+                                        tint = primaryColor
+                                    )
+                                }
+                            }
+
+                            // NFT Name and Collection
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             )
                             {
-                                Text(
-                                    text = nft.name,
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = primaryColor,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = body1_fontSize
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                                    modifier = Modifier.weight(1f)
                                 )
-
-                                Text(
-                                    text = nft.collectionName,
-                                    style = TextStyle(
-                                        fontFamily = PitagonsSans,
-                                        color = dgenWhite,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = button_fontSize
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Spacer(modifier = Modifier.fillMaxWidth().height(4.dp))
-                                // Token ID
-                                Text(
-                                    text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
-                                    style = TextStyle(
-                                        fontFamily = SpaceMono,
-                                        color = primaryColor.copy(neonOpacity),
-                                        fontWeight = FontWeight.Light,
-                                        fontSize = 16.sp
+                                {
+                                    Text(
+                                        text = nft.name,
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = primaryColor,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = body1_fontSize
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
-                                )
-                            }
+
+                                    Text(
+                                        text = nft.collectionName,
+                                        style = TextStyle(
+                                            fontFamily = PitagonsSans,
+                                            color = dgenWhite,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = button_fontSize
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.fillMaxWidth().height(4.dp))
+                                    // Token ID
+                                    Text(
+                                        text = "#${nft.tokenId.take(8)}${if (nft.tokenId.length > 8) "..." else ""}",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = primaryColor.copy(neonOpacity),
+                                            fontWeight = FontWeight.Light,
+                                            fontSize = 16.sp
+                                        )
+                                    )
+                                }
 
 //                            IconButton(
 //                                onClick = { showNftImageOverlay = true },
@@ -405,30 +418,34 @@ fun SendNftScreen(
 //                                }
 //
 //                            }
+                            }
+
                         }
 
+                        // DetailItem(
+                        //     label = "Network",
+                        //     value = getChainName(nft.chainId),
+                        //     primaryColor = primaryColor
+                        // )
+
+                        // Floor Price
+                        val floorPrice = nft.floorPriceEth
+                        val floorPriceText = if (floorPrice != null && floorPrice > 0) {
+                            String.format("%.4f ETH", floorPrice)
+                        } else {
+                            "---"
+                        }
+
+                        DetailItem(
+                            label = "Floor Price",
+                            value = floorPriceText,
+                            primaryColor = primaryColor
+                        )
+
+
                     }
-
-                    DetailItem(
-                        label = "Network",
-                        value = getChainName(nft.chainId),
-                        primaryColor = primaryColor
-                    )
-
-                    // Floor Price
-                    val floorPrice = nft.floorPriceEth
-                    val floorPriceText = if (floorPrice != null && floorPrice > 0) {
-                        String.format("%.4f ETH", floorPrice)
-                    } else {
-                        "---"
-                    }
-
-                    DetailItem(
-                        label = "Floor Price",
-                        value = floorPriceText,
-                        primaryColor = primaryColor
-                    )
                 }
+
 
 
 
