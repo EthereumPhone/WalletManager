@@ -54,6 +54,16 @@ interface NftRepository {
      * Check if any NFTs exist
      */
     fun observeNftsExist(): Flow<Boolean>
+    
+    /**
+     * Remove a specific NFT from the database (after transfer)
+     */
+    suspend fun removeNft(contractAddress: String, tokenId: String, chainId: Int)
+    
+    /**
+     * Update NFT balance (for ERC1155 tokens after partial transfer)
+     */
+    suspend fun updateNftBalance(contractAddress: String, tokenId: String, chainId: Int, newBalance: Int)
 }
 
 /**
@@ -143,6 +153,25 @@ class AlchemyNftRepository @Inject constructor(
     }
     
     override fun observeNftsExist(): Flow<Boolean> = nftDao.observeNftsExist()
+    
+    override suspend fun removeNft(contractAddress: String, tokenId: String, chainId: Int) {
+        withContext(Dispatchers.IO) {
+            Log.d(TAG, "Removing NFT: $contractAddress/$tokenId on chain $chainId")
+            nftDao.deleteNft(contractAddress, tokenId, chainId)
+        }
+    }
+    
+    override suspend fun updateNftBalance(contractAddress: String, tokenId: String, chainId: Int, newBalance: Int) {
+        withContext(Dispatchers.IO) {
+            if (newBalance <= 0) {
+                Log.d(TAG, "Removing NFT with zero balance: $contractAddress/$tokenId on chain $chainId")
+                nftDao.deleteNft(contractAddress, tokenId, chainId)
+            } else {
+                Log.d(TAG, "Updating NFT balance to $newBalance: $contractAddress/$tokenId on chain $chainId")
+                nftDao.updateNftBalance(contractAddress, tokenId, chainId, newBalance)
+            }
+        }
+    }
     
     private suspend fun fetchNftsForChain(
         ownerAddress: String,

@@ -60,6 +60,10 @@ class SendNftViewModel @Inject constructor(
     private val _recipientUiState = MutableStateFlow(RecipientUiState())
     val recipientUiState: StateFlow<RecipientUiState> = _recipientUiState.asStateFlow()
 
+    // Amount to send (for ERC1155 tokens that can have quantity > 1)
+    private val _sendAmount = MutableStateFlow(1)
+    val sendAmount: StateFlow<Int> = _sendAmount.asStateFlow()
+
     private val _qrScannerTriggered = MutableStateFlow(false)
     val qrScannerTriggered: StateFlow<Boolean> = _qrScannerTriggered.asStateFlow()
 
@@ -156,6 +160,16 @@ class SendNftViewModel @Inject constructor(
     }
 
     /**
+     * Update the amount to send (for ERC1155 tokens)
+     */
+    fun updateSendAmount(amount: Int) {
+        val currentNft = _nft.value ?: return
+        // Ensure amount is within valid range (1 to balance)
+        val validAmount = amount.coerceIn(1, currentNft.balance)
+        _sendAmount.value = validAmount
+    }
+
+    /**
      * Send the NFT
      */
     fun sendNft() {
@@ -172,6 +186,8 @@ class SendNftViewModel @Inject constructor(
             Log.d("SendNftViewModel", "=== SEND NFT TRANSACTION STARTED ===")
             Log.d("SendNftViewModel", "NFT: ${currentNft.name} (${currentNft.contractAddress})")
             Log.d("SendNftViewModel", "Token ID: ${currentNft.tokenId}")
+            Log.d("SendNftViewModel", "Token Type: ${currentNft.tokenType}")
+            Log.d("SendNftViewModel", "Amount: ${_sendAmount.value}")
             Log.d("SendNftViewModel", "To address: $toAddress")
 
             _transactionStatus.value = TransactionStatus.PENDING
@@ -180,12 +196,14 @@ class SendNftViewModel @Inject constructor(
                 // Clear previous transaction state
                 sendRepository.restoreState()
 
-                // Transfer the NFT using ERC721 safeTransferFrom
+                // Transfer the NFT using appropriate method based on token type
                 sendRepository.transferNft(
                     chainId = currentNft.chainId,
                     contractAddress = currentNft.contractAddress,
                     tokenId = currentNft.tokenId,
-                    toAddress = toAddress
+                    toAddress = toAddress,
+                    tokenType = currentNft.tokenType,
+                    amount = _sendAmount.value
                 )
 
                 // Observe transaction result
@@ -213,6 +231,8 @@ class SendNftViewModel @Inject constructor(
                                 _transactionStatus.value = TransactionStatus.SUCCESS
                                 viewModelScope.launch {
                                     terminalSDK?.displayBlackText("NFT SENT!")
+                                    // Remove or update NFT in database after successful transfer
+                                    removeOrUpdateNftAfterTransfer(currentNft, _sendAmount.value)
                                 }
                             } else {
                                 Log.e("SendNftViewModel", "🔴 NFT TRANSFER FAILED - Not included")
@@ -429,6 +449,37 @@ class SendNftViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Remove or update NFT in database after successful transfer
+     * - For ERC721: Always remove (only 1 can exist)
+     * - For ERC1155: Remove if all sent, otherwise update balance
+     */
+    private suspend fun removeOrUpdateNftAfterTransfer(nft: NFT, amountSent: Int) {
+        try {
+            if (nft.tokenType == com.core.model.NftTokenType.ERC1155 && nft.balance > amountSent) {
+                // ERC1155 with remaining balance - update the balance
+                val newBalance = nft.balance - amountSent
+                Log.d("SendNftViewModel", "Updating NFT balance: ${nft.balance} - $amountSent = $newBalance")
+                nftRepository.updateNftBalance(
+                    contractAddress = nft.contractAddress,
+                    tokenId = nft.tokenId,
+                    chainId = nft.chainId,
+                    newBalance = newBalance
+                )
+            } else {
+                // ERC721 or ERC1155 with all tokens sent - remove completely
+                Log.d("SendNftViewModel", "Removing NFT from database after transfer")
+                nftRepository.removeNft(
+                    contractAddress = nft.contractAddress,
+                    tokenId = nft.tokenId,
+                    chainId = nft.chainId
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("SendNftViewModel", "Failed to update NFT in database after transfer", e)
+        }
+    }
+    
     /**
      * Parse NFT-specific error codes
      */

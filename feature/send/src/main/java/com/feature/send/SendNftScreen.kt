@@ -115,6 +115,7 @@ fun SendNftRoute(
     val selectedContact by viewModel.selectedContact.collectAsStateWithLifecycle()
     val contactsWithEth by viewModel.contactsWithEth.collectAsStateWithLifecycle()
     val shouldRequestContactsPermission by viewModel.shouldRequestContactsPermission.collectAsStateWithLifecycle()
+    val sendAmount by viewModel.sendAmount.collectAsStateWithLifecycle()
 
     // Load NFT on first composition
     LaunchedEffect(contractAddress, tokenId, chainId) {
@@ -188,6 +189,8 @@ fun SendNftRoute(
         selectedContact = selectedContact,
         contactsWithEth = contactsWithEth,
         shouldRequestContactsPermission = shouldRequestContactsPermission,
+        sendAmount = sendAmount,
+        onSendAmountChange = viewModel::updateSendAmount,
         onRecipientChange = viewModel::updateAddress,
         onContactSelected = viewModel::selectContact,
         onClearContact = viewModel::clearSelectedContact,
@@ -215,6 +218,8 @@ fun SendNftScreen(
     selectedContact: Contact? = null,
     contactsWithEth: List<Contact> = emptyList(),
     shouldRequestContactsPermission: Boolean = false,
+    sendAmount: Int = 1,
+    onSendAmountChange: (Int) -> Unit = {},
     onRecipientChange: (String) -> Unit,
     onContactSelected: (Contact) -> Unit = {},
     onClearContact: () -> Unit = {},
@@ -448,6 +453,74 @@ fun SendNftScreen(
                             primaryColor = primaryColor
                         )
 
+                        // Show quantity selector for ERC1155 tokens with balance > 1
+                        if (nft.tokenType == NftTokenType.ERC1155 && nft.balance > 1) {
+                            Spacer(Modifier.fillMaxWidth().height(16.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Quantity",
+                                    style = TextStyle(
+                                        fontFamily = PitagonsSans,
+                                        color = dgenWhite,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = label_fontSize
+                                    )
+                                )
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    // Decrease button
+                                    IconButton(
+                                        onClick = { onSendAmountChange(sendAmount - 1) },
+                                        enabled = sendAmount > 1
+                                    ) {
+                                        Text(
+                                            text = "−",
+                                            style = TextStyle(
+                                                fontFamily = SpaceMono,
+                                                color = if (sendAmount > 1) primaryColor else primaryColor.copy(0.3f),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 24.sp
+                                            )
+                                        )
+                                    }
+                                    
+                                    // Current amount
+                                    Text(
+                                        text = "$sendAmount / ${nft.balance}",
+                                        style = TextStyle(
+                                            fontFamily = SpaceMono,
+                                            color = primaryColor,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = body1_fontSize
+                                        )
+                                    )
+                                    
+                                    // Increase button
+                                    IconButton(
+                                        onClick = { onSendAmountChange(sendAmount + 1) },
+                                        enabled = sendAmount < nft.balance
+                                    ) {
+                                        Text(
+                                            text = "+",
+                                            style = TextStyle(
+                                                fontFamily = SpaceMono,
+                                                color = if (sendAmount < nft.balance) primaryColor else primaryColor.copy(0.3f),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 24.sp
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                     }
                 }
@@ -564,6 +637,8 @@ fun PreviewSendNftScreen() {
         shouldDismissKeyboard = false,
         selectedContact = null,
         contactsWithEth = emptyList(),
+        sendAmount = 1,
+        onSendAmountChange = {},
         onRecipientChange = {},
         onContactSelected = {},
         onClearContact = {},

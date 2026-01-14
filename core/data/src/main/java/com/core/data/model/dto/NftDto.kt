@@ -118,6 +118,7 @@ fun OwnedNft.toDomainModel(chainId: Int, ethPriceUsd: Double = 0.0): NFT {
         tokenType = when (tokenType.uppercase()) {
             "ERC721" -> NftTokenType.ERC721
             "ERC1155" -> NftTokenType.ERC1155
+            "ERC404" -> NftTokenType.ERC404
             else -> NftTokenType.UNKNOWN
         },
         floorPriceEth = floorPriceEth,

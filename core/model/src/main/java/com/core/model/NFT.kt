@@ -21,5 +21,6 @@ data class NFT(
 enum class NftTokenType {
     ERC721,
     ERC1155,
+    ERC404,
     UNKNOWN
 }

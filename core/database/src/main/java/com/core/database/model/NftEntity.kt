@@ -41,6 +41,7 @@ fun NftEntity.asDomainModel(): NFT = NFT(
     tokenType = when (tokenType) {
         "ERC721" -> NftTokenType.ERC721
         "ERC1155" -> NftTokenType.ERC1155
+        "ERC404" -> NftTokenType.ERC404
         else -> NftTokenType.UNKNOWN
     },
     floorPriceEth = floorPriceEth,

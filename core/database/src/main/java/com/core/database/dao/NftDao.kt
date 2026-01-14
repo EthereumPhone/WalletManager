@@ -60,4 +60,16 @@ interface NftDao {
      */
     @Query("SELECT COUNT(*) FROM nfts")
     suspend fun getNftCount(): Int
+    
+    /**
+     * Delete a specific NFT
+     */
+    @Query("DELETE FROM nfts WHERE contractAddress = :contractAddress AND tokenId = :tokenId AND chainId = :chainId")
+    suspend fun deleteNft(contractAddress: String, tokenId: String, chainId: Int)
+    
+    /**
+     * Update NFT balance (for ERC1155 tokens)
+     */
+    @Query("UPDATE nfts SET balance = :newBalance WHERE contractAddress = :contractAddress AND tokenId = :tokenId AND chainId = :chainId")
+    suspend fun updateNftBalance(contractAddress: String, tokenId: String, chainId: Int, newBalance: Int)
 }
