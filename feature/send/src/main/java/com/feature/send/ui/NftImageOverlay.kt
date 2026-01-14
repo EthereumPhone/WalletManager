@@ -211,7 +211,7 @@ fun SimpleHeader(
         // Close icon
         IconButton(
             modifier = Modifier
-                .offset(12.dp)
+                .offset(5.dp,(-5).dp)
                 .size(56.dp)
                 .clip(CircleShape)
                 .background(secondaryColor.copy(0.15f))

@@ -133,8 +133,6 @@ fun NftCardCarousel(
         }
     }
 
-    val baseTopPadding = 32.dp
-    val baseBottomPadding = 120.dp
     val itemSpacing = overlap - 32.dp
     val extraScrollMargin = cardHeight * 0.5f
 
@@ -142,6 +140,24 @@ fun NftCardCarousel(
         modifier = modifier.fillMaxSize()
     ) {
         val containerHeight = this.maxHeight
+        val containerWidth = this.maxWidth
+        
+        // Determine if device is square-ish (aspect ratio close to 1:1)
+        val aspectRatio = containerWidth / containerHeight
+        val isSquareDevice = aspectRatio in 0.8f..1.25f
+        
+        // Use smaller dimension for calculations on square devices
+        val referenceDimension = if (isSquareDevice) {
+            minOf(containerHeight.value, containerWidth.value)
+        } else {
+            containerHeight.value
+        }
+        
+        // Responsive padding based on display size
+        // Smaller screens get less padding, larger screens get more
+        val paddingScale = (referenceDimension / 480f).coerceIn(0.6f, 1.5f)
+        val baseTopPadding = (32 * paddingScale).dp
+        val baseBottomPadding = (120 * paddingScale).dp
 
         // Keep the "front" card more fixed around the vertical center by anchoring the list's
         // first visible item at roughly mid-screen.
@@ -149,6 +165,12 @@ fun NftCardCarousel(
         val topPadding = maxOf(baseTopPadding, centeredPadding)
         // Ensure the last card can also settle into the same centered position.
         val minBottomPadding = maxOf(baseBottomPadding, topPadding)
+        
+        // Responsive frontCardTranslation based on screen size and aspect ratio
+        // Square devices need less translation to prevent cards from going off-screen
+        // Larger screens need proportionally larger translation values
+        val translationMultiplier = if (isSquareDevice) 1.2f else 1.5f
+        val maxTranslation = (referenceDimension * translationMultiplier).coerceIn(600f, 1600f)
 
         val baseContentHeight = (cardHeight * nfts.size) +
                 (itemSpacing * (nfts.size - 1).coerceAtLeast(0)) +
@@ -200,7 +222,7 @@ fun NftCardCarousel(
                 )
 
                 val frontCardTranslation by animateFloatAsState(
-                    targetValue = lerp(0f, 1200f, (relIdx / 2).coerceIn(0f, 1f)),
+                    targetValue = lerp(0f, maxTranslation, (relIdx / 2).coerceIn(0f, 1f)),
                     animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing),
                     label = "translationAnimation"
                 )

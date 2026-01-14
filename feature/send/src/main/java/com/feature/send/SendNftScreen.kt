@@ -339,7 +339,7 @@ fun SendNftScreen(
                             Box(
                                 modifier = Modifier
                                     .size(96.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(3.dp))
 //
                             ) {
                                 AsyncImage(

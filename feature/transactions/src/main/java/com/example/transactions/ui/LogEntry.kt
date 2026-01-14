@@ -45,6 +45,7 @@ import com.core.ui.util.dgenTurqoise
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.TokenLogoFallback
 import com.core.ui.util.dgenBlack
+import com.core.ui.util.SystemColorManager
 import com.example.transactions.R
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -131,12 +132,14 @@ fun LogEntry(
                     }
                     // Second priority: Use provided logo URL or fallback URL
                     effectiveLogoUrl.isNotEmpty() -> {
+                        // Use themed placeholder based on primary color
+                        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
                         AsyncImage(
                             modifier = Modifier.size(24.dp).clip(CircleShape),
                             model = effectiveLogoUrl,
                             contentDescription = "Token logo",
-                            placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                            error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
+                            placeholder = painterResource(placeholderDrawable),
+                            error = painterResource(placeholderDrawable)
                         )
                     }
                     // Third priority: Check for local resource fallback
@@ -149,9 +152,11 @@ fun LogEntry(
                     }
                     // Fallback: Use placeholder
                     else -> {
+                        // Use themed placeholder based on primary color
+                        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
                         Image(
                             modifier = Modifier.size(24.dp),
-                            painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                            painter = painterResource(placeholderDrawable),
                             contentDescription = "Placeholder"
                         )
                     }

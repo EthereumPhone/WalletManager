@@ -53,6 +53,7 @@ import com.core.ui.util.SpaceMono
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.TokenLogoFallback
+import com.core.ui.util.SystemColorManager
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -167,7 +168,8 @@ fun SwapView(
                                     )
                                 }
                                 else -> {
-                                    // Default placeholder if no fallback exists
+                                    // Default placeholder if no fallback exists - use themed placeholder
+                                    val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawableForColor(primaryColor)
                                     Image(
                                         modifier = Modifier
                                             .graphicsLayer {
@@ -178,8 +180,7 @@ fun SwapView(
                                             .width(46.dp)
                                             .clip(RoundedCornerShape(95)),
                                         contentScale = ContentScale.Crop,
-                                        painter = painterResource(R.drawable.placeholer_icon_5),
-                                        colorFilter = ColorFilter.tint(primaryColor),
+                                        painter = painterResource(placeholderDrawable),
                                         contentDescription = "Token placeholder"
                                     )
                                 }
@@ -187,9 +188,10 @@ fun SwapView(
                         }
                         // Handle URL icons (either from API or fallback)
                         else -> {
-                            val shouldTint = effectiveIcon.isEmpty()
-                            
                             Log.d("IdleCardView", "Loading image URL: $effectiveIcon")
+                            
+                            // Use themed placeholder based on primary color
+                            val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawableForColor(primaryColor)
 
                             // AsyncImage will automatically use the ImageLoader from ImageLoaderFactory
                             AsyncImage(
@@ -212,9 +214,8 @@ fun SwapView(
                                     )
                                     .build(),
                                 contentDescription = tokenName,
-                                placeholder = painterResource(R.drawable.placeholer_icon_5),
-                                error = painterResource(R.drawable.placeholer_icon_5),
-                                colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
+                                placeholder = painterResource(placeholderDrawable),
+                                error = painterResource(placeholderDrawable)
                             )
                         }
                     }

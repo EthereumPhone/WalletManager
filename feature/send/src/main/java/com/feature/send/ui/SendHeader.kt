@@ -32,6 +32,7 @@ import com.core.ui.util.TokenLogoFallback
 import com.core.ui.util.rememberDebouncedClickHandler
 import com.feature.send.AssetsUiState
 import com.feature.send.R
+import com.core.ui.R as CoreUiR
 
 @Composable
 fun SendHeader(
@@ -73,15 +74,14 @@ fun SendHeader(
             if (fallback is TokenLogoFallback.LogoSource.Url) fallback.url else ""
         } else iconUrl
 
+        // Use themed placeholder based on primary color, or local resource for ETH/MATIC
         val placeHolderImage = if (fallback is TokenLogoFallback.LogoSource.LocalResource) {
             when(symbol.uppercase()) {
                 "ETH" -> R.drawable.mainnet
                 "MATIC" -> R.drawable.polygon
-                else -> R.drawable.placeholer_icon_5
+                else -> SystemColorManager.getPlaceholderTokenDrawable()
             }
-        } else R.drawable.placeholer_icon_5
-
-        val shouldTint = placeHolderImage == R.drawable.placeholer_icon_5 && icon.isNullOrEmpty()
+        } else SystemColorManager.getPlaceholderTokenDrawable()
 
         AsyncImage(
             model = icon,
@@ -90,8 +90,7 @@ fun SendHeader(
                 .size(28.dp)
                 .clip(CircleShape),
             placeholder = painterResource(placeHolderImage),
-            error = painterResource(placeHolderImage),
-            colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
+            error = painterResource(placeHolderImage)
         )
 
         Text(
@@ -168,15 +167,17 @@ fun SendHeader(
             )
         )
 
+        // Use themed placeholder based on primary color
+        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
+        
         AsyncImage(
             model = nftImageUrl,
             contentDescription = nftName,
             modifier = Modifier
                 .size(28.dp)
                 .clip(CircleShape),
-            placeholder = painterResource(R.drawable.placeholer_icon_5),
-            error = painterResource(R.drawable.placeholer_icon_5),
-            colorFilter = if (nftImageUrl.isNullOrEmpty()) ColorFilter.tint(primaryColor) else null
+            placeholder = painterResource(placeholderDrawable),
+            error = painterResource(placeholderDrawable)
         )
 
         Text(
