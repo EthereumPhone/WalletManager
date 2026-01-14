@@ -52,6 +52,7 @@ fun TokenCardCarousel(
     primaryColor: Color,
     secondaryColor: Color,
     modifier: Modifier = Modifier,
+    hasNfts: Boolean = true,
 ) {
     var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
     var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
@@ -135,7 +136,7 @@ fun TokenCardCarousel(
         }
     }
 
-    val topPadding = 32.dp
+    val baseTopPadding = if (hasNfts) 32.dp else 64.dp
     val baseBottomPadding = 120.dp
     val itemSpacing = overlap - 32.dp
     // Extra space so the last card can fully settle without lifting the stack too high.
@@ -145,13 +146,28 @@ fun TokenCardCarousel(
         modifier = modifier.fillMaxSize()
     ) {
         val containerHeight = this.maxHeight
+
+        // Keep the "front" card more fixed around the vertical center by anchoring the list's
+        // first visible item at roughly mid-screen.
+        val centeredPadding = ((containerHeight - cardHeight) / 2).coerceAtLeast(0.dp)
+        // When there are no NFTs shown above, the carousel can feel slightly too high.
+        // Nudge the whole stack down a tiny bit in that case.
+        val noNftsExtraTopOffset = if (hasNfts) 0.dp else 12.dp
+        val topPadding = maxOf(baseTopPadding, centeredPadding) + noNftsExtraTopOffset
+        // Ensure the last card can also settle into the same centered position.
+        val minBottomPadding = maxOf(baseBottomPadding, topPadding)
+        
+        // Responsive frontCardTranslation based on screen height
+        // Small screens (~600dp): 900f, Medium (~800dp): 1200f, Large (~900dp+): 1500f
+        val maxTranslation = (containerHeight.value * 1.5f).coerceIn(900f, 1600f)
+        
         val baseContentHeight = (cardHeight * assets.size) +
                 (itemSpacing * (assets.size - 1).coerceAtLeast(0)) +
                 topPadding
 
         // Guarantee enough scrollable area so back cards are reachable on tall screens.
         val bottomPadding = maxOf(
-            baseBottomPadding,
+            minBottomPadding,
             (containerHeight + extraScrollMargin - baseContentHeight)
         )
 
@@ -200,7 +216,7 @@ fun TokenCardCarousel(
                 )
 
                 val frontCardTranslation by animateFloatAsState(
-                    targetValue = lerp(0f, 1200f, (relIdx / 2).coerceIn(0f, 1f)),
+                    targetValue = lerp(0f, maxTranslation, (relIdx / 2).coerceIn(0f, 1f)),
                     animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
                 )
 

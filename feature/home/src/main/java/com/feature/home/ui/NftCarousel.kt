@@ -133,7 +133,7 @@ fun NftCardCarousel(
         }
     }
 
-    val topPadding = 32.dp
+    val baseTopPadding = 32.dp
     val baseBottomPadding = 120.dp
     val itemSpacing = overlap - 32.dp
     val extraScrollMargin = cardHeight * 0.5f
@@ -142,12 +142,20 @@ fun NftCardCarousel(
         modifier = modifier.fillMaxSize()
     ) {
         val containerHeight = this.maxHeight
+
+        // Keep the "front" card more fixed around the vertical center by anchoring the list's
+        // first visible item at roughly mid-screen.
+        val centeredPadding = ((containerHeight - cardHeight) / 2).coerceAtLeast(0.dp)
+        val topPadding = maxOf(baseTopPadding, centeredPadding)
+        // Ensure the last card can also settle into the same centered position.
+        val minBottomPadding = maxOf(baseBottomPadding, topPadding)
+
         val baseContentHeight = (cardHeight * nfts.size) +
                 (itemSpacing * (nfts.size - 1).coerceAtLeast(0)) +
                 topPadding
 
         val bottomPadding = maxOf(
-            baseBottomPadding,
+            minBottomPadding,
             (containerHeight + extraScrollMargin - baseContentHeight)
         )
 

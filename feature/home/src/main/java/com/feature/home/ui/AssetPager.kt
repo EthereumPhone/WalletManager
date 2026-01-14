@@ -120,7 +120,8 @@ fun AssetPager(
                             navigateToSend = navigateToSend,
                             primaryColor = primaryColor,
                             secondaryColor = secondaryColor,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            hasNfts = nfts.isNotEmpty()
                         )
 
                         Box(
