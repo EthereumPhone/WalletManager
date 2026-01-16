@@ -56,6 +56,7 @@ import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.neonOpacity
+import com.feature.swap.CustomTokenLookupState
 import com.feature.swap.TokenSelectionMode
 
 
@@ -75,6 +76,11 @@ fun TokenSelectorOverlay(
     selectedChainId: Int,
     onChainSelected: (Int) -> Unit,
     groupedTokens: List<TokenGroupAssetOverview> = emptyList(),
+    // Custom token lookup support (paste contract address feature)
+    customTokenLookupState: CustomTokenLookupState = CustomTokenLookupState.Idle,
+    onLookupCustomToken: (String, Int) -> Unit = { _, _ -> },
+    onClearCustomTokenLookup: () -> Unit = {},
+    isContractAddress: (String) -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
     if (!isVisible) return
@@ -85,9 +91,27 @@ fun TokenSelectorOverlay(
     val keyboardController = LocalSoftwareKeyboardController.current
     var isFocused by remember { mutableStateOf(false) }
     var context = LocalContext.current
-    
+
     // Chain selector overlay state
     var isChainSelectorVisible by remember { mutableStateOf(false) }
+
+    // Detect contract address paste and trigger lookup
+    LaunchedEffect(searchQuery, selectedChainId) {
+        if (isContractAddress(searchQuery)) {
+            // Debounce the lookup slightly
+            kotlinx.coroutines.delay(300)
+            onLookupCustomToken(searchQuery, selectedChainId)
+        } else {
+            onClearCustomTokenLookup()
+        }
+    }
+
+    // Clear custom token state when overlay closes
+    LaunchedEffect(isVisible) {
+        if (!isVisible) {
+            onClearCustomTokenLookup()
+        }
+    }
 
 
     Dialog(
@@ -421,7 +445,9 @@ fun TokenSelectorOverlay(
                             Box(
 
                             ){
-                                if (filteredTokens.isNotEmpty()) {
+                                // Show list if there are filtered tokens OR if custom token lookup is active
+                                val showTokenList = filteredTokens.isNotEmpty() || customTokenLookupState !is CustomTokenLookupState.Idle
+                                if (showTokenList) {
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -429,7 +455,114 @@ fun TokenSelectorOverlay(
                                         item {
                                             Spacer(Modifier.fillMaxWidth().height(8.dp))
                                         }
-                                        
+
+                                        // CUSTOM TOKEN section (when pasting a contract address)
+                                        when (val lookupState = customTokenLookupState) {
+                                            is CustomTokenLookupState.Loading -> {
+                                                item {
+                                                    Column(
+                                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(
+                                                            text = "LOOKING UP TOKEN...",
+                                                            fontFamily = SpaceMono,
+                                                            color = primaryColor.copy(alpha = 0.7f),
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 12.sp,
+                                                            letterSpacing = 1.sp,
+                                                        )
+                                                        Spacer(Modifier.height(8.dp))
+                                                        androidx.compose.material3.CircularProgressIndicator(
+                                                            modifier = Modifier.size(24.dp),
+                                                            color = primaryColor,
+                                                            strokeWidth = 2.dp
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            is CustomTokenLookupState.Found -> {
+                                                item {
+                                                    Text(
+                                                        text = "CUSTOM TOKEN",
+                                                        fontFamily = SpaceMono,
+                                                        color = primaryColor,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        letterSpacing = 1.sp,
+                                                    )
+                                                }
+                                                item {
+                                                    TokenRow(
+                                                        token = lookupState.token,
+                                                        unitPriceUsd = 0.0,
+                                                        fiatAmount = 0.0,
+                                                        primaryColor = primaryColor,
+                                                        secondaryColor = secondaryColor,
+                                                        onClick = {
+                                                            android.util.Log.d("TokenSelector_CLICK", "Custom token selected: ${lookupState.token.symbol}")
+                                                            selectToToken(lookupState.token)
+                                                            onDismiss()
+                                                        }
+                                                    )
+                                                }
+                                                item {
+                                                    Spacer(Modifier.fillMaxWidth().height(8.dp))
+                                                }
+                                            }
+                                            is CustomTokenLookupState.NotFound -> {
+                                                item {
+                                                    Column(
+                                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(
+                                                            text = "TOKEN NOT FOUND",
+                                                            fontFamily = SpaceMono,
+                                                            color = dgenRed,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 12.sp,
+                                                            letterSpacing = 1.sp,
+                                                        )
+                                                        Spacer(Modifier.height(4.dp))
+                                                        Text(
+                                                            text = "No token found at this address on the selected chain",
+                                                            fontFamily = PitagonsSans,
+                                                            color = primaryColor.copy(alpha = 0.6f),
+                                                            fontSize = 12.sp,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            is CustomTokenLookupState.Error -> {
+                                                item {
+                                                    Column(
+                                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(
+                                                            text = "LOOKUP ERROR",
+                                                            fontFamily = SpaceMono,
+                                                            color = dgenRed,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 12.sp,
+                                                            letterSpacing = 1.sp,
+                                                        )
+                                                        Spacer(Modifier.height(4.dp))
+                                                        Text(
+                                                            text = lookupState.message,
+                                                            fontFamily = PitagonsSans,
+                                                            color = primaryColor.copy(alpha = 0.6f),
+                                                            fontSize = 12.sp,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            CustomTokenLookupState.Idle -> {
+                                                // Show nothing when idle
+                                            }
+                                        }
+
                                         // OWNED section
                                         if (ownedTokensSorted.isNotEmpty()) {
                                             item {

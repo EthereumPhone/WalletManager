@@ -19,8 +19,8 @@ class GetAllTokensWithExchangeUsecase @Inject constructor(
     operator fun invoke(): Flow<List<TokenAssetWithPrice>> =
         combine(
             groupedTokenRepository.observeGroupTokensWithExchange(),
-            networkBalanceRepository.getGroupedNetworkTokensOverview()
-        ) { groupAssetWithExchanges, networkTokensOverview ->
+            networkBalanceRepository.getNetworkTokensWithExchange()
+        ) { groupAssetWithExchanges, networkTokensWithExchange ->
             // Process ERC20 grouped tokens
             val erc20Tokens = groupAssetWithExchanges.flatMap { group ->
                 val commonIcon = group.tokens.firstOrNull { !it.logoUrl.isNullOrEmpty() }?.logoUrl
@@ -28,24 +28,10 @@ class GetAllTokensWithExchangeUsecase @Inject constructor(
                 group.tokens
                     .map { it.copy(logoUrl = commonIcon) }
             }
-            
-            // Convert network tokens overview to TokenAssetWithPrice
-            val networkTokens = networkTokensOverview.map { overview ->
-                TokenAssetWithPrice(
-                    address = overview.groupId,
-                    chainId = if (overview.symbol == "MATIC") 137 else 1,
-                    symbol = overview.symbol,
-                    name = overview.name,
-                    balance = overview.totalBalance,
-                    decimals = 18,
-                    logoUrl = overview.logoUrl,
-                    swappable = true,
-                    fiatAmount = overview.totalFiatBalance ?: 0.0
-                )
-            }
-            
+
+            // Network tokens already come as individual per-chain tokens with exchange rates
             // Combine both lists
-            networkTokens + erc20Tokens
+            networkTokensWithExchange + erc20Tokens
         }
 }
 

@@ -117,7 +117,8 @@ internal fun SwapScreen(
     val selectedTokenChainId by viewModel.selectedTokenChainId.collectAsStateWithLifecycle()
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
     val swapTransactionStatus by viewModel.swapTransactionStatus.collectAsStateWithLifecycle()
-    
+    val customTokenLookupState by viewModel.customTokenLookupState.collectAsStateWithLifecycle()
+
     // Show toast when message is set
     LaunchedEffect(toastMessage) {
         toastMessage?.let { message ->
@@ -135,25 +136,17 @@ internal fun SwapScreen(
             SwapTransactionStatus.SUCCESS -> {
                 Log.d("SwapScreen", "🟢 SUCCESS status detected - swap successful")
                 delay(SwapTransactionTiming.SUCCESS_DISPLAY_DURATION)
-                Log.d("SwapScreen", "${SwapTransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, starting smooth fade navigation")
-                onBackClick()
-                delay(SwapTransactionTiming.FADE_TRANSITION_DURATION)
-                Log.d("SwapScreen", "Fade transition complete, clearing overlay")
-                viewModel.clearSwapTransactionStatus()
+                Log.d("SwapScreen", "${SwapTransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, resetting swap screen")
+                // Reset the swap screen instead of navigating back - allows user to do another swap
+                viewModel.resetSwapScreen()
             }
             is SwapTransactionStatus.FAILURE -> {
                 Log.d("SwapScreen", "🔴 FAILURE status detected - showing error state")
                 // Display failure overlay for a reasonable duration to acknowledge the error
                 delay(SwapTransactionTiming.FAILURE_DISPLAY_DURATION)
-                Log.d("SwapScreen", "${SwapTransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, starting fade navigation")
-
-                // Start navigation while overlay is still visible for smooth fade effect
-                onBackClick()
-
-                // Keep overlay visible during fade transition for seamless experience
-                delay(SwapTransactionTiming.FADE_TRANSITION_DURATION)
-                Log.d("SwapScreen", "Fade transition complete, clearing overlay")
-                viewModel.clearSwapTransactionStatus()
+                Log.d("SwapScreen", "${SwapTransactionTiming.FAILURE_DISPLAY_DURATION}ms passed, resetting swap screen")
+                // Reset the swap screen instead of navigating back - allows user to retry
+                viewModel.resetSwapScreen()
             }
             else -> {
                 Log.d("SwapScreen", "Other status: $swapTransactionStatus - no auto-navigation")
@@ -231,7 +224,12 @@ internal fun SwapScreen(
         currentChainId = toTokens.firstOrNull()?.chainId,
         selectedChainId = selectedTokenChainId,
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
-        groupedTokens = groupedTokens
+        groupedTokens = groupedTokens,
+        // Custom token lookup support (paste contract address feature)
+        customTokenLookupState = customTokenLookupState,
+        onLookupCustomToken = { address, chainId -> viewModel.lookupCustomToken(address, chainId) },
+        onClearCustomTokenLookup = { viewModel.clearCustomTokenLookup() },
+        isContractAddress = { query -> viewModel.isContractAddress(query) }
     )
     
     // Swap Transaction Status Overlay - shows swap progress and results

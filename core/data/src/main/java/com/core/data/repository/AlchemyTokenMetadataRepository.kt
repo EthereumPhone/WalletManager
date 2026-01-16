@@ -6,6 +6,8 @@ import com.core.data.model.dto.asEntity
 import com.core.data.model.requestBody.TokenMetadataRequestBody
 import com.core.data.remote.RetrofitClankerTokenApi
 import com.core.data.remote.TokenMetadataApi
+import com.core.data.service.OnChainTokenMetadataFetcher
+import com.core.data.util.chainIdToRPC
 import com.core.data.util.chainToApiKey
 import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
@@ -26,7 +28,8 @@ class AlchemyTokenMetadataRepository @Inject constructor(
     private val tokenMetadataDao: TokenMetadataDao,
     private val tokenGroupDao: TokenGroupDao,
     private val tokenMetadataApi: TokenMetadataApi,
-    private val clankerTokenApi: RetrofitClankerTokenApi
+    private val clankerTokenApi: RetrofitClankerTokenApi,
+    private val onChainTokenMetadataFetcher: OnChainTokenMetadataFetcher
 ): TokenMetadataRepository {
     override fun getTokensMetadata(): Flow<List<TokenMetadata>> =
         tokenMetadataDao.getTokensMetadata()
@@ -329,6 +332,64 @@ class AlchemyTokenMetadataRepository @Inject constructor(
             } catch (e: Exception) {
                 Log.e("AlchemyTokenMetadataRepository", "Error reconciling token groups", e)
             }
+        }
+    }
+
+    override suspend fun lookupTokenByAddress(contractAddress: String, chainId: Int): TokenMetadata? {
+        return withContext(Dispatchers.IO) {
+            val normalizedAddress = contractAddress.lowercase()
+
+            // First, check if we already have this token in the database
+            try {
+                val existingTokens = tokenMetadataDao.getTokenMetadata(listOf(normalizedAddress)).first()
+                val existingToken = existingTokens.firstOrNull {
+                    it.contractAddress.equals(normalizedAddress, ignoreCase = true) &&
+                    it.chainId == chainId
+                }
+
+                if (existingToken != null) {
+                    return@withContext existingToken.asExternalModel()
+                }
+            } catch (e: Exception) {
+                Log.w("AlchemyTokenMetadataRepository", "Error checking local database", e)
+            }
+
+            // Fetch on-chain if not in database
+            try {
+                val rpcUrl = chainIdToRPC(chainId)
+                val onChainMetadata = onChainTokenMetadataFetcher.fetchTokenMetadata(
+                    contractAddress = normalizedAddress,
+                    chainId = chainId,
+                    rpcUrl = rpcUrl
+                )
+
+                if (onChainMetadata != null) {
+                    // Optionally save to database for future lookups
+                    try {
+                        val entityToSave = onChainMetadata.copy(
+                            swappable = true,
+                            groupId = "custom_${normalizedAddress}"
+                        )
+                        tokenMetadataDao.upsertTokensMetadata(listOf(entityToSave))
+                    } catch (e: Exception) {
+                        Log.w("AlchemyTokenMetadataRepository", "Error saving custom token to database", e)
+                    }
+
+                    return@withContext TokenMetadata(
+                        contractAddress = onChainMetadata.contractAddress,
+                        chainId = onChainMetadata.chainId,
+                        symbol = onChainMetadata.symbol,
+                        name = onChainMetadata.name,
+                        decimals = onChainMetadata.decimals,
+                        logo = onChainMetadata.logo,
+                        swappable = true
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("AlchemyTokenMetadataRepository", "Error fetching on-chain metadata", e)
+            }
+
+            return@withContext null
         }
     }
 }

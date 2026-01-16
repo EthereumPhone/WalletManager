@@ -24,4 +24,15 @@ interface TokenMetadataRepository {
      */
     suspend fun reconcileTokenGroups()
 
+    /**
+     * Look up a token by contract address and chain ID.
+     * First checks the local database, then falls back to on-chain lookup.
+     * Returns null if the token cannot be found.
+     *
+     * @param contractAddress The contract address to look up
+     * @param chainId The chain ID to look up on
+     * @return TokenMetadata if found, null otherwise
+     */
+    suspend fun lookupTokenByAddress(contractAddress: String, chainId: Int): TokenMetadata?
+
 }

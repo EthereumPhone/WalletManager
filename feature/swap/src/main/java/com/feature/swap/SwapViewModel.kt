@@ -15,6 +15,7 @@ import com.core.domain.GetAllTokensUsecase
 import com.core.domain.GetAllTokensWithExchangeUsecase
 import com.core.domain.GetSwapTokens
 import com.core.domain.GetSwappableTokensForSelection
+import com.core.domain.LookupTokenByAddress
 import com.core.domain.QueryTokenAssetsByNetwork
 import com.core.model.NetworkChain
 import com.core.model.TokenAsset
@@ -75,6 +76,7 @@ class SwapViewModel @Inject constructor(
     private val tokenBalanceDao: TokenBalanceDao,
     private val transferDao: TransferDao,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
+    private val lookupTokenByAddress: LookupTokenByAddress,
     ): ViewModel() {
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
@@ -153,6 +155,109 @@ class SwapViewModel @Inject constructor(
     
     // Track the last fetch parameters to avoid duplicate requests
     private var lastFetchParams: Triple<String?, String?, String>? = null
+
+    // Custom token lookup state (for paste contract address feature)
+    private val _customTokenLookupState = MutableStateFlow<CustomTokenLookupState>(CustomTokenLookupState.Idle)
+    val customTokenLookupState: StateFlow<CustomTokenLookupState> = _customTokenLookupState.asStateFlow()
+
+    /**
+     * Look up a token by contract address when user pastes an address in the search field.
+     * This enables swapping into any token by just pasting its contract address.
+     */
+    fun lookupCustomToken(contractAddress: String, chainId: Int) {
+        // Validate the address format
+        if (!lookupTokenByAddress.isValidContractAddress(contractAddress)) {
+            _customTokenLookupState.value = CustomTokenLookupState.Idle
+            return
+        }
+
+        viewModelScope.launch {
+            Log.d("SwapViewModel", "Looking up custom token: $contractAddress on chain $chainId")
+            _customTokenLookupState.value = CustomTokenLookupState.Loading
+
+            try {
+                val token = lookupTokenByAddress(contractAddress, chainId)
+
+                if (token != null) {
+                    Log.d("SwapViewModel", "Custom token found: ${token.symbol} (${token.name})")
+                    val tokenWithPrice = TokenAssetWithPrice(
+                        address = token.address,
+                        chainId = token.chainId,
+                        symbol = token.symbol,
+                        name = token.name,
+                        balance = token.balance,
+                        decimals = token.decimals,
+                        logoUrl = token.logoUrl,
+                        swappable = true,
+                        fiatAmount = 0.0
+                    )
+                    _customTokenLookupState.value = CustomTokenLookupState.Found(tokenWithPrice)
+                } else {
+                    Log.w("SwapViewModel", "Custom token not found: $contractAddress")
+                    _customTokenLookupState.value = CustomTokenLookupState.NotFound(contractAddress)
+                }
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error looking up custom token", e)
+                _customTokenLookupState.value = CustomTokenLookupState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    /**
+     * Look up a token on all supported chains when the chain is unknown.
+     */
+    fun lookupCustomTokenOnAllChains(contractAddress: String) {
+        if (!lookupTokenByAddress.isValidContractAddress(contractAddress)) {
+            _customTokenLookupState.value = CustomTokenLookupState.Idle
+            return
+        }
+
+        viewModelScope.launch {
+            Log.d("SwapViewModel", "Looking up custom token on all chains: $contractAddress")
+            _customTokenLookupState.value = CustomTokenLookupState.Loading
+
+            try {
+                val result = lookupTokenByAddress.lookupOnAllChains(contractAddress)
+
+                if (result != null) {
+                    val (token, chainId) = result
+                    Log.d("SwapViewModel", "Custom token found: ${token.symbol} on chain $chainId")
+                    val tokenWithPrice = TokenAssetWithPrice(
+                        address = token.address,
+                        chainId = token.chainId,
+                        symbol = token.symbol,
+                        name = token.name,
+                        balance = token.balance,
+                        decimals = token.decimals,
+                        logoUrl = token.logoUrl,
+                        swappable = true,
+                        fiatAmount = 0.0
+                    )
+                    _customTokenLookupState.value = CustomTokenLookupState.Found(tokenWithPrice)
+                } else {
+                    Log.w("SwapViewModel", "Custom token not found on any chain: $contractAddress")
+                    _customTokenLookupState.value = CustomTokenLookupState.NotFound(contractAddress)
+                }
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error looking up custom token on all chains", e)
+                _customTokenLookupState.value = CustomTokenLookupState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    /**
+     * Clear the custom token lookup state.
+     */
+    fun clearCustomTokenLookup() {
+        _customTokenLookupState.value = CustomTokenLookupState.Idle
+    }
+
+    /**
+     * Check if a string looks like a contract address.
+     */
+    fun isContractAddress(query: String): Boolean {
+        return lookupTokenByAddress.isValidContractAddress(query)
+    }
 
     fun showTokenOverlay(mode: TokenSelectionMode = TokenSelectionMode.From) {
         Log.d("SwapViewModel", "showTokenOverlay: mode=$mode")
@@ -424,93 +529,128 @@ class SwapViewModel @Inject constructor(
                             Log.d("SwapViewModel", "Adjusted: $amount")
                         }
                         
+                        // Detect if this is a cross-chain swap
+                        val isCrossChain = fromToken.token.chainId != toToken.token.chainId
+                        
                         Log.d("SwapViewModel", "=== Fetching Quote ===")
-                        Log.d("SwapViewModel", "FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
-                        Log.d("SwapViewModel", "TO: ${toToken.token.symbol} (${toToken.token.address})")
+                        Log.d("SwapViewModel", "FROM: ${fromToken.token.symbol} (${fromToken.token.address}) on chain ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "TO: ${toToken.token.symbol} (${toToken.token.address}) on chain ${toToken.token.chainId}")
                         Log.d("SwapViewModel", "Display amount: $fromAmount")
                         Log.d("SwapViewModel", "Use MAX amount: $useMaxAmount")
                         Log.d("SwapViewModel", "Exact amount for API: $amount")
-                        Log.d("SwapViewModel", "CHAIN: ${fromToken.token.chainId}")
-                        Log.d("SwapViewModel", "")
-                        Log.d("SwapViewModel", "📞 Calling swapRepository.getSwapQuote() with:")
-                        Log.d("SwapViewModel", "  inputTokenAddress: ${fromToken.token.address}")
-                        Log.d("SwapViewModel", "  outputTokenAddress: ${toToken.token.address}")
-                        Log.d("SwapViewModel", "  amount: $amount (${if (useMaxAmount) "EXACT" else "USER-ENTERED"})")
-                        Log.d("SwapViewModel", "  inputTokenDecimals: ${fromToken.token.decimals}")
-                        Log.d("SwapViewModel", "  outputTokenDecimals: ${toToken.token.decimals}")
-                        Log.d("SwapViewModel", "  chainId: ${fromToken.token.chainId}")
-                        Log.d("SwapViewModel", "  inputTokenSymbol: ${fromToken.token.symbol}")
-                        Log.d("SwapViewModel", "  outputTokenSymbol: ${toToken.token.symbol}")
+                        Log.d("SwapViewModel", "Is Cross-Chain: $isCrossChain")
                         
-                        // Get quote from 0x API via SwapRepository
-                        val quote = try {
-                            swapRepository.getSwapQuote(
-                                inputTokenAddress = fromToken.token.address,
-                                outputTokenAddress = toToken.token.address,
-                                amount = amount,
-                                inputTokenDecimals = fromToken.token.decimals,
-                                outputTokenDecimals = toToken.token.decimals,
-                                chainId = fromToken.token.chainId,
-                                inputTokenSymbol = fromToken.token.symbol,
-                                outputTokenSymbol = toToken.token.symbol
-                            )
-                        } catch (quoteException: Exception) {
-                            Log.e("SwapViewModel", "💥 Exception calling swapRepository.getSwapQuote()", quoteException)
-                            Log.e("SwapViewModel", "  Exception type: ${quoteException::class.simpleName}")
-                            Log.e("SwapViewModel", "  Exception message: ${quoteException.message}")
-                            quoteException.printStackTrace()
-                            null
-                        }
-                        
-                        Log.d("SwapViewModel", "📬 Quote response received: ${if (quote != null) "SUCCESS" else "NULL"}")
-                        
-                        if (quote != null) {
-                            Log.d("SwapViewModel", "✅ Quote received successfully")
-                            Log.d("SwapViewModel", "  Buy amount (smallest unit): ${quote.buyAmount}")
-                            Log.d("SwapViewModel", "  Price: ${quote.price ?: "N/A"}")
+                        if (isCrossChain) {
+                            // Cross-chain swap - use Socket API
+                            Log.d("SwapViewModel", "🌉 Using Socket API for cross-chain quote")
+                            Log.d("SwapViewModel", "📞 Calling swapRepository.getCrossChainQuote()")
                             
-                            // Store the parameters of this successful fetch
-                            lastFetchParams = currentParams
-                            _lastQuote.value = quote
-                            
-                            // Convert buyAmount from smallest unit to human-readable format
-                            val toDecimals = toToken.token.decimals
-                            val buyAmountBigInt = quote.buyAmount.toBigIntegerOrNull() ?: BigInteger.ZERO
-                            val buyAmountDecimal = BigDecimal(buyAmountBigInt)
-                                .divide(BigDecimal.TEN.pow(toDecimals), toDecimals, RoundingMode.DOWN)
-                            
-                            // Format the output amount (strip trailing zeros)
-                            val formattedToAmount = buyAmountDecimal.stripTrailingZeros().toPlainString()
-                            
-                            Log.d("SwapViewModel", "  Formatted TO amount: $formattedToAmount ${toToken.token.symbol}")
-                            Log.d("SwapViewModel", "  Stored fetch params to prevent duplicates")
-                            
-                            // Update the TO amount in the UI state
-                            _swapUIState.update { currentState ->
-                                currentState.copy(
-                                    toCurrentAmount = formattedToAmount,
-                                    toCurrentFiatAmount = "" // TODO: Calculate fiat value
+                            val crossChainQuote = try {
+                                swapRepository.getCrossChainQuote(
+                                    fromChainId = fromToken.token.chainId,
+                                    toChainId = toToken.token.chainId,
+                                    fromTokenAddress = fromToken.token.address,
+                                    toTokenAddress = toToken.token.address,
+                                    amount = amount,
+                                    fromTokenDecimals = fromToken.token.decimals,
+                                    toTokenDecimals = toToken.token.decimals,
+                                    fromTokenSymbol = fromToken.token.symbol,
+                                    toTokenSymbol = toToken.token.symbol
                                 )
+                            } catch (e: Exception) {
+                                Log.e("SwapViewModel", "💥 Exception calling getCrossChainQuote()", e)
+                                null
+                            }
+                            
+                            if (crossChainQuote != null && crossChainQuote.result?.routes?.isNotEmpty() == true) {
+                                val bestRoute = crossChainQuote.result!!.routes.first()
+                                Log.d("SwapViewModel", "✅ Cross-chain quote received")
+                                Log.d("SwapViewModel", "  Output amount (smallest unit): ${bestRoute.toAmount}")
+                                Log.d("SwapViewModel", "  Bridges: ${bestRoute.usedBridgeNames.joinToString(", ")}")
+                                Log.d("SwapViewModel", "  Service time: ${bestRoute.serviceTime}s")
+                                
+                                lastFetchParams = currentParams
+                                _lastQuote.value = null // Clear 0x quote for cross-chain
+                                
+                                // Convert output amount
+                                val toDecimals = toToken.token.decimals
+                                val buyAmountBigInt = bestRoute.toAmount.toBigIntegerOrNull() ?: BigInteger.ZERO
+                                val buyAmountDecimal = BigDecimal(buyAmountBigInt)
+                                    .divide(BigDecimal.TEN.pow(toDecimals), toDecimals, RoundingMode.DOWN)
+                                val formattedToAmount = buyAmountDecimal.stripTrailingZeros().toPlainString()
+                                
+                                Log.d("SwapViewModel", "  Formatted TO amount: $formattedToAmount ${toToken.token.symbol}")
+                                
+                                _swapUIState.update { currentState ->
+                                    currentState.copy(
+                                        toCurrentAmount = formattedToAmount,
+                                        toCurrentFiatAmount = ""
+                                    )
+                                }
+                            } else {
+                                Log.w("SwapViewModel", "⚠️ Cross-chain quote returned null or no routes")
+                                _lastQuote.value = null
+                                _swapUIState.update { currentState ->
+                                    currentState.copy(
+                                        toCurrentAmount = "",
+                                        toCurrentFiatAmount = ""
+                                    )
+                                }
                             }
                         } else {
-                            Log.w("SwapViewModel", "⚠️ Quote returned null")
-                            Log.w("SwapViewModel", "  FROM: ${fromToken.token.symbol} (${fromToken.token.address})")
-                            Log.w("SwapViewModel", "  TO: ${toToken.token.symbol} (${toToken.token.address})")
-                            Log.w("SwapViewModel", "  Amount: $amount")
-                            Log.w("SwapViewModel", "  Possible reasons:")
-                            Log.w("SwapViewModel", "    - No liquidity for this token pair")
-                            Log.w("SwapViewModel", "    - Amount too small or too large")
-                            Log.w("SwapViewModel", "    - Insufficient balance")
-                            Log.w("SwapViewModel", "    - 0x API error")
-                            Log.w("SwapViewModel", "  NOT storing params (failed fetch - will allow retry)")
-                            Log.w("SwapViewModel", "  CHECK LOGCAT FOR: SwapRepositoryImp and WM-SwapHandler tags for details!")
-                            _lastQuote.value = null
-                            // Don't update lastFetchParams on failure - allow retry
-                            _swapUIState.update { currentState ->
-                                currentState.copy(
-                                    toCurrentAmount = "",
-                                    toCurrentFiatAmount = ""
+                            // Same-chain swap - use 0x API
+                            Log.d("SwapViewModel", "📞 Calling swapRepository.getSwapQuote() (0x API)")
+                            
+                            val quote = try {
+                                swapRepository.getSwapQuote(
+                                    inputTokenAddress = fromToken.token.address,
+                                    outputTokenAddress = toToken.token.address,
+                                    amount = amount,
+                                    inputTokenDecimals = fromToken.token.decimals,
+                                    outputTokenDecimals = toToken.token.decimals,
+                                    chainId = fromToken.token.chainId,
+                                    inputTokenSymbol = fromToken.token.symbol,
+                                    outputTokenSymbol = toToken.token.symbol
                                 )
+                            } catch (quoteException: Exception) {
+                                Log.e("SwapViewModel", "💥 Exception calling swapRepository.getSwapQuote()", quoteException)
+                                quoteException.printStackTrace()
+                                null
+                            }
+                            
+                            Log.d("SwapViewModel", "📬 Quote response received: ${if (quote != null) "SUCCESS" else "NULL"}")
+                            
+                            if (quote != null) {
+                                Log.d("SwapViewModel", "✅ Quote received successfully")
+                                Log.d("SwapViewModel", "  Buy amount (smallest unit): ${quote.buyAmount}")
+                                Log.d("SwapViewModel", "  Price: ${quote.price ?: "N/A"}")
+                                
+                                lastFetchParams = currentParams
+                                _lastQuote.value = quote
+                                
+                                val toDecimals = toToken.token.decimals
+                                val buyAmountBigInt = quote.buyAmount.toBigIntegerOrNull() ?: BigInteger.ZERO
+                                val buyAmountDecimal = BigDecimal(buyAmountBigInt)
+                                    .divide(BigDecimal.TEN.pow(toDecimals), toDecimals, RoundingMode.DOWN)
+                                val formattedToAmount = buyAmountDecimal.stripTrailingZeros().toPlainString()
+                                
+                                Log.d("SwapViewModel", "  Formatted TO amount: $formattedToAmount ${toToken.token.symbol}")
+                                
+                                _swapUIState.update { currentState ->
+                                    currentState.copy(
+                                        toCurrentAmount = formattedToAmount,
+                                        toCurrentFiatAmount = ""
+                                    )
+                                }
+                            } else {
+                                Log.w("SwapViewModel", "⚠️ Quote returned null")
+                                _lastQuote.value = null
+                                _swapUIState.update { currentState ->
+                                    currentState.copy(
+                                        toCurrentAmount = "",
+                                        toCurrentFiatAmount = ""
+                                    )
+                                }
                             }
                         }
                         
@@ -610,6 +750,7 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("SwapViewModel", "selectToTokenAsset: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             
+            // Cross-chain swaps are now supported! Only check if chain is in supported list
             if (tokenAsset.chainId !in supportedSwapChainIds) {
                 Log.w("SwapViewModel", "Attempted to select TO token on unsupported chain ${tokenAsset.chainId}")
                 _toastMessage.value = swapsUnsupportedMessage(tokenAsset.chainId)
@@ -620,40 +761,14 @@ class SwapViewModel @Inject constructor(
             lastFetchParams = null // Clear cached params when token changes
             val currentFromToken = _swapUIState.value.fromToken
             
-            // Check if this is a cross-chain swap attempt
+            // Log cross-chain detection (now allowed!)
             if (currentFromToken != null && currentFromToken.token.chainId != tokenAsset.chainId) {
-                Log.d("SwapViewModel", "Cross-chain detected: FROM chain ${currentFromToken.token.chainId}, TO chain ${tokenAsset.chainId}")
-                
-                val fromSymbol = currentFromToken.token.symbol.uppercase()
-                val toSymbol = tokenAsset.symbol.uppercase()
-                
-                // Only allow cross-chain for ETH-ETH or USDC-USDC (preparing for future bridge integration)
-                val isValidBridgePair = (fromSymbol == "ETH" && toSymbol == "ETH") ||
-                                       (fromSymbol == "USDC" && toSymbol == "USDC")
-                
-                if (!isValidBridgePair) {
-                    Log.w("SwapViewModel", "Invalid cross-chain pair: $fromSymbol (chain ${currentFromToken.token.chainId}) -> $toSymbol (chain ${tokenAsset.chainId})")
-                    
-                    // Unselect TO token
-                    Log.d("SwapViewModel", "Unselecting TO token due to cross-chain attempt")
-                    _swapUIState.update { currentState ->
-                        currentState.copy(
-                            toToken = null,
-                            toCurrentAmount = "",
-                            toCurrentFiatAmount = "",
-                            toUseMaxAmount = false
-                        )
-                    }
-                    
-                    // Show simple toast notification
-                    _toastMessage.value = "Cross-chain swaps not supported"
-                    
-                    hideTokenOverlay()
-                    return@launch
-                }
+                Log.d("SwapViewModel", "🌉 Cross-chain swap selected!")
+                Log.d("SwapViewModel", "  FROM: ${currentFromToken.token.symbol} on chain ${currentFromToken.token.chainId}")
+                Log.d("SwapViewModel", "  TO: ${tokenAsset.symbol} on chain ${tokenAsset.chainId}")
             }
             
-            // Valid selection (same chain or valid bridge pair) - proceed normally
+            // All valid chain combinations are now allowed - proceed with selection
             // Format the balance for display
             val formattedBalance = String.format("%.6f", tokenAsset.balance).trimEnd('0').trimEnd('.')
             
@@ -858,19 +973,33 @@ class SwapViewModel @Inject constructor(
         "Swaps on ${chainDisplayName(chainId)} are not supported yet."
 
     val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY, "")
+    
+    // Track if we want to show all chains in the token selector (for cross-chain swaps)
+    private val _showAllChainsInSelector = MutableStateFlow(true) // Default to all chains for cross-chain support
+    val showAllChainsInSelector: StateFlow<Boolean> = _showAllChainsInSelector.asStateFlow()
+    
+    fun setShowAllChainsInSelector(showAll: Boolean) {
+        _showAllChainsInSelector.value = showAll
+    }
 
     // Enhanced token list that includes both owned and available swappable tokens
+    // Now supports cross-chain by loading tokens from all chains when allChains is true
     val swapTokenUiState: StateFlow<SwapTokenUiState> = combine(
         swapUIState,
         searchQuery,
-        selectedTokenChainId
-    ) { uiState, query, chainId ->
-        Triple(uiState.fromToken?.token, query, chainId)
-    }.flatMapLatest { (fromToken, query, chainId) ->
+        selectedTokenChainId,
+        showAllChainsInSelector
+    ) { uiState, query, chainId, allChains ->
+        // When selecting TO token and allChains is true, don't filter by chain
+        val effectiveChainId = if (allChains) null else chainId
+        Triple(uiState.fromToken?.token, query, effectiveChainId) to allChains
+    }.flatMapLatest { (triple, allChains) ->
+        val (fromToken, query, chainId) = triple
         getSwappableTokensForSelection(
             excludeToken = fromToken,
             targetChainId = chainId,
-            query = query
+            query = query,
+            allChains = allChains
         ).asResult().map { result ->
 
             when(result) {
@@ -1052,6 +1181,52 @@ class SwapViewModel @Inject constructor(
         _swapTransactionStatus.value = null
     }
 
+    /**
+     * Reset the swap screen to its initial state.
+     * Called after a swap completes (success or failure) to allow the user to perform another swap.
+     */
+    fun resetSwapScreen() {
+        Log.d("SwapViewModel", "Resetting swap screen to initial state")
+
+        // Clear the transaction status
+        _swapTransactionStatus.value = null
+
+        // Clear the quote
+        _lastQuote.value = null
+        lastFetchParams = null
+        _isFetchingQuote.value = false
+
+        // Reset the UI state - clear tokens and amounts but keep the callbacks
+        _swapUIState.update { currentState ->
+            currentState.copy(
+                fromToken = null,
+                fromCurrentAmount = "",
+                fromCurrentFiatAmount = "",
+                fromUseMaxAmount = false,
+                toToken = null,
+                toCurrentAmount = "",
+                toCurrentFiatAmount = "",
+                toUseMaxAmount = false
+            )
+        }
+
+        // Re-trigger default token selection
+        observeAndSetDefaultToken()
+
+        // Re-initialize the terminal display (SWAP text and click callback)
+        viewModelScope.launch {
+            try {
+                Log.d("SwapViewModel", "Re-initializing terminal display after reset")
+                terminalRepository.generateSwap()
+                reflectiveLedPattern?.displaySwap()
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "Error re-initializing terminal display", e)
+            }
+        }
+
+        Log.d("SwapViewModel", "Swap screen reset complete")
+    }
+
     private fun showFailedMatrix() {
         viewModelScope.launch {
             reflectiveLedPattern?.displayError()
@@ -1104,7 +1279,7 @@ class SwapViewModel @Inject constructor(
                 Log.d("SwapViewModel", "🔍 Has UI tokens: $hasUiTokens")
                 
                 if (hasUiTokens) {
-                    // Check if this is a cross-chain swap attempt
+                    // Check if this is a cross-chain swap
                     val isCrossChain = fromToken!!.token.chainId != toToken!!.token.chainId
                     
                     Log.d("SwapViewModel", "🌐 Cross-chain check:")
@@ -1113,35 +1288,41 @@ class SwapViewModel @Inject constructor(
                     Log.d("SwapViewModel", "  Is cross-chain: $isCrossChain")
                     
                     if (isCrossChain) {
-                        // 0x API does NOT support cross-chain swaps
-                        val fromSymbol = fromToken.token.symbol.uppercase()
-                        val toSymbol = toToken.token.symbol.uppercase()
-                        val isValidBridgePair = (fromSymbol == "ETH" && toSymbol == "ETH") ||
-                                               (fromSymbol == "USDC" && toSymbol == "USDC")
+                        // Cross-chain swap via Socket API
+                        Log.d("SwapViewModel", "")
+                        Log.d("SwapViewModel", "🌉 CROSS-CHAIN SWAP (via Socket API)")
+                        Log.d("SwapViewModel", "  FROM: ${fromToken.token.symbol} on chain ${fromToken.token.chainId}")
+                        Log.d("SwapViewModel", "  TO: ${toToken.token.symbol} on chain ${toToken.token.chainId}")
+                        Log.d("SwapViewModel", "  Amount: $fromAmountFromUi")
                         
-                        if (isValidBridgePair) {
-                            Log.w("SwapViewModel", "")
-                            Log.w("SwapViewModel", "🌉 BRIDGING NEEDED!")
-                            Log.w("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
-                            Log.w("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
-                            Log.w("SwapViewModel", "  AMOUNT: $fromAmountFromUi")
-                            Log.w("SwapViewModel", "  NOTE: 0x API does not support cross-chain. Bridge protocol integration required.")
-                            
-                            val errorMsg = "Bridging not yet implemented"
-                            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
-                            callback("Error: $errorMsg. 0x API only supports same-chain swaps. " +
-                                    "Please integrate a bridge protocol (Across, LayerZero, etc.) for cross-chain functionality.")
+                        // Set status to PENDING
+                        Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
+                        _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                        
+                        // Calculate exact amount
+                        val exactSwapAmount = if (uiState.fromUseMaxAmount) {
+                            val fullAmount = fromToken.formattedMaxAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                            val maxMultiplier = BigDecimal("0.9999")
+                            fullAmount.multiply(maxMultiplier)
                         } else {
-                            Log.e("SwapViewModel", "")
-                            Log.e("SwapViewModel", "❌ INVALID CROSS-CHAIN PAIR!")
-                            Log.e("SwapViewModel", "  FROM: $fromSymbol on chain ${fromToken.token.chainId}")
-                            Log.e("SwapViewModel", "  TO: $toSymbol on chain ${toToken.token.chainId}")
-                            Log.e("SwapViewModel", "  NOTE: Cross-chain swaps are not supported by 0x API")
-                            
-                            val errorMsg = "Cross-chain swaps are not supported"
-                            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
-                            callback("Error: $errorMsg. Please select tokens on the same chain.")
+                            fromAmountFromUi.toBigDecimalOrNull() ?: BigDecimal.ZERO
                         }
+                        
+                        Log.d("SwapViewModel", "🚀 Executing cross-chain swap...")
+                        Log.d("SwapViewModel", "  Exact amount: $exactSwapAmount")
+                        
+                        executeCrossChainSwap(
+                            fromChainId = fromToken.token.chainId,
+                            toChainId = toToken.token.chainId,
+                            fromAddress = fromToken.token.address,
+                            toAddress = toToken.token.address,
+                            fromDecimals = fromToken.token.decimals,
+                            toDecimals = toToken.token.decimals,
+                            fromSymbol = fromToken.token.symbol,
+                            toSymbol = toToken.token.symbol,
+                            amount = exactSwapAmount,
+                            callback = callback
+                        )
                         return@launch
                     } else {
                         // Same chain - execute normal swap via 0x
@@ -1355,6 +1536,109 @@ class SwapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Execute a cross-chain swap via Socket API
+     */
+    private suspend fun executeCrossChainSwap(
+        fromChainId: Int,
+        toChainId: Int,
+        fromAddress: String,
+        toAddress: String,
+        fromDecimals: Int,
+        toDecimals: Int,
+        fromSymbol: String,
+        toSymbol: String,
+        amount: BigDecimal,
+        callback: (String) -> Unit
+    ) {
+        Log.d("SwapViewModel", "=== executeCrossChainSwap called ===")
+        Log.d("SwapViewModel", "From: $fromSymbol on chain $fromChainId")
+        Log.d("SwapViewModel", "To: $toSymbol on chain $toChainId")
+        Log.d("SwapViewModel", "Amount: $amount")
+        
+        if (amount <= BigDecimal.ZERO) {
+            Log.e("SwapViewModel", "❌ Invalid amount: $amount")
+            val errorMsg = "Invalid amount"
+            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            callback("Error: $errorMsg")
+            return
+        }
+        
+        try {
+            Log.d("SwapViewModel", "📞 Calling swapRepository.crossChainSwap()...")
+            
+            val result = swapRepository.crossChainSwap(
+                fromChainId = fromChainId,
+                toChainId = toChainId,
+                fromTokenAddress = fromAddress,
+                toTokenAddress = toAddress,
+                amount = amount,
+                fromTokenDecimals = fromDecimals,
+                toTokenDecimals = toDecimals,
+                fromTokenSymbol = fromSymbol,
+                toTokenSymbol = toSymbol
+            )
+            
+            Log.d("SwapViewModel", "📬 Cross-chain swap result: '$result'")
+            
+            when {
+                result.startsWith("0x") -> {
+                    Log.d("SwapViewModel", "🟢 CROSS-CHAIN SWAP INITIATED!")
+                    Log.d("SwapViewModel", "  Transaction hash: $result")
+                    Log.d("SwapViewModel", "  Note: Funds will arrive on destination chain shortly")
+                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    callback("Success: Cross-chain swap initiated. TX: $result")
+                    
+                    // Apply local adjustments for the source chain
+                    try {
+                        applyLocalSwapAdjustments(
+                            fromAmountStr = amount.toPlainString(),
+                            txHash = result
+                        )
+                    } catch (e: Exception) {
+                        Log.e("SwapViewModel", "Failed to apply local adjustments", e)
+                    }
+                }
+                result.equals("DECLINE", ignoreCase = true) -> {
+                    Log.w("SwapViewModel", "⚠️ USER DECLINED CROSS-CHAIN SWAP")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("User declined transaction")
+                    callback("User declined the transaction")
+                }
+                result.equals("ERROR_NO_ROUTES", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 NO ROUTES AVAILABLE")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("No bridge routes available for this pair")
+                    callback("Error: No bridge routes available. Try a different token pair or amount.")
+                }
+                result.equals("ERROR_BUILD_TX", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 FAILED TO BUILD TRANSACTION")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Failed to build bridge transaction")
+                    callback("Error: Failed to build bridge transaction")
+                }
+                result.contains("NOT_ENOUGH_GAS", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 INSUFFICIENT GAS")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Insufficient gas")
+                    callback("Error: Insufficient gas for cross-chain transaction")
+                }
+                result.isEmpty() || result.equals("ERROR", ignoreCase = true) -> {
+                    Log.e("SwapViewModel", "🔴 CROSS-CHAIN SWAP FAILED")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Cross-chain swap failed")
+                    callback("Error: Cross-chain swap failed")
+                }
+                else -> {
+                    Log.w("SwapViewModel", "⚠️ UNKNOWN RESULT: $result")
+                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(result)
+                    callback("Error: $result")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e("SwapViewModel", "🔴 CROSS-CHAIN SWAP EXCEPTION", e)
+            val errorMsg = e.message ?: "Unknown error"
+            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            callback("Error: $errorMsg")
+        }
+    }
+    
     private fun applyLocalSwapAdjustments(fromAmountStr: String, txHash: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -1570,4 +1854,24 @@ sealed interface FromTokensUiState {
     data class Success(
         val tokens: List<TokenAssetWithPrice>
     ) : FromTokensUiState
+}
+
+/**
+ * State for custom token lookup (paste contract address feature)
+ */
+sealed interface CustomTokenLookupState {
+    /** No lookup in progress */
+    object Idle : CustomTokenLookupState
+
+    /** Looking up token metadata */
+    object Loading : CustomTokenLookupState
+
+    /** Token found successfully */
+    data class Found(val token: TokenAssetWithPrice) : CustomTokenLookupState
+
+    /** Token not found at the given address */
+    data class NotFound(val address: String) : CustomTokenLookupState
+
+    /** Error occurred during lookup */
+    data class Error(val message: String) : CustomTokenLookupState
 }

@@ -3,6 +3,8 @@ package com.core.data.repository
 import android.util.Log
 import com.core.data.remote.UniswapApi
 import com.core.model.TokenMetadata
+import com.core.data.swap.CrossChainSwapHandler
+import com.core.data.swap.SocketQuoteResponse
 import com.core.data.swap.SwapHandler
 import com.core.data.swap.ZeroXSwapQuoteResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,6 +36,7 @@ class SwapRepositoryImp @Inject constructor(
 ): SwapRepository {
 
     private val swapHandler: SwapHandler by lazy { SwapHandler(context) }
+    private val crossChainHandler: CrossChainSwapHandler by lazy { CrossChainSwapHandler(context) }
 
     override suspend fun getQuote(
         inputTokenAddress: String,
@@ -178,6 +181,82 @@ class SwapRepositoryImp @Inject constructor(
         } catch (e: Exception) {
             Log.e("SwapRepositoryImp", "0x swap failed, returning empty string", e)
             ""
+        }
+    }
+    
+    override suspend fun getCrossChainQuote(
+        fromChainId: Int,
+        toChainId: Int,
+        fromTokenAddress: String,
+        toTokenAddress: String,
+        amount: BigDecimal,
+        fromTokenDecimals: Int,
+        toTokenDecimals: Int,
+        fromTokenSymbol: String,
+        toTokenSymbol: String
+    ): SocketQuoteResponse? = withContext(Dispatchers.IO) {
+        try {
+            Log.d("SwapRepositoryImp", "=== getCrossChainQuote called ===")
+            Log.d("SwapRepositoryImp", "From: $fromTokenSymbol on chain $fromChainId")
+            Log.d("SwapRepositoryImp", "To: $toTokenSymbol on chain $toChainId")
+            Log.d("SwapRepositoryImp", "Amount: $amount")
+            
+            val quote = crossChainHandler.getCrossChainQuote(
+                fromChainId = fromChainId,
+                toChainId = toChainId,
+                fromAddress = fromTokenAddress,
+                toAddress = toTokenAddress,
+                fromDecimals = fromTokenDecimals,
+                toDecimals = toTokenDecimals,
+                fromSymbol = fromTokenSymbol,
+                toSymbol = toTokenSymbol,
+                fromAmount = amount
+            )
+            
+            if (quote != null) {
+                val bestRoute = quote.result?.routes?.firstOrNull()
+                Log.d("SwapRepositoryImp", "✅ Cross-chain quote fetched: output=${bestRoute?.toAmount}")
+            } else {
+                Log.w("SwapRepositoryImp", "⚠️ Cross-chain quote returned null")
+            }
+            
+            quote
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "❌ Failed to get cross-chain quote", e)
+            null
+        }
+    }
+    
+    override suspend fun crossChainSwap(
+        fromChainId: Int,
+        toChainId: Int,
+        fromTokenAddress: String,
+        toTokenAddress: String,
+        amount: BigDecimal,
+        fromTokenDecimals: Int,
+        toTokenDecimals: Int,
+        fromTokenSymbol: String,
+        toTokenSymbol: String
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            Log.d("SwapRepositoryImp", "=== crossChainSwap called ===")
+            Log.d("SwapRepositoryImp", "From: $fromTokenSymbol on chain $fromChainId -> $toTokenSymbol on chain $toChainId")
+            Log.d("SwapRepositoryImp", "Amount: $amount")
+            
+            crossChainHandler.executeCrossChainSwap(
+                fromChainId = fromChainId,
+                toChainId = toChainId,
+                fromAddress = fromTokenAddress,
+                toAddress = toTokenAddress,
+                fromDecimals = fromTokenDecimals,
+                toDecimals = toTokenDecimals,
+                fromSymbol = fromTokenSymbol,
+                toSymbol = toTokenSymbol,
+                fromAmount = amount
+            )
+        } catch (e: Exception) {
+            Log.e("SwapRepositoryImp", "Cross-chain swap failed", e)
+            "ERROR"
         }
     }
 }

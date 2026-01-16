@@ -13,8 +13,9 @@ import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModule
 import com.core.model.NetworkChain
-import com.core.model.TokenBalance
 import com.core.model.TokenAsset
+import com.core.model.TokenAssetWithPrice
+import com.core.model.TokenBalance
 import com.core.model.TokenGroupAssetOverview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -125,6 +126,40 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             }.filter { it.totalBalance != 0.0 }
         }
 
+    override fun getNetworkTokensWithExchange(): Flow<List<TokenAssetWithPrice>> =
+        // Return individual network tokens per chain with exchange rates
+        combine(
+            tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() }),
+            tokenExchangeDao.getExchangeBySymbolFlow("ETH", "usd"),
+            tokenExchangeDao.getExchangeBySymbolFlow("MATIC", "usd")
+        ) { items, ethExchange, maticExchange ->
+            items.mapNotNull { tokenBalance ->
+                val isPolygon = tokenBalance.chainId == 137
+                val symbol = if (isPolygon) "MATIC" else "ETH"
+                val name = if (isPolygon) "Polygon" else "Ethereum"
+                val balance = tokenBalance.tokenBalance.toDouble()
+
+                // Skip zero balances
+                if (balance == 0.0) return@mapNotNull null
+
+                val exchangeEntity = if (isPolygon) maticExchange else ethExchange
+                val exchangeRate = exchangeEntity?.value ?: 0.0
+                val fiatAmount = if (exchangeRate > 0) balance * exchangeRate else 0.0
+
+                TokenAssetWithPrice(
+                    // Use chainId as address for native tokens (matches existing convention)
+                    address = tokenBalance.chainId.toString(),
+                    chainId = tokenBalance.chainId,
+                    symbol = symbol,
+                    name = name,
+                    balance = balance,
+                    decimals = 18,
+                    logoUrl = symbol,
+                    swappable = true,
+                    fiatAmount = fiatAmount
+                )
+            }
+        }
 
     override fun getNetworkBalance(chainId: Int): Flow<TokenBalance> =
         tokenBalanceDao.getTokenBalances(listOf(chainId.toString()))
