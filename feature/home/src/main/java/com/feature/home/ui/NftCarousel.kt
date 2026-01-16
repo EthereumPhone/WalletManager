@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -42,7 +41,6 @@ import androidx.compose.ui.zIndex
 import com.core.model.NFT
 import com.core.ui.Card
 import com.core.ui.util.dgenBlack
-import com.core.ui.util.dgenGreen
 import com.core.ui.views.NftCardView
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.smallDuration
@@ -62,6 +60,7 @@ fun NftCardCarousel(
     primaryColor: Color,
     secondaryColor: Color,
     modifier: Modifier = Modifier,
+    hasTokens: Boolean = true,
 ) {
     var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
     var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
@@ -133,51 +132,28 @@ fun NftCardCarousel(
         }
     }
 
+    val topPadding = if (hasTokens) 32.dp else 64.dp
+    val baseBottomPadding = 130.dp
     val itemSpacing = overlap - 32.dp
+    // Extra space so the last card can fully settle without lifting the stack too high.
     val extraScrollMargin = cardHeight * 0.5f
 
     BoxWithConstraints(
         modifier = modifier.fillMaxSize()
     ) {
         val containerHeight = this.maxHeight
-        val containerWidth = this.maxWidth
         
-        // Determine if device is square-ish (aspect ratio close to 1:1)
-        val aspectRatio = containerWidth / containerHeight
-        val isSquareDevice = aspectRatio in 0.8f..1.25f
+        // Responsive frontCardTranslation based on screen height
+        // Small screens (~600dp): 900f, Medium (~800dp): 1200f, Large (~900dp+): 1500f
+        val maxTranslation = (containerHeight.value * 1.5f).coerceIn(900f, 1600f)
         
-        // Use smaller dimension for calculations on square devices
-        val referenceDimension = if (isSquareDevice) {
-            minOf(containerHeight.value, containerWidth.value)
-        } else {
-            containerHeight.value
-        }
-        
-        // Responsive padding based on display size
-        // Smaller screens get less padding, larger screens get more
-        val paddingScale = (referenceDimension / 480f).coerceIn(0.6f, 1.5f)
-        val baseTopPadding = (32 * paddingScale).dp
-        val baseBottomPadding = (120 * paddingScale).dp
-
-        // Keep the "front" card more fixed around the vertical center by anchoring the list's
-        // first visible item at roughly mid-screen.
-        val centeredPadding = ((containerHeight - cardHeight) / 2).coerceAtLeast(0.dp)
-        val topPadding = maxOf(baseTopPadding, centeredPadding)
-        // Ensure the last card can also settle into the same centered position.
-        val minBottomPadding = maxOf(baseBottomPadding, topPadding)
-        
-        // Responsive frontCardTranslation based on screen size and aspect ratio
-        // Square devices need less translation to prevent cards from going off-screen
-        // Larger screens need proportionally larger translation values
-        val translationMultiplier = if (isSquareDevice) 1.2f else 1.5f
-        val maxTranslation = (referenceDimension * translationMultiplier).coerceIn(600f, 1600f)
-
         val baseContentHeight = (cardHeight * nfts.size) +
                 (itemSpacing * (nfts.size - 1).coerceAtLeast(0)) +
                 topPadding
 
+        // Guarantee enough scrollable area so back cards are reachable on tall screens.
         val bottomPadding = maxOf(
-            minBottomPadding,
+            baseBottomPadding,
             (containerHeight + extraScrollMargin - baseContentHeight)
         )
 

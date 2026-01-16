@@ -38,7 +38,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.core.model.TokenGroupAssetOverview
 import com.core.ui.util.dgenBlack
-import com.core.ui.util.dgenGreen
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
