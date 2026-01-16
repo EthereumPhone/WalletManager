@@ -24,7 +24,7 @@ import javax.inject.Singleton
  * Service for fetching ERC20 token metadata directly from the blockchain
  */
 @Singleton
-class OnChainTokenMetadataFetcher @Inject constructor() {
+class OnChainTokenMetadataFetcher @Inject constructor() : TokenMetadataFetcher {
     
     companion object {
         private const val TAG = "OnChainTokenMetadataFetcher"
@@ -39,7 +39,7 @@ class OnChainTokenMetadataFetcher @Inject constructor() {
      * Fetches token metadata from the blockchain for a given contract address and chain
      * Returns null if the contract is not an ERC20 token or if fetching fails
      */
-    suspend fun fetchTokenMetadata(
+    override suspend fun fetchTokenMetadata(
         contractAddress: String,
         chainId: Int,
         rpcUrl: String

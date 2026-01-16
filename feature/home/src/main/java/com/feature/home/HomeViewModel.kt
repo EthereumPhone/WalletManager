@@ -6,10 +6,12 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.data.repository.NftRepository
 import com.core.data.repository.TransferRepository
 import com.core.data.repository.UserDataRepository
 import com.core.data.util.NetworkMonitor
 import com.core.domain.GetAllGroupedTokensUsecase
+import com.core.model.NFT
 import com.core.model.TokenAsset
 import com.core.model.UserData
 import com.squareup.moshi.Moshi
@@ -49,6 +51,7 @@ class HomeViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val userDataRepository: UserDataRepository,
     private val transferRepository: TransferRepository,
+    private val nftRepository: NftRepository,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
     private val savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context
@@ -88,6 +91,46 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false
         )
+
+    // NFT State
+    val nftState: StateFlow<NftUiState> = nftRepository.getNfts().map { nfts ->
+        if (nfts.isEmpty()) {
+            NftUiState.Empty
+        } else {
+            NftUiState.Success(nfts)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = NftUiState.Loading
+    )
+
+    val hasNfts: StateFlow<Boolean> = nftRepository.observeNftsExist()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
+
+    init {
+        // Refresh NFTs when ViewModel is created
+        refreshNfts()
+    }
+
+    private fun refreshNfts() {
+        viewModelScope.launch {
+            try {
+                val userData = userDataRepository.userData.first()
+                val walletAddress = userData.walletAddress
+                if (walletAddress.isNotBlank()) {
+                    Log.d("HomeViewModel", "Refreshing NFTs for address: $walletAddress")
+                    nftRepository.refreshNfts(walletAddress)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error refreshing NFTs", e)
+            }
+        }
+    }
 
     val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map { isOnlineValue ->
@@ -178,4 +221,10 @@ sealed interface GroupedAssetsUiState {
 sealed interface WalletDataUiState {
     object Loading : WalletDataUiState
     data class Success(val userData: UserData) : WalletDataUiState
+}
+
+sealed interface NftUiState {
+    object Loading : NftUiState
+    object Empty : NftUiState
+    data class Success(val nfts: List<NFT>) : NftUiState
 }

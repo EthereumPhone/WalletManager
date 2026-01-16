@@ -4,12 +4,14 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.core.database.dao.EnsDao
+import com.core.database.dao.NftDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.dao.TransferDao
 import com.core.database.model.EnsEntity
+import com.core.database.model.NftEntity
 import com.core.database.model.TransferEntity
 import com.core.database.model.erc20.TokenBalanceEntity
 import com.core.database.model.erc20.TokenBridgeEntity
@@ -29,9 +31,10 @@ import com.core.database.util.RawContractConverter
         TokenExchangeEntity::class,
         EnsEntity::class,
         TokenGroupEntity::class,
-        TokenBridgeEntity::class
+        TokenBridgeEntity::class,
+        NftEntity::class
     ],
-    version = 7,  // Updated to use composite primary key (contractAddress + chainId) for TokenBalanceEntity
+    version = 8,  // Added NFT entity
     exportSchema = true
 )
 
@@ -47,6 +50,6 @@ abstract class WmDatabase: RoomDatabase() {
     abstract val tokenMetadataDao: TokenMetadataDao
     abstract val tokenExchangeDao: TokenExchangeDao
     abstract val ensDao: EnsDao
-
     abstract val tokenGroupDao: TokenGroupDao
+    abstract val nftDao: NftDao
 }

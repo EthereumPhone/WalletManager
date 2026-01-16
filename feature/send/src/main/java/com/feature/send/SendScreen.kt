@@ -327,6 +327,10 @@ fun SendScreen(
 
 
 
+            // #region agent log
+            Log.d("DEBUG_AGENT", "SendScreen:RecipientSection - selectedContact=${selectedContact?.name ?: "null"}, contactsWithEthSize=${contactsWithEth.size}, hasContactsWithEth=${contactsWithEth.isNotEmpty()}, hypothesisId=C")
+            // #endregion
+
             RecipientSection(
                 recipientUiState = recipientUiState,
                 selectedContact = selectedContact,

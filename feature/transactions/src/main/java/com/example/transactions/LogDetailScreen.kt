@@ -244,6 +244,9 @@ fun LogDetailScreen(
                             else -> ""
                         }
                         
+                        // Use themed placeholder based on primary color
+                        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
+                        
                         when {
                             // Use URL (either fallback or provided)
                             effectiveLogoUrl.isNotEmpty() -> {
@@ -253,8 +256,8 @@ fun LogDetailScreen(
                                         .clip(CircleShape),
                                     model = effectiveLogoUrl,
                                     contentDescription = "Token logo",
-                                    placeholder = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
-                                    error = painterResource(com.core.ui.R.drawable.placeholer_icon_5)
+                                    placeholder = painterResource(placeholderDrawable),
+                                    error = painterResource(placeholderDrawable)
                                 )
                             }
                             // Check for local resource fallback
@@ -271,7 +274,7 @@ fun LogDetailScreen(
                             else -> {
                                 Image(
                                     modifier = Modifier.size(28.dp),
-                                    painter = painterResource(com.core.ui.R.drawable.placeholer_icon_5),
+                                    painter = painterResource(placeholderDrawable),
                                     contentDescription = "Placeholder"
                                 )
                             }

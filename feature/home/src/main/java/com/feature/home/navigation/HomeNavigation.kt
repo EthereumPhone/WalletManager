@@ -25,6 +25,7 @@ fun NavGraphBuilder.homeGraph(
     sharedTransitionScope: SharedTransitionScope,
     navigateToSwap: () -> Unit,
     navigateToSend: (groupId: String) -> Unit,
+    navigateToSendNft: (contractAddress: String, tokenId: String, chainId: Int) -> Unit,
     navigateToLog: () -> Unit,
     navigateToReceive: () -> Unit,
     navigateToPayMaster: () -> Unit,
@@ -40,6 +41,7 @@ fun NavGraphBuilder.homeGraph(
                 animatedContentScope = this@composable,
                 navigateToSwap = navigateToSwap,
                 navigateToSend = navigateToSend,
+                navigateToSendNft = navigateToSendNft,
                 navigateToLog = navigateToLog,
                 navigateToReceive = navigateToReceive,
                 navigateToPayMaster = navigateToPayMaster

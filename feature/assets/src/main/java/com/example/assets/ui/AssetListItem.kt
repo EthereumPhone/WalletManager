@@ -46,6 +46,7 @@ import org.ethosmobile.components.library.theme.Colors
 import java.text.DecimalFormat
 import com.core.ui.R
 import com.core.ui.util.shimmerEffect
+import com.core.ui.util.SystemColorManager
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -477,13 +478,16 @@ fun AssetListItemHeaderImage(
 
         }
 
+        // Use themed placeholder based on primary color
+        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
+        
         Image(
             modifier = Modifier,
             contentScale = ContentScale.Crop,
             painter = if(isError.not() && !isLocalInspection) {
                 imageLoader
             } else {
-                painterResource(id = R.drawable.placeholer_icon_5)
+                painterResource(id = placeholderDrawable)
             },
             contentDescription = null
         )

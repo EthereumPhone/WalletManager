@@ -136,9 +136,9 @@ object DatabaseModule {
                 val currentVersion = getCurrentDatabaseVersion(context)
                 Log.d("DatabaseModule", "Current database version: $currentVersion")
                 
-                // If database is at version 2-6, perform complete data clear
-                if (currentVersion in 2..6) {
-                    Log.w("DatabaseModule", "Database at version $currentVersion, performing complete data clear for fresh migration to version 7")
+                // If database is at version 2-7, perform complete data clear
+                if (currentVersion in 2..7) {
+                    Log.w("DatabaseModule", "Database at version $currentVersion, performing complete data clear for fresh migration to version 8")
                     
                     // Special handling for version 2 -> 7 migration
                     if (currentVersion == 2) {

@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.util.Log
+import androidx.compose.foundation.shape.CircleShape
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
@@ -53,6 +54,7 @@ import com.core.ui.util.SpaceMono
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.TokenLogoFallback
+import com.core.ui.util.SystemColorManager
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -141,7 +143,7 @@ fun IdleView(
                                     .padding(bottom = 2.dp)
                                     .height(48.dp)
                                     .width(46.dp)
-                                    .clip(RoundedCornerShape(95)),
+                                    .clip(CircleShape),
                                 contentScale = ContentScale.Crop,
                                 painter = painterResource(R.drawable.ethereum_placeholder),
                                 contentDescription = "Ethereum"
@@ -159,27 +161,27 @@ fun IdleView(
                                             }
                                             .padding(bottom = 2.dp)
                                             .height(48.dp)
-                                            .width(46.dp)
-                                            .clip(RoundedCornerShape(95)),
+                                            //.width(46.dp)
+                                            .clip(CircleShape),
                                         contentScale = ContentScale.Crop,
                                         painter = painterResource(fallbackLogo.resourceId),
                                         contentDescription = tokenName
                                     )
                                 }
                                 else -> {
-                                    // Default placeholder if no fallback exists
+                                    // Default placeholder if no fallback exists - use themed placeholder
+                                    val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawableForColor(primaryColor)
                                     Image(
                                         modifier = Modifier
                                             .graphicsLayer {
                                                 rotationX = 5f
                                             }
                                             .padding(bottom = 2.dp)
-                                            .height(48.dp)
-                                            .width(46.dp)
-                                            .clip(RoundedCornerShape(95)),
+                                            .size(48.dp)
+                                            //.width(46.dp)
+                                            .clip(CircleShape),//RoundedCornerShape(95)
                                         contentScale = ContentScale.Crop,
-                                        painter = painterResource(R.drawable.placeholer_icon_5),
-                                        colorFilter = ColorFilter.tint(primaryColor),
+                                        painter = painterResource(placeholderDrawable),
                                         contentDescription = "Token placeholder"
                                     )
                                 }
@@ -187,17 +189,18 @@ fun IdleView(
                         }
                         // Handle URL icons (either from API or fallback)
                         else -> {
-                            val shouldTint = effectiveIcon.isEmpty()
-                            
                             Log.d("IdleCardView", "Loading image URL: $effectiveIcon")
+                            
+                            // Use themed placeholder based on primary color
+                            val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawableForColor(primaryColor)
 
                             // AsyncImage will automatically use the ImageLoader from ImageLoaderFactory
                             AsyncImage(
                                 modifier = Modifier
                                     .padding(bottom = 2.dp)
-                                    .height(48.dp)
-                                    .width(46.dp)
-                                    .clip(RoundedCornerShape(95)),
+                                    .size(48.dp)
+                                    //.width(46.dp)
+                                    .clip(CircleShape),
                                 contentScale = ContentScale.Crop,
                                 model = ImageRequest.Builder(context)
                                     .data(effectiveIcon)
@@ -212,9 +215,8 @@ fun IdleView(
                                     )
                                     .build(),
                                 contentDescription = tokenName,
-                                placeholder = painterResource(R.drawable.placeholer_icon_5),
-                                error = painterResource(R.drawable.placeholer_icon_5),
-                                colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
+                                placeholder = painterResource(placeholderDrawable),
+                                error = painterResource(placeholderDrawable)
                             )
                         }
                     }

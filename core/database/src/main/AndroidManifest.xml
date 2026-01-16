@@ -3,22 +3,7 @@
     package="com.core.database">
 
     <application>
-        <!-- Content Provider for Token Balance -->
-        <provider
-            android:name=".provider.TokenBalanceContentProvider"
-            android:authorities="com.walletmanager.tokenbalance.provider"
-            android:enabled="true"
-            android:exported="true"
-            android:grantUriPermissions="true"
-            android:writePermission="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" />
 
-        <!-- Content Provider for Token Metadata -->
-        <provider
-            android:name=".provider.TokenMetadataContentProvider"
-            android:authorities="com.walletmanager.tokenmetadata.provider"
-            android:enabled="true"
-            android:exported="true"
-            android:grantUriPermissions="true" /> 
     </application>
 
 </manifest>

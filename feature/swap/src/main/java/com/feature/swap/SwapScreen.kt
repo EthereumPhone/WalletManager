@@ -118,6 +118,7 @@ internal fun SwapScreen(
     val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
     val swapTransactionStatus by viewModel.swapTransactionStatus.collectAsStateWithLifecycle()
     val customTokenLookupState by viewModel.customTokenLookupState.collectAsStateWithLifecycle()
+    val isDexScreenerLoading by viewModel.isDexScreenerLoading.collectAsStateWithLifecycle()
 
     // Show toast when message is set
     LaunchedEffect(toastMessage) {
@@ -210,6 +211,13 @@ internal fun SwapScreen(
         else -> emptyList()
     }
     val groupedTokens = (groupedAssetsUiState as? GroupedAssetsUiState.Success)?.assets ?: emptyList()
+    
+    // Determine if tokens are still loading (initial load or search)
+    val isTokensLoading = when (selectionMode) {
+        TokenSelectionMode.From -> fromTokensUiState is FromTokensUiState.Loading
+        TokenSelectionMode.To -> tokenListUi is SwapTokenUiState.Loading
+        else -> false
+    }
 
     TokenSelectorOverlay(
         isVisible = isTokenOverlayVisible,
@@ -220,7 +228,10 @@ internal fun SwapScreen(
         selectToToken = { token -> viewModel.selectToTokenAsset(token) },
         primaryColor = primaryColor,
         secondaryColor = secondaryColor,
-        onDismiss = { viewModel.hideTokenOverlay() },
+        onDismiss = { 
+            viewModel.hideTokenOverlay()
+            viewModel.clearDexScreenerResults()
+        },
         currentChainId = toTokens.firstOrNull()?.chainId,
         selectedChainId = selectedTokenChainId,
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
@@ -229,7 +240,12 @@ internal fun SwapScreen(
         customTokenLookupState = customTokenLookupState,
         onLookupCustomToken = { address, chainId -> viewModel.lookupCustomToken(address, chainId) },
         onClearCustomTokenLookup = { viewModel.clearCustomTokenLookup() },
-        isContractAddress = { query -> viewModel.isContractAddress(query) }
+        isContractAddress = { query -> viewModel.isContractAddress(query) },
+        // DexScreener search support
+        isDexScreenerLoading = isDexScreenerLoading,
+        isTokensLoading = isTokensLoading,
+        onSearchDexScreener = { query -> viewModel.searchDexScreener(query) },
+        onClearDexScreenerResults = { viewModel.clearDexScreenerResults() }
     )
     
     // Swap Transaction Status Overlay - shows swap progress and results

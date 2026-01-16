@@ -8,10 +8,15 @@ import com.core.data.remote.ClaimDataApi
 import com.core.data.remote.EnsApi
 import com.core.data.remote.Erc20TransferApi
 import com.core.data.remote.NetworkBalanceApi
+import com.core.data.remote.NftApi
 import com.core.data.remote.TokenBalanceApi
 import com.core.data.remote.TokenMetadataApi
 import com.core.data.remote.TransfersApi
 import com.core.data.remote.UniswapApi
+import com.core.data.remote.DexScreenerApiClient
+import com.core.data.remote.DexScreenerDataSource
+import com.core.data.service.OnChainTokenMetadataFetcher
+import com.core.data.service.TokenMetadataFetcher
 import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.datastore.ExclusionListProtoSerializer
@@ -231,6 +236,38 @@ object DataModule {
     @Provides
     fun provideEnsApi(): EnsApi {
         return EnsApi()
+    }
+
+    @Singleton
+    @Provides
+    fun provideNftApi(
+        moshi: Moshi
+    ): NftApi {
+        val client: OkHttpClient = OkHttpClient.Builder()
+            .build()
+        return Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("http://localhost/")
+            .client(client)
+            .build()
+            .create(NftApi::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideDexScreenerDataSource(
+        okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): DexScreenerDataSource {
+        return DexScreenerApiClient(okHttpClient, moshi)
+    }
+
+    @Singleton
+    @Provides
+    fun provideTokenMetadataFetcher(
+        onChainTokenMetadataFetcher: OnChainTokenMetadataFetcher
+    ): TokenMetadataFetcher {
+        return onChainTokenMetadataFetcher
     }
 
 

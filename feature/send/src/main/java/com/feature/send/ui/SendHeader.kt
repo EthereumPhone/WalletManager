@@ -32,6 +32,7 @@ import com.core.ui.util.TokenLogoFallback
 import com.core.ui.util.rememberDebouncedClickHandler
 import com.feature.send.AssetsUiState
 import com.feature.send.R
+import com.core.ui.R as CoreUiR
 
 @Composable
 fun SendHeader(
@@ -73,15 +74,14 @@ fun SendHeader(
             if (fallback is TokenLogoFallback.LogoSource.Url) fallback.url else ""
         } else iconUrl
 
+        // Use themed placeholder based on primary color, or local resource for ETH/MATIC
         val placeHolderImage = if (fallback is TokenLogoFallback.LogoSource.LocalResource) {
             when(symbol.uppercase()) {
                 "ETH" -> R.drawable.mainnet
                 "MATIC" -> R.drawable.polygon
-                else -> R.drawable.placeholer_icon_5
+                else -> SystemColorManager.getPlaceholderTokenDrawable()
             }
-        } else R.drawable.placeholer_icon_5
-
-        val shouldTint = placeHolderImage == R.drawable.placeholer_icon_5 && icon.isNullOrEmpty()
+        } else SystemColorManager.getPlaceholderTokenDrawable()
 
         AsyncImage(
             model = icon,
@@ -90,8 +90,7 @@ fun SendHeader(
                 .size(28.dp)
                 .clip(CircleShape),
             placeholder = painterResource(placeHolderImage),
-            error = painterResource(placeHolderImage),
-            colorFilter = if (shouldTint) ColorFilter.tint(primaryColor) else null
+            error = painterResource(placeHolderImage)
         )
 
         Text(
@@ -136,6 +135,83 @@ fun String.overflowWithEllipses(amount: Int = 10): String {
     }
 
     return this
+}
+
+/**
+ * SendHeader variant for NFT sending
+ */
+@Composable
+fun SendHeader(
+    modifier: Modifier = Modifier,
+    nftName: String,
+    nftImageUrl: String?,
+    onBackClick: () -> Unit
+) {
+    val primaryColor = SystemColorManager.primaryColor
+    var enabled by remember { mutableStateOf(true) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        Text(
+            text = "SEND",
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                letterSpacing = 0.sp,
+                textDecoration = TextDecoration.None
+            )
+        )
+
+        // Use themed placeholder based on primary color
+        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
+        
+        AsyncImage(
+            model = nftImageUrl,
+            contentDescription = nftName,
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape),
+            placeholder = painterResource(placeholderDrawable),
+            error = painterResource(placeholderDrawable)
+        )
+
+        Text(
+            text = nftName.overflowWithEllipses(12).uppercase(),
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                letterSpacing = 0.sp,
+                textDecoration = TextDecoration.None
+            ),
+            modifier = Modifier.weight(1f)
+        )
+
+        // back icon
+        IconButton(
+            modifier = Modifier.size(56.dp),
+            onClick = dropUnlessResumed {
+                if (!enabled) return@dropUnlessResumed
+                enabled = false
+                onBackClick()
+            }
+        ) {
+            Box(modifier = Modifier.size(56.dp)) {
+                Icon(
+                    modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
+                    painter = painterResource(com.core.ui.R.drawable.baseline_close_24),
+                    contentDescription = "Back",
+                    tint = primaryColor
+                )
+            }
+        }
+    }
 }
 
 @Preview

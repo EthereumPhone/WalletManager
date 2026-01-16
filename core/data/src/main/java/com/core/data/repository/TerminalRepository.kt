@@ -203,6 +203,40 @@ class TerminalRepository @Inject constructor(
             )
         }
     }
+
+    suspend fun generateSendNft() {
+        sdk?.apply {
+            println("ETHOSDEBUGTERMINAL displaySendNft")
+            // Clean up any existing touch handler first
+            destroyTouchHandler()
+
+            val layoutRenderer = LayoutRenderer(context)
+            val sendNftBitmap = layoutRenderer.renderSendNft()
+
+            refresh(sendNftBitmap, ID_PERSISTENT)
+
+            miniDisplayTouchHandler = MiniDisplayTouchHandler(
+                context,
+                MiniDisplayTouchHandler.OnTouchListener { x, y, action ->
+                    if (action != MotionEvent.ACTION_DOWN) {
+                        return@OnTouchListener
+                    }
+                    try {
+                        coroutineScope.launch {
+                            if (x < 214) {
+                                // QR Code area
+                                _events.emit(TerminalEvent.QrTapped)
+                            } else {
+                                _events.emit(TerminalEvent.SendNftTapped)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            )
+        }
+    }
 }
 
 
@@ -210,6 +244,7 @@ sealed interface TerminalEvent {
     object CopyTapped : TerminalEvent
     object QrTapped: TerminalEvent
     object SendTapped: TerminalEvent
+    object SendNftTapped: TerminalEvent
     object TopUpTapped: TerminalEvent
     object LogTapped: TerminalEvent
     object SwapTapped: TerminalEvent

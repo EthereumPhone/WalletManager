@@ -8,9 +8,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -95,6 +98,9 @@ fun SimpleDgenTextfield(
     view: View,
     placeholder: @Composable() (() -> Unit)? = null,
     labelContent: @Composable() (() -> Unit)? = null,
+    backgroundOverflowHorizontal: Dp = 32.dp,
+    backgroundOverflowVertical: Dp = 0.dp,
+    labelOffsetX: Dp = 0.dp,
 
     ) {
 
@@ -140,10 +146,12 @@ fun SimpleDgenTextfield(
             .fillMaxWidth()
             .clip(shape)
             .drawBehind {
+                val overflowH = backgroundOverflowHorizontal.toPx()
+                val overflowV = backgroundOverflowVertical.toPx()
                 drawRect(
                     color = activeColor,
-                    size = size,
-                    topLeft = Offset(0f, 0f),
+                    size = Size(size.width + overflowH * 2, size.height + overflowV * 2),
+                    topLeft = Offset(-overflowH, -overflowV),
                     alpha = animatedBackgroundOpacity
                 )
             }
@@ -178,7 +186,9 @@ fun SimpleDgenTextfield(
         ){
 
             if (labelContent != null) {
-                labelContent()
+                Box(modifier = Modifier.offset(x = labelOffsetX)) {
+                    labelContent()
+                }
             }
 
             DgenBasicTextfield(

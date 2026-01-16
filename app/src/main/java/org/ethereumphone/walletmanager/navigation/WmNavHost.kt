@@ -35,8 +35,10 @@ import com.feature.paymaster.navigation.payMasterScreen
 import com.feature.receive.navigation.navigateToReceive
 import com.feature.receive.navigation.receiveScreen
 import com.feature.send.navigation.navigateToSend
+import com.feature.send.navigation.navigateToSendNft
 import com.feature.send.navigation.sendRoute
 import com.feature.send.navigation.sendScreen
+import com.feature.send.navigation.sendNftScreen
 import com.feature.swap.navigation.navigateToSwap
 import com.feature.swap.navigation.swapScreen
 import kotlinx.coroutines.Dispatchers
@@ -92,12 +94,16 @@ fun WmNavHost(
                 navigateToSend = { groupId ->
                     navController.navigateToSend(groupId=groupId)
                 },
+                navigateToSendNft = { contractAddress, tokenId, chainId ->
+                    navController.navigateToSendNft(contractAddress, tokenId, chainId)
+                },
                 navigateToLog = navController::navigateToTransaction,
                 navigateToReceive = navController::navigateToReceive,
                 navigateToPayMaster = navController::navigateToPayMaster,
                 nestedGraphs = {
                     swapScreen(navController::popBackStack)
                     sendScreen(navController::popBackStack, navController)
+                    sendNftScreen(navController::popBackStack, navController)
                     receiveScreen(navController::popBackStack)
                     payMasterScreen(navController::popBackStack)
                 }

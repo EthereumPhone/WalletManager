@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.NetworkBalanceRepository
 import com.core.data.repository.TokenBalanceRepository
 import com.core.data.repository.TokenMetadataRepository
@@ -15,6 +16,9 @@ class GetSwapTokens @Inject constructor(
     private val networkBalanceRepository: NetworkBalanceRepository,
     private val tokenBalanceRepository: TokenBalanceRepository
 ) {
+    companion object {
+        private const val TAG = "GetSwapTokens"
+    }
 
     operator fun invoke(
         query: String,
@@ -25,6 +29,24 @@ class GetSwapTokens @Inject constructor(
             tokenBalanceRepository.getTokensBalances(chainId),
             networkBalanceRepository.getNetworkBalance(chainId)
         ) { metadata, erc20Amount, networkAmount ->
+            Log.d(TAG, "=== GetSwapTokens combine triggered ===")
+            Log.d(TAG, "ChainId: $chainId, Query: '$query'")
+            Log.d(TAG, "Metadata count from DB: ${metadata.size}")
+            Log.d(TAG, "Swappable tokens in metadata: ${metadata.count { it.swappable }}")
+            
+            // Log first few metadata entries
+            metadata.filter { it.swappable }.take(5).forEach { m ->
+                Log.d(TAG, "  DB Token: ${m.symbol} (${m.name}) swappable=${m.swappable}")
+            }
+            
+            // Check specifically for common tokens like USDC
+            val usdc = metadata.find { it.symbol.equals("USDC", ignoreCase = true) }
+            if (usdc != null) {
+                Log.d(TAG, "  USDC found in DB: ${usdc.symbol} (${usdc.name}) swappable=${usdc.swappable}")
+            } else {
+                Log.w(TAG, "  USDC NOT FOUND in DB for chain $chainId!")
+            }
+            
             val networkAsset = TokenAsset(
                 address = networkAmount.contractAddress,
                 chainId = networkAmount.chainId,
@@ -47,16 +69,19 @@ class GetSwapTokens @Inject constructor(
                     name = tokenMetadata.name,
                     balance = (truncatedValue?.div(scale))?.toDouble() ?: 0.0,
                     decimals = tokenMetadata.decimals, 
-                    swappable = tokenMetadata.swappable,
+                    swappable = true, // All tokens in the swap selector should be swappable
                     logoUrl = tokenMetadata.logo
                 )
             }
-                .filter { it.swappable }
                 .distinctBy { it.address }
-            if(query.isEmpty()) {
+            
+            val result = if(query.isEmpty()) {
                 listOf(networkAsset) + erc20Assets
             } else {
                 (listOf(networkAsset) + erc20Assets).filter { it.name.contains(query, ignoreCase = true) || it.symbol.contains(query, ignoreCase = true) }
             }
+            
+            Log.d(TAG, "Returning ${result.size} tokens (query='$query')")
+            result
         }
 }

@@ -2,6 +2,7 @@ package com.core.database.di
 
 import com.core.database.WmDatabase
 import com.core.database.dao.EnsDao
+import com.core.database.dao.NftDao
 import com.core.database.dao.TokenBalanceDao
 import com.core.database.dao.TokenExchangeDao
 import com.core.database.dao.TokenGroupDao
@@ -46,4 +47,9 @@ object DaosModule {
     fun provideTokenGroupDao(
         database: WmDatabase
     ): TokenGroupDao = database.tokenGroupDao
+
+    @Provides
+    fun provideNftDao(
+        database: WmDatabase
+    ): NftDao = database.nftDao
 }

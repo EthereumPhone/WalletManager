@@ -59,6 +59,9 @@ import kotlinx.datetime.Clock
 import kotlinx.coroutines.Dispatchers
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalLEDController
+import com.core.data.remote.DexScreenerDataSource
+import com.core.data.remote.DexScreenerSearchResult
+import com.core.data.repository.DexScreenerSearchRepository
 
 @HiltViewModel
 class SwapViewModel @Inject constructor(
@@ -77,6 +80,7 @@ class SwapViewModel @Inject constructor(
     private val transferDao: TransferDao,
     private val reflectiveLedPattern: ReflectiveLedPattern?,
     private val lookupTokenByAddress: LookupTokenByAddress,
+    private val dexScreenerSearchRepository: DexScreenerSearchRepository
     ): ViewModel() {
 
     private val supportedSwapChainIds = setOf(1, 10, 137, 42161, 8453)
@@ -1169,6 +1173,70 @@ class SwapViewModel @Inject constructor(
     fun updateSearchQuery(query: String) {
         savedStateHandle[SEARCH_QUERY] = query
     }
+    
+    // DexScreener search results
+
+    private val _isDexScreenerLoading = MutableStateFlow(false)
+    val isDexScreenerLoading: StateFlow<Boolean> = _isDexScreenerLoading.asStateFlow()
+    
+    /**
+     * Search DexScreener API for tokens by name, symbol, or contract address.
+     * Results are filtered to only include supported swap chains.
+     * 
+     * Note: DexScreener's search API returns results from ALL chains sorted by liquidity.
+     * To get chain-specific results, we append the chain name to the query.
+     */
+    fun searchDexScreener(query: String) {
+        Log.d("SwapViewModel", "=== searchDexScreener called ===")
+        Log.d("SwapViewModel", "Query: '$query'")
+        Log.d("SwapViewModel", "Selected chain: ${_selectedTokenChainId.value}")
+
+        viewModelScope.launch {
+            if (query.isBlank() || query.length < 2) {
+                Log.d("SwapViewModel", "Query too short, skipping")
+                return@launch
+            }
+            
+            _isDexScreenerLoading.value = true
+            Log.d("SwapViewModel", "Set loading = true")
+            
+            try {
+                val selectedChain = _selectedTokenChainId.value
+                
+                Log.d("SwapViewModel", "Calling dexScreenerSearchRepository.queryTokens('$query', chainId=$selectedChain)...")
+                dexScreenerSearchRepository.queryTokens(query, selectedChain)
+                Log.d("SwapViewModel", "queryTokens completed successfully")
+                
+                // Give the database Flow a moment to emit
+                kotlinx.coroutines.delay(100)
+                
+                // Log current swapTokenUiState
+                val currentState = swapTokenUiState.value
+                Log.d("SwapViewModel", "Current swapTokenUiState: $currentState")
+                when (currentState) {
+                    is SwapTokenUiState.Success -> {
+                        Log.d("SwapViewModel", "SwapTokenUiState has ${currentState.tokenAssets.size} tokens")
+                        currentState.tokenAssets.take(5).forEach { token ->
+                            Log.d("SwapViewModel", "  - ${token.symbol} (${token.name}) on chain ${token.chainId}")
+                        }
+                    }
+                    is SwapTokenUiState.Loading -> Log.d("SwapViewModel", "SwapTokenUiState is Loading")
+                    is SwapTokenUiState.Error -> Log.d("SwapViewModel", "SwapTokenUiState is Error")
+                }
+            } catch (e: Exception) {
+                Log.e("SwapViewModel", "DexScreener search failed for query: $query", e)
+                e.printStackTrace()
+            } finally {
+                _isDexScreenerLoading.value = false
+                Log.d("SwapViewModel", "Set loading = false")
+            }
+        }
+    }
+    
+    /**
+     * Clear DexScreener search results
+     */
+    fun clearDexScreenerResults() {  }
     
     fun clearToastMessage() {
         _toastMessage.value = null

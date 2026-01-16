@@ -6,6 +6,7 @@ import com.core.data.util.chainIdToBundler
 import com.core.data.util.chainToApiKey
 import com.core.data.utils.GasEstimationHelper
 import com.core.model.NetworkChain
+import com.core.model.NftTokenType
 import com.core.model.TokenAsset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -328,6 +329,148 @@ class SendRepositoryImp @Inject constructor(
     override fun restoreState() {
         currentTransactionHash.value = ""
         currentTransactionChainId.value = 0
+    }
+
+    override suspend fun transferNft(
+        chainId: Int,
+        contractAddress: String,
+        tokenId: String,
+        toAddress: String,
+        tokenType: NftTokenType,
+        amount: Int
+    ) {
+        withContext(Dispatchers.IO) {
+            currentChainId = chainId
+
+            val rpc = NetworkChain.getNetworkByChainId(chainId)
+            val walletSDK = if (rpc != null) {
+                WalletSDK(
+                    context = mContext,
+                    web3jInstance = Web3j.build(HttpService("https://${rpc.chainName}.g.alchemy.com/v2/${chainToApiKey(rpc.chainName)}")),
+                    bundlerRPCUrl = chainIdToBundler(chainId)
+                )
+            } else {
+                WalletSDK(mContext, bundlerRPCUrl = chainIdToBundler(chainId))
+            }
+
+            if (chainId != walletSDK.getChainId()) {
+                rpc?.let {
+                    walletSDK.changeChain(
+                        chainId,
+                        "https://${rpc.chainName}.g.alchemy.com/v2/${chainToApiKey(rpc.chainName)}",
+                        chainIdToBundler(chainId)
+                    )
+                }
+            }
+
+            terminalSDK?.finishScreen()
+            reflectiveLedPattern?.displayArrowUp()
+
+            val fromAddress = walletSDK.getAddress()
+            val tokenIdBigInt = BigInteger(tokenId)
+            
+            // Encode the appropriate function call based on token type
+            val data = when (tokenType) {
+                NftTokenType.ERC721 -> {
+                    // ERC721 safeTransferFrom(address from, address to, uint256 tokenId)
+                    // Function selector: 0x42842e0e
+                    val methodId = "42842e0e"
+                    val fromAddressPadded = fromAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val toAddressPadded = toAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val tokenIdHex = tokenIdBigInt.toString(16).padStart(64, '0')
+                    "0x$methodId$fromAddressPadded$toAddressPadded$tokenIdHex"
+                }
+                NftTokenType.ERC1155 -> {
+                    // ERC1155 safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)
+                    // Function selector: 0xf242432a
+                    val methodId = "f242432a"
+                    val fromAddressPadded = fromAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val toAddressPadded = toAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val tokenIdHex = tokenIdBigInt.toString(16).padStart(64, '0')
+                    val amountHex = BigInteger.valueOf(amount.toLong()).toString(16).padStart(64, '0')
+                    // bytes data offset (points to position 160 = 0xa0, which is after the 5 fixed params)
+                    val dataOffset = "00000000000000000000000000000000000000000000000000000000000000a0"
+                    // bytes data length (0 = empty bytes)
+                    val dataLength = "0000000000000000000000000000000000000000000000000000000000000000"
+                    "0x$methodId$fromAddressPadded$toAddressPadded$tokenIdHex$amountHex$dataOffset$dataLength"
+                }
+                NftTokenType.ERC404 -> {
+                    // ERC404 is a hybrid ERC-20/ERC-721 token. For NFT transfers, it uses ERC-721's safeTransferFrom
+                    // safeTransferFrom(address from, address to, uint256 tokenId)
+                    // Function selector: 0x42842e0e
+                    val methodId = "42842e0e"
+                    val fromAddressPadded = fromAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val toAddressPadded = toAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val tokenIdHex = tokenIdBigInt.toString(16).padStart(64, '0')
+                    "0x$methodId$fromAddressPadded$toAddressPadded$tokenIdHex"
+                }
+                NftTokenType.UNKNOWN -> {
+                    // Default to ERC721 behavior for unknown types
+                    android.util.Log.w("SendRepository", "Unknown NFT token type, defaulting to ERC721")
+                    val methodId = "42842e0e"
+                    val fromAddressPadded = fromAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val toAddressPadded = toAddress.removePrefix("0x").lowercase().padStart(64, '0')
+                    val tokenIdHex = tokenIdBigInt.toString(16).padStart(64, '0')
+                    "0x$methodId$fromAddressPadded$toAddressPadded$tokenIdHex"
+                }
+            }
+
+            val res = try {
+                walletSDK.sendTransaction(
+                    to = contractAddress,
+                    value = "0",
+                    data = data,
+                    callGas = null,
+                    chainId = chainId,
+                    gasProvider = ::gasProvider
+                )
+            } catch (exception: Exception) {
+                android.util.Log.e("SendRepository", "NFT transfer failed", exception)
+                "error"
+            }
+
+            // If successful, insert provisional transfer entry
+            if (res.isNotEmpty() && res != "error" && res != "decline") {
+                val category = when (tokenType) {
+                    NftTokenType.ERC721 -> "erc721"
+                    NftTokenType.ERC1155 -> "erc1155"
+                    NftTokenType.ERC404 -> "erc721" // ERC404 NFT transfers are recorded as ERC721
+                    NftTokenType.UNKNOWN -> "erc721"
+                }
+                
+                val erc1155Metadata = if (tokenType == NftTokenType.ERC1155) {
+                    listOf(Erc1155MetadataObject(tokenId = tokenId, value = amount.toString()))
+                } else {
+                    emptyList()
+                }
+                
+                val transferEntity = TransferEntity(
+                    uniqueId = "temp_${res}",
+                    asset = "NFT",
+                    chainId = chainId,
+                    blockNum = "",
+                    category = category,
+                    erc1155Metadata = erc1155Metadata,
+                    erc721TokenId = if (tokenType == NftTokenType.ERC721 || tokenType == NftTokenType.ERC404) tokenId else "",
+                    fromaddress = fromAddress,
+                    hash = res,
+                    rawContract = RawContract(
+                        address = contractAddress,
+                        decimal = "0",
+                        value = amount.toString()
+                    ),
+                    toaddress = toAddress,
+                    tokenId = tokenId,
+                    value = amount.toDouble(),
+                    blockTimestamp = Clock.System.now(),
+                    userIsSender = true
+                )
+                transferDao.insertTransfer(transferEntity)
+            }
+
+            currentTransactionHash.value = res
+            currentTransactionChainId.value = chainId
+        }
     }
     
     /**
