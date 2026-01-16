@@ -46,6 +46,7 @@ import com.core.model.TokenAsset
 import com.core.model.TokenGroupAssetOverview
 import com.core.model.NetworkChain
 import com.core.model.TokenAssetWithPrice
+import com.core.ui.DgenLoadingMatrix
 import com.core.ui.DgenSearchBar
 import com.core.ui.HeaderBar
 import com.core.ui.InfoScreen
@@ -77,6 +78,7 @@ fun TokenSelectorOverlay(
     onChainSelected: (Int) -> Unit,
     groupedTokens: List<TokenGroupAssetOverview> = emptyList(),
     isDexScreenerLoading: Boolean = false,
+    isTokensLoading: Boolean = false,
     onSearchDexScreener: (String) -> Unit = {},
     onClearDexScreenerResults: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -288,6 +290,16 @@ fun TokenSelectorOverlay(
                                             Spacer(Modifier.fillMaxWidth().height(24.dp))
                                         }
                                     }
+                                } else if (isDexScreenerLoading || isTokensLoading) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        DgenLoadingMatrix(
+                                            activeLEDColor = primaryColor,
+                                            unactiveLEDColor = secondaryColor
+                                        )
+                                    }
                                 } else {
                                     InfoScreen(
                                         description = "No tokens available.",
@@ -326,6 +338,45 @@ fun TokenSelectorOverlay(
                     TokenSelectionMode.To -> {
                         val context = LocalContext.current
                         var priceMap by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
+
+                        // Debug logging for token flow
+                        LaunchedEffect(toTokens, searchQuery, selectedChainId, isDexScreenerLoading) {
+                            android.util.Log.d("TokenSelectorOverlay", "=== Token State Changed ===")
+                            android.util.Log.d("TokenSelectorOverlay", "toTokens count: ${toTokens.size}")
+                            android.util.Log.d("TokenSelectorOverlay", "searchQuery: '$searchQuery'")
+                            android.util.Log.d("TokenSelectorOverlay", "selectedChainId: $selectedChainId")
+                            android.util.Log.d("TokenSelectorOverlay", "isDexScreenerLoading: $isDexScreenerLoading")
+                            
+                            // Log ALL tokens on the selected chain (to see what's available)
+                            val tokensOnChain = toTokens.filter { it.chainId == selectedChainId }
+                            android.util.Log.d("TokenSelectorOverlay", "Tokens on chain $selectedChainId: ${tokensOnChain.size}")
+                            
+                            // Check if searchQuery matches any token
+                            if (searchQuery.isNotEmpty()) {
+                                val matchingTokens = toTokens.filter { token ->
+                                    val matchesSearch = token.name.contains(searchQuery, ignoreCase = true) || 
+                                        token.symbol.contains(searchQuery, ignoreCase = true) ||
+                                        token.address.contains(searchQuery, ignoreCase = true)
+                                    val matchesChain = token.chainId == selectedChainId
+                                    matchesSearch && matchesChain
+                                }
+                                android.util.Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on chain $selectedChainId: ${matchingTokens.size}")
+                                matchingTokens.take(5).forEach { token ->
+                                    android.util.Log.d("TokenSelectorOverlay", "  MATCH: ${token.symbol} (${token.name}) addr=${token.address.take(10)}...")
+                                }
+                                
+                                // Also check across ALL chains
+                                val matchingAllChains = toTokens.filter { token ->
+                                    token.name.contains(searchQuery, ignoreCase = true) || 
+                                    token.symbol.contains(searchQuery, ignoreCase = true) ||
+                                    token.address.contains(searchQuery, ignoreCase = true)
+                                }
+                                android.util.Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on ANY chain: ${matchingAllChains.size}")
+                                matchingAllChains.take(5).forEach { token ->
+                                    android.util.Log.d("TokenSelectorOverlay", "  ANY: ${token.symbol} chain=${token.chainId}")
+                                }
+                            }
+                        }
 
                         LaunchedEffect(isVisible, currentChainId, groupedTokens) {
                             val chainId = currentChainId
@@ -571,14 +622,21 @@ fun TokenSelectorOverlay(
                                             Spacer(Modifier.fillMaxWidth().height(24.dp))
                                         }
                                     }
-                                }
-                                else {
-
+                                } else if (isDexScreenerLoading || isTokensLoading) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        DgenLoadingMatrix(
+                                            activeLEDColor = primaryColor,
+                                            unactiveLEDColor = secondaryColor
+                                        )
+                                    }
+                                } else {
                                     InfoScreen(
                                         description = "No tokens available.",
                                         primaryColor = primaryColor
                                     )
-
                                 }
 
                                 // Top gradient fade

@@ -1,5 +1,6 @@
 package com.core.domain
 
+import android.util.Log
 import com.core.data.repository.DEFAULT_EXCLUDE_LIST
 import com.core.data.repository.GroupedTokenRepository
 import com.core.data.repository.UserDataRepository
@@ -43,6 +44,13 @@ class GetSwappableTokensForSelection @Inject constructor(
             // Get all swappable tokens for the chain
             getSwapTokens(query, effectiveChainId)
         ) { ownedGroups, swappableTokens ->
+            Log.d("GetSwappableTokens", "=== GetSwappableTokensForSelection combine ===")
+            Log.d("GetSwappableTokens", "Query: '$query', ChainId: $effectiveChainId")
+            Log.d("GetSwappableTokens", "Owned groups: ${ownedGroups.size}")
+            Log.d("GetSwappableTokens", "Swappable tokens from GetSwapTokens: ${swappableTokens.size}")
+            swappableTokens.take(5).forEach { token ->
+                Log.d("GetSwappableTokens", "  SwapToken: ${token.symbol} (${token.name}) addr=${token.address.take(10)}...")
+            }
             
             // Convert owned groups to individual TokenAssets on the target chain
             val ownedTokensOnChain = mutableListOf<TokenAsset>()
@@ -52,7 +60,7 @@ class GetSwappableTokensForSelection @Inject constructor(
                     val tokensInGroup = groupedTokenRepository
                         .observeAllTokensWithPriceInGroup(group.groupId, filterZeroBalance = false)
                         .first()
-                        .filter { token -> token.chainId == effectiveChainId && token.swappable }
+                        .filter { token -> token.chainId == effectiveChainId }
                     
                     tokensInGroup.forEach { token ->
                         ownedTokensOnChain.add(
@@ -64,7 +72,7 @@ class GetSwappableTokensForSelection @Inject constructor(
                                 balance = token.balance,
                                 decimals = token.decimals,
                                 logoUrl = token.logoUrl,
-                                swappable = token.swappable
+                                swappable = true // All tokens in swap selector should be swappable
                             )
                         )
                     }
@@ -88,13 +96,20 @@ class GetSwappableTokensForSelection @Inject constructor(
                     // Query filtering (already applied in getSwapTokens, but double-check)
                     if (query.isBlank()) true
                     else token.name.contains(query, ignoreCase = true) || 
-                         token.symbol.contains(query, ignoreCase = true)
+                         token.symbol.contains(query, ignoreCase = true) ||
+                         token.address.contains(query, ignoreCase = true)
                 }
                 .sortedWith(
                     compareByDescending<TokenAsset> { it.balance > 0.0 } // Owned tokens first
                         .thenByDescending { it.balance } // Then by balance amount
                         .thenBy { it.symbol } // Then alphabetically
                 )
+            
+            Log.d("GetSwappableTokens", "Owned tokens on chain: ${ownedTokensOnChain.size}")
+            Log.d("GetSwappableTokens", "Total allTokens after merge+filter: ${allTokens.size}")
+            allTokens.take(5).forEach { token ->
+                Log.d("GetSwappableTokens", "  Final: ${token.symbol} (${token.name}) balance=${token.balance}")
+            }
             
             allTokens
         }

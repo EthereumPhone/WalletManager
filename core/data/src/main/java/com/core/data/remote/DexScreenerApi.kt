@@ -20,10 +20,21 @@ private interface DexScreenerApiService {
     suspend fun searchPairs(
         @Query("q") query: String
     ): DexScreenerSearchResponse
+    
+    @GET("/token-pairs/v1/{chainId}/{tokenAddress}")
+    suspend fun getTokenPairs(
+        @retrofit2.http.Path("chainId") chainId: String,
+        @retrofit2.http.Path("tokenAddress") tokenAddress: String
+    ): DexScreenerTokenPairsResponse
 }
 
 @JsonClass(generateAdapter = true)
 data class DexScreenerSearchResponse(
+    @Json(name = "pairs") val pairs: List<DexScreenerPair>?
+)
+
+@JsonClass(generateAdapter = true)
+data class DexScreenerTokenPairsResponse(
     @Json(name = "pairs") val pairs: List<DexScreenerPair>?
 )
 
@@ -90,8 +101,20 @@ private val chainIdMapping = mapOf(
     "blast" to 81457
 )
 
+// Reverse mapping: EVM chain ID to DexScreener chain name
+private val evmToChainName = mapOf(
+    1 to "ethereum",
+    10 to "optimism",
+    137 to "polygon",
+    42161 to "arbitrum",
+    8453 to "base",
+    43114 to "avalanche",
+    56 to "bsc"
+)
+
 interface DexScreenerDataSource {
     suspend fun searchTokens(query: String): List<DexScreenerSearchResult>
+    suspend fun getTokenByAddress(address: String, chainId: Int): DexScreenerSearchResult?
 }
 
 /**
@@ -121,43 +144,144 @@ class DexScreenerApiClient @Inject constructor(
         .create(DexScreenerApiService::class.java)
     
     override suspend fun searchTokens(query: String): List<DexScreenerSearchResult> {
-        if (query.isBlank() || query.length < 2) return emptyList()
+        android.util.Log.d("DexScreenerApi", "=== searchTokens called ===")
+        android.util.Log.d("DexScreenerApi", "Query: '$query'")
+        
+        if (query.isBlank() || query.length < 2) {
+            android.util.Log.d("DexScreenerApi", "Query too short, returning empty")
+            return emptyList()
+        }
         
         return try {
+            android.util.Log.d("DexScreenerApi", "Calling API: /latest/dex/search?q=$query")
             val response = api.searchPairs(query)
-            val pairs = response.pairs ?: return emptyList()
+            val pairs = response.pairs
+            
+            android.util.Log.d("DexScreenerApi", "API returned ${pairs?.size ?: 0} pairs")
+            
+            if (pairs == null || pairs.isEmpty()) {
+                android.util.Log.w("DexScreenerApi", "No pairs returned from API")
+                return emptyList()
+            }
+            
+            // Log first few pairs for debugging
+            pairs.take(3).forEach { pair ->
+                android.util.Log.d("DexScreenerApi", "  Pair: ${pair.baseToken.symbol}/${pair.quoteToken.symbol} on ${pair.chainId} - liquidity: ${pair.liquidity?.usd}")
+            }
             
             // Group by token address and chain, keeping highest liquidity pair
+            // Extract BOTH baseToken and quoteToken from each pair to capture all matching tokens
             val tokenMap = mutableMapOf<String, DexScreenerSearchResult>()
             
             for (pair in pairs) {
-                val evmChainId = chainIdMapping[pair.chainId] ?: continue
-                val token = pair.baseToken
-                val key = "${token.address.lowercase()}_$evmChainId"
+                val evmChainId = chainIdMapping[pair.chainId]
+                if (evmChainId == null) {
+                    android.util.Log.d("DexScreenerApi", "  Skipping unknown chain: ${pair.chainId}")
+                    continue
+                }
                 
                 val priceUsd = pair.priceUsd?.toDoubleOrNull() ?: 0.0
                 val liquidity = pair.liquidity?.usd ?: 0.0
                 val volume24h = pair.volume?.h24 ?: 0.0
                 
-                val existing = tokenMap[key]
-                if (existing == null || liquidity > existing.liquidity) {
-                    tokenMap[key] = DexScreenerSearchResult(
-                        address = token.address,
+                // Process baseToken
+                val baseToken = pair.baseToken
+                val baseKey = "${baseToken.address.lowercase()}_$evmChainId"
+                val existingBase = tokenMap[baseKey]
+                if (existingBase == null || liquidity > existingBase.liquidity) {
+                    tokenMap[baseKey] = DexScreenerSearchResult(
+                        address = baseToken.address,
                         chainId = evmChainId,
-                        symbol = token.symbol,
-                        name = token.name,
+                        symbol = baseToken.symbol,
+                        name = baseToken.name,
                         priceUsd = priceUsd,
+                        liquidity = liquidity,
+                        volume24h = volume24h
+                    )
+                }
+                
+                // Process quoteToken (also add to results if it matches the search)
+                val quoteToken = pair.quoteToken
+                val quoteKey = "${quoteToken.address.lowercase()}_$evmChainId"
+                val existingQuote = tokenMap[quoteKey]
+                // Only add quoteToken if it matches the search query (name or symbol)
+                val quoteMatchesQuery = quoteToken.name.contains(query, ignoreCase = true) ||
+                    quoteToken.symbol.contains(query, ignoreCase = true) ||
+                    quoteToken.address.contains(query, ignoreCase = true)
+                if (quoteMatchesQuery && (existingQuote == null || liquidity > existingQuote.liquidity)) {
+                    tokenMap[quoteKey] = DexScreenerSearchResult(
+                        address = quoteToken.address,
+                        chainId = evmChainId,
+                        symbol = quoteToken.symbol,
+                        name = quoteToken.name,
+                        priceUsd = 0.0, // Quote token price not directly available
                         liquidity = liquidity,
                         volume24h = volume24h
                     )
                 }
             }
             
+            android.util.Log.d("DexScreenerApi", "Mapped to ${tokenMap.size} unique tokens (including quote tokens)")
+            tokenMap.values.take(5).forEach { token ->
+                android.util.Log.d("DexScreenerApi", "  Token: ${token.symbol} (${token.name}) on chain ${token.chainId}")
+            }
+            
             // Sort by liquidity descending to show most liquid tokens first
             tokenMap.values.sortedByDescending { it.liquidity }
         } catch (e: Exception) {
             android.util.Log.e("DexScreenerApi", "Search failed for query: $query", e)
+            e.printStackTrace()
             emptyList()
+        }
+    }
+    
+    /**
+     * Get token info by contract address on a specific chain.
+     * Uses the /token-pairs/v1/{chainId}/{tokenAddress} endpoint.
+     */
+    override suspend fun getTokenByAddress(address: String, chainId: Int): DexScreenerSearchResult? {
+        val chainName = evmToChainName[chainId]
+        if (chainName == null) {
+            android.util.Log.w("DexScreenerApi", "Unsupported chainId for token lookup: $chainId")
+            return null
+        }
+        
+        android.util.Log.d("DexScreenerApi", "=== getTokenByAddress called ===")
+        android.util.Log.d("DexScreenerApi", "Address: $address, ChainId: $chainId ($chainName)")
+        
+        return try {
+            val response = api.getTokenPairs(chainName, address)
+            val pairs = response.pairs
+            
+            android.util.Log.d("DexScreenerApi", "Token pairs returned: ${pairs?.size ?: 0}")
+            
+            if (pairs.isNullOrEmpty()) {
+                android.util.Log.w("DexScreenerApi", "No pairs found for token $address on $chainName")
+                return null
+            }
+            
+            // Get the pair with highest liquidity
+            val bestPair = pairs.maxByOrNull { it.liquidity?.usd ?: 0.0 }
+            if (bestPair == null) {
+                android.util.Log.w("DexScreenerApi", "No valid pair found")
+                return null
+            }
+            
+            val token = bestPair.baseToken
+            android.util.Log.d("DexScreenerApi", "Found token: ${token.symbol} (${token.name})")
+            
+            DexScreenerSearchResult(
+                address = token.address,
+                chainId = chainId,
+                symbol = token.symbol,
+                name = token.name,
+                priceUsd = bestPair.priceUsd?.toDoubleOrNull() ?: 0.0,
+                liquidity = bestPair.liquidity?.usd ?: 0.0,
+                volume24h = bestPair.volume?.h24 ?: 0.0
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("DexScreenerApi", "Token lookup failed for $address on chain $chainId", e)
+            null
         }
     }
 }

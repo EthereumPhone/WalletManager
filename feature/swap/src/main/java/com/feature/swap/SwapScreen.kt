@@ -218,6 +218,13 @@ internal fun SwapScreen(
         else -> emptyList()
     }
     val groupedTokens = (groupedAssetsUiState as? GroupedAssetsUiState.Success)?.assets ?: emptyList()
+    
+    // Determine if tokens are still loading (initial load or search)
+    val isTokensLoading = when (selectionMode) {
+        TokenSelectionMode.From -> fromTokensUiState is FromTokensUiState.Loading
+        TokenSelectionMode.To -> tokenListUi is SwapTokenUiState.Loading
+        else -> false
+    }
 
     TokenSelectorOverlay(
         isVisible = isTokenOverlayVisible,
@@ -237,6 +244,7 @@ internal fun SwapScreen(
         onChainSelected = { chainId -> viewModel.setTokenSelectorChain(chainId) },
         groupedTokens = groupedTokens,
         isDexScreenerLoading = isDexScreenerLoading,
+        isTokensLoading = isTokensLoading,
         onSearchDexScreener = { query -> viewModel.searchDexScreener(query) },
         onClearDexScreenerResults = { viewModel.clearDexScreenerResults() }
     )

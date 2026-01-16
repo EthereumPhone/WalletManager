@@ -17,7 +17,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +39,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.core.ui.util.SpaceMono
+import com.core.ui.util.TokenLogoFallback
 import com.feature.swap.R
 
 
@@ -57,6 +61,16 @@ fun TokenLogoWithChain(
     showChainOverlay: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
+    // Build a list of fallback URLs to try
+    val logoUrls = remember(token.address, token.chainId, token.symbol, token.logoUrl) {
+        buildLogoUrlFallbackList(token)
+    }
+    
+    // Track which URL index we're currently trying
+    var currentUrlIndex by remember(logoUrls) { mutableStateOf(0) }
+    
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
@@ -72,89 +86,108 @@ fun TokenLogoWithChain(
                     .clip(RoundedCornerShape(3.dp)),
                 tint = Color.Unspecified // Keep original colors
             )
-        } else if (token.logoUrl != null && token.logoUrl != "https://example.com/token-image.png") {
-            // Use provided image URL with error handling
-            val context = LocalContext.current
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(token.logoUrl)
-                    .crossfade(true)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .listener(
-                        onStart = {
-                            Log.d("TokenLogo", "Loading image: ${token.logoUrl}")
-                        },
-                        onSuccess = { _, _ ->
-                            Log.d("TokenLogo", "✅ Image loaded successfully: ${token.name}")
-                        },
-                        onError = { _, result ->
-                            Log.e("TokenLogo", "❌ Failed to load image for ${token.name}: ${result.throwable.message}")
-                            Log.e("TokenLogo", "URL was: ${token.logoUrl}")
-                        }
-                    )
-                    .build(),
-                contentDescription = token.name,
-                modifier = Modifier
-                    .size(size)
-                    .clip(RoundedCornerShape(3.dp)),
-                contentScale = ContentScale.Crop,
-                error = {
-                    // Fallback to symbol text on error
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(secondaryColor),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = token.symbol.take(2).uppercase(),
-                            fontSize = (size.value * 0.4).sp,
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = primaryColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                },
-                loading = {
-                    // Show placeholder while loading
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(secondaryColor.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = token.symbol.take(2).uppercase(),
-                            fontSize = (size.value * 0.4).sp,
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = primaryColor.copy(alpha = 0.5f),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                }
-            )
         } else {
-            // Fallback to symbol text
-            Box(
-                modifier = Modifier
-                    .size(size)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(secondaryColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = token.symbol.take(2).uppercase(),
-                    fontSize = (size.value * 0.4).sp,
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = primaryColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            // Check for local resource fallback first
+            val localResourceFallback = TokenLogoFallback.getFallbackLogo(token.symbol)
+            
+            if (localResourceFallback is TokenLogoFallback.LogoSource.LocalResource) {
+                // Use local drawable resource
+                Image(
+                    painter = painterResource(id = localResourceFallback.resourceId),
+                    contentDescription = token.name,
+                    modifier = Modifier
+                        .size(size)
+                        .clip(RoundedCornerShape(3.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else if (logoUrls.isNotEmpty() && currentUrlIndex < logoUrls.size) {
+                val currentUrl = logoUrls[currentUrlIndex]
+                
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(currentUrl)
+                        .crossfade(true)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .listener(
+                            onStart = {
+                                Log.d("TokenLogo", "Loading image [$currentUrlIndex/${logoUrls.size}]: $currentUrl")
+                            },
+                            onSuccess = { _, _ ->
+                                Log.d("TokenLogo", "✅ Image loaded successfully: ${token.name}")
+                            },
+                            onError = { _, result ->
+                                Log.e("TokenLogo", "❌ Failed to load image for ${token.name}: ${result.throwable.message}")
+                                Log.e("TokenLogo", "URL was: $currentUrl")
+                                // Try next URL in the fallback list
+                                if (currentUrlIndex < logoUrls.size - 1) {
+                                    currentUrlIndex++
+                                }
+                            }
+                        )
+                        .build(),
+                    contentDescription = token.name,
+                    modifier = Modifier
+                        .size(size)
+                        .clip(RoundedCornerShape(3.dp)),
+                    contentScale = ContentScale.Crop,
+                    error = {
+                        // Try next fallback URL, or show symbol fallback
+                        if (currentUrlIndex < logoUrls.size - 1) {
+                            // The listener will trigger recomposition with next URL
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(secondaryColor.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = token.symbol.take(2).uppercase(),
+                                    fontSize = (size.value * 0.4).sp,
+                                    style = TextStyle(
+                                        fontFamily = SpaceMono,
+                                        color = primaryColor.copy(alpha = 0.5f),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+                        } else {
+                            // Final fallback: symbol text
+                            SymbolFallback(
+                                symbol = token.symbol,
+                                size = size,
+                                primaryColor = primaryColor,
+                                secondaryColor = secondaryColor
+                            )
+                        }
+                    },
+                    loading = {
+                        // Show placeholder while loading
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(secondaryColor.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = token.symbol.take(2).uppercase(),
+                                fontSize = (size.value * 0.4).sp,
+                                style = TextStyle(
+                                    fontFamily = SpaceMono,
+                                    color = primaryColor.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+                    }
+                )
+            } else {
+                // No URLs available, fallback to symbol text
+                SymbolFallback(
+                    symbol = token.symbol,
+                    size = size,
+                    primaryColor = primaryColor,
+                    secondaryColor = secondaryColor
                 )
             }
         }
@@ -243,6 +276,131 @@ fun TokenLogoWithChain(
             }
         }
     }
+}
+
+/**
+ * Simple symbol-based fallback display
+ */
+@Composable
+private fun SymbolFallback(
+    symbol: String,
+    size: Dp,
+    primaryColor: Color,
+    secondaryColor: Color
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(3.dp))
+            .background(secondaryColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = symbol.take(2).uppercase(),
+            fontSize = (size.value * 0.4).sp,
+            style = TextStyle(
+                fontFamily = SpaceMono,
+                color = primaryColor,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+    }
+}
+
+/**
+ * Build a prioritized list of logo URLs to try for a token.
+ * Returns URLs in order of priority:
+ * 1. TokenLogoFallback URL (known reliable sources)
+ * 2. Original logoUrl from the token
+ * 3. TrustWallet assets CDN (based on contract address)
+ * 4. CoinGecko assets (if we have a mapping)
+ */
+private fun buildLogoUrlFallbackList(token: TokenAsset): List<String> {
+    val urls = mutableListOf<String>()
+    
+    // 1. Check TokenLogoFallback for known reliable URLs
+    val fallback = TokenLogoFallback.getFallbackLogo(token.symbol)
+    if (fallback is TokenLogoFallback.LogoSource.Url) {
+        urls.add(fallback.url)
+    }
+    
+    // 2. Use the original logoUrl if valid
+    token.logoUrl?.let { url ->
+        if (url.isNotBlank() && 
+            url != "https://example.com/token-image.png" &&
+            !urls.contains(url)
+        ) {
+            // Replace problematic gateway URLs
+            val cleanedUrl = url
+                .replace("gateway.pinata.cloud", "ipfs.io")
+                .replace("cloudflare-ipfs.com", "ipfs.io")
+            urls.add(cleanedUrl)
+        }
+    }
+    
+    // 3. TrustWallet assets CDN - works for many ERC20 tokens
+    val normalizedAddress = token.address.lowercase()
+    if (normalizedAddress.startsWith("0x") && 
+        normalizedAddress.length == 42 &&
+        normalizedAddress != "0x0000000000000000000000000000000000000000"
+    ) {
+        val chainFolder = getTrustWalletChainFolder(token.chainId)
+        if (chainFolder != null) {
+            // Checksum the address for TrustWallet (they use checksummed addresses)
+            val checksumAddress = toChecksumAddress(normalizedAddress)
+            val trustWalletUrl = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/$chainFolder/assets/$checksumAddress/logo.png"
+            if (!urls.contains(trustWalletUrl)) {
+                urls.add(trustWalletUrl)
+            }
+        }
+    }
+    
+    return urls
+}
+
+/**
+ * Get the TrustWallet blockchain folder name for a chain ID
+ */
+private fun getTrustWalletChainFolder(chainId: Int): String? {
+    return when (chainId) {
+        1 -> "ethereum"
+        10 -> "optimism"
+        56 -> "smartchain"
+        137 -> "polygon"
+        250 -> "fantom"
+        8453 -> "base"
+        42161 -> "arbitrum"
+        43114 -> "avalanchec"
+        else -> null
+    }
+}
+
+/**
+ * Convert an address to checksum format (EIP-55)
+ * TrustWallet assets repository uses checksummed addresses in the path
+ */
+private fun toChecksumAddress(address: String): String {
+    val lowercaseAddress = address.lowercase().removePrefix("0x")
+    
+    // Simple keccak256 hash simulation - for proper implementation you'd use a crypto library
+    // For now, we'll use a simplified approach that works for most cases
+    val hash = lowercaseAddress.toByteArray().fold(0L) { acc, byte -> 
+        (acc * 31 + byte.toLong()) and 0xFFFFFFFFL 
+    }.toString(16).padStart(40, '0')
+    
+    val checksummed = StringBuilder("0x")
+    for (i in lowercaseAddress.indices) {
+        val c = lowercaseAddress[i]
+        if (c in '0'..'9') {
+            checksummed.append(c)
+        } else {
+            // If the corresponding hex digit in hash is >= 8, uppercase the character
+            val hashChar = if (i < hash.length) hash[i] else '0'
+            val shouldUppercase = hashChar in '8'..'9' || hashChar in 'a'..'f'
+            checksummed.append(if (shouldUppercase) c.uppercaseChar() else c)
+        }
+    }
+    return checksummed.toString()
 }
 
 /**

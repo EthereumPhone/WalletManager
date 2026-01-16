@@ -2,7 +2,6 @@ package com.core.data.repository
 
 import com.core.data.remote.DexScreenerDataSource
 import com.core.data.remote.DexScreenerSearchResult
-import com.core.data.service.TokenMetadataFetcher
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.model.NetworkChain
 import com.core.model.TokenMetadata
@@ -16,18 +15,15 @@ import org.junit.Test
 class DexScreenerSearchRepositoryTest {
 
     private lateinit var fakeApi: FakeDexScreenerDataSource
-    private lateinit var fakeTokenMetadataFetcher: FakeTokenMetadataFetcher
     private lateinit var fakeTokenMetadataRepository: FakeTokenMetadataRepository
     private lateinit var repository: DexScreenerSearchRepository
 
     @Before
     fun setUp() {
         fakeApi = FakeDexScreenerDataSource()
-        fakeTokenMetadataFetcher = FakeTokenMetadataFetcher()
         fakeTokenMetadataRepository = FakeTokenMetadataRepository()
         repository = DexScreenerSearchRepository(
             api = fakeApi,
-            tokenMetadataFetcher = fakeTokenMetadataFetcher,
             tokenMetadataRepository = fakeTokenMetadataRepository
         )
     }
@@ -42,7 +38,7 @@ class DexScreenerSearchRepositoryTest {
     }
 
     @Test
-    fun `queryTokens fetches on-chain metadata for each token`() = runBlocking {
+    fun `queryTokens inserts tokens directly from DexScreener results`() = runBlocking {
         val tokens = listOf(
             DexScreenerSearchResult(
                 address = "0xtoken1",
@@ -67,13 +63,17 @@ class DexScreenerSearchRepositoryTest {
 
         repository.queryTokens("test")
 
-        assertEquals(2, fakeTokenMetadataFetcher.fetchedTokens.size)
-        assertTrue(fakeTokenMetadataFetcher.fetchedTokens.any { it.first == "0xtoken1" && it.second == 1 })
-        assertTrue(fakeTokenMetadataFetcher.fetchedTokens.any { it.first == "0xtoken2" && it.second == 1 })
+        assertEquals(2, fakeTokenMetadataRepository.insertedMetadata.size)
+        assertTrue(fakeTokenMetadataRepository.insertedMetadata.any { 
+            it.contractAddress == "0xtoken1" && it.symbol == "TKN1" && it.name == "Token One"
+        })
+        assertTrue(fakeTokenMetadataRepository.insertedMetadata.any { 
+            it.contractAddress == "0xtoken2" && it.symbol == "TKN2" && it.name == "Token Two"
+        })
     }
 
     @Test
-    fun `queryTokens groups tokens by chainId and processes each chain`() = runBlocking {
+    fun `queryTokens inserts tokens from multiple chains`() = runBlocking {
         val tokens = listOf(
             DexScreenerSearchResult(
                 address = "0xeth_token",
@@ -98,15 +98,15 @@ class DexScreenerSearchRepositoryTest {
 
         repository.queryTokens("test")
 
-        // Verify tokens from different chains were fetched
-        val chainIds = fakeTokenMetadataFetcher.fetchedTokens.map { it.second }.distinct()
+        // Verify tokens from different chains were inserted
+        val chainIds = fakeTokenMetadataRepository.insertedMetadata.map { it.chainId }.distinct()
         assertEquals(2, chainIds.size)
         assertTrue(chainIds.contains(1))
         assertTrue(chainIds.contains(42161))
     }
 
     @Test
-    fun `queryTokens inserts fetched metadata into repository`() = runBlocking {
+    fun `queryTokens marks all tokens as swappable`() = runBlocking {
         val tokens = listOf(
             DexScreenerSearchResult(
                 address = "0xtoken1",
@@ -119,22 +119,11 @@ class DexScreenerSearchRepositoryTest {
             )
         )
         fakeApi.searchResults = tokens
-        fakeTokenMetadataFetcher.metadataToReturn = TokenMetadataEntity(
-            contractAddress = "0xtoken1",
-            chainId = 1,
-            decimals = 18,
-            name = "Token One",
-            symbol = "TKN1",
-            logo = null,
-            swappable = false,
-            groupId = null
-        )
 
         repository.queryTokens("test")
 
         assertEquals(1, fakeTokenMetadataRepository.insertedMetadata.size)
-        assertEquals("0xtoken1", fakeTokenMetadataRepository.insertedMetadata[0].contractAddress)
-        assertEquals(18, fakeTokenMetadataRepository.insertedMetadata[0].decimals)
+        assertTrue(fakeTokenMetadataRepository.insertedMetadata[0].swappable)
     }
 
     @Test
@@ -143,72 +132,58 @@ class DexScreenerSearchRepositoryTest {
 
         repository.queryTokens("nonexistent")
 
-        assertTrue(fakeTokenMetadataFetcher.fetchedTokens.isEmpty())
         assertTrue(fakeTokenMetadataRepository.insertedMetadata.isEmpty())
     }
 
     @Test
-    fun `queryTokens filters out tokens when on-chain fetch returns null`() = runBlocking {
-
+    fun `queryTokens filters unsupported chains`() = runBlocking {
         val tokens = listOf(
             DexScreenerSearchResult(
-                address = "0xtoken1",
-                chainId = 1,
-                symbol = "TKN1",
-                name = "Token One",
-                priceUsd = 1.0,
-                liquidity = 1000.0,
-                volume24h = 500.0
-            )
-        )
-        fakeApi.searchResults = tokens
-        fakeTokenMetadataFetcher.metadataToReturn = null // Simulate fetch failure
-
-        repository.queryTokens("test")
-
-        // Should still call fetch but no metadata inserted
-        assertEquals(1, fakeTokenMetadataFetcher.fetchedTokens.size)
-        assertTrue(fakeTokenMetadataRepository.insertedMetadata.isEmpty())
-    }
-
-    @Test
-    fun `queryTokens processes multiple tokens on same chain`() = runBlocking {
-        val tokens = listOf(
-            DexScreenerSearchResult(
-                address = "0xtoken1",
-                chainId = 1,
-                symbol = "TKN1",
-                name = "Token One",
+                address = "0xsupported",
+                chainId = 8453, // Base - supported
+                symbol = "BASE",
+                name = "Base Token",
                 priceUsd = 1.0,
                 liquidity = 1000.0,
                 volume24h = 500.0
             ),
             DexScreenerSearchResult(
-                address = "0xtoken2",
-                chainId = 1,
-                symbol = "TKN2",
-                name = "Token Two",
+                address = "0xunsupported",
+                chainId = 999999, // Unsupported chain
+                symbol = "UNSUP",
+                name = "Unsupported Token",
                 priceUsd = 2.0,
                 liquidity = 2000.0,
                 volume24h = 800.0
-            ),
-            DexScreenerSearchResult(
-                address = "0xtoken3",
-                chainId = 1,
-                symbol = "TKN3",
-                name = "Token Three",
-                priceUsd = 3.0,
-                liquidity = 3000.0,
-                volume24h = 900.0
             )
         )
         fakeApi.searchResults = tokens
-        fakeTokenMetadataFetcher.returnDynamicMetadata = true
 
         repository.queryTokens("test")
 
-        assertEquals(3, fakeTokenMetadataFetcher.fetchedTokens.size)
-        assertEquals(3, fakeTokenMetadataRepository.insertedMetadata.size)
+        // Only supported chain token should be inserted
+        assertEquals(1, fakeTokenMetadataRepository.insertedMetadata.size)
+        assertEquals(8453, fakeTokenMetadataRepository.insertedMetadata[0].chainId)
+    }
+
+    @Test
+    fun `queryTokens lowercases contract addresses`() = runBlocking {
+        val tokens = listOf(
+            DexScreenerSearchResult(
+                address = "0xABCDEF123456",
+                chainId = 1,
+                symbol = "TKN",
+                name = "Token",
+                priceUsd = 1.0,
+                liquidity = 1000.0,
+                volume24h = 500.0
+            )
+        )
+        fakeApi.searchResults = tokens
+
+        repository.queryTokens("test")
+
+        assertEquals("0xabcdef123456", fakeTokenMetadataRepository.insertedMetadata[0].contractAddress)
     }
 
     // Fake implementations
@@ -216,38 +191,15 @@ class DexScreenerSearchRepositoryTest {
     private class FakeDexScreenerDataSource : DexScreenerDataSource {
         var searchResults: List<DexScreenerSearchResult> = emptyList()
         var lastQuery: String? = null
+        var tokenByAddressResult: DexScreenerSearchResult? = null
 
         override suspend fun searchTokens(query: String): List<DexScreenerSearchResult> {
             lastQuery = query
             return searchResults
         }
-    }
-
-    private class FakeTokenMetadataFetcher : TokenMetadataFetcher {
-        val fetchedTokens = mutableListOf<Triple<String, Int, String>>()
-        var metadataToReturn: TokenMetadataEntity? = null
-        var returnDynamicMetadata = false
-
-        override suspend fun fetchTokenMetadata(
-            contractAddress: String,
-            chainId: Int,
-            rpcUrl: String
-        ): TokenMetadataEntity? {
-            fetchedTokens.add(Triple(contractAddress, chainId, rpcUrl))
-            return if (returnDynamicMetadata) {
-                TokenMetadataEntity(
-                    contractAddress = contractAddress,
-                    chainId = chainId,
-                    decimals = 18,
-                    name = "Token $contractAddress",
-                    symbol = "TKN",
-                    logo = null,
-                    swappable = false,
-                    groupId = null
-                )
-            } else {
-                metadataToReturn
-            }
+        
+        override suspend fun getTokenByAddress(address: String, chainId: Int): DexScreenerSearchResult? {
+            return tokenByAddressResult
         }
     }
 
