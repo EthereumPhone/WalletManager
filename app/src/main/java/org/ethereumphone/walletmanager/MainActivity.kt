@@ -74,6 +74,11 @@ class MainActivity() : ComponentActivity() {
     val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     private var pendingDeepLink by mutableStateOf<Eip681DeepLinkResult?>(null)
+    private var openPaymaster by mutableStateOf(false)
+
+    companion object {
+        const val ACTION_OPEN_GAS = "org.ethereumphone.walletmanager.ACTION_OPEN_GAS"
+    }
 
     // Notification permission launcher for Android 13+
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -132,7 +137,9 @@ class MainActivity() : ComponentActivity() {
                 terminalSDK = terminalSDK,
                 reflectiveLedPattern = reflectiveLedPattern,
                 pendingDeepLink = pendingDeepLink,
-                onDeepLinkHandled = { pendingDeepLink = null }
+                onDeepLinkHandled = { pendingDeepLink = null },
+                openPaymaster = openPaymaster,
+                onPaymasterOpened = { openPaymaster = false }
             )
         }
     }
@@ -144,37 +151,43 @@ class MainActivity() : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent) {
-        if (intent.action == Intent.ACTION_VIEW) {
-            val uri = intent.data
-            when (uri?.scheme) {
-                "ethereum" -> {
-                    Log.d("MainActivity", "Processing EIP-681 deep link: $uri")
-                    coroutineScope.launch {
-                        val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
-                        withContext(Dispatchers.Main) {
-                            pendingDeepLink = result
+        when (intent.action) {
+            ACTION_OPEN_GAS -> {
+                Log.d("MainActivity", "Processing ACTION_OPEN_GAS intent")
+                openPaymaster = true
+            }
+            Intent.ACTION_VIEW -> {
+                val uri = intent.data
+                when (uri?.scheme) {
+                    "ethereum" -> {
+                        Log.d("MainActivity", "Processing EIP-681 deep link: $uri")
+                        coroutineScope.launch {
+                            val result = eip681DeepLinkHandler.handleIntent(intent, this@MainActivity)
+                            withContext(Dispatchers.Main) {
+                                pendingDeepLink = result
+                            }
                         }
                     }
-                }
-                "wc" -> {
-                    Log.d("MainActivity", "Processing WalletConnect URI: $uri")
-                    // Wait for CoreClient to be initialized before pairing
-                    coroutineScope.launch {
-                        Log.d("MainActivity", "Waiting for CoreClient initialization...")
-                        val isReady = WmApplication.waitForCoreClientInitialization(5000)
-                        
-                        if (isReady) {
-                            Log.d("MainActivity", "CoreClient ready, initiating pairing")
-                            // Pass the WalletConnect URI to the service
-                            WalletConnectService.pair(this@MainActivity, uri.toString())
-                        } else {
-                            Log.e("MainActivity", "CoreClient not ready after timeout")
-                            // Optionally show an error message to the user
+                    "wc" -> {
+                        Log.d("MainActivity", "Processing WalletConnect URI: $uri")
+                        // Wait for CoreClient to be initialized before pairing
+                        coroutineScope.launch {
+                            Log.d("MainActivity", "Waiting for CoreClient initialization...")
+                            val isReady = WmApplication.waitForCoreClientInitialization(5000)
+
+                            if (isReady) {
+                                Log.d("MainActivity", "CoreClient ready, initiating pairing")
+                                // Pass the WalletConnect URI to the service
+                                WalletConnectService.pair(this@MainActivity, uri.toString())
+                            } else {
+                                Log.e("MainActivity", "CoreClient not ready after timeout")
+                                // Optionally show an error message to the user
+                            }
+
+                            // Close the activity so user doesn't see the app open
+                            // The connection will happen in the background via the service
+                            finish()
                         }
-                        
-                        // Close the activity so user doesn't see the app open
-                        // The connection will happen in the background via the service
-                        finish()
                     }
                 }
             }

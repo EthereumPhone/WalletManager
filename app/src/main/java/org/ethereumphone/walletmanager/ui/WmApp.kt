@@ -33,6 +33,7 @@ import com.core.designsystem.theme.background
 import com.core.designsystem.theme.secondary
 import com.core.ui.showDgenToast
 import com.feature.home.navigation.navigateToHome
+import com.feature.paymaster.navigation.navigateToPayMaster
 import com.feature.send.navigation.navigateToSend
 import org.ethereumphone.walletmanager.deeplink.Eip681DeepLinkResult
 import org.ethereumphone.walletmanager.navigation.WmNavHost
@@ -58,7 +59,9 @@ fun WmApp(
     terminalSDK: TerminalSDK?,
     reflectiveLedPattern: ReflectiveLedPattern?,
     pendingDeepLink: Eip681DeepLinkResult?,
-    onDeepLinkHandled: () -> Unit
+    onDeepLinkHandled: () -> Unit,
+    openPaymaster: Boolean = false,
+    onPaymasterOpened: () -> Unit = {}
 ) {
 
     val context = LocalContext.current
@@ -94,6 +97,15 @@ fun WmApp(
             
             // Mark deep link as handled
             onDeepLinkHandled()
+        }
+    }
+
+    // Handle paymaster/gas intent navigation
+    LaunchedEffect(openPaymaster) {
+        if (openPaymaster) {
+            Log.d("WmApp", "Navigating to paymaster screen from intent")
+            appState.navController.navigateToPayMaster()
+            onPaymasterOpened()
         }
     }
 
