@@ -132,7 +132,7 @@ fun NftCardCarousel(
         }
     }
 
-    val topPadding = if (hasTokens) 32.dp else 64.dp
+    val topPadding = if (hasTokens) 80.dp else 100.dp
     val baseBottomPadding = 130.dp
     val itemSpacing = overlap - 32.dp
     // Extra space so the last card can fully settle without lifting the stack too high.
@@ -146,7 +146,7 @@ fun NftCardCarousel(
         // Responsive frontCardTranslation based on screen height
         // Small screens (~600dp): 900f, Medium (~800dp): 1200f, Large (~900dp+): 1500f
         val maxTranslation = (containerHeight.value * 1.5f).coerceIn(900f, 1600f)
-        
+
         val baseContentHeight = (cardHeight * nfts.size) +
                 (itemSpacing * (nfts.size - 1).coerceAtLeast(0)) +
                 topPadding
