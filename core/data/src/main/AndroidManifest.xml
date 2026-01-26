@@ -13,12 +13,21 @@
     <application>
         <!-- BroadcastReceiver for token balance updates from TokenLauncher -->
         <!-- TODO: Re-enable permission check after testing -->
-        <receiver 
+        <receiver
             android:name=".broadcast.TokenBalanceUpdateReceiver"
             android:exported="true">
             <!-- android:permission="org.ethereumphone.walletmanager.permission.UPDATE_TOKEN_BALANCE" -->
             <intent-filter>
                 <action android:name="org.ethereumphone.walletmanager.DEDUCT_TOKEN_BALANCE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver for low paymaster balance notifications from the system -->
+        <receiver
+            android:name=".broadcast.LowBalanceReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.ethereumphone.walletmanager.ACTION_SHOW_LOW_BALANCE" />
             </intent-filter>
         </receiver>
         
