@@ -61,9 +61,11 @@ class LowBalanceReceiver : BroadcastReceiver() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Low Balance Alerts",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications when Paymaster balance is low"
+                enableVibration(true)
+                enableLights(true)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -89,7 +91,8 @@ class LowBalanceReceiver : BroadcastReceiver() {
             .setContentText("Your balance is \$$balance. Tap to top up.")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
