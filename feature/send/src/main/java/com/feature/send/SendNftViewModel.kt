@@ -177,6 +177,20 @@ class SendNftViewModel @Inject constructor(
             _transactionStatus.value = TransactionStatus.PENDING
 
             try {
+                // Check if NFT is soulbound (non-transferable) using EIP-5192
+                val isSoulbound = nftRepository.isNftSoulbound(
+                    contractAddress = currentNft.contractAddress,
+                    tokenId = currentNft.tokenId,
+                    chainId = currentNft.chainId
+                )
+                
+                if (isSoulbound) {
+                    Log.e("SendNftViewModel", "🔴 NFT is soulbound and cannot be transferred")
+                    reflectiveLedPattern?.displayError()
+                    _transactionStatus.value = TransactionStatus.FAILURE("This NFT is soulbound and cannot be transferred")
+                    return@launch
+                }
+                
                 // Clear previous transaction state
                 sendRepository.restoreState()
 
@@ -434,6 +448,16 @@ class SendNftViewModel @Inject constructor(
      */
     private fun parseNftErrorCode(errorString: String): String? {
         return when {
+            // Soulbound / Non-transferable NFT errors (EIP-5192)
+            errorString.contains("soulbound", ignoreCase = true) ||
+            errorString.contains("non-transferable", ignoreCase = true) ||
+            errorString.contains("transfer disabled", ignoreCase = true) ||
+            errorString.contains("SBT:", ignoreCase = true) ||
+            errorString.contains("locked token", ignoreCase = true) ||
+            errorString.contains("cannot transfer", ignoreCase = true) ||
+            errorString.contains("transfer not allowed", ignoreCase = true) ||
+            errorString.contains("nontransferable", ignoreCase = true) -> 
+                "This NFT is soulbound and cannot be transferred"
             errorString.contains("not owner", ignoreCase = true) -> 
                 "You don't own this NFT"
             errorString.contains("not approved", ignoreCase = true) -> 

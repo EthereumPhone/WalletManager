@@ -23,7 +23,8 @@ data class NftEntity(
     val tokenType: String,
     val floorPriceEth: Double?,
     val floorPriceUsd: Double?,
-    val balance: Int
+    val balance: Int,
+    val isSoulbound: Boolean = false // EIP-5192: Non-transferable token
 )
 
 /**
@@ -45,7 +46,8 @@ fun NftEntity.asDomainModel(): NFT = NFT(
     },
     floorPriceEth = floorPriceEth,
     floorPriceUsd = floorPriceUsd,
-    balance = balance
+    balance = balance,
+    isSoulbound = isSoulbound
 )
 
 /**
@@ -64,5 +66,6 @@ fun NFT.asEntity(): NftEntity = NftEntity(
     tokenType = tokenType.name,
     floorPriceEth = floorPriceEth,
     floorPriceUsd = floorPriceUsd,
-    balance = balance
+    balance = balance,
+    isSoulbound = isSoulbound
 )

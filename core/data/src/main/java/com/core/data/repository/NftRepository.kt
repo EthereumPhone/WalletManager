@@ -4,6 +4,7 @@ import android.util.Log
 import com.core.data.BuildConfig
 import com.core.data.model.dto.toDomainModel
 import com.core.data.remote.NftApi
+import com.core.data.service.SoulboundChecker
 import com.core.data.util.chainIdToName
 import com.core.database.dao.NftDao
 import com.core.database.model.NftEntity
@@ -54,6 +55,22 @@ interface NftRepository {
      * Check if any NFTs exist
      */
     fun observeNftsExist(): Flow<Boolean>
+    
+    /**
+     * Remove a specific NFT from the database (after transfer)
+     */
+    suspend fun removeNft(contractAddress: String, tokenId: String, chainId: Int)
+    
+    /**
+     * Update NFT balance (for ERC1155 tokens after partial transfer)
+     */
+    suspend fun updateNftBalance(contractAddress: String, tokenId: String, chainId: Int, newBalance: Int)
+    
+    /**
+     * Check if an NFT is soulbound (non-transferable) using EIP-5192.
+     * Returns true if the NFT is soulbound and cannot be transferred.
+     */
+    suspend fun isNftSoulbound(contractAddress: String, tokenId: String, chainId: Int): Boolean
 }
 
 /**
@@ -62,7 +79,8 @@ interface NftRepository {
 @Singleton
 class AlchemyNftRepository @Inject constructor(
     private val nftApi: NftApi,
-    private val nftDao: NftDao
+    private val nftDao: NftDao,
+    private val soulboundChecker: SoulboundChecker
 ) : NftRepository {
     
     companion object {
@@ -143,6 +161,29 @@ class AlchemyNftRepository @Inject constructor(
     }
     
     override fun observeNftsExist(): Flow<Boolean> = nftDao.observeNftsExist()
+    
+    override suspend fun removeNft(contractAddress: String, tokenId: String, chainId: Int) {
+        withContext(Dispatchers.IO) {
+            Log.d(TAG, "Removing NFT: $contractAddress/$tokenId on chain $chainId")
+            nftDao.deleteNft(contractAddress, tokenId, chainId)
+        }
+    }
+    
+    override suspend fun updateNftBalance(contractAddress: String, tokenId: String, chainId: Int, newBalance: Int) {
+        withContext(Dispatchers.IO) {
+            if (newBalance <= 0) {
+                Log.d(TAG, "Removing NFT with zero balance: $contractAddress/$tokenId on chain $chainId")
+                nftDao.deleteNft(contractAddress, tokenId, chainId)
+            } else {
+                Log.d(TAG, "Updating NFT balance to $newBalance: $contractAddress/$tokenId on chain $chainId")
+                nftDao.updateNftBalance(contractAddress, tokenId, chainId, newBalance)
+            }
+        }
+    }
+    
+    override suspend fun isNftSoulbound(contractAddress: String, tokenId: String, chainId: Int): Boolean {
+        return soulboundChecker.isNftSoulbound(chainId, contractAddress, tokenId)
+    }
     
     private suspend fun fetchNftsForChain(
         ownerAddress: String,

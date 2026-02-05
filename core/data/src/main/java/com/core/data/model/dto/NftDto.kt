@@ -98,6 +98,7 @@ data class OpenSeaMetadata(
 
 /**
  * Extension function to convert OwnedNft DTO to domain model
+ * Note: isSoulbound is set to false by default and will be checked on-chain via EIP-5192
  */
 fun OwnedNft.toDomainModel(chainId: Int, ethPriceUsd: Double = 0.0): NFT {
     val floorPriceEth = contract.openSeaMetadata?.floorPrice 
@@ -122,6 +123,7 @@ fun OwnedNft.toDomainModel(chainId: Int, ethPriceUsd: Double = 0.0): NFT {
         },
         floorPriceEth = floorPriceEth,
         floorPriceUsd = floorPriceEth?.let { it * ethPriceUsd },
-        balance = balance?.toIntOrNull() ?: 1
+        balance = balance?.toIntOrNull() ?: 1,
+        isSoulbound = false // Checked on-chain via EIP-5192 when needed
     )
 }

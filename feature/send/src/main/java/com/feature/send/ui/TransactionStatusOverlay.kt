@@ -217,6 +217,8 @@ fun TransactionStatusOverlay(
                         // Add additional help text based on error type
                         if (targetStatus is TransactionStatus.FAILURE) {
                             val helpText = when {
+                                targetStatus.errorMessage?.contains("soulbound", ignoreCase = true) == true -> 
+                                    "Soulbound NFTs are permanently bound to your wallet and cannot be sent"
                                 targetStatus.errorMessage?.contains("gas", ignoreCase = true) == true -> 
                                     "Add ETH to your wallet to pay for gas fees"
                                 targetStatus.errorMessage?.contains("nonce", ignoreCase = true) == true -> 

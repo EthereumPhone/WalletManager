@@ -34,7 +34,7 @@ import com.core.database.util.RawContractConverter
         TokenBridgeEntity::class,
         NftEntity::class
     ],
-    version = 8,  // Added NFT entity
+    version = 9,  // Added isSoulbound column to NftEntity for EIP-5192 support
     exportSchema = true
 )
 

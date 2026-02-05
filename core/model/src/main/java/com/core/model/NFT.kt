@@ -15,7 +15,8 @@ data class NFT(
     val tokenType: NftTokenType,
     val floorPriceEth: Double?,
     val floorPriceUsd: Double?,
-    val balance: Int = 1 // For ERC1155, can be > 1
+    val balance: Int = 1, // For ERC1155, can be > 1
+    val isSoulbound: Boolean = false // EIP-5192: Non-transferable token
 )
 
 enum class NftTokenType {
