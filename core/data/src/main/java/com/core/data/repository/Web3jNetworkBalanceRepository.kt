@@ -333,20 +333,24 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             
             // Update balance
             async {
-                val newNetworkBalance = networkBalanceApi
-                    .getNetworkCurrency(
-                        toAddress,
-                        "https://${network!!.chainName}.g.alchemy.com/v2/${chainToApiKey(network!!.chainName)}"
-                    )
-                tokenBalanceDao.upsertTokenBalances(
-                    listOf(
-                        TokenBalanceEntity(
-                            contractAddress = network!!.chainId.toString(),
-                            chainId = network!!.chainId,
-                            tokenBalance = newNetworkBalance
+                try {
+                    val newNetworkBalance = networkBalanceApi
+                        .getNetworkCurrency(
+                            toAddress,
+                            "https://${network!!.chainName}.g.alchemy.com/v2/${chainToApiKey(network!!.chainName)}"
+                        )
+                    tokenBalanceDao.upsertTokenBalances(
+                        listOf(
+                            TokenBalanceEntity(
+                                contractAddress = network!!.chainId.toString(),
+                                chainId = network!!.chainId,
+                                tokenBalance = newNetworkBalance
+                            )
                         )
                     )
-                )
+                } catch (e: Exception) {
+                    Log.e("Web3jNetworkBalanceRepository", "Failed to fetch balance for chain $chainId: ${e.message}")
+                }
             }
 
 
