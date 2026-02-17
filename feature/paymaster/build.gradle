@@ -72,4 +72,6 @@ dependencies {
     implementation libs.ethos.wallet
     implementation libs.web3j.android
     implementation libs.moshi
+
+    implementation libs.dgen.component.library
 }

@@ -109,4 +109,6 @@ dependencies {
     implementation "io.coil-kt:coil-gif:2.6.0"       // GIF decoding
 
     implementation "dev.chrisbanes.snapper:snapper:0.3.0"
+
+    implementation libs.dgen.component.library
 }
