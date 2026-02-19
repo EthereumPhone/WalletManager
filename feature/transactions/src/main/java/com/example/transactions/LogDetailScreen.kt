@@ -54,7 +54,6 @@ import coil.compose.AsyncImage
 import com.core.model.TokenAsset
 import com.core.model.TransferItem
 import com.core.ui.DgenLoadingMatrix
-import com.core.ui.HeaderBar
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
@@ -75,6 +74,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.Brush
 import com.core.data.util.chainIdToName
 import androidx.activity.compose.BackHandler
+import com.example.dgenlibrary.DetailItem
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
 
 @Composable
 fun DetailLogRoute(
@@ -204,101 +206,94 @@ fun LogDetailScreen(
     val outputFormat = SimpleDateFormat("MMMM d, yyyy 'at' hh:mm a", Locale.getDefault())
     val formattedTimestamp = date?.let { outputFormat.format(it) } ?: transfer.timeStamp
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    DgenHeaderBackground(
+        primaryColor = primaryColor,
+        headerContent = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            )
+            {
+                Text(
+                    text = if (transfer.userSent) "SENT" else "RECEIVED",
+                    style = TextStyle(
+                        fontFamily = SpaceMono,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 24.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
+                // Check for fallback logo for consistent display across screens
+                val fallbackLogo = TokenLogoFallback.getFallbackLogo(transfer.asset)
 
-            HeaderBar(
-                modifier = modifier.padding(horizontal = 24.dp),
-                onClick = onNavigateBack,
-                text = "",
-                content = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (transfer.userSent) "SENT" else "RECEIVED",
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = primaryColor,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 24.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None
-                            )
-                        )
-                        // Check for fallback logo for consistent display across screens
-                        val fallbackLogo = TokenLogoFallback.getFallbackLogo(transfer.asset)
-                        
-                        // Determine the effective logo: prefer fallback for consistency
-                        val effectiveLogoUrl = when {
-                            // If we have a fallback URL, use it for consistency
-                            fallbackLogo is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
-                            // Otherwise use the provided logo URL
-                            logoUrl.isNotEmpty() -> logoUrl
-                            else -> ""
-                        }
-                        
-                        // Use themed placeholder based on primary color
-                        val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
-                        
-                        when {
-                            // Use URL (either fallback or provided)
-                            effectiveLogoUrl.isNotEmpty() -> {
-                                AsyncImage(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape),
-                                    model = effectiveLogoUrl,
-                                    contentDescription = "Token logo",
-                                    placeholder = painterResource(placeholderDrawable),
-                                    error = painterResource(placeholderDrawable)
-                                )
-                            }
-                            // Check for local resource fallback
-                            fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
-                                Image(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape),
-                                    painter = painterResource(fallbackLogo.resourceId),
-                                    contentDescription = "Token logo"
-                                )
-                            }
-                            // Fallback: Use placeholder
-                            else -> {
-                                Image(
-                                    modifier = Modifier.size(28.dp),
-                                    painter = painterResource(placeholderDrawable),
-                                    contentDescription = "Placeholder"
-                                )
-                            }
-                        }
+                // Determine the effective logo: prefer fallback for consistency
+                val effectiveLogoUrl = when {
+                    // If we have a fallback URL, use it for consistency
+                    fallbackLogo is TokenLogoFallback.LogoSource.Url -> fallbackLogo.url
+                    // Otherwise use the provided logo URL
+                    logoUrl.isNotEmpty() -> logoUrl
+                    else -> ""
+                }
 
-                        Text(
-                            text = transfer.asset.uppercase(),
-                            style = TextStyle(
-                                fontFamily = SpaceMono,
-                                color = primaryColor,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 24.sp,
-                                letterSpacing = 0.sp,
-                                textDecoration = TextDecoration.None
-                            )
+                // Use themed placeholder based on primary color
+                val placeholderDrawable = SystemColorManager.getPlaceholderTokenDrawable()
+
+                when {
+                    // Use URL (either fallback or provided)
+                    effectiveLogoUrl.isNotEmpty() -> {
+                        AsyncImage(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape),
+                            model = effectiveLogoUrl,
+                            contentDescription = "Token logo",
+                            placeholder = painterResource(placeholderDrawable),
+                            error = painterResource(placeholderDrawable)
                         )
                     }
-                },
-                primaryColor = primaryColor
-            )
+                    // Check for local resource fallback
+                    fallbackLogo is TokenLogoFallback.LogoSource.LocalResource -> {
+                        Image(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape),
+                            painter = painterResource(fallbackLogo.resourceId),
+                            contentDescription = "Token logo"
+                        )
+                    }
+                    // Fallback: Use placeholder
+                    else -> {
+                        Image(
+                            modifier = Modifier.size(28.dp),
+                            painter = painterResource(placeholderDrawable),
+                            contentDescription = "Placeholder"
+                        )
+                    }
+                }
+
+                Text(
+                    text = transfer.asset.uppercase(),
+                    style = TextStyle(
+                        fontFamily = SpaceMono,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 24.sp,
+                        letterSpacing = 0.sp,
+                        textDecoration = TextDecoration.None
+                    )
+                )
+            }
+        },
+        onBackClick = onNavigateBack
+    ) {
+
+
 
 
         Box(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = DgenBackgroundHorizontalPadding)
         ) {
             LazyColumn(
                 state = scrollState,
@@ -370,37 +365,7 @@ fun networkToName(chainId: Int): String = when(chainId) {
     else -> ""
 }
 
-@Composable
-fun DetailItem(
-    label: String,
-    value: String,
-    primaryColor: Color
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(end=24.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = TextStyle(
-                fontFamily = SpaceMono,
-                color = primaryColor,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = label_fontSize,
-            )
-        )
-        Text(
-            text = value,
-            style = TextStyle(
-                fontFamily = PitagonsSans,
-                color = dgenWhite,
-                fontWeight = FontWeight.Medium,
-                fontSize = body1_fontSize,
-            )
-        )
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable

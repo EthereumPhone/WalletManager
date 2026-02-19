@@ -16,7 +16,7 @@ import com.core.data.util.chainToApiKey
 import com.core.model.NFT
 import com.core.terminalsdk.ReflectiveLedPattern
 import com.core.terminalsdk.TerminalSDK
-import com.feature.send.ui.TransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

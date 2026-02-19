@@ -1,6 +1,7 @@
 package com.feature.swap.ui
 
 import android.os.Build.VERSION.SDK_INT
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,8 +50,7 @@ import com.core.model.NetworkChain
 import com.core.model.TokenAssetWithPrice
 import com.core.ui.DgenLoadingMatrix
 import com.core.ui.DgenSearchBar
-import com.core.ui.HeaderBar
-import com.core.ui.InfoScreen
+
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
@@ -57,6 +58,8 @@ import com.core.ui.util.dgenRed
 import com.core.ui.util.dgenWhite
 import com.core.ui.util.formatWithSuffix
 import com.core.ui.util.neonOpacity
+import com.example.dgenlibrary.InfoScreen
+import com.example.dgenlibrary.SearchBar
 import com.feature.swap.CustomTokenLookupState
 import com.feature.swap.TokenSelectionMode
 import kotlinx.coroutines.delay
@@ -124,7 +127,7 @@ fun TokenSelectorOverlay(
     LaunchedEffect(searchQuery, selectedChainId) {
         if (isContractAddress(searchQuery)) {
             // Debounce the lookup slightly
-            kotlinx.coroutines.delay(300)
+            delay(300)
             onLookupCustomToken(searchQuery, selectedChainId)
         } else {
             onClearCustomTokenLookup()
@@ -173,14 +176,14 @@ fun TokenSelectorOverlay(
                                 val totalFiat = group.totalFiatBalance
                                 if (group.totalBalance > 0 && totalFiat != null && totalFiat > 0) {
                                     val price = totalFiat / group.totalBalance
-                                    android.util.Log.d("TokenSelector", "ETH Group Found - Total Balance: ${group.totalBalance}, Total Fiat: $totalFiat, Unit Price: $price")
+                                    Log.d("TokenSelector", "ETH Group Found - Total Balance: ${group.totalBalance}, Total Fiat: $totalFiat, Unit Price: $price")
                                     price
                                 } else {
-                                    android.util.Log.d("TokenSelector", "ETH Group found but invalid balance/fiat: balance=${group.totalBalance}, fiat=$totalFiat")
+                                    Log.d("TokenSelector", "ETH Group found but invalid balance/fiat: balance=${group.totalBalance}, fiat=$totalFiat")
                                     null
                                 }
                             } ?: run {
-                                android.util.Log.d("TokenSelector", "ETH Group not found in grouped tokens")
+                                Log.d("TokenSelector", "ETH Group not found in grouped tokens")
                                 null
                             }
                             
@@ -213,12 +216,12 @@ fun TokenSelectorOverlay(
                                     }
                                 }
                                 
-                                android.util.Log.d("TokenSelector", "Set ETH unit price to: $price for addresses and chain IDs: ${uniqueChainIds.filter { it != 137 }}")
+                                Log.d("TokenSelector", "Set ETH unit price to: $price for addresses and chain IDs: ${uniqueChainIds.filter { it != 137 }}")
                             }
                             
                             // Log all ETH tokens and their addresses
                             fromTokens.filter { it.symbol.equals("ETH", ignoreCase = true) }.forEach { token ->
-                                android.util.Log.d("TokenSelector", "ETH Token - Address: ${token.address}, Chain: ${token.chainId}, Balance: ${token.balance}")
+                                Log.d("TokenSelector", "ETH Token - Address: ${token.address}, Chain: ${token.chainId}, Balance: ${token.balance}")
                             }
 
                         }
@@ -262,8 +265,6 @@ fun TokenSelectorOverlay(
                                     onFocusChanged = { isFocused = it },
                                     textColor = primaryColor,
                                     backgroundColor = secondaryColor,
-                                    primaryColor = primaryColor,
-                                    secondaryColor = secondaryColor,
                                     focusRequester = focusRequester,
                                     keyboardController = keyboardController,
                                     onClear = { searchQuery = "" },
@@ -271,7 +272,9 @@ fun TokenSelectorOverlay(
                                     selectedChainId = selectedChainId,
                                     onNetworkClick = {
                                         isChainSelectorVisible = true
-                                    }
+                                    },
+                                    primaryColor = primaryColor,
+                                    secondaryColor = secondaryColor,
                                 )
                             }
 
@@ -294,7 +297,7 @@ fun TokenSelectorOverlay(
                                 primaryColor = primaryColor,
                                 secondaryColor = secondaryColor,
                                                 onClick = {
-                                                    android.util.Log.d("TokenSelector_CLICK", """
+                                                    Log.d("TokenSelector_CLICK", """
                                                         |=== FROM TOKEN CLICKED ===
                                                         |Token Name: ${token.name}
                                                         |Symbol: ${token.symbol}
@@ -366,15 +369,15 @@ fun TokenSelectorOverlay(
 
                         // Debug logging for token flow
                         LaunchedEffect(toTokens, searchQuery, selectedChainId, isDexScreenerLoading) {
-                            android.util.Log.d("TokenSelectorOverlay", "=== Token State Changed ===")
-                            android.util.Log.d("TokenSelectorOverlay", "toTokens count: ${toTokens.size}")
-                            android.util.Log.d("TokenSelectorOverlay", "searchQuery: '$searchQuery'")
-                            android.util.Log.d("TokenSelectorOverlay", "selectedChainId: $selectedChainId")
-                            android.util.Log.d("TokenSelectorOverlay", "isDexScreenerLoading: $isDexScreenerLoading")
+                            Log.d("TokenSelectorOverlay", "=== Token State Changed ===")
+                            Log.d("TokenSelectorOverlay", "toTokens count: ${toTokens.size}")
+                            Log.d("TokenSelectorOverlay", "searchQuery: '$searchQuery'")
+                            Log.d("TokenSelectorOverlay", "selectedChainId: $selectedChainId")
+                            Log.d("TokenSelectorOverlay", "isDexScreenerLoading: $isDexScreenerLoading")
                             
                             // Log ALL tokens on the selected chain (to see what's available)
                             val tokensOnChain = toTokens.filter { it.chainId == selectedChainId }
-                            android.util.Log.d("TokenSelectorOverlay", "Tokens on chain $selectedChainId: ${tokensOnChain.size}")
+                            Log.d("TokenSelectorOverlay", "Tokens on chain $selectedChainId: ${tokensOnChain.size}")
                             
                             // Check if searchQuery matches any token
                             if (searchQuery.isNotEmpty()) {
@@ -385,9 +388,9 @@ fun TokenSelectorOverlay(
                                     val matchesChain = token.chainId == selectedChainId
                                     matchesSearch && matchesChain
                                 }
-                                android.util.Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on chain $selectedChainId: ${matchingTokens.size}")
+                                Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on chain $selectedChainId: ${matchingTokens.size}")
                                 matchingTokens.take(5).forEach { token ->
-                                    android.util.Log.d("TokenSelectorOverlay", "  MATCH: ${token.symbol} (${token.name}) addr=${token.address.take(10)}...")
+                                    Log.d("TokenSelectorOverlay", "  MATCH: ${token.symbol} (${token.name}) addr=${token.address.take(10)}...")
                                 }
                                 
                                 // Also check across ALL chains
@@ -396,9 +399,9 @@ fun TokenSelectorOverlay(
                                     token.symbol.contains(searchQuery, ignoreCase = true) ||
                                     token.address.contains(searchQuery, ignoreCase = true)
                                 }
-                                android.util.Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on ANY chain: ${matchingAllChains.size}")
+                                Log.d("TokenSelectorOverlay", "Tokens matching '$searchQuery' on ANY chain: ${matchingAllChains.size}")
                                 matchingAllChains.take(5).forEach { token ->
-                                    android.util.Log.d("TokenSelectorOverlay", "  ANY: ${token.symbol} chain=${token.chainId}")
+                                    Log.d("TokenSelectorOverlay", "  ANY: ${token.symbol} chain=${token.chainId}")
                                 }
                             }
                         }
@@ -558,7 +561,7 @@ fun TokenSelectorOverlay(
                                                             letterSpacing = 1.sp,
                                                         )
                                                         Spacer(Modifier.height(8.dp))
-                                                        androidx.compose.material3.CircularProgressIndicator(
+                                                        CircularProgressIndicator(
                                                             modifier = Modifier.size(24.dp),
                                                             color = primaryColor,
                                                             strokeWidth = 2.dp
@@ -585,7 +588,7 @@ fun TokenSelectorOverlay(
                                                         primaryColor = primaryColor,
                                                         secondaryColor = secondaryColor,
                                                         onClick = {
-                                                            android.util.Log.d("TokenSelector_CLICK", "Custom token selected: ${lookupState.token.symbol}")
+                                                            Log.d("TokenSelector_CLICK", "Custom token selected: ${lookupState.token.symbol}")
                                                             selectToToken(lookupState.token)
                                                             onDismiss()
                                                         }
@@ -670,7 +673,7 @@ fun TokenSelectorOverlay(
                                                     primaryColor = primaryColor,
                                                     secondaryColor = secondaryColor,
                                                     onClick = {
-                                                        android.util.Log.d("TokenSelector_CLICK", """
+                                                        Log.d("TokenSelector_CLICK", """
                                                             |=== TO TOKEN CLICKED (OWNED) ===
                                                             |Token Name: ${token.name}
                                                             |Symbol: ${token.symbol}
@@ -731,7 +734,7 @@ fun TokenSelectorOverlay(
                                                     primaryColor = primaryColor,
                                                     secondaryColor = secondaryColor,
                                                     onClick = {
-                                                        android.util.Log.d("TokenSelector_CLICK", """
+                                                        Log.d("TokenSelector_CLICK", """
                                                             |=== TO TOKEN CLICKED (ALL) ===
                                                             |Token Name: ${token.name}
                                                             |Symbol: ${token.symbol}

@@ -39,11 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.zIndex
 import com.core.model.NFT
-import com.core.ui.Card
 import com.core.ui.util.dgenBlack
-import com.core.ui.views.NftCardView
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.smallDuration
+import com.example.dgenlibrary.Card
+import com.example.dgenlibrary.NftCardView
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs

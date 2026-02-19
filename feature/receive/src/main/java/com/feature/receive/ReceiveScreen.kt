@@ -54,7 +54,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.core.model.UserData
-import com.core.ui.HeaderBar
 import com.core.ui.initializeFontMap
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
@@ -66,6 +65,7 @@ import com.core.ui.util.neonOpacity
 import com.core.ui.util.pulseOpacity
 import com.feature.receive.ui.rememberQrBitmapPainter
 import androidx.activity.compose.BackHandler
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
 
 @Composable
 internal fun ReceiveRoute(
@@ -128,21 +128,14 @@ fun ReceiveScreen(
 
     val primaryColor = SystemColorManager.primaryColor
 
-    Column (
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding()
-            .padding(horizontal = 24.dp)
-        //.padding(horizontal = 32.dp, vertical = 32.dp)
+    DgenHeaderBackground(
+        title = "RECEIVE ASSETS", onBackClick = onBackClick, primaryColor = primaryColor
     ) {
-        HeaderBar(text = "RECEIVE ASSETS", onClick = onBackClick, primaryColor = primaryColor)
 
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.fillMaxSize(1f)
         ){
             Image(
                 painter = rememberQrBitmapPainter(content = "ethereum:${userData.walletAddress}", primaryColor = primaryColor),

@@ -1,6 +1,5 @@
 package com.feature.swap
 
-import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -29,19 +28,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.ImageLoader
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
-import com.core.model.TokenAsset
-import com.core.model.SwapUIState
-import com.core.model.SwapToken
-import com.core.ui.HeaderBar
 import com.core.ui.showDgenToast
 import com.core.ui.util.SystemColorManager
-import com.core.ui.util.dgenBlack
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
+import com.example.dgenlibrary.ui.TransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatusOverlay
 import com.feature.swap.ui.SwapInterface
-import com.feature.swap.ui.SwapTransactionStatus
-import com.feature.swap.ui.SwapTransactionStatusOverlay
 import com.feature.swap.ui.TokenSelectorOverlay
 import kotlinx.coroutines.delay
 
@@ -134,14 +127,14 @@ internal fun SwapScreen(
         Log.d("SwapScreen", "New swapTransactionStatus: $swapTransactionStatus")
 
         when (swapTransactionStatus) {
-            SwapTransactionStatus.SUCCESS -> {
+            TransactionStatus.SUCCESS -> {
                 Log.d("SwapScreen", "🟢 SUCCESS status detected - swap successful")
                 delay(SwapTransactionTiming.SUCCESS_DISPLAY_DURATION)
                 Log.d("SwapScreen", "${SwapTransactionTiming.SUCCESS_DISPLAY_DURATION}ms passed, resetting swap screen")
                 // Reset the swap screen instead of navigating back - allows user to do another swap
                 viewModel.resetSwapScreen()
             }
-            is SwapTransactionStatus.FAILURE -> {
+            is TransactionStatus.FAILURE -> {
                 Log.d("SwapScreen", "🔴 FAILURE status detected - showing error state")
                 // Display failure overlay for a reasonable duration to acknowledge the error
                 delay(SwapTransactionTiming.FAILURE_DISPLAY_DURATION)
@@ -172,36 +165,18 @@ internal fun SwapScreen(
     LaunchedEffect(Unit) {
         viewModel.onScreenOpenedAfterResume()
     }
-    
-    // Create GIF-enabled ImageLoader for animations
-    val gifEnabledLoader = ImageLoader.Builder(context)
-        .components {
-            if (SDK_INT >= 28) {
-                add(ImageDecoderDecoder.Factory())
-            } else {
-                add(GifDecoder.Factory())
-            }
-        }.build()
 
-    Column (
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding()
-            .padding(horizontal = 24.dp)
-        //.padding(horizontal = 32.dp, vertical = 32.dp)
+    DgenHeaderBackground(
+        title = "SWAP ASSETS", onBackClick = onBackClick, primaryColor = primaryColor
     ) {
-        HeaderBar(text = "SWAP ASSETS", onClick = onBackClick, primaryColor = primaryColor)
         
         SwapInterface(
             primaryColor = primaryColor,
             secondaryColor = secondaryColor,
             uiState = swapUIState,
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
+                .fillMaxSize().padding(start = DgenBackgroundHorizontalPadding, end = DgenBackgroundHorizontalPadding, bottom = 32.dp),
+            )
     }
 
     // Unified Token Selector Overlay - handles both From and To selections
@@ -248,13 +223,14 @@ internal fun SwapScreen(
         onClearDexScreenerResults = { viewModel.clearDexScreenerResults() }
     )
     
-    // Swap Transaction Status Overlay - shows swap progress and results
-    SwapTransactionStatusOverlay(
+    TransactionStatusOverlay(
         status = swapTransactionStatus,
-        gifLoader = gifEnabledLoader,
-        onDismiss = { viewModel.clearSwapTransactionStatus() },
         primaryColor = primaryColor,
-        secondaryColor = secondaryColor
+        secondaryColor = secondaryColor,
+        pendingMessage = "Swap Pending...",
+        successMessage = "Swap Confirmed!",
+        failureMessage = "Swap Failed",
+        onDismiss = { viewModel.clearTransactionStatus() }
     )
 }
 

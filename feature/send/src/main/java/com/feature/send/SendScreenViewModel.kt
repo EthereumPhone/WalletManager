@@ -44,7 +44,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import kotlinx.coroutines.delay
-import com.feature.send.ui.TransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatus
 import kotlinx.coroutines.flow.update
 import org.kethereum.eip137.model.ENSName
 import org.kethereum.ens.ENS

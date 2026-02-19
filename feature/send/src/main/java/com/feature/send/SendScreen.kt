@@ -1,6 +1,5 @@
 package com.feature.send
 
-import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -41,23 +40,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.ImageLoader
-import coil.compose.AsyncImage
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenAssetWithPrice
 import com.core.ui.util.SystemColorManager
-import com.core.ui.util.dgenBlack
 import com.core.ui.util.mediumEnterDuration
-import com.core.ui.util.pulseOpacity
 import com.feature.send.ui.AmountTextField
 import com.feature.send.ui.ContactPickerOverlay
 import com.feature.send.ui.CustomCaptureActivity
 import com.feature.send.ui.NetworkSelector
 import com.feature.send.ui.RecipientSection
-import com.feature.send.ui.SendHeader
-import com.feature.send.ui.TransactionStatusOverlay
-import com.feature.send.ui.TransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatusOverlay
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.journeyapps.barcodescanner.ScanContract
@@ -65,6 +57,34 @@ import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.delay
 import android.Manifest
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderGlobeBackground
+//import com.example.dgenlibrary.ui.backgrounds.DgenHeaderGlobeBackground
+import com.example.dgenlibrary.ui.backgrounds.LargeGlobeBackground
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
+import com.example.dgenlibrary.ui.theme.SpaceMono
+import com.example.dgenlibrary.ui.theme.dgenOcean
+import com.example.dgenlibrary.ui.theme.mediumExitDuration
+import com.feature.send.ui.SendHeader
 
 
 @Composable
@@ -260,102 +280,76 @@ fun SendScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val context = LocalContext.current
 
-    val gifEnabledLoader = ImageLoader.Builder(context)
-        .components {
-            if ( SDK_INT >= 28 ) {
-                add(ImageDecoderDecoder.Factory())
-            } else {
-                add(GifDecoder.Factory())
-            }
-        }.build()
-
-
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding()
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) {
-                focusManager.clearFocus()
-            }
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        AsyncImage(
-            modifier = Modifier
-                .alpha(pulseOpacity)
-                .offset(x = 250.dp, y = 20.dp)
-                .scale(1.3f)
-                .aspectRatio(1f),
-            imageLoader = gifEnabledLoader,
-            model = R.drawable.globe_wireframe,
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(primaryColor)
-        )
+        DgenHeaderGlobeBackground(
+            onBackClick = onBackClick,
+            headerContent = {
+                SendHeader(
+                    assetsUiState = assetsUiState,
+                )
+            },
+            primaryColor = primaryColor,
+            content = {
+
+                Column(
+                        Modifier.fillMaxSize().padding(start = DgenBackgroundHorizontalPadding, end = DgenBackgroundHorizontalPadding, bottom = 32.dp),
+                ){
+                        Spacer(Modifier.fillMaxWidth().height(48.dp))
+
+
+                        AmountTextField(
+                            selectedAssetUiState= selectedAssetUiState,
+                            amountUiState = amountUiState,
+                            onAmountChange = onAmountChange,
+                            onMaxClick = maxAmountClicked
+                        )
+
+                        NetworkSelector(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                                .weight(1f),
+                            itemWidth = 65.dp,
+                            itemHeight = 65.dp,
+                            assetsUiState = assetsUiState,
+                            selectedAssetUiState = selectedAssetUiState,
+                            onNetworkSelected = onNetworkSelected
+                        )
 
 
 
+                        // #region agent log
+                        Log.d("DEBUG_AGENT", "SendScreen:RecipientSection - selectedContact=${selectedContact?.name ?: "null"}, contactsWithEthSize=${contactsWithEth.size}, hasContactsWithEth=${contactsWithEth.isNotEmpty()}, hypothesisId=C")
+                        // #endregion
 
-        Column(
-            Modifier.padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 12.dp),
-        ) {
-            SendHeader(
-                modifier = Modifier.padding(bottom = 48.dp),
-                assetsUiState = assetsUiState,
-                onBackClick
-            )
-
-            AmountTextField(
-                selectedAssetUiState= selectedAssetUiState,
-                amountUiState = amountUiState,
-                onAmountChange = onAmountChange,
-                onMaxClick = maxAmountClicked
-            )
-
-            NetworkSelector(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .weight(1f),
-                itemWidth = 65.dp,
-                itemHeight = 65.dp,
-                assetsUiState = assetsUiState,
-                selectedAssetUiState = selectedAssetUiState,
-                onNetworkSelected = onNetworkSelected
-            )
-
-
-
-            // #region agent log
-            Log.d("DEBUG_AGENT", "SendScreen:RecipientSection - selectedContact=${selectedContact?.name ?: "null"}, contactsWithEthSize=${contactsWithEth.size}, hasContactsWithEth=${contactsWithEth.isNotEmpty()}, hypothesisId=C")
-            // #endregion
-
-            RecipientSection(
-                recipientUiState = recipientUiState,
-                selectedContact = selectedContact,
-                hasContactsWithEth = contactsWithEth.isNotEmpty(),
-                onContentChanged = onRecipientChange,
-                onContactIconClick = {
-                    onContactIconClick()
-                    if (contactsWithEth.isNotEmpty()) {
-                        showContactPicker = true
+                        RecipientSection(
+                            recipientUiState = recipientUiState,
+                            selectedContact = selectedContact,
+                            hasContactsWithEth = contactsWithEth.isNotEmpty(),
+                            onContentChanged = onRecipientChange,
+                            onContactIconClick = {
+                                onContactIconClick()
+                                if (contactsWithEth.isNotEmpty()) {
+                                    showContactPicker = true
+                                }
+                            },
+                            onClearContact = onClearContact,
+                            shouldDismissKeyboard = shouldDismissKeyboard,
+                            onKeyboardDismissed = onKeyboardDismissed
+                        )
                     }
-                },
-                onClearContact = onClearContact,
-                shouldDismissKeyboard = shouldDismissKeyboard,
-                onKeyboardDismissed = onKeyboardDismissed
-            )
-        }
-
+            }
+        )
         TransactionStatusOverlay(
             status = transactionStatus,
-            gifLoader = gifEnabledLoader,
-            onDismiss = { clearTransactionStatus() },
             primaryColor = primaryColor,
-            secondaryColor = secondaryColor
+            secondaryColor = secondaryColor,
+            onDismiss = { clearTransactionStatus() }
         )
-        
+
         // Contact picker overlay with fade in/out like send screen overlays
         AnimatedVisibility(
             visible = showContactPicker,
@@ -422,6 +416,10 @@ fun SendScreen(
         }
     }
 }
+
+
+
+
 
 @Preview(device = "spec:width=720px,height=720px,dpi=240")
 @Composable

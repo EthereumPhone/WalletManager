@@ -3,6 +3,7 @@ package com.feature.send.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -38,7 +39,6 @@ import com.core.ui.R as CoreUiR
 fun SendHeader(
     modifier: Modifier = Modifier,
     assetsUiState: AssetsUiState,
-    onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
     var enabled by remember { mutableStateOf(true) }
@@ -54,7 +54,7 @@ fun SendHeader(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Text(
             text = "SEND",
@@ -105,25 +105,6 @@ fun SendHeader(
             ),
             modifier = Modifier.weight(1f)
         )
-
-        // back icon
-        IconButton(
-            modifier = Modifier.size(56.dp),
-            onClick = dropUnlessResumed {
-                if (!enabled) return@dropUnlessResumed
-                enabled = false                      // one-shot guard
-                onBackClick()
-            }
-        ) {
-            Box(modifier = Modifier.size(56.dp)) {
-                Icon(
-                    modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
-                    painter = painterResource(com.core.ui.R.drawable.baseline_close_24),
-                    contentDescription = "Back",
-                    tint = primaryColor
-                )
-            }
-        }
     }
 }
 
@@ -141,11 +122,10 @@ fun String.overflowWithEllipses(amount: Int = 10): String {
  * SendHeader variant for NFT sending
  */
 @Composable
-fun SendHeader(
+fun SendNftHeader(
     modifier: Modifier = Modifier,
     nftName: String,
     nftImageUrl: String?,
-    onBackClick: () -> Unit
 ) {
     val primaryColor = SystemColorManager.primaryColor
     var enabled by remember { mutableStateOf(true) }
@@ -192,25 +172,6 @@ fun SendHeader(
             ),
             modifier = Modifier.weight(1f)
         )
-
-        // back icon
-        IconButton(
-            modifier = Modifier.size(56.dp),
-            onClick = dropUnlessResumed {
-                if (!enabled) return@dropUnlessResumed
-                enabled = false
-                onBackClick()
-            }
-        ) {
-            Box(modifier = Modifier.size(56.dp)) {
-                Icon(
-                    modifier = Modifier.size(32.dp).align(Alignment.CenterEnd),
-                    painter = painterResource(com.core.ui.R.drawable.baseline_close_24),
-                    contentDescription = "Back",
-                    tint = primaryColor
-                )
-            }
-        }
     }
 }
 

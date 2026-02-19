@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -30,12 +28,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import com.core.model.NetworkChain
-import com.core.ui.HeaderBar
 import com.core.ui.ChainIcon
 import com.core.ui.util.SpaceMono
 import com.core.ui.util.dgenBlack
-import com.core.ui.util.dgenBurgendy
-import com.core.ui.util.dgenWhite
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.backgrounds.FadeDirection
+import com.example.dgenlibrary.ui.backgrounds.FadeEdge
 
 @Composable
 fun ChainSelectorOverlay(
@@ -70,21 +68,14 @@ fun ChainSelectorOverlay(
             modifier = Modifier
                 .fillMaxSize().background(dgenBlack)
         ){
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp)
-            )
-            {
-                HeaderBar(
-                    modifier = Modifier,
-                    text = "SELECT CHAIN",
-                    onClick = onDismiss,
-                    primaryColor = primaryColor
-                )
+            DgenHeaderBackground(
+                title = "SELECT CHAIN",
+                onBackClick = onDismiss,
+                primaryColor = primaryColor
+            ) {
 
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp)
                 ) {
                     LazyColumn(
                         modifier = Modifier
@@ -96,12 +87,11 @@ fun ChainSelectorOverlay(
                         }
 
                         items(chains) { (networkChain, chainName) ->
-                            ChainRow(
+                            ChainSelectionRow(
                                 chainId = networkChain.chainId,
                                 chainName = chainName,
                                 isSelected = selectedChainId == networkChain.chainId,
                                 primaryColor = primaryColor,
-                                secondaryColor = secondaryColor,
                                 onClick = {
                                     onChainSelected(networkChain.chainId)
                                     onDismiss()
@@ -114,33 +104,13 @@ fun ChainSelectorOverlay(
                         }
                     }
 
-                    // Top gradient fade
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(32.dp)
-                            .align(Alignment.TopCenter)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(dgenBlack, dgenBlack, Color.Transparent)
-                                )
-                            )
-                            .zIndex(3f)
-                    )
 
-                    // Bottom gradient fade
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(32.dp)
-                            .align(Alignment.BottomCenter)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, dgenBlack)
-                                )
-                            )
-                            .zIndex(3f)
-                    )
+
+                    FadeEdge(FadeDirection.Top,  modifier = Modifier.align(Alignment.TopCenter),)
+                    FadeEdge(FadeDirection.Bottom, modifier = Modifier.align(Alignment.BottomCenter))
+
+                    // Top gradient fade
+
                 }
             }
         }
@@ -148,13 +118,13 @@ fun ChainSelectorOverlay(
     }
 }
 
+
 @Composable
-private fun ChainRow(
+private fun ChainSelectionRow(
     chainId: Int?,
     chainName: String,
     isSelected: Boolean,
     primaryColor: Color,
-    secondaryColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -170,7 +140,7 @@ private fun ChainRow(
             chainId = chainId,
             size = 32.dp
         )
-        
+
         Text(
             text = chainName,
             style = TextStyle(
@@ -181,7 +151,7 @@ private fun ChainRow(
             ),
             modifier = Modifier.weight(1f)
         )
-        
+
         if (isSelected) {
             Box(
                 modifier = Modifier

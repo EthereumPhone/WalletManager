@@ -34,70 +34,21 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.core.ui.DgenSearchBar
-import com.core.ui.InfoScreen
-import com.core.ui.HeaderBar
 import com.core.data.model.dto.Contact
+import com.core.ui.DgenSearchBar
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SystemColorManager
 import com.core.ui.util.dgenBlack
 import com.core.ui.util.pulseOpacity
+import com.example.dgenlibrary.InfoScreen
+import com.example.dgenlibrary.contacts.ContactItem
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.backgrounds.FadeDirection
+import com.example.dgenlibrary.ui.backgrounds.FadeEdge
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
 import com.feature.send.AssetsUiState
+import kotlin.compareTo
 
-@Composable
-private fun ContactItem(
-    contact: Contact,
-    primaryColor: Color,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = contact.name,
-                overflow = TextOverflow.Ellipsis,
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = primaryColor,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 22.sp,
-                    lineHeight = 22.sp,
-                    letterSpacing = 0.sp,
-                )
-            )
-
-            Text(
-                text = when {
-                    contact.ens.isNotEmpty() -> contact.ens
-                    contact.address.length > 10 -> "${contact.address.take(6)}...${contact.address.takeLast(4)}"
-                    else -> contact.address
-                },
-                overflow = TextOverflow.Ellipsis,
-                style = TextStyle(
-                    fontFamily = PitagonsSans,
-                    color = primaryColor.copy(pulseOpacity),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    lineHeight = 16.sp,
-                    letterSpacing = 0.sp,
-                    textDecoration = TextDecoration.None
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp)
-            )
-        }
-    }
-}
 
 @Composable
 fun ContactPickerOverlay(
@@ -124,27 +75,21 @@ fun ContactPickerOverlay(
             }
         }
     }
-    
 
-        Column (
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier
+
+    DgenHeaderBackground(
+        title = "SELECT CONTACT",
+        primaryColor = primaryColor,
+        onBackClick = onDismiss
+    ){
+
+        Column(
+            Modifier
                 .fillMaxSize()
-                .background(dgenBlack)
-                .statusBarsPadding()
-                .padding(top=4.dp),
-            //.padding(horizontal = 32.dp, vertical = 32.dp)
+                .padding(top = DgenBackgroundHorizontalPadding),
         ){
-            HeaderBar(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                text = "SELECT CONTACT",
-                primaryColor = primaryColor,
-                onClick = onDismiss
-            )
-
-            // Dgen search bar without dropdown, keep clear button
             Box(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 DgenSearchBar(
                     searchValue = searchQuery,
@@ -169,15 +114,17 @@ fun ContactPickerOverlay(
             // Contacts List
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-            ) {
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+            {
                 Crossfade(
                     targetState = filteredContacts.isEmpty(),
                     label = "contacts_empty_crossfade"
                 ) { isEmpty ->
                     if (isEmpty) {
                         InfoScreen(
-                            modifier = Modifier.fillMaxSize().offset(y=16.dp),
+                            modifier = Modifier.fillMaxSize(),
                             description = if (searchQuery.isEmpty()) {
                                 "No contacts with Ethereum addresses"
                             } else {
@@ -186,18 +133,19 @@ fun ContactPickerOverlay(
                             primaryColor = primaryColor
                         )
                     } else {
-                        Box(
-
-                        ) {
+                        Box() {
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                                modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ){
-
-                                
                                 items(filteredContacts) { contact ->
                                     ContactItem(
-                                        contact = contact,
+                                        header = contact.name,
+                                        subheader = when {
+                                            contact.ens.isNotEmpty() -> contact.ens
+                                            contact.address.length > 10 -> "${contact.address.take(6)}...${contact.address.takeLast(4)}"
+                                            else -> contact.address
+                                        },
                                         primaryColor = primaryColor,
                                         onClick = {
                                             onContactSelected(contact)
@@ -211,34 +159,15 @@ fun ContactPickerOverlay(
                                 }
                             }
 
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(32.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(Color.Transparent, dgenBlack)
-                                        )
-                                    )
-                            )
+                            FadeEdge(FadeDirection.Top,  modifier = Modifier.align(Alignment.TopCenter),)
+                            FadeEdge(FadeDirection.Bottom, size = 24.dp, modifier = Modifier.align(Alignment.BottomCenter))
 
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(24.dp)
-                                    .align(Alignment.TopCenter)
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(dgenBlack,Color.Transparent)
-                                        )
-                                    )
-                            )
                         }
 
                     }
                 }
             }
         }
+    }
 
 }

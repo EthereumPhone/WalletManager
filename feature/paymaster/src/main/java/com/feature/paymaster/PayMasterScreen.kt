@@ -54,22 +54,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.core.ui.DgenButtonTextfield
-import com.core.ui.HeaderBar
 import com.core.ui.util.PitagonsSans
-import com.core.ui.util.SpaceMono
 import com.core.ui.util.SystemColorManager
-import com.core.ui.util.dgenBlack
-import com.core.ui.util.dgenGray
-import com.core.ui.util.dgenGunMetal
-import com.core.ui.util.dgenOcean
-import com.core.ui.util.dgenTurqoise
-import com.core.ui.util.dgenWhite
 import com.core.ui.util.neonOpacity
 import com.core.ui.util.pulseOpacity
 import java.math.BigDecimal
 import java.math.RoundingMode
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.focus.FocusManager
+import com.example.dgenlibrary.AmountButton
+import com.example.dgenlibrary.Quote
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
+
+//import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
 
 @Composable
 internal fun PayMasterScreenRoute(
@@ -154,14 +152,6 @@ fun PayMasterScreen(
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
 
-    val scope = rememberCoroutineScope()
-    val focusManager = LocalFocusManager.current
-    var selectedAmount by remember { mutableStateOf("") }
-    var customAmount by remember { mutableStateOf("") }
-    var isCustomSelected by remember { mutableStateOf(false) }
-//    var toUpAmount by remember { mutableStateOf(TextFieldValue("")) }
-    val view = LocalView.current
-
     val formattedBalance = try {
         val bd = BigDecimal(balance)
         bd.setScale(2, RoundingMode.HALF_UP).toPlainString()
@@ -170,72 +160,32 @@ fun PayMasterScreen(
         "0.00"
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding()
-            .padding(start = 12.dp, end = 12.dp, bottom = 24.dp)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        focusManager.clearFocus()
-                    }
-                )
-            },
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        HeaderBar(text = "Gas", onClick = onBackClick, modifier = modifier.padding(horizontal = 12.dp), primaryColor = primaryColor)
+    DgenHeaderBackground(
+        onBackClick = onBackClick,
+        title = "Gas",
+        primaryColor = primaryColor
+    ){
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = modifier.padding(start = 12.dp, end = 12.dp)
-        ){
+            modifier = modifier.padding(start = DgenBackgroundHorizontalPadding, end = DgenBackgroundHorizontalPadding, bottom = 32.dp),
 
+            ){
+            Spacer(modifier = Modifier.fillMaxWidth().height(48.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Spacer(Modifier
-                        .offset(y = 5.dp)
-                        .height(77.dp)
-                        .width(8.dp)
-                        .background(primaryColor.copy(pulseOpacity))
-                        .padding(end = 16.dp)
-                    )
-                    Column {
-                        Text(
-                            buildAnnotatedString {
-                                append("TOTAL")
-                            },
-                            fontFamily = SpaceMono,
-                            color = primaryColor,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp,
-                            lineHeight = 18.sp,
-                            letterSpacing = 0.sp,
-                            textDecoration = TextDecoration.None,
-                            modifier = Modifier.offset(y = 8.dp)
-                        )
-                        Text(
-                            "$${formattedBalance}",
-                            fontFamily = PitagonsSans,
-                            color = dgenWhite,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 48.sp,
-                            lineHeight = 48.sp,
-                            letterSpacing = 0.sp,
-                            textDecoration = TextDecoration.None
-                        )
-                    }
-                }
+            )
+            {
 
+                Quote(
+                    primaryColor = primaryColor,
+                    content = "$${formattedBalance}",
+                    title = "TOTAL",
+                )
                 Text(
                     "This is your wallets paymaster account that handles all gas fees on any EVM chain. \n\nPaymaster transactions incur a 10% gas fee and funds cannot be withdrawn once filled.",
                     style = TextStyle(
@@ -251,147 +201,41 @@ fun PayMasterScreen(
                 )
             }
 
-            /*DgenButtonTextfield(
-            value = topUpAmount,
-            onValueChange = { newValue ->
-                val input = newValue.text
-                
-                // Remove any existing "$" to get the raw input
-                val cleanInput = input.removePrefix("$")
-                
-                // Only allow digits and decimal point
-                if (cleanInput.isEmpty()) {
-                    onTopUpAmountChanged(TextFieldValue(""))
-                } else if (cleanInput.matches(Regex("^\\d*\\.?\\d*$"))) {
-                    // Add "$" prefix if there's any numeric input
-                    val newText = "$$cleanInput"
-                    // Set cursor position at the end (behind the number)
-                    onTopUpAmountChanged(
-                        TextFieldValue(
-                            text = newText,
-                            selection = TextRange(newText.length)
-                        )
-                    )
-                } else {
-                    // Keep the previous value if input is invalid
-                    onTopUpAmountChanged(topUpAmount)
-                }
-            },
-            isAnyFieldFocused = remember { mutableStateOf(false) },
-            onEditDone = { },
-            view = view,
-            labelContent = {
-                Text(
-                    text = "ADD AMOUNT",
-                    style = TextStyle(
-                        fontFamily = SpaceMono,
-                        color = dgenTurqoise,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp
-                    )
-                )
-            },
-            placeholder = {
-                Text(
-                    text = "0.00",
-                    style = TextStyle(
-                        fontFamily = PitagonsSans,
-                        color = dgenWhite.copy(pulseOpacity),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = body2_fontSize
-                    )
-                )
-            },
-            button1Text = "10",
-            button2Text = "20",
-            button1Value = "\$10",
-            button2Value = "\$20",
-            onButton1Click = {
-                onTopUpAmountChanged(TextFieldValue("\$10"))
-            },
-            onButton2Click = {
-                onTopUpAmountChanged(TextFieldValue("\$20"))
-            },
-            modifier = Modifier.fillMaxWidth()
-        )*/
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val amounts = listOf(10, 25, 50, 100)
-            amounts.forEach { amount ->
-                val amountText = "$amount"
-                val isSelected = topUpAmount.text == amountText
-
-                AmountButton(
-                    amount = amount,
-                    isSelected = isSelected,
-                    primaryColor = primaryColor,
-                    secondaryColor = secondaryColor,
-                    onClick = {
-                        onTopUpAmountChanged(
-                            TextFieldValue(
-                                text = amountText,
-                                selection = TextRange(amountText.length)
-                            )
-                        )
-                    }
-                )
-            }
-        }
-    }
-
-}
-
-@Composable
-fun AmountButton(
-    amount: Int,
-    isSelected: Boolean,
-    primaryColor: Color,
-    secondaryColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .width(64.dp)
-            .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(4.dp))
-            .background(if (isSelected) primaryColor else Color.Transparent)
-            .border(BorderStroke(1.dp, primaryColor), RoundedCornerShape(4.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = buildAnnotatedString {
-                withStyle(
-                    style = SpanStyle(
-                        fontFamily = PitagonsSans,
-                        color = if (isSelected) secondaryColor else primaryColor,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
-                        letterSpacing = 0.sp,
-                        textDecoration = TextDecoration.None
-                    )
-                ) {
-                    append("\$")
-                }
-                append("$amount")
-            },
-            style = TextStyle(
-                fontFamily = SpaceMono,
-                color = if (isSelected) secondaryColor else primaryColor,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             )
-        )
+            {
+                val amounts = listOf(10, 25, 50, 100)
+                amounts.forEach { amount ->
+                    val amountText = "$amount"
+                    val isSelected = topUpAmount.text == amountText
+
+                    AmountButton(
+                        amount = amount,
+                        isSelected = isSelected,
+                        primaryColor = primaryColor,
+                        secondaryColor = secondaryColor,
+                        onClick = {
+                            onTopUpAmountChanged(
+                                TextFieldValue(
+                                    text = amountText,
+                                    selection = TextRange(amountText.length)
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+
+        }
+
     }
+
 }
+
+
 
 @Preview(device = "spec:width=720px,height=720px,dpi=240", name = "DDevice")
 @Composable

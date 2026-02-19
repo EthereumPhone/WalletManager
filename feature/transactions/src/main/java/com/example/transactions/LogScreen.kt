@@ -73,13 +73,14 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.core.model.TokenMetadata
 import com.core.ui.DgenLoadingMatrix
-import com.core.ui.HeaderBar
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.dgenGunMetal
 import com.core.ui.util.extraLargeEnterDuration
 import com.core.ui.util.extraLargeExitDuration
 import kotlin.math.max 
 import androidx.activity.compose.BackHandler
+import com.example.dgenlibrary.ui.backgrounds.DgenHeaderBackground
+import com.example.dgenlibrary.ui.theme.DgenBackgroundHorizontalPadding
 import kotlinx.coroutines.launch
 
 @Composable
@@ -184,19 +185,11 @@ fun LogScreen(
         }.build()
 
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(dgenBlack)
-            .statusBarsPadding(),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+    DgenHeaderBackground(
+        title = "ACTIVITY LOG",
+        onBackClick = onNavigateBack,
+        primaryColor = primaryColor
     ) {
-        HeaderBar(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            text = "ACTIVITY LOG",
-            onClick = onNavigateBack,
-            primaryColor = primaryColor
-        )
 
         Box(modifier = Modifier.fillMaxSize()){
             AnimatedContent(
@@ -206,7 +199,7 @@ fun LogScreen(
                         animationSpec = tween(extraLargeEnterDuration)
                     ) togetherWith fadeOut(animationSpec = tween(extraLargeExitDuration))
                 },
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = DgenBackgroundHorizontalPadding),
                 label = "Animated Content"
             ) { txState ->
                 when(txState){

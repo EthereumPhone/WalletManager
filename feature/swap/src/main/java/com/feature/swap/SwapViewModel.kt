@@ -26,7 +26,7 @@ import com.core.model.SwapToken
 import com.core.model.TokenAssetWithPrice
 import com.core.result.Result
 import com.core.result.asResult
-import com.feature.swap.ui.SwapTransactionStatus
+import com.example.dgenlibrary.ui.TransactionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -146,8 +146,8 @@ class SwapViewModel @Inject constructor(
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
     
     // Transaction status state for overlay
-    private val _swapTransactionStatus = MutableStateFlow<SwapTransactionStatus?>(null)
-    val swapTransactionStatus: StateFlow<SwapTransactionStatus?> = _swapTransactionStatus.asStateFlow()
+    private val _swapTransactionStatus = MutableStateFlow<TransactionStatus?>(null)
+    val swapTransactionStatus: StateFlow<TransactionStatus?> = _swapTransactionStatus.asStateFlow()
     
     // Quote fetching state
     private val _isFetchingQuote = MutableStateFlow(false)
@@ -318,10 +318,10 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             swapTransactionStatus.collect { status ->
                 when (status) {
-                    SwapTransactionStatus.SUCCESS -> {
+                    TransactionStatus.SUCCESS -> {
                         showSuccessMatrix()
                     }
-                    is SwapTransactionStatus.FAILURE -> {
+                    is TransactionStatus.FAILURE -> {
                         showFailedMatrix()
                     }
                     else -> { /* no-op */ }
@@ -1245,7 +1245,7 @@ class SwapViewModel @Inject constructor(
     /**
      * Clear the transaction status, e.g., when the overlay is dismissed or when navigating away
      */
-    fun clearSwapTransactionStatus() {
+    fun clearTransactionStatus() {
         _swapTransactionStatus.value = null
     }
 
@@ -1365,7 +1365,7 @@ class SwapViewModel @Inject constructor(
                         
                         // Set status to PENDING
                         Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
-                        _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                        _swapTransactionStatus.value = TransactionStatus.PENDING
                         
                         // Calculate exact amount
                         val exactSwapAmount = if (uiState.fromUseMaxAmount) {
@@ -1409,7 +1409,7 @@ class SwapViewModel @Inject constructor(
                         
                         // Set status to PENDING before executing swap
                         Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
-                        _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                        _swapTransactionStatus.value = TransactionStatus.PENDING
                         
                         // If MAX was clicked, use 99.99% to avoid Double precision issues
                         val exactSwapAmount = if (uiState.fromUseMaxAmount) {
@@ -1449,14 +1449,14 @@ class SwapViewModel @Inject constructor(
                     if (fromAsset.tokenAsset.chainId != toAsset.tokenAsset.chainId) {
                         Log.e("SwapViewModel", "❌ Cross-chain swap attempted in legacy state (not supported)")
                         val errorMsg = "Cross-chain swaps are not supported"
-                        _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                        _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
                         callback("Error: $errorMsg.")
                         return@launch
                     }
                     
                     // Set status to PENDING before executing swap
                     Log.d("SwapViewModel", "⏳ Setting status to PENDING...")
-                    _swapTransactionStatus.value = SwapTransactionStatus.PENDING
+                    _swapTransactionStatus.value = TransactionStatus.PENDING
                     
                     Log.d("SwapViewModel", "🚀 Executing swap (legacy path)...")
                     executeSwap(
@@ -1473,7 +1473,7 @@ class SwapViewModel @Inject constructor(
                     Log.e("SwapViewModel", "  FROM amount: $fromAmountFromUi")
                     
                     val errorMsg = "Please select both FROM and TO tokens"
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
                     callback("Error: $errorMsg")
                 }
             } catch (e: Exception) {
@@ -1483,7 +1483,7 @@ class SwapViewModel @Inject constructor(
                 Log.e("SwapViewModel", "  Message: ${e.message}")
                 e.printStackTrace()
                 
-                _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(e.message ?: "Unknown error")
+                _swapTransactionStatus.value = TransactionStatus.FAILURE(e.message ?: "Unknown error")
                 callback("Error: ${e.message}")
             }
             
@@ -1512,7 +1512,7 @@ class SwapViewModel @Inject constructor(
         if (amt == null || amt <= 0.0) {
             Log.e("SwapViewModel", "❌ Invalid amount: $amount (parsed: $amt)")
             val errorMsg = "Invalid amount: $amount"
-            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
             callback("Error: $errorMsg")
             return
         }
@@ -1537,7 +1537,7 @@ class SwapViewModel @Inject constructor(
                     // Transaction hash returned - success!
                     Log.d("SwapViewModel", "🟢 SWAP SUCCESS!")
                     Log.d("SwapViewModel", "  Transaction hash: $result")
-                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    _swapTransactionStatus.value = TransactionStatus.SUCCESS
                     callback("Success: Transaction hash: $result")
                     // Apply local adjustments and log entries
                     try {
@@ -1551,35 +1551,35 @@ class SwapViewModel @Inject constructor(
                 }
                 result.equals("DECLINE", ignoreCase = true) -> {
                     Log.w("SwapViewModel", "⚠️ USER DECLINED SWAP")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("User declined transaction")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("User declined transaction")
                     callback("User declined the transaction")
                 }
                 result.equals("ERROR", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 SWAP ERROR")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Swap failed")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("Swap failed")
                     callback("Error: Swap failed")
                 }
                 result.contains("NOT_ENOUGH_GAS", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 INSUFFICIENT GAS")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Insufficient gas for transaction")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("Insufficient gas for transaction")
                     callback("Error: Insufficient gas")
                 }
                 result.isEmpty() -> {
                     Log.e("SwapViewModel", "🔴 EMPTY RESULT")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("No response from swap service")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("No response from swap service")
                     callback("Error: No response from swap service")
                 }
                 result.lowercase().contains("error") || 
                 result.lowercase().contains("failed") -> {
                     Log.e("SwapViewModel", "🔴 SWAP FAILED: $result")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(result)
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE(result)
                     callback("Error: $result")
                 }
                 else -> {
                     // Unknown result format - assume success if it's not empty
                     Log.w("SwapViewModel", "⚠️ UNKNOWN RESULT FORMAT: $result")
                     Log.w("SwapViewModel", "  Assuming success since no error keywords detected")
-                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    _swapTransactionStatus.value = TransactionStatus.SUCCESS
                     callback("Success: $result")
                     try {
                         applyLocalSwapAdjustments(
@@ -1599,7 +1599,7 @@ class SwapViewModel @Inject constructor(
             e.printStackTrace()
             
             val errorMsg = e.message ?: "Unknown error occurred"
-            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
             callback("Error: $errorMsg")
         }
     }
@@ -1627,7 +1627,7 @@ class SwapViewModel @Inject constructor(
         if (amount <= BigDecimal.ZERO) {
             Log.e("SwapViewModel", "❌ Invalid amount: $amount")
             val errorMsg = "Invalid amount"
-            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
             callback("Error: $errorMsg")
             return
         }
@@ -1654,7 +1654,7 @@ class SwapViewModel @Inject constructor(
                     Log.d("SwapViewModel", "🟢 CROSS-CHAIN SWAP INITIATED!")
                     Log.d("SwapViewModel", "  Transaction hash: $result")
                     Log.d("SwapViewModel", "  Note: Funds will arrive on destination chain shortly")
-                    _swapTransactionStatus.value = SwapTransactionStatus.SUCCESS
+                    _swapTransactionStatus.value = TransactionStatus.SUCCESS
                     callback("Success: Cross-chain swap initiated. TX: $result")
                     
                     // Apply local adjustments for the source chain
@@ -1669,32 +1669,32 @@ class SwapViewModel @Inject constructor(
                 }
                 result.equals("DECLINE", ignoreCase = true) -> {
                     Log.w("SwapViewModel", "⚠️ USER DECLINED CROSS-CHAIN SWAP")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("User declined transaction")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("User declined transaction")
                     callback("User declined the transaction")
                 }
                 result.equals("ERROR_NO_ROUTES", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 NO ROUTES AVAILABLE")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("No bridge routes available for this pair")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("No bridge routes available for this pair")
                     callback("Error: No bridge routes available. Try a different token pair or amount.")
                 }
                 result.equals("ERROR_BUILD_TX", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 FAILED TO BUILD TRANSACTION")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Failed to build bridge transaction")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("Failed to build bridge transaction")
                     callback("Error: Failed to build bridge transaction")
                 }
                 result.contains("NOT_ENOUGH_GAS", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 INSUFFICIENT GAS")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Insufficient gas")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("Insufficient gas")
                     callback("Error: Insufficient gas for cross-chain transaction")
                 }
                 result.isEmpty() || result.equals("ERROR", ignoreCase = true) -> {
                     Log.e("SwapViewModel", "🔴 CROSS-CHAIN SWAP FAILED")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE("Cross-chain swap failed")
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE("Cross-chain swap failed")
                     callback("Error: Cross-chain swap failed")
                 }
                 else -> {
                     Log.w("SwapViewModel", "⚠️ UNKNOWN RESULT: $result")
-                    _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(result)
+                    _swapTransactionStatus.value = TransactionStatus.FAILURE(result)
                     callback("Error: $result")
                 }
             }
@@ -1702,7 +1702,7 @@ class SwapViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("SwapViewModel", "🔴 CROSS-CHAIN SWAP EXCEPTION", e)
             val errorMsg = e.message ?: "Unknown error"
-            _swapTransactionStatus.value = SwapTransactionStatus.FAILURE(errorMsg)
+            _swapTransactionStatus.value = TransactionStatus.FAILURE(errorMsg)
             callback("Error: $errorMsg")
         }
     }
@@ -1856,7 +1856,7 @@ class SwapViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 // Clear any pending transaction status when leaving swap screen
-                clearSwapTransactionStatus()
+                clearTransactionStatus()
                 
                 // Use TerminalRepository to dismiss content
                 terminalRepository.dismissContent()

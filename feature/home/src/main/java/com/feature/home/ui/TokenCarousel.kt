@@ -19,8 +19,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import androidx.compose.ui.zIndex
-import com.core.ui.Card
-import com.core.ui.views.IdleView
 import com.core.ui.util.largeEnterDuration
 import com.core.ui.util.smallDuration
 import kotlin.math.abs
@@ -38,6 +36,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.core.model.TokenGroupAssetOverview
 import com.core.ui.util.dgenBlack
+import com.example.dgenlibrary.Card
+import com.example.dgenlibrary.IdleView
 import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
