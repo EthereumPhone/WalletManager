@@ -184,8 +184,17 @@ class OwnedTokenContentProvider : ContentProvider() {
         }
     }
 
+    private fun isNativeToken(contractAddress: String): Boolean =
+        contractAddress.all { it.isDigit() }
+
     private fun addRow(cursor: MatrixCursor, rawBalance: BigDecimal, meta: com.core.database.model.erc20.TokenMetadataEntity) {
-        val displayBalance = rawBalance.movePointLeft(meta.decimals)
+        // Native token balances (contractAddress is a chain ID like "1", "137") are
+        // already stored in human-readable units (e.g. ETH, not wei), so skip conversion.
+        val displayBalance = if (isNativeToken(meta.contractAddress)) {
+            rawBalance
+        } else {
+            rawBalance.movePointLeft(meta.decimals)
+        }
         // Using the new suspend function signature
         val latestExchange = runBlocking { 
             tokenExchangeDao.getLatestExchangeByAddressAndChain(
