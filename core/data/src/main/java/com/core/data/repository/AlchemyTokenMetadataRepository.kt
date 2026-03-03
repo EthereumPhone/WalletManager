@@ -91,10 +91,21 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                                     ?.replace("gateway.pinata.cloud", "ipfs.io")
 
                                 // Create TokenMetadataDto from ClankerToken
+                                // Use Alchemy's decimals (often correct even when name/symbol are blank),
+                                // then try on-chain fetch, then fall back to 18
+                                val resolvedDecimals = response.result.decimals
+                                    ?: try {
+                                        val rpcUrl = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
+                                        onChainTokenMetadataFetcher.fetchTokenMetadata(address, chainId, rpcUrl)?.decimals
+                                    } catch (e: Exception) {
+                                        Log.w("refreshTokensMetadata", "Failed on-chain decimals fetch for $address", e)
+                                        null
+                                    }
+
                                 TokenMetadataDto(
                                     name = clankerToken.name,
                                     symbol = clankerToken.symbol,
-                                    decimals = 18, // Default to 18 decimals for Clanker tokens
+                                    decimals = resolvedDecimals,
                                     logo = logoUrl
                                 )
                             } else {
@@ -129,8 +140,23 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         tokenGroups.add(tokenGroup)
                     }
 
+                    // If decimals is still null, try on-chain fetch before storing
+                    val finalMetadata = if (tokenMetadata.decimals == null) {
+                        Log.d("refreshTokensMetadata", "Decimals null for $address, trying on-chain fetch")
+                        val onChainDecimals = try {
+                            val rpcUrl = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
+                            onChainTokenMetadataFetcher.fetchTokenMetadata(address, chainId, rpcUrl)?.decimals
+                        } catch (e: Exception) {
+                            Log.w("refreshTokensMetadata", "Failed on-chain decimals fetch for $address", e)
+                            null
+                        }
+                        tokenMetadata.copy(decimals = onChainDecimals)
+                    } else {
+                        tokenMetadata
+                    }
+
                     // Create token metadata with resolved group ID
-                    tokenMetadata.asEntity(
+                    finalMetadata.asEntity(
                         contractAddress = address,
                         chainId = chainId,
                         groupId = resolvedGroupId
@@ -191,10 +217,21 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                                     ?.replace("gateway.pinata.cloud", "ipfs.io")
                                 
                                 // Create TokenMetadataDto from ClankerToken
+                                // Use Alchemy's decimals (often correct even when name/symbol are blank),
+                                // then try on-chain fetch, then fall back to 18
+                                val resolvedDecimals = response.result.decimals
+                                    ?: try {
+                                        val rpcUrl = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
+                                        onChainTokenMetadataFetcher.fetchTokenMetadata(address, network.chainId, rpcUrl)?.decimals
+                                    } catch (e: Exception) {
+                                        Log.w("refreshTokensMetadataByNetwork", "Failed on-chain decimals fetch for $address", e)
+                                        null
+                                    }
+
                                 TokenMetadataDto(
                                     name = clankerToken.name,
                                     symbol = clankerToken.symbol,
-                                    decimals = 18, // Default to 18 decimals for Clanker tokens
+                                    decimals = resolvedDecimals,
                                     logo = logoUrl
                                 )
                             } else {
@@ -229,8 +266,23 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         tokenGroups.add(tokenGroup)
                     }
 
+                    // If decimals is still null, try on-chain fetch before storing
+                    val finalMetadata = if (tokenMetadata.decimals == null) {
+                        Log.d("refreshTokensMetadataByNetwork", "Decimals null for $address, trying on-chain fetch")
+                        val onChainDecimals = try {
+                            val rpcUrl = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
+                            onChainTokenMetadataFetcher.fetchTokenMetadata(address, network.chainId, rpcUrl)?.decimals
+                        } catch (e: Exception) {
+                            Log.w("refreshTokensMetadataByNetwork", "Failed on-chain decimals fetch for $address", e)
+                            null
+                        }
+                        tokenMetadata.copy(decimals = onChainDecimals)
+                    } else {
+                        tokenMetadata
+                    }
+
                     // Create token metadata with resolved group ID
-                    tokenMetadata.asEntity(
+                    finalMetadata.asEntity(
                         contractAddress = address,
                         chainId = network.chainId,
                         groupId = resolvedGroupId
