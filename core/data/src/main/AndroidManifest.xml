@@ -46,5 +46,13 @@
             android:enabled="true"
             android:exported="true"
             android:grantUriPermissions="true" />
+
+        <!-- Content Provider for triggering price sync from external apps -->
+        <provider
+            android:name=".provider.PriceSyncContentProvider"
+            android:authorities="com.walletmanager.pricesync.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>
