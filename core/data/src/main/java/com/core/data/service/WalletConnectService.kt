@@ -463,7 +463,7 @@ class WalletConnectService : Service() {
                     val errorMsg = "WalletSDK is not available (probably running on emulator)"
                     Log.e(TAG, errorMsg)
                     showErrorNotification("Request Failed", errorMsg)
-                    walletConnectManager.rejectRequest(request.topic, request.requestId, "WalletSDK not available")
+                    walletConnectManager.rejectRequest(request.topic, request.requestId, "WalletSDK not available", -32603)
                     return@launch
                 }
                 
@@ -482,23 +482,51 @@ class WalletConnectService : Service() {
                         val errorMsg = "User declined chain switch to chain $chainId"
                         Log.w(TAG, errorMsg)
                         showErrorNotification("Chain Switch Declined", errorMsg)
-                        walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined chain switch")
+                        walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined chain switch", 4001)
                         return@withContext null
                     }
                     when (request.method) {
                         "personal_sign" -> {
                             val message = parsePersonalSignParams(request.params)
-                            val signature = sdk.signMessage(message, chainId)
+                            val decodedMessage = decodeHex(message)
+                            val signature = sdk.signMessage(decodedMessage, chainId)
+                            if (signature == "decline" || signature == WalletSDK.DECLINE) {
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined", 4001)
+                                return@withContext null
+                            }
+                            if (!signature.startsWith("0x")) {
+                                Log.e(TAG, "Invalid signature response: $signature")
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "Invalid signature from wallet", -32603)
+                                return@withContext null
+                            }
                             signature
                         }
                         "eth_sign" -> {
                             val message = parseEthSignParams(request.params)
                             val signature = sdk.signMessage(message, chainId)
+                            if (signature == "decline" || signature == WalletSDK.DECLINE) {
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined", 4001)
+                                return@withContext null
+                            }
+                            if (!signature.startsWith("0x")) {
+                                Log.e(TAG, "Invalid signature response: $signature")
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "Invalid signature from wallet", -32603)
+                                return@withContext null
+                            }
                             signature
                         }
                         "eth_signTypedData", "eth_signTypedData_v4" -> {
                             val typedData = parseTypedDataParams(request.params)
-                            val signature = sdk.signMessage(typedData, chainId)
+                            val signature = sdk.signMessage(typedData, chainId, "eth_signTypedData")
+                            if (signature == "decline" || signature == WalletSDK.DECLINE) {
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined", 4001)
+                                return@withContext null
+                            }
+                            if (!signature.startsWith("0x")) {
+                                Log.e(TAG, "Invalid signature response: $signature")
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "Invalid signature from wallet", -32603)
+                                return@withContext null
+                            }
                             signature
                         }
                         "eth_sendTransaction" -> {
@@ -528,9 +556,9 @@ class WalletConnectService : Service() {
                             }
                             
                             val gasProvider: suspend (WalletSDK.UserOperation) -> WalletSDK.GasEstimation = { userOp ->
-                                GasEstimationHelper.estimateGas(userOp, rpcUrl)
+                                GasEstimationHelper.estimateGas(userOp, bundlerUrl)
                             }
-                            
+
                             val userOpHash = sdk.sendTransaction(
                                 to = tx.to,
                                 value = valueInWei,
@@ -539,11 +567,20 @@ class WalletConnectService : Service() {
                                 chainId = chainId,
                                 gasProvider = gasProvider
                             )
-                            
+
                             Log.d(TAG, "UserOp submitted with hash: $userOpHash")
 
+                            if (userOpHash == "decline" || userOpHash == WalletSDK.DECLINE) {
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "User declined", 4001)
+                                return@withContext null
+                            }
+                            if (!userOpHash.startsWith("0x")) {
+                                Log.e(TAG, "Error from WalletSDK: $userOpHash")
+                                walletConnectManager.rejectRequest(request.topic, request.requestId, "Transaction failed: $userOpHash", -32603)
+                                return@withContext null
+                            }
+
                             Log.d(TAG, "Getting tx hash now")
-                            // Return plain string; SDK will serialize correctly.
                             val txHash = getTxHashForUserOp(
                                 bundlerRPC = bundlerUrl,
                                 chainId = chainId,
@@ -556,10 +593,7 @@ class WalletConnectService : Service() {
                             val capabilities = JSONObject().apply {
                                 val smartWalletCapabilities = JSONObject().apply {
                                     put("atomic", JSONObject().apply {
-                                        put("supported", true)
-                                    })
-                                    put("paymasterService", JSONObject().apply {
-                                        put("supported", false)
+                                        put("status", "supported")
                                     })
                                 }
                                 
@@ -579,7 +613,7 @@ class WalletConnectService : Service() {
                             val errorMsg = "Unsupported method: ${request.method}"
                             Log.w(TAG, errorMsg)
                             showErrorNotification("Unsupported Request", errorMsg)
-                            walletConnectManager.rejectRequest(request.topic, request.requestId, "Unsupported method")
+                            walletConnectManager.rejectRequest(request.topic, request.requestId, "Unsupported method: ${request.method}", -32601)
                             return@withContext null
                         }
                     }
@@ -594,7 +628,12 @@ class WalletConnectService : Service() {
                 val errorMsg = "Failed to process ${request.method}: ${e.message}"
                 Log.e(TAG, errorMsg, e)
                 showErrorNotification("Request Processing Failed", errorMsg)
-                walletConnectManager.rejectRequest(request.topic, request.requestId, "Processing failed: ${e.message}")
+                val errorCode = when {
+                    e.message?.contains("declined", ignoreCase = true) == true -> 4001
+                    e.message?.contains("timed out", ignoreCase = true) == true -> -32000
+                    else -> -32603
+                }
+                walletConnectManager.rejectRequest(request.topic, request.requestId, "Processing failed: ${e.message}", errorCode)
             }
         }
     }
@@ -796,6 +835,18 @@ class WalletConnectService : Service() {
     }
     
     // Helper functions
+
+    private fun decodeHex(hex: String): String {
+        val cleanHex = if (hex.startsWith("0x")) hex.substring(2) else hex
+        return try {
+            val bytes = cleanHex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+            String(bytes, Charsets.UTF_8)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to decode hex: $hex", e)
+            hex
+        }
+    }
+
     private fun getChainRpcUrl(chainId: Int): String {
         val alchemyKey = com.core.data.BuildConfig.ALCHEMY_API
         
@@ -842,14 +893,11 @@ class WalletConnectService : Service() {
     
     private fun parseTypedDataParams(params: String): String {
         return try {
-            val regex = """"(0x[a-fA-F0-9]+)"""".toRegex()
-            val matches = regex.findAll(params).map { it.groupValues[1] }.toList()
-            if (matches.size >= 2) {
-                matches[1]
-            } else {
-                params
-            }
+            val jsonArray = JSONArray(params)
+            // WalletConnect sends [address, typedDataJSON] - get the typed data at index 1
+            jsonArray.get(1).toString()
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse typed data params: $params", e)
             params
         }
     }

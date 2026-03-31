@@ -428,13 +428,13 @@ class WalletConnectManager(private val application: Application) {
         }
     }
     
-    fun rejectRequest(topic: String, requestId: Long, message: String = "User rejected") {
+    fun rejectRequest(topic: String, requestId: Long, message: String = "User rejected", code: Int = 4001) {
         try {
             val response = Wallet.Params.SessionRequestResponse(
                 sessionTopic = topic,
                 jsonRpcResponse = Wallet.Model.JsonRpcResponse.JsonRpcError(
                     id = requestId,
-                    code = 5000,
+                    code = code,
                     message = message
                 )
             )
