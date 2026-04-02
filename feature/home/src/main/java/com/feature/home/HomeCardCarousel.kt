@@ -70,7 +70,10 @@ import com.core.model.NFT
 import com.feature.home.screens.ErrorHomeScreen
 import com.feature.home.screens.HomeScreenContent
 import com.feature.home.screens.LoadingHomeScreen
+import androidx.activity.compose.BackHandler
+import com.core.model.TokenGroupAssetOverview
 import com.core.ui.BottomBar
+import com.core.ui.SelectionBottomBar
 import com.core.ui.showDgenToast
 import com.core.ui.util.PitagonsSans
 import com.core.ui.util.SpaceMono
@@ -107,6 +110,9 @@ internal fun HomeRoute2(
     val nftUiState: NftUiState by viewModel.nftState.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOffline.collectAsStateWithLifecycle()
     val hasTransfer by viewModel.hasTransfers.collectAsState()
+    val selectedToken by viewModel.selectedTokenForAction.collectAsStateWithLifecycle()
+    val isSelectionMode by viewModel.isSelectionMode.collectAsStateWithLifecycle()
+    val hiddenTokens by viewModel.hiddenTokensState.collectAsStateWithLifecycle()
     initializeFontMap(SpaceMono, PitagonsSans)
 
     HomeScreen2(
@@ -119,7 +125,15 @@ internal fun HomeRoute2(
         navigateToReceive = navigateToReceive,
         isOffline = isOffline,
         hasTransfer = hasTransfer,
-        navigateToPayMaster = navigateToPayMaster
+        navigateToPayMaster = navigateToPayMaster,
+        isSelectionMode = isSelectionMode,
+        selectedToken = selectedToken,
+        hiddenTokens = hiddenTokens,
+        onLongPressToken = viewModel::selectTokenForAction,
+        onHideToken = viewModel::hideSelectedToken,
+        onUnhideToken = viewModel::unhideSelectedToken,
+        onCopyToken = { viewModel.getSelectedTokenGroupId() },
+        onClearSelection = viewModel::clearSelection,
     )
 }
 
@@ -137,6 +151,14 @@ fun HomeScreen2(
     navigateToPayMaster: () -> Unit,
     isOffline: Boolean,
     hasTransfer: Boolean,
+    isSelectionMode: Boolean = false,
+    selectedToken: TokenGroupAssetOverview? = null,
+    hiddenTokens: List<TokenGroupAssetOverview> = emptyList(),
+    onLongPressToken: (TokenGroupAssetOverview) -> Unit = {},
+    onHideToken: () -> Unit = {},
+    onUnhideToken: () -> Unit = {},
+    onCopyToken: () -> String? = { null },
+    onClearSelection: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     // (Removed excessive recomposition logs)
@@ -162,6 +184,10 @@ fun HomeScreen2(
 
     val primaryColor = SystemColorManager.primaryColor
     val secondaryColor = SystemColorManager.secondaryColor
+
+    BackHandler(enabled = isSelectionMode) {
+        onClearSelection()
+    }
 
     Box (
         modifier = Modifier
@@ -241,8 +267,12 @@ fun HomeScreen2(
                                         modifier = Modifier.padding(bottom = 24.dp),
                                         tokens = nonZeroAssets,
                                         nfts = nfts,
+                                        hiddenTokens = hiddenTokens,
                                         navigateToSend = navigateToSend,
                                         navigateToSendNft = navigateToSendNft,
+                                        onLongPressToken = onLongPressToken,
+                                        isSelectionMode = isSelectionMode,
+                                        onClearSelection = onClearSelection,
                                         primaryColor = primaryColor,
                                         secondaryColor = secondaryColor
                                     )
@@ -319,34 +349,59 @@ fun HomeScreen2(
 
             )
 
-            BottomBar(
-                hasTransfer,
-                navigateToLog = {
-                    if (isOffline) {
-                        showDgenToast(
-                            context,
-                            message = "No internet connection!",
-                        )
-                    } else {
-                        navigateToLog()
-                        //navigateToSend(selectedTokenId.value,selectedTokenId.value)
-                    }
+            AnimatedContent(
+                targetState = isSelectionMode,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
                 },
-                navigateToReceive = {
-                    debouncedClickHandler {
-                        navigateToReceive()
-                    }
-                },
-                navigateToBuy = {
-                    debouncedClickHandler {
-                        navigateToSwap()
-                    }
-                },
-                navigateToPayMaster = {
-                    navigateToPayMaster()
-                },
-                primaryColor = primaryColor
-            )
+                label = "bottomBarSwap"
+            ) { inSelectionMode ->
+                if (inSelectionMode) {
+                    val isSelectedHidden = hiddenTokens.any { it.groupId == selectedToken?.groupId }
+                    SelectionBottomBar(
+                        onHide = {
+                            if (isSelectedHidden) onUnhideToken() else onHideToken()
+                        },
+                        onCopy = {
+                            val address = onCopyToken()
+                            if (address != null) {
+                                copyTextToClipboard(context, address)
+                                showDgenToast(context, message = "Address copied!")
+                            }
+                        },
+                        primaryColor = primaryColor,
+                        hideLabel = if (isSelectedHidden) "Unhide" else "Hide"
+                    )
+                } else {
+                    BottomBar(
+                        hasTransfer,
+                        navigateToLog = {
+                            if (isOffline) {
+                                showDgenToast(
+                                    context,
+                                    message = "No internet connection!",
+                                )
+                            } else {
+                                navigateToLog()
+                            }
+                        },
+                        navigateToReceive = {
+                            debouncedClickHandler {
+                                navigateToReceive()
+                            }
+                        },
+                        navigateToBuy = {
+                            debouncedClickHandler {
+                                navigateToSwap()
+                            }
+                        },
+                        navigateToPayMaster = {
+                            navigateToPayMaster()
+                        },
+                        primaryColor = primaryColor
+                    )
+                }
+            }
         }
     }
 

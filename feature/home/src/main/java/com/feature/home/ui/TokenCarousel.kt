@@ -6,7 +6,9 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -43,6 +45,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("RestrictedApi")
 @Composable
 fun TokenCardCarousel(
@@ -52,6 +55,7 @@ fun TokenCardCarousel(
     secondaryColor: Color,
     modifier: Modifier = Modifier,
     hasNfts: Boolean = true,
+    onLongPressToken: (TokenGroupAssetOverview) -> Unit = {},
 ) {
     var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
     var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
@@ -209,33 +213,41 @@ fun TokenCardCarousel(
                     animationSpec = tween(durationMillis = largeEnterDuration, easing = FastOutSlowInEasing), label = "translationAnimation"
                 )
 
-                    Card(
-                        isFirst = isFirstCard,
+                    Box(
                         modifier = Modifier
-                            .height(cardHeight)
-                            .fillMaxWidth()
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                                alpha = alphafactor
-                                rotationX = rotX
-                                translationY = frontCardTranslation
-                                cameraDistance = 32f * density
-                            },
-                        frontSide = {
-                            IdleView(
-                                amount = item.totalBalance,
-                                tokenName = item.symbol,
-                                fiatAmount = item.totalFiatBalance ?: 0.0,
-                                icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
-                                navigateToSend = { navigateToSend(item.groupId) },
-                                enableSend = item.totalBalance > 0,
-                                primaryColor = primaryColor,
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = { onLongPressToken(item) }
                             )
-                        },
-                        primaryColor = primaryColor,
-                        secondaryColor = secondaryColor
-                    )
+                    ) {
+                        Card(
+                            isFirst = isFirstCard,
+                            modifier = Modifier
+                                .height(cardHeight)
+                                .fillMaxWidth()
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                    alpha = alphafactor
+                                    rotationX = rotX
+                                    translationY = frontCardTranslation
+                                    cameraDistance = 32f * density
+                                },
+                            frontSide = {
+                                IdleView(
+                                    amount = item.totalBalance,
+                                    tokenName = item.symbol,
+                                    fiatAmount = item.totalFiatBalance ?: 0.0,
+                                    icon = if(item.logoUrl != null && item.logoUrl != "") item.logoUrl else "",
+                                    navigateToSend = { navigateToSend(item.groupId) },
+                                    enableSend = item.totalBalance > 0,
+                                    primaryColor = primaryColor,
+                                )
+                            },
+                            primaryColor = primaryColor,
+                            secondaryColor = secondaryColor
+                        )
+                    }
             }
         }
 

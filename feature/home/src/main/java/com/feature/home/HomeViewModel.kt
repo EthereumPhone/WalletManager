@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.core.data.repository.DEFAULT_EXCLUDE_LIST
+import com.core.datastore.ExclusionListManager
 import com.core.model.TokenGroupAssetOverview
 import com.core.ui.showDgenToast
 
@@ -53,6 +55,7 @@ class HomeViewModel @Inject constructor(
     private val transferRepository: TransferRepository,
     private val nftRepository: NftRepository,
     private val getAllGroupedTokensUsecase: GetAllGroupedTokensUsecase,
+    private val exclusionListManager: ExclusionListManager,
     private val savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -68,20 +71,35 @@ class HomeViewModel @Inject constructor(
 
 
     val groupedTokenAssetState: StateFlow<GroupedAssetsUiState> =
-        getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST).map {
-            if (it.isEmpty()) {
+        combine(
+            getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST),
+            exclusionListManager.exclusionList
+        ) { tokens, excluded ->
+            val filtered = tokens.filter { it.groupId !in excluded }
+            if (filtered.isEmpty()) {
                 GroupedAssetsUiState.Empty
             } else {
-                // Sort assets by totalFiatBalance in descending order (highest value first)
-                val sortedAssets = it.sortedBy { asset -> asset.totalFiatBalance ?: 0.0 }
+                val sortedAssets = filtered.sortedByDescending { asset -> asset.totalFiatBalance ?: 0.0 }
                 GroupedAssetsUiState.Success(sortedAssets)
             }
-
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = GroupedAssetsUiState.Loading
+        )
+
+    val hiddenTokensState: StateFlow<List<TokenGroupAssetOverview>> =
+        combine(
+            getAllGroupedTokensUsecase(DEFAULT_EXCLUDE_LIST),
+            exclusionListManager.exclusionList
+        ) { tokens, excluded ->
+            tokens.filter { it.groupId in excluded }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
         )
 
 
@@ -160,6 +178,43 @@ class HomeViewModel @Inject constructor(
 
     fun hideTokenOverlay() {
         _isTokenOverlayVisible.value = false
+    }
+
+    // Selection mode for hide/copy actions
+    private val _selectedTokenForAction = MutableStateFlow<TokenGroupAssetOverview?>(null)
+    val selectedTokenForAction: StateFlow<TokenGroupAssetOverview?> = _selectedTokenForAction.asStateFlow()
+
+    val isSelectionMode: StateFlow<Boolean> = _selectedTokenForAction.map { it != null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun selectTokenForAction(token: TokenGroupAssetOverview) {
+        _selectedTokenForAction.value = token
+    }
+
+    fun clearSelection() {
+        _selectedTokenForAction.value = null
+    }
+
+    fun hideSelectedToken() {
+        val token = _selectedTokenForAction.value ?: return
+        viewModelScope.launch {
+            exclusionListManager.addToExclusionList(token.groupId)
+            _selectedTokenForAction.value = null
+        }
+    }
+
+    fun unhideSelectedToken() {
+        val token = _selectedTokenForAction.value ?: return
+        viewModelScope.launch {
+            exclusionListManager.removeFromExclusionList(token.groupId)
+            _selectedTokenForAction.value = null
+        }
+    }
+
+    fun getSelectedTokenGroupId(): String? {
+        val token = _selectedTokenForAction.value
+        _selectedTokenForAction.value = null
+        return token?.groupId
     }
 
 

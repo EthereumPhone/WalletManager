@@ -29,7 +29,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.core.model.NFT
 import com.core.model.TokenGroupAssetOverview
 import com.core.ui.util.SpaceMono
@@ -37,66 +36,64 @@ import com.core.ui.util.dgenBlack
 import kotlinx.coroutines.launch
 
 /**
- * Horizontal pager that switches between Token and NFT carousels
+ * Horizontal pager that switches between Token, NFT, and Spam carousels
  */
 @Composable
 fun AssetPager(
     tokens: List<TokenGroupAssetOverview>,
     nfts: List<NFT>,
+    hiddenTokens: List<TokenGroupAssetOverview> = emptyList(),
     navigateToSend: (groupId: String) -> Unit,
     navigateToSendNft: (contractAddress: String, tokenId: String, chainId: Int) -> Unit,
+    onLongPressToken: (TokenGroupAssetOverview) -> Unit = {},
+    isSelectionMode: Boolean = false,
+    onClearSelection: () -> Unit = {},
     primaryColor: Color,
     secondaryColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val pages = mutableListOf("TOKENS")
+    if (nfts.isNotEmpty()) pages.add("NFTs")
+    if (hiddenTokens.isNotEmpty()) pages.add("SPAM")
+
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { if (nfts.isNotEmpty()) 2 else 1 }
+        pageCount = { pages.size }
     )
     val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Page indicator tabs (only show if NFTs exist)
-        if (nfts.isNotEmpty()) {
+        // Page indicator tabs (only show if more than one page)
+        if (pages.size > 1) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp)
-                    .background(dgenBlack)
-                ,
+                    .background(dgenBlack),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                PageTab(
-                    text = "TOKENS",
-                    isSelected = pagerState.currentPage == 0,
-                    primaryColor = primaryColor,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(0)
-                        }
+            ) {
+                pages.forEachIndexed { index, pageName ->
+                    if (index > 0) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(primaryColor.copy(alpha = 0.3f))
+                        )
                     }
-                )
-                
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .size(4.dp)
-                        .clip(CircleShape)
-                        .background(primaryColor.copy(alpha = 0.3f))
-                )
-                
-                PageTab(
-                    text = "NFTs",
-                    isSelected = pagerState.currentPage == 1,
-                    primaryColor = primaryColor,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(1)
+                    PageTab(
+                        text = pageName,
+                        isSelected = pagerState.currentPage == index,
+                        primaryColor = primaryColor,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
 
@@ -108,44 +105,35 @@ fun AssetPager(
                 .weight(1f),
             beyondViewportPageCount = 1
         ) { page ->
-            when (page) {
-                0 -> {
-                    // Token Carousel
-                    Box(
-                        modifier = Modifier
-                        .fillMaxSize()
-                    ) {
-                        TokenCardCarousel(
+            when (pages.getOrNull(page)) {
+                "TOKENS" -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        StackTokenCarousel(
                             assets = tokens,
                             navigateToSend = navigateToSend,
                             primaryColor = primaryColor,
                             secondaryColor = secondaryColor,
                             modifier = Modifier.fillMaxSize(),
-                            hasNfts = nfts.isNotEmpty()
+                            hasNfts = pages.size > 1,
+                            onLongPressToken = onLongPressToken,
+                            isSelectionMode = isSelectionMode,
+                            onClearSelection = onClearSelection
                         )
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-
-                                .height(48.dp) // Adjust thickness of fading border
+                                .height(48.dp)
                                 .align(Alignment.TopCenter)
                                 .background(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(dgenBlack, Color.Transparent)
                                     )
                                 )
-
-
                         )
                     }
                 }
-                1 -> {
-                    // NFT Carousel
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
+                "NFTs" -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         NftCardCarousel(
                             nfts = nfts,
                             navigateToSendNft = navigateToSendNft,
@@ -153,18 +141,42 @@ fun AssetPager(
                             secondaryColor = secondaryColor,
                             modifier = Modifier.fillMaxSize()
                         )
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp) // Adjust thickness of fading border
+                                .height(48.dp)
                                 .align(Alignment.TopCenter)
                                 .background(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(dgenBlack, Color.Transparent)
                                     )
                                 )
-
+                        )
+                    }
+                }
+                "SPAM" -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        StackTokenCarousel(
+                            assets = hiddenTokens,
+                            navigateToSend = {},
+                            primaryColor = primaryColor,
+                            secondaryColor = secondaryColor,
+                            modifier = Modifier.fillMaxSize(),
+                            hasNfts = pages.size > 1,
+                            onLongPressToken = onLongPressToken,
+                            isSelectionMode = isSelectionMode,
+                            onClearSelection = onClearSelection
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .align(Alignment.TopCenter)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(dgenBlack, Color.Transparent)
+                                    )
+                                )
                         )
                     }
                 }
@@ -172,7 +184,7 @@ fun AssetPager(
         }
 
         // Page dots indicator
-        if (nfts.isNotEmpty()) {
+        if (pages.size > 1) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -216,7 +228,7 @@ private fun PageTab(
         animationSpec = tween(200),
         label = "tabTextColor"
     )
-    
+
     Text(
         text = text,
         style = TextStyle(
