@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,9 +37,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.exp
 
 // ── Tuning constants ──────────────────────────────────────────────────
-private const val FRONT_SCALE = 0.85f
+private const val FRONT_SCALE = 0.82f
 private const val SCALE_PER_CARD = 0.03f
-private const val EDGE_OFFSET_PX = 24f
+private const val EDGE_OFFSET_PX = 36f
 private const val FADE_RATE = 0.5f
 private const val BASE_TILT = 5f
 private const val TILT_PER_CARD = 1.5f
@@ -69,14 +70,15 @@ fun StackTokenCarousel(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val containerHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
         // Drag sensitivity: how many pixels to drag for one full card swipe
-        val pxPerCard = containerHeightPx * 0.4f
+        // Higher value = less sensitive (need more finger travel per card)
+        val pxPerCard = containerHeightPx * 0.7f
 
         val draggableState = rememberDraggableState { delta ->
-            // delta > 0 = finger moving down = scroll to next card (increase position)
-            // delta < 0 = finger moving up = scroll to previous card (decrease position)
-            val newPos = (state.scrollPosition + delta / pxPerCard)
-                .coerceIn(0f, assets.lastIndex.toFloat())
-            coroutineScope.launch { state.snapTo(newPos) }
+            if (!isSelectionMode) {
+                val newPos = (state.scrollPosition + delta / pxPerCard)
+                    .coerceIn(0f, assets.lastIndex.toFloat())
+                coroutineScope.launch { state.snapTo(newPos) }
+            }
         }
 
         Box(
@@ -85,9 +87,11 @@ fun StackTokenCarousel(
                 .draggable(
                     state = draggableState,
                     orientation = Orientation.Vertical,
-                    onDragStopped = {
+                    onDragStopped = { velocity ->
+                        // Convert px/s velocity to scroll-position/s velocity
+                        val scrollVelocity = velocity / pxPerCard
                         coroutineScope.launch {
-                            state.animateScrollTo(state.currentIndex)
+                            state.fling(scrollVelocity)
                         }
                     }
                 )
@@ -117,6 +121,22 @@ fun StackTokenCarousel(
                         colors = listOf(dgenBlack, Color.Transparent)
                     )
                 )
+        )
+
+        // Scrollbar overlaid on the right
+        CarouselScrollbar(
+            itemCount = assets.size,
+            currentPosition = state.scrollPosition,
+            onScrollTo = { position ->
+                coroutineScope.launch {
+                    state.snapTo(position)
+                }
+            },
+            primaryColor = primaryColor,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight(0.6f)
+                .zIndex(11f)
         )
     }
 }
