@@ -14,11 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -29,10 +25,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.core.model.NFT
 import com.core.model.TokenGroupAssetOverview
 import com.core.ui.Card
 import com.core.ui.util.dgenBlack
 import com.core.ui.views.IdleView
+import com.core.ui.views.NftCardView
 import kotlinx.coroutines.launch
 import kotlin.math.exp
 
@@ -46,37 +44,37 @@ private const val TILT_PER_CARD = 1.5f
 private const val MAX_STACK_BEHIND = 4
 private const val CAMERA_DIST_FACTOR = 32f
 
+// ─────────────────────────────────────────────────────────────────────
+// Generic stack carousel
+// ─────────────────────────────────────────────────────────────────────
+
 @OptIn(ExperimentalFoundationApi::class)
-@SuppressLint("RestrictedApi")
 @Composable
-fun StackTokenCarousel(
-    assets: List<TokenGroupAssetOverview>,
-    navigateToSend: (groupId: String) -> Unit,
+private fun <T> StackCardCarousel(
+    items: List<T>,
     primaryColor: Color,
     secondaryColor: Color,
     modifier: Modifier = Modifier,
-    hasNfts: Boolean = true,
-    onLongPressToken: (TokenGroupAssetOverview) -> Unit = {},
     isSelectionMode: Boolean = false,
+    onLongPress: (T) -> Unit = {},
     onClearSelection: () -> Unit = {},
+    cardContent: @Composable (item: T, isFrontCard: Boolean) -> Unit,
 ) {
     val state = rememberStackCarouselState(initialPosition = 0f)
-    state.itemCount = assets.size
+    state.itemCount = items.size
 
     val coroutineScope = rememberCoroutineScope()
 
-    if (assets.isEmpty()) return
+    if (items.isEmpty()) return
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val containerHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
-        // Drag sensitivity: how many pixels to drag for one full card swipe
-        // Higher value = less sensitive (need more finger travel per card)
         val pxPerCard = containerHeightPx * 0.7f
 
         val draggableState = rememberDraggableState { delta ->
             if (!isSelectionMode) {
                 val newPos = (state.scrollPosition + delta / pxPerCard)
-                    .coerceIn(0f, assets.lastIndex.toFloat())
+                    .coerceIn(0f, items.lastIndex.toFloat())
                 coroutineScope.launch { state.snapTo(newPos) }
             }
         }
@@ -87,8 +85,8 @@ fun StackTokenCarousel(
                 .draggable(
                     state = draggableState,
                     orientation = Orientation.Vertical,
+                    enabled = !isSelectionMode,
                     onDragStopped = { velocity ->
-                        // Convert px/s velocity to scroll-position/s velocity
                         val scrollVelocity = velocity / pxPerCard
                         coroutineScope.launch {
                             state.fling(scrollVelocity)
@@ -96,16 +94,16 @@ fun StackTokenCarousel(
                     }
                 )
         ) {
-            CardStackLayout(
-                assets = assets,
+            StackLayout(
+                items = items,
                 scrollPosition = state.scrollPosition,
                 containerHeightPx = containerHeightPx,
-                navigateToSend = navigateToSend,
-                onLongPressToken = onLongPressToken,
                 isSelectionMode = isSelectionMode,
+                onLongPress = onLongPress,
                 onClearSelection = onClearSelection,
                 primaryColor = primaryColor,
                 secondaryColor = secondaryColor,
+                cardContent = cardContent,
             )
         }
 
@@ -123,14 +121,12 @@ fun StackTokenCarousel(
                 )
         )
 
-        // Scrollbar overlaid on the right
+        // Scrollbar
         CarouselScrollbar(
-            itemCount = assets.size,
+            itemCount = items.size,
             currentPosition = state.scrollPosition,
             onScrollTo = { position ->
-                coroutineScope.launch {
-                    state.snapTo(position)
-                }
+                coroutineScope.launch { state.snapTo(position) }
             },
             primaryColor = primaryColor,
             modifier = Modifier
@@ -142,64 +138,45 @@ fun StackTokenCarousel(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-@SuppressLint("RestrictedApi")
 @Composable
-private fun CardStackLayout(
-    assets: List<TokenGroupAssetOverview>,
+private fun <T> StackLayout(
+    items: List<T>,
     scrollPosition: Float,
     containerHeightPx: Float,
-    navigateToSend: (groupId: String) -> Unit,
-    onLongPressToken: (TokenGroupAssetOverview) -> Unit,
     isSelectionMode: Boolean,
+    onLongPress: (T) -> Unit,
     onClearSelection: () -> Unit,
     primaryColor: Color,
     secondaryColor: Color,
+    cardContent: @Composable (item: T, isFrontCard: Boolean) -> Unit,
 ) {
     val currentIdx = scrollPosition.toInt()
-    val fractional = scrollPosition - currentIdx  // 0..1 progress swiping current card away
+    val fractional = scrollPosition - currentIdx
 
-    // Show current card + up to MAX_STACK_BEHIND cards after it in the list
     val firstCard = currentIdx
-    val lastCard = (currentIdx + MAX_STACK_BEHIND).coerceAtMost(assets.lastIndex)
-
-    // Render back-to-front so the front card draws on top
+    val lastCard = (currentIdx + MAX_STACK_BEHIND).coerceAtMost(items.lastIndex)
     val cardsToRender = (lastCard downTo firstCard).toList()
 
     Layout(
         content = {
             for (index in cardsToRender) {
-                val item = assets[index]
-                val depth = index - currentIdx  // 0 = front, 1+ = behind
-
-                // Effective depth shifts as user scrolls between cards
+                val item = items[index]
+                val depth = index - currentIdx
                 val effectiveDepth = (depth - fractional).coerceAtLeast(0f)
 
-                // ── Scale ──
                 val scale = (FRONT_SCALE - SCALE_PER_CARD * effectiveDepth).coerceAtLeast(0.4f)
-
-                // ── Alpha ──
                 val alpha = if (depth == 0) {
-                    // Front card fades slightly as it swipes away
                     (1f - fractional * 0.3f).coerceIn(0f, 1f)
                 } else {
                     exp(-FADE_RATE * effectiveDepth).coerceIn(0f, 1f)
                 }
-
-                // ── Translation Y ──
                 val translationY = if (depth == 0) {
-                    // Front card: swipe down as user scrolls (finger up → card down)
                     fractional * containerHeightPx
                 } else {
-                    // Stacked cards: peek upward behind the front card
                     -EDGE_OFFSET_PX * effectiveDepth
                 }
-
-                // ── Rotation X ──
                 val rotationX = -(BASE_TILT + TILT_PER_CARD * effectiveDepth)
-
-                // ── Z-index ──
                 val zIdx = (MAX_STACK_BEHIND + 1f) - effectiveDepth
-
                 val isFrontCard = depth == 0 && fractional < 0.3f
 
                 Box(
@@ -211,7 +188,7 @@ private fun CardStackLayout(
                                 if (isSelectionMode && isFrontCard) onClearSelection()
                             },
                             onLongClick = {
-                                if (!isSelectionMode && isFrontCard) onLongPressToken(item)
+                                if (!isSelectionMode && isFrontCard) onLongPress(item)
                             }
                         )
                         .graphicsLayer {
@@ -226,19 +203,7 @@ private fun CardStackLayout(
                     Card(
                         isFirst = isFrontCard,
                         modifier = Modifier.fillMaxWidth(),
-                        frontSide = {
-                            IdleView(
-                                amount = item.totalBalance,
-                                tokenName = item.symbol,
-                                fiatAmount = item.totalFiatBalance ?: 0.0,
-                                icon = if (!item.logoUrl.isNullOrEmpty()) item.logoUrl else "",
-                                navigateToSend = {
-                                    if (isFrontCard) navigateToSend(item.groupId)
-                                },
-                                enableSend = item.totalBalance > 0 && isFrontCard,
-                                primaryColor = primaryColor,
-                            )
-                        },
+                        frontSide = { cardContent(item, isFrontCard) },
                         primaryColor = primaryColor,
                         secondaryColor = secondaryColor
                     )
@@ -250,14 +215,83 @@ private fun CardStackLayout(
         val cardWidth = constraints.maxWidth
         val cardHeight = (cardWidth * 9f / 16f).toInt()
         val cardConstraints = Constraints.fixed(cardWidth, cardHeight)
-
         val placeables = measurables.map { it.measure(cardConstraints) }
 
         layout(constraints.maxWidth, constraints.maxHeight) {
             val centerY = (constraints.maxHeight - cardHeight) / 2
-            placeables.forEach { placeable ->
-                placeable.place(0, centerY)
-            }
+            placeables.forEach { it.place(0, centerY) }
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Token carousel
+// ─────────────────────────────────────────────────────────────────────
+
+@SuppressLint("RestrictedApi")
+@Composable
+fun StackTokenCarousel(
+    assets: List<TokenGroupAssetOverview>,
+    navigateToSend: (groupId: String) -> Unit,
+    primaryColor: Color,
+    secondaryColor: Color,
+    modifier: Modifier = Modifier,
+    hasNfts: Boolean = true,
+    onLongPressToken: (TokenGroupAssetOverview) -> Unit = {},
+    isSelectionMode: Boolean = false,
+    onClearSelection: () -> Unit = {},
+) {
+    StackCardCarousel(
+        items = assets,
+        primaryColor = primaryColor,
+        secondaryColor = secondaryColor,
+        modifier = modifier,
+        isSelectionMode = isSelectionMode,
+        onLongPress = onLongPressToken,
+        onClearSelection = onClearSelection,
+    ) { item, isFrontCard ->
+        IdleView(
+            amount = item.totalBalance,
+            tokenName = item.symbol,
+            fiatAmount = item.totalFiatBalance ?: 0.0,
+            icon = if (!item.logoUrl.isNullOrEmpty()) item.logoUrl else "",
+            navigateToSend = {
+                if (isFrontCard) navigateToSend(item.groupId)
+            },
+            enableSend = item.totalBalance > 0 && isFrontCard,
+            primaryColor = primaryColor,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// NFT carousel
+// ─────────────────────────────────────────────────────────────────────
+
+@Composable
+fun StackNftCarousel(
+    nfts: List<NFT>,
+    navigateToSendNft: (contractAddress: String, tokenId: String, chainId: Int) -> Unit,
+    primaryColor: Color,
+    secondaryColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    StackCardCarousel(
+        items = nfts,
+        primaryColor = primaryColor,
+        secondaryColor = secondaryColor,
+        modifier = modifier,
+    ) { nft, isFrontCard ->
+        NftCardView(
+            nftName = nft.name,
+            collectionName = nft.collectionName,
+            imageUrl = nft.imageUrl ?: nft.thumbnailUrl,
+            floorPriceEth = nft.floorPriceEth,
+            floorPriceUsd = nft.floorPriceUsd,
+            navigateToSendNft = {
+                if (isFrontCard) navigateToSendNft(nft.contractAddress, nft.tokenId, nft.chainId)
+            },
+            primaryColor = primaryColor,
+        )
     }
 }

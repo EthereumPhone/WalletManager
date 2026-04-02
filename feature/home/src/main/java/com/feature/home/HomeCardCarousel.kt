@@ -233,10 +233,37 @@ fun HomeScreen2(
                 } else {
                     when(groupedAssetsState){
                         is GroupedAssetsUiState.Empty -> {
-                            EmptyHomeScreen(
-                                gifEnabledLoader = gifEnabledLoader,
-                                primaryColor = primaryColor
-                            )
+                            if (hiddenTokens.isNotEmpty()) {
+                                // All visible tokens are hidden — show AssetPager with only the Spam tab
+                                val nfts = when (nftUiState) {
+                                    is NftUiState.Success -> nftUiState.nfts
+                                    else -> emptyList()
+                                }
+                                HomeScreenContent(
+                                    areAssetsVisible = true,
+                                    primaryContent = {
+                                        AssetPager(
+                                            modifier = Modifier.padding(bottom = 24.dp),
+                                            tokens = emptyList(),
+                                            nfts = nfts,
+                                            hiddenTokens = hiddenTokens,
+                                            navigateToSend = navigateToSend,
+                                            navigateToSendNft = navigateToSendNft,
+                                            onLongPressToken = onLongPressToken,
+                                            isSelectionMode = isSelectionMode,
+                                            onClearSelection = onClearSelection,
+                                            primaryColor = primaryColor,
+                                            secondaryColor = secondaryColor
+                                        )
+                                    },
+                                    secondaryContent = {}
+                                )
+                            } else {
+                                EmptyHomeScreen(
+                                    gifEnabledLoader = gifEnabledLoader,
+                                    primaryColor = primaryColor
+                                )
+                            }
                             Log.d("DEBUG","AssetsUiState.EMPTY")
                         }
                         is GroupedAssetsUiState.Error -> {
@@ -261,7 +288,7 @@ fun HomeScreen2(
                                 else -> emptyList()
                             }
                             HomeScreenContent(
-                                areAssetsVisible = nonZeroAssets.isNotEmpty() || nfts.isNotEmpty(),
+                                areAssetsVisible = nonZeroAssets.isNotEmpty() || nfts.isNotEmpty() || hiddenTokens.isNotEmpty(),
                                 primaryContent = {
                                     AssetPager(
                                         modifier = Modifier.padding(bottom = 24.dp),
@@ -361,15 +388,6 @@ fun HomeScreen2(
                     SelectionBottomBar(
                         onHide = {
                             if (isSelectedHidden) onUnhideToken() else onHideToken()
-                        },
-                        onCopy = {
-                            val address = onCopyToken()
-                            if (address != null) {
-                                copyTextToClipboard(context, address)
-                                showDgenToast(context, message = "Address copied!")
-                            } else {
-                                showDgenToast(context, message = "Native token — no contract address")
-                            }
                         },
                         primaryColor = primaryColor,
                         hideLabel = if (isSelectedHidden) "Unhide" else "Hide"

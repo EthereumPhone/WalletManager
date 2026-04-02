@@ -134,7 +134,7 @@ fun AssetPager(
                 }
                 "NFTs" -> {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        NftCardCarousel(
+                        StackNftCarousel(
                             nfts = nfts,
                             navigateToSendNft = navigateToSendNft,
                             primaryColor = primaryColor,
