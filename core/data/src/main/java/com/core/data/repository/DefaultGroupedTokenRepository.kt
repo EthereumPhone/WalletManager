@@ -47,6 +47,7 @@ class DefaultGroupedTokenRepository @Inject constructor(
                         totalFiatBalance = it.totalBalanceInUsd,
                         formattedFiatBalance = it.formattedUsdBalance,
                         exchangeCurrency = "usd",
+                        canonicalAddress = it.tokenGroup.canonicalAddress,
                     )
                 }
             }

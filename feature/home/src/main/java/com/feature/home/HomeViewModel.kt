@@ -211,10 +211,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getSelectedTokenGroupId(): String? {
+    fun getSelectedTokenAddress(): String? {
         val token = _selectedTokenForAction.value
         _selectedTokenForAction.value = null
-        return token?.groupId
+        return token?.canonicalAddress
     }
 
 

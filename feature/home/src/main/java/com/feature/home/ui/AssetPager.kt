@@ -68,8 +68,8 @@ fun AssetPager(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
-                    .background(dgenBlack),
+                    .background(dgenBlack)
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -183,8 +183,8 @@ fun AssetPager(
             }
         }
 
-        // Page dots indicator
-        if (pages.size > 1) {
+        // Page dots indicator (hide during selection mode)
+        if (pages.size > 1 && !isSelectionMode) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

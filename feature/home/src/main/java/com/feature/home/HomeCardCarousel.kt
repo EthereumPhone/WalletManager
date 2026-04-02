@@ -132,7 +132,7 @@ internal fun HomeRoute2(
         onLongPressToken = viewModel::selectTokenForAction,
         onHideToken = viewModel::hideSelectedToken,
         onUnhideToken = viewModel::unhideSelectedToken,
-        onCopyToken = { viewModel.getSelectedTokenGroupId() },
+        onCopyToken = { viewModel.getSelectedTokenAddress() },
         onClearSelection = viewModel::clearSelection,
     )
 }
@@ -367,6 +367,8 @@ fun HomeScreen2(
                             if (address != null) {
                                 copyTextToClipboard(context, address)
                                 showDgenToast(context, message = "Address copied!")
+                            } else {
+                                showDgenToast(context, message = "Native token — no contract address")
                             }
                         },
                         primaryColor = primaryColor,

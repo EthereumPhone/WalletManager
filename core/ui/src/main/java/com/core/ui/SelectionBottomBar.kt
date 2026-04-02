@@ -1,6 +1,5 @@
 package com.core.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +24,6 @@ fun SelectionBottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(primaryColor.copy(alpha = 0.15f))
             .padding(start = 8.dp, end = 8.dp, top = 8.dp),
         horizontalArrangement = Arrangement.Center
     ) {

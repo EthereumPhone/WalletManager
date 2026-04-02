@@ -14,6 +14,7 @@ data class TokenGroupAssetOverview(
     val totalFiatBalance: Double? = 0.0,
     val formattedFiatBalance: String? = "0.00",
     val exchangeCurrency: String? = "usd",
+    val canonicalAddress: String? = null,
 )
 
 
