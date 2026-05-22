@@ -12,7 +12,9 @@ data class TokenBalanceJsonResponse(
 ) {
     data class Result(
         val address: String,
-        val tokenBalances: List<TokenBalanceDto>
+        val tokenBalances: List<TokenBalanceDto>,
+        // Present when the result is paginated; pass back to fetch the next page.
+        val pageKey: String? = null
     )
 
 }

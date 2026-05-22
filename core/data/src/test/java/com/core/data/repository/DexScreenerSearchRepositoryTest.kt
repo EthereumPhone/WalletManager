@@ -214,6 +214,8 @@ class DexScreenerSearchRepositoryTest {
 
         override fun getTokensMetadata(chainId: Int): Flow<List<TokenMetadata>> = flowOf(emptyList())
 
+        override suspend fun lookupTokenByAddress(contractAddress: String, chainId: Int): TokenMetadata? = null
+
         override suspend fun refreshTokensMetadata(contractAddresses: List<String>, chainId: Int) {}
 
         override suspend fun refreshTokensMetadataByNetwork(contractAddresses: List<String>, network: NetworkChain) {}

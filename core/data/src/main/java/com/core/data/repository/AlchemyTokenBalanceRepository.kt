@@ -133,7 +133,6 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         Log.d("TonkenBalance API", "update started")
 
 
-        val requestBody = TokenBalanceRequestBody.allErc20Tokens(toAddress)
         val spam = spamTokens.asSequence().map { it.lowercase() }.toSet()
         val networks = NetworkChain.getAllNetworkChains()
 
@@ -145,9 +144,7 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                         val url = "https://${network.chainName}.g.alchemy.com/v2/$apiKey"
 
                         try {
-                            tokenBalanceApi
-                                .getTokenBalances(url, requestBody)
-                                .result.tokenBalances
+                            fetchAllErc20Balances(url, toAddress)
                                 .asSequence()
                                 .filter { it.contractAddress.lowercase() !in spam }
                                 .map { it.asEntity(network.chainId) }
@@ -178,18 +175,37 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val apiKey = chainToApiKey(network!!.chainName)
             async {
-                val results = tokenBalanceApi.getTokenBalances(
-                    "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey",
-                    TokenBalanceRequestBody.allErc20Tokens(toAddress)
-                ).result.tokenBalances
+                val url = "https://${network!!.chainName}.g.alchemy.com/v2/$apiKey"
+                val results = fetchAllErc20Balances(url, toAddress)
                     .filter { it.contractAddress !in spamTokens }
                     .map { it.asEntity(network!!.chainId) }
                 tokenBalanceDao.upsertTokenBalances(results)
-                
+
                 // Fetch metadata for tokens that don't have it
                 fetchMissingMetadataOnChain()
             }
         }
+    }
+
+    /**
+     * Fetches every ERC20 balance for [toAddress] from the Alchemy endpoint at [url],
+     * following pagination. alchemy_getTokenBalances returns at most 100 balances per page
+     * and a [pageKey] when more remain; reading only the first page silently drops the rest,
+     * which hides tokens for wallets holding more than 100 ERC20s.
+     */
+    private suspend fun fetchAllErc20Balances(url: String, toAddress: String): List<TokenBalanceDto> {
+        val all = mutableListOf<TokenBalanceDto>()
+        var pageKey: String? = null
+        var pages = 0
+        do {
+            val result = tokenBalanceApi
+                .getTokenBalances(url, TokenBalanceRequestBody.allErc20Tokens(toAddress, pageKey))
+                .result
+            all += result.tokenBalances
+            pageKey = result.pageKey
+            pages++
+        } while (pageKey != null && pages < MAX_BALANCE_PAGES)
+        return all
     }
     
     /**
@@ -284,6 +300,11 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         val bySymbol = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
         if (bySymbol != null) return bySymbol
         return "${chainId}_${address.lowercase()}"
+    }
+
+    companion object {
+        // Safety cap on pagination (100 balances/page) to bound a single refresh.
+        private const val MAX_BALANCE_PAGES = 50
     }
 
 }
