@@ -9,6 +9,7 @@ import com.core.database.dao.TokenGroupDao
 import com.core.database.dao.TokenMetadataDao
 import com.core.database.model.erc20.CompositeToken
 import com.core.database.model.erc20.TokenBalanceEntity
+import com.core.database.model.erc20.TokenExchangeEntity
 import com.core.database.model.erc20.TokenGroupEntity
 import com.core.database.model.erc20.TokenMetadataEntity
 import com.core.database.model.erc20.asExternalModule
@@ -52,18 +53,26 @@ class Web3jNetworkBalanceRepository @Inject constructor(
     private val tokenExchangeRepository: DefaultExchangeRepository,
     private val tokenExchangeDao: TokenExchangeDao
 ): NetworkBalanceRepository {
+    // Distinct native gas-token tickers across all supported chains (ETH, MATIC, BNB, AVAX, MON, APE).
+    private val nativeSymbols: List<String> =
+        NetworkChain.getAllNetworkChains().map { it.nativeSymbol }.distinct()
+
+    private fun List<TokenExchangeEntity>.latestUsdRateBySymbol(): Map<String, Double> =
+        groupBy { it.symbol }
+            .mapValues { (_, rows) -> rows.maxByOrNull { it.timestamp }?.value ?: 0.0 }
+
     override fun getNetworkTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
             .map { items ->
-                items.map {
-                    val name = NetworkChain.getNetworkByChainId(it.chainId)?.name ?: ""
+                items.map { tb ->
+                    val net = NetworkChain.getNetworkByChainId(tb.chainId)
                     TokenAsset(
-                        address = it.contractAddress,
-                        chainId = it.chainId,
-                        symbol = name,
-                        name = name,
-                        balance = formatSmallBalance(it.tokenBalance.toDouble()),
-                        decimals = 18
+                        address = tb.contractAddress,
+                        chainId = tb.chainId,
+                        symbol = net?.nativeSymbol ?: "",
+                        name = net?.nativeName ?: "",
+                        balance = formatSmallBalance(tb.tokenBalance.toDouble()),
+                        decimals = net?.nativeDecimals ?: 18
                     )
                 }
             }
@@ -71,90 +80,83 @@ class Web3jNetworkBalanceRepository @Inject constructor(
     override fun getGroupedNetworkTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() })
             .map { items ->
-                val grouped = items.groupBy { it.chainId == 137 }
-
-                grouped.map { (isPolygon, assets) ->
-                    val name = if(isPolygon) "MATIC" else "ETH"
-                    val sum = assets.sumOf { it.tokenBalance}
-
-                    TokenAsset(
-                        address = if (isPolygon) "network_matic" else "network_eth",
-                        chainId = if (isPolygon) 137 else 1,
-                        symbol = name,
-                        name = name,
-                        balance = formatSmallBalance(sum.toDouble()),
-                        logoUrl = if (isPolygon) "MATIC" else "ETH",
-                        decimals = 18
-                    )
-                }
+                // Group native balances by their gas-token ticker (ETH across all its chains,
+                // MATIC, BNB, AVAX, MON, APE...), summing each into a single asset.
+                items.groupBy { NetworkChain.getNetworkByChainId(it.chainId)?.nativeSymbol ?: "ETH" }
+                    .map { (symbol, assets) ->
+                        val canonical = NetworkChain.getAllNetworkChains()
+                            .filter { it.nativeSymbol == symbol }.minByOrNull { it.chainId }
+                        val sum = assets.sumOf { it.tokenBalance }
+                        TokenAsset(
+                            address = "network_${symbol.lowercase()}",
+                            chainId = canonical?.chainId ?: assets.first().chainId,
+                            symbol = symbol,
+                            name = symbol,
+                            balance = formatSmallBalance(sum.toDouble()),
+                            logoUrl = symbol,
+                            decimals = canonical?.nativeDecimals ?: 18
+                        )
+                    }
             }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getGroupedNetworkTokensOverview(): Flow<List<TokenGroupAssetOverview>> =
-        // Combine token balances with exchange rate changes to ensure proper Flow updates
+        // Combine balances with the latest USD rate for every native ticker so the flow
+        // re-emits when prices change.
         combine(
             tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() }),
-            tokenExchangeDao.getExchangeBySymbolFlow("ETH", "usd"),
-            tokenExchangeDao.getExchangeBySymbolFlow("MATIC", "usd")
-        ) { items, ethExchange, maticExchange ->
-            val grouped = items.groupBy { it.chainId == 137 }
-            
-            grouped.mapNotNull { (isPolygon, assets) ->
-                if (assets.isEmpty()) return@mapNotNull null
-                
-                val symbol = if(isPolygon) "MATIC" else "ETH"
-                val sum = assets.sumOf { it.tokenBalance }
-                val totalBalance = sum.toDouble()
+            tokenExchangeDao.observeExchangesBySymbols(nativeSymbols, "usd")
+        ) { items, exchanges ->
+            val rates = exchanges.latestUsdRateBySymbol()
 
-                val exchangeEntity = if (isPolygon) maticExchange else ethExchange
-                val exchangeRate = exchangeEntity?.value ?: 0.0
+            items.groupBy { NetworkChain.getNetworkByChainId(it.chainId)?.nativeSymbol ?: "ETH" }
+                .mapNotNull { (symbol, assets) ->
+                    if (assets.isEmpty()) return@mapNotNull null
 
-                // Calculate fiat balance
-                val totalFiatBalance = if (exchangeRate > 0) totalBalance * exchangeRate else 0.0
+                    val totalBalance = assets.sumOf { it.tokenBalance }.toDouble()
+                    val exchangeRate = rates[symbol] ?: 0.0
+                    val totalFiatBalance = if (exchangeRate > 0) totalBalance * exchangeRate else 0.0
 
-                TokenGroupAssetOverview(
-                    groupId = if (isPolygon) "network_matic" else "network_eth",
-                    symbol = symbol,
-                    name = symbol,
-                    totalBalance = totalBalance,
-                    formattedBalance = formatSmallBalance(totalBalance).toString(),
-                    logoUrl = symbol,
-                    totalFiatBalance = if (exchangeRate > 0) totalFiatBalance else null,
-                    formattedFiatBalance = if (exchangeRate > 0) String.format("%.2f", totalFiatBalance) else null,
-                    exchangeCurrency = "usd"
-                )
-            }.filter { it.totalBalance != 0.0 }
+                    TokenGroupAssetOverview(
+                        groupId = "network_${symbol.lowercase()}",
+                        symbol = symbol,
+                        name = symbol,
+                        totalBalance = totalBalance,
+                        formattedBalance = formatSmallBalance(totalBalance).toString(),
+                        logoUrl = symbol,
+                        totalFiatBalance = if (exchangeRate > 0) totalFiatBalance else null,
+                        formattedFiatBalance = if (exchangeRate > 0) String.format("%.2f", totalFiatBalance) else null,
+                        exchangeCurrency = "usd"
+                    )
+                }.filter { it.totalBalance != 0.0 }
         }
 
     override fun getNetworkTokensWithExchange(): Flow<List<TokenAssetWithPrice>> =
         // Return individual network tokens per chain with exchange rates
         combine(
             tokenBalanceDao.getTokenBalances(NetworkChain.getAllNetworkChains().map { it.chainId.toString() }),
-            tokenExchangeDao.getExchangeBySymbolFlow("ETH", "usd"),
-            tokenExchangeDao.getExchangeBySymbolFlow("MATIC", "usd")
-        ) { items, ethExchange, maticExchange ->
+            tokenExchangeDao.observeExchangesBySymbols(nativeSymbols, "usd")
+        ) { items, exchanges ->
+            val rates = exchanges.latestUsdRateBySymbol()
             items.mapNotNull { tokenBalance ->
-                val isPolygon = tokenBalance.chainId == 137
-                val symbol = if (isPolygon) "MATIC" else "ETH"
-                val name = if (isPolygon) "Polygon" else "Ethereum"
+                val net = NetworkChain.getNetworkByChainId(tokenBalance.chainId) ?: return@mapNotNull null
                 val balance = tokenBalance.tokenBalance.toDouble()
 
                 // Skip zero balances
                 if (balance == 0.0) return@mapNotNull null
 
-                val exchangeEntity = if (isPolygon) maticExchange else ethExchange
-                val exchangeRate = exchangeEntity?.value ?: 0.0
+                val exchangeRate = rates[net.nativeSymbol] ?: 0.0
                 val fiatAmount = if (exchangeRate > 0) balance * exchangeRate else 0.0
 
                 TokenAssetWithPrice(
                     // Use chainId as address for native tokens (matches existing convention)
                     address = tokenBalance.chainId.toString(),
                     chainId = tokenBalance.chainId,
-                    symbol = symbol,
-                    name = name,
+                    symbol = net.nativeSymbol,
+                    name = net.nativeName,
                     balance = balance,
-                    decimals = 18,
-                    logoUrl = symbol,
+                    decimals = net.nativeDecimals,
+                    logoUrl = net.nativeSymbol,
                     swappable = true,
                     fiatAmount = fiatAmount
                 )
@@ -180,63 +182,33 @@ class Web3jNetworkBalanceRepository @Inject constructor(
             val tokenGroups = mutableListOf<TokenGroupEntity>()
             val tokenMetadata = mutableListOf<TokenMetadataEntity>()
             
-            // Group ETH and MATIC separately
-            val ethNetworks = networks.filter { it.chainId != 137 }
-            val maticNetwork = networks.find { it.chainId == 137 }
-            
-            // Create ETH group if we have any ETH networks
-            if (ethNetworks.isNotEmpty()) {
+            // One group per distinct native currency (ETH spans all its chains; MATIC, BNB,
+            // AVAX, MON, APE...), with one metadata row per chain pointing to its native group.
+            networks.groupBy { it.nativeSymbol }.forEach { (symbol, chainsForSymbol) ->
+                val canonical = chainsForSymbol.minByOrNull { it.chainId } ?: return@forEach
                 tokenGroups.add(
                     TokenGroupEntity(
-                        groupId = "network_eth",
-                        canonicalChainId = 1,
-                        canonicalAddress = "1",
-                        symbol = "ETH",
-                        name = "ETH"
+                        groupId = canonical.nativeGroupId,
+                        canonicalChainId = canonical.chainId,
+                        canonicalAddress = canonical.chainId.toString(),
+                        symbol = symbol,
+                        name = canonical.nativeName
                     )
                 )
-                
-                // Create metadata for each ETH network
-                ethNetworks.forEach { network ->
+                chainsForSymbol.forEach { network ->
                     tokenMetadata.add(
                         TokenMetadataEntity(
                             contractAddress = network.chainId.toString(),
                             chainId = network.chainId,
-                            decimals = 18,
-                            name = "ETH",
-                            symbol = "ETH",
-                            logo = "ETH",
+                            decimals = network.nativeDecimals,
+                            name = network.nativeName,
+                            symbol = symbol,
+                            logo = symbol,
                             swappable = true,
-                            groupId = "network_eth"
+                            groupId = canonical.nativeGroupId
                         )
                     )
                 }
-            }
-            
-            // Create MATIC group if we have MATIC network
-            if (maticNetwork != null) {
-                tokenGroups.add(
-                    TokenGroupEntity(
-                        groupId = "network_matic",
-                        canonicalChainId = 137,
-                        canonicalAddress = "137",
-                        symbol = "MATIC",
-                        name = "MATIC"
-                    )
-                )
-                
-                tokenMetadata.add(
-                    TokenMetadataEntity(
-                        contractAddress = "137",
-                        chainId = 137,
-                        decimals = 18,
-                        name = "MATIC",
-                        symbol = "MATIC",
-                        logo = "MATIC",
-                        swappable = true,
-                        groupId = "network_matic"
-                    )
-                )
             }
             
             // Insert token groups and metadata before updating balances
@@ -300,31 +272,31 @@ class Web3jNetworkBalanceRepository @Inject constructor(
     }
 
     override suspend fun refreshNetworkBalanceByNetwork(toAddress: String, chainId: Int) {
-        val network = NetworkChain.getNetworkByChainId(chainId)
+        val network = NetworkChain.getNetworkByChainId(chainId) ?: return
 
         withContext(Dispatchers.IO) {
-            // Create token group and metadata for network token
-            val isPolygon = chainId == 137
-            val symbol = if (isPolygon) "MATIC" else "ETH"
-            val groupId = if (isPolygon) "network_matic" else "network_eth"
-            
+            // Create token group and metadata for this chain's native (gas) token.
+            val symbol = network.nativeSymbol
+            val canonical = NetworkChain.getAllNetworkChains()
+                .filter { it.nativeSymbol == symbol }.minByOrNull { it.chainId } ?: network
+
             val tokenGroup = TokenGroupEntity(
-                groupId = groupId,
-                canonicalChainId = if (isPolygon) 137 else 1,
-                canonicalAddress = if (isPolygon) "137" else "1",
+                groupId = network.nativeGroupId,
+                canonicalChainId = canonical.chainId,
+                canonicalAddress = canonical.chainId.toString(),
                 symbol = symbol,
-                name = symbol
+                name = network.nativeName
             )
-            
+
             val tokenMetadata = TokenMetadataEntity(
                 contractAddress = chainId.toString(),
                 chainId = chainId,
-                decimals = 18,
-                name = symbol,
+                decimals = network.nativeDecimals,
+                name = network.nativeName,
                 symbol = symbol,
                 logo = symbol,
                 swappable = true,
-                groupId = groupId
+                groupId = network.nativeGroupId
             )
             
             // Insert token group and metadata
@@ -337,13 +309,13 @@ class Web3jNetworkBalanceRepository @Inject constructor(
                     val newNetworkBalance = networkBalanceApi
                         .getNetworkCurrency(
                             toAddress,
-                            "https://${network!!.chainName}.g.alchemy.com/v2/${chainToApiKey(network!!.chainName)}"
+                            "https://${network.chainName}.g.alchemy.com/v2/${chainToApiKey(network.chainName)}"
                         )
                     tokenBalanceDao.upsertTokenBalances(
                         listOf(
                             TokenBalanceEntity(
-                                contractAddress = network!!.chainId.toString(),
-                                chainId = network!!.chainId,
+                                contractAddress = network.chainId.toString(),
+                                chainId = network.chainId,
                                 tokenBalance = newNetworkBalance
                             )
                         )

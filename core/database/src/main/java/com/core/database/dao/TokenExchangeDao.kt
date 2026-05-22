@@ -24,6 +24,9 @@ interface TokenExchangeDao {
     @Query("SELECT * FROM token_exchange WHERE symbol = :symbol AND currency = :currency ORDER BY timestamp DESC LIMIT 1")
     fun getExchangeBySymbolFlow(symbol: String, currency: String): Flow<TokenExchangeEntity?>
 
+    @Query("SELECT * FROM token_exchange WHERE symbol IN (:symbols) AND currency = :currency")
+    fun observeExchangesBySymbols(symbols: List<String>, currency: String): Flow<List<TokenExchangeEntity>>
+
     @Query("SELECT DISTINCT symbol FROM token_exchange")
     suspend fun getAllUniqueSymbols(): List<String>
 

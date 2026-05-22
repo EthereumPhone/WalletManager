@@ -64,6 +64,8 @@ fun SelectedNetworkButton(
         42161 -> "Arbitrum"
         8453 -> "Base"
         7777777 -> "Zora"
+        143 -> "Monad"
+        33139 -> "ApeChain"
         else -> "Select Network"
     }
         Button(

@@ -249,8 +249,10 @@ class DefaultExchangeRepository @Inject constructor(
             val tokenAddressesWithMetadata = mutableListOf<TokenAddressWithMetadata>()
             
             for (tokenGroup in activeTokenGroups) {
-                // Skip native tokens (ETH and MATIC) - we'll handle them separately
-                if (tokenGroup.tokenGroup.symbol == "ETH" || tokenGroup.tokenGroup.symbol == "MATIC") {
+                // Skip native (gas) token groups — they're handled separately by symbol below.
+                // Match by the "network_" groupId prefix so every native currency is covered
+                // (ETH, MATIC, BNB, AVAX, MON, APE...), not just ETH/MATIC.
+                if (tokenGroup.tokenGroup.groupId.startsWith("network_")) {
                     continue
                 }
                 
@@ -290,19 +292,15 @@ class DefaultExchangeRepository @Inject constructor(
                     }
                 }
             
-            // Determine which native currencies to fetch by symbol
-            val nativeCurrencySymbols = mutableSetOf<String>()
-            
-            for (balance in networkBalances) {
-                when {
-                    balance.chainId == 137 || balance.contractAddress == "0x0000000000000000000000000000000000001010" -> {
-                        nativeCurrencySymbols.add("MATIC")
-                    }
-                    else -> {
-                        nativeCurrencySymbols.add("ETH")
-                    }
+            // Determine which native currencies to fetch by their real per-chain ticker
+            // (ETH, MATIC, BNB, AVAX, MON, APE...) so each native balance gets its own price
+            // instead of everything non-Polygon being priced as ETH.
+            val nativeCurrencySymbols = networkBalances
+                .mapNotNull { balance ->
+                    if (balance.contractAddress == "0x0000000000000000000000000000000000001010") "MATIC"
+                    else NetworkChain.getNetworkByChainId(balance.chainId)?.nativeSymbol
                 }
-            }
+                .toMutableSet()
             
             // Fetch native currencies by symbol
             if (nativeCurrencySymbols.isNotEmpty()) {

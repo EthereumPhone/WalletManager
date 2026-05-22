@@ -367,6 +367,8 @@ fun networkToName(chainId: Int): String = when(chainId) {
     137 -> "Polygon"
     8453 -> "Base"
     5 -> "Goerli"
+    143 -> "Monad"
+    33139 -> "ApeChain"
     else -> ""
 }
 
@@ -433,6 +435,8 @@ fun getEtherscanDomainForChain(chainId: Int): String {
         137 -> "https://polygonscan.com/"
         42161 -> "https://arbiscan.io/"
         8453 -> "https://basescan.org/"
+        143 -> "https://monad.socialscan.io/" // Monad's first-party explorer is currently private
+        33139 -> "https://apescan.io/"
         else -> ""
     }
 }

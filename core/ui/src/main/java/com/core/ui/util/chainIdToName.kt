@@ -11,6 +11,11 @@ fun chainIdToName(name: String): String = when(name) {
     "10" -> "Optimism" // Optimum
     "42161" -> "Arbitrum" // Arbitrum
     "8453" -> "Base" // Base
+    "7777777" -> "Zora"
+    "56" -> "BNB Chain"
+    "43114" -> "Avalanche"
+    "143" -> "Monad"
+    "33139" -> "ApeChain"
     else -> {
         "N/A"
     }

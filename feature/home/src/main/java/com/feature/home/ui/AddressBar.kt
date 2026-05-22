@@ -151,6 +151,8 @@ private fun chainName(chainId: String) = when(chainId) {
     "8453" -> "Base"
     "42161" -> "Arbitrum"
     "7777777" -> "Zora"
+    "143" -> "Monad"
+    "33139" -> "ApeChain"
     else -> "Loading..."
 }
 

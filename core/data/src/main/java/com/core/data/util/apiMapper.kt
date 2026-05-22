@@ -15,6 +15,8 @@ fun chainIdToName(chainId: Int): String = when(chainId) {
     5 -> "eth-goerli"
     56 -> "bnb-mainnet"
     43114 -> "avax-mainnet"
+    143 -> "monad-mainnet"
+    33139 -> "apechain-mainnet"
     else -> ""
 }
 

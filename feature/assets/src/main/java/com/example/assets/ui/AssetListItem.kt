@@ -250,6 +250,8 @@ fun AssetListDetailItem(
         42161 -> "Arbitrum"
         11155111 -> "Sepolia"
         7777777 -> "Zora"
+        143 -> "Monad"
+        33139 -> "ApeChain"
         else -> {""}
     }
 
@@ -341,6 +343,22 @@ fun AssetListDetailItem(
                             modifier = Modifier,
                             contentScale = ContentScale.Fit,
                             painter = painterResource(id = R.drawable.sepolia_logo_v1),
+                            contentDescription = null
+                        )
+                    }
+                    143 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.monad),
+                            contentDescription = null
+                        )
+                    }
+                    33139 -> {
+                        Image(
+                            modifier = Modifier,
+                            contentScale = ContentScale.Crop,
+                            painter = painterResource(id = R.drawable.apechain),
                             contentDescription = null
                         )
                     }

@@ -344,6 +344,18 @@ fun ChainIcon(
             modifier = iconModifier,
             tint = Color.Unspecified
         )
+        143 -> Icon(
+            painter = painterResource(id = R.drawable.monad),
+            contentDescription = "Monad",
+            modifier = iconModifier,
+            tint = Color.Unspecified
+        )
+        33139 -> Icon(
+            painter = painterResource(id = R.drawable.apechain),
+            contentDescription = "ApeChain",
+            modifier = iconModifier,
+            tint = Color.Unspecified
+        )
         else -> Icon(
             painter = painterResource(id = R.drawable.ethereum_placeholder),
             contentDescription = "All Chains",
@@ -361,6 +373,8 @@ fun getChainName(chainId: Int?): String {
         8453 -> "BASE"
         42161 -> "ARB"
         7777777 -> "ZORA"
+        143 -> "MON"
+        33139 -> "APE"
         null -> "ALL"
         else -> "ALL"
     }

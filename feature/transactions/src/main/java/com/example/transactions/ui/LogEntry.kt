@@ -295,6 +295,8 @@ private fun getNetworkLogoResource(chainId: Int, asset: String): Int? {
         42161 -> R.drawable.arbitrum_logo // Arbitrum
         8453 -> R.drawable.base_square // Base
         7777777 -> R.drawable.zorb
+        143 -> R.drawable.monad // Monad
+        33139 -> R.drawable.apechain // ApeChain
         else -> null
     }
 }

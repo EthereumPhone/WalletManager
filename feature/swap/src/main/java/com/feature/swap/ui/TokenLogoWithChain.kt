@@ -253,6 +253,22 @@ fun TokenLogoWithChain(
                             contentScale = ContentScale.FillBounds
                         )
                     }
+                    143 -> { // Monad
+                        Image(
+                            painter = painterResource(id = R.drawable.monad),
+                            modifier = Modifier.border(1.dp,secondaryColor,CircleShape).clip(CircleShape),
+                            contentDescription = "Monad",
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
+                    33139 -> { // ApeChain
+                        Image(
+                            painter = painterResource(id = R.drawable.apechain),
+                            modifier = Modifier.border(1.dp,secondaryColor,CircleShape).clip(CircleShape),
+                            contentDescription = "ApeChain",
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
                     else -> {
                         Box(
                             modifier = Modifier

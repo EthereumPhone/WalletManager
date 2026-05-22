@@ -143,6 +143,8 @@ private fun networkSymbolResolver(chainId: Int): Int {
         42161 -> R.drawable.arbitrum
         43114 -> R.drawable.avalanche
         7777777 -> R.drawable.zorb
+        143 -> R.drawable.monad
+        33139 -> R.drawable.apechain
         else -> R.drawable.mainnet //TODO change to something different?
     }
 }
@@ -157,6 +159,8 @@ private fun networkNameResolver(chainId: Int): String {
         42161 -> "ARB"
         43114 -> "AVAX"
         7777777 -> "ZORA"
+        143 -> "MON"
+        33139 -> "APE"
         else -> "MAINNET" //TODO change to something different?
     }
 }
