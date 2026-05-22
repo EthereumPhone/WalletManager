@@ -123,8 +123,7 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                     // Resolve or create a groupId for this token
                     val resolvedGroupId = resolveGroupId(
                         chainId = chainId,
-                        address = address,
-                        symbol = tokenMetadata.symbol
+                        address = address
                     )
 
                     // Ensure the TokenGroup exists only if needed
@@ -249,8 +248,7 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                     // Resolve or create a groupId for this token
                     val resolvedGroupId = resolveGroupId(
                         chainId = network.chainId,
-                        address = address,
-                        symbol = tokenMetadata.symbol
+                        address = address
                     )
 
                     // Ensure the TokenGroup exists only if needed
@@ -320,16 +318,15 @@ class AlchemyTokenMetadataRepository @Inject constructor(
         return "${chainId}_${address.lowercase()}"
     }
 
-    private suspend fun resolveGroupId(chainId: Int, address: String, symbol: String): String {
-        // 1) Prefer explicit bridge relationships
+    private suspend fun resolveGroupId(chainId: Int, address: String): String {
+        // Only group across chains via authoritative bridge relationships from the curated
+        // token list. We deliberately do NOT merge by symbol: this runs for backfilled
+        // (non-curated) tokens, and scam tokens routinely reuse a real token's ticker
+        // (e.g. a fake "AERO"). Merging by symbol folds the scam into the legitimate token's
+        // group and corrupts its balance/identity, so unknown tokens get their own group.
         val byBridge = tokenGroupDao.findGroupIdByBridge(chainId, address)
         if (byBridge != null) return byBridge
 
-        // 2) Fallback: prefer existing group by symbol (favor mainnet canonical groups)
-        val bySymbol = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
-        if (bySymbol != null) return bySymbol
-
-        // 3) Otherwise, create a new group id scoped to this token
         return generateGroupId(chainId, address)
     }
 
@@ -370,9 +367,39 @@ class AlchemyTokenMetadataRepository @Inject constructor(
                         )
                     }
 
-                    // Update all tokens to point to the canonical group
+                    // The authoritative canonical (the real token) for this group.
+                    val canonicalChainId = existingGroup?.canonicalChainId ?: canonicalToken.chainId
+                    val canonicalAddress =
+                        (existingGroup?.canonicalAddress ?: canonicalToken.contractAddress).lowercase()
+
                     tokenList.forEach { token ->
-                        if (token.groupId != canonicalGroupId) {
+                        val addr = token.contractAddress.lowercase()
+                        val currentGroupId = token.groupId
+
+                        // A different-address token sitting on the canonical token's OWN chain is a
+                        // distinct token reusing the symbol (e.g. a scam "AERO" on Base alongside the
+                        // real Aerodrome). Give it its own group so it can't merge with / hide the
+                        // real token. This also HEALS databases where such a token was already merged
+                        // in by the previous symbol-based grouping.
+                        if (token.chainId == canonicalChainId && addr != canonicalAddress) {
+                            val ownGroupId = generateGroupId(token.chainId, addr)
+                            if (tokenGroupDao.getGroupedToken(ownGroupId) == null) {
+                                groupsToCreate.add(
+                                    TokenGroupEntity(ownGroupId, token.chainId, addr, token.symbol, token.name)
+                                )
+                            }
+                            if (currentGroupId != ownGroupId) {
+                                tokensToUpdate.add(token.copy(groupId = ownGroupId))
+                            }
+                            return@forEach
+                        }
+
+                        // Otherwise only attach tokens that don't already belong to a valid group.
+                        // Re-pointing tokens that ALREADY have a valid group is what let a scam token
+                        // get merged into a real token's group via a shared symbol.
+                        val hasValidGroup = currentGroupId != null &&
+                            tokenGroupDao.getGroupedToken(currentGroupId) != null
+                        if (!hasValidGroup && currentGroupId != canonicalGroupId) {
                             tokensToUpdate.add(token.copy(groupId = canonicalGroupId))
                         }
                     }

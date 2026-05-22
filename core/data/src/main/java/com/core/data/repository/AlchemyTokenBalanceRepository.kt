@@ -250,8 +250,7 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                                     if (metadata != null) {
                                         val resolvedGroupId = resolveGroupId(
                                             chainId = chainId,
-                                            address = token.contractAddress,
-                                            symbol = metadata.symbol
+                                            address = token.contractAddress
                                         )
                                         
                                         val existingGroup = tokenGroupDao.getGroupedToken(resolvedGroupId)
@@ -294,11 +293,14 @@ class AlchemyTokenBalanceRepository @Inject constructor(
         }
     }
 
-    private suspend fun resolveGroupId(chainId: Int, address: String, symbol: String): String {
+    private suspend fun resolveGroupId(chainId: Int, address: String): String {
+        // Only group across chains via authoritative bridge relationships from the curated
+        // token list. We must NOT merge by symbol here: this runs for backfilled (non-curated)
+        // tokens, and scam tokens commonly reuse a real token's ticker (e.g. a fake "AERO").
+        // Merging by symbol would fold the scam into the legitimate token's group and corrupt
+        // its balance/identity. Unknown tokens therefore get their own per-address group.
         val byBridge = tokenGroupDao.findGroupIdByBridge(chainId, address)
         if (byBridge != null) return byBridge
-        val bySymbol = tokenGroupDao.findGroupIdBySymbolPreferMainnet(symbol)
-        if (bySymbol != null) return bySymbol
         return "${chainId}_${address.lowercase()}"
     }
 
