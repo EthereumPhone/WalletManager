@@ -177,13 +177,47 @@ class VitalikGroupingTest {
             )
         }
 
-        // DAI composition dump (helps explain the pre-existing same-address dedup quirk:
-        // DAI on Optimism(10) and Arbitrum(42161) share address 0xda1000..., so only chain 10
-        // survives seeding — a separate latent issue, NOT caused by this fix).
+        // DAI composition dump.
         val dai = groups.first { it.tokenGroup.symbol == "DAI" && !it.tokenGroup.canonicalAddress.startsWith("0xdead") }
         println("DAI group ${dai.tokenGroup.groupId} activeChains=${dai.activeChainIds}")
         dai.tokensWithExchange.filter { it.tokenBalanceEntity != null }.forEach {
             println("   member ${it.tokenMetadataEntity?.contractAddress} chain=${it.tokenMetadataEntity?.chainId}")
         }
+    }
+
+    /**
+     * #2 fix: a token deployed at the SAME address on multiple chains (DAI lives at
+     * 0xda10009cbd5d07dd0cecc66161fc93d7c9000da1 on BOTH Optimism and Arbitrum) must be seeded
+     * on every chain. Previously the address-only dedup kept only the first chain, so a user
+     * holding DAI on Arbitrum couldn't see it. Verifies both rows exist and the DAI group
+     * spans both chains once balances are present.
+     */
+    @Test
+    fun sameAddressToken_isSeededOnAllChains_andGroupSpansThem() = runBlocking {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        TokenSeedingHelper.seedTokensDirectly(ctx, db.openHelper.writableDatabase)
+
+        val daiShared = "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1" // DAI on Optimism(10) AND Arbitrum(42161)
+        val onOptimism = db.tokenMetadataDao.getTokenMetadataByAddressAndChainId(daiShared, 10)
+        val onArbitrum = db.tokenMetadataDao.getTokenMetadataByAddressAndChainId(daiShared, 42161)
+        println("DAI@Optimism=$onOptimism")
+        println("DAI@Arbitrum=$onArbitrum")
+        assertTrue("DAI must be seeded on Optimism", onOptimism != null)
+        assertTrue("DAI must be seeded on Arbitrum (previously dropped by address-only dedup)", onArbitrum != null)
+        // Both rows must carry the SAME group so they aggregate into one DAI card.
+        assertEquals(onOptimism!!.groupId, onArbitrum!!.groupId)
+
+        // With balances on both chains, the DAI group is active on both.
+        db.tokenBalanceDao.upsertTokenBalances(
+            listOf(
+                TokenBalanceEntity(daiShared, 10, BigDecimal("5000000000000000000")),
+                TokenBalanceEntity(daiShared, 42161, BigDecimal("7000000000000000000"))
+            )
+        )
+        val dai = db.tokenGroupDao.observeAllActiveTokenGroupsWithExchange().first()
+            .first { it.tokenGroup.symbol == "DAI" }
+        println("DAI active chains = ${dai.activeChainIds}")
+        assertTrue("DAI group must be active on Optimism", dai.activeChainIds.contains(10))
+        assertTrue("DAI group must be active on Arbitrum", dai.activeChainIds.contains(42161))
     }
 }

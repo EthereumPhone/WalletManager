@@ -158,56 +158,43 @@ object TokenSeedingHelper {
             }
 
             // Add placeholder tokens for bridge targets that don't exist in our token lists
-            // This ensures foreign key constraints are satisfied
+            // This ensures foreign key constraints are satisfied. Tokens are keyed by
+            // (chainId, address): the SAME address can legitimately exist on multiple chains
+            // (e.g. DAI shares 0xda1000... on Optimism and Arbitrum), so we only skip when the
+            // exact (chain, address) pair already exists — never just because the address is
+            // reused elsewhere.
             val missingTokens = mutableSetOf<Pair<Int, String>>()
-            val addressesInUse = allTokens.values.map { it.address.lowercase() }.toMutableSet()
-            
+
             bridgeRelationships.forEach { bridge ->
                 val sourceKey = bridge.sourceChain to bridge.sourceAddress.lowercase()
                 val targetKey = bridge.targetChain to bridge.targetAddress.lowercase()
-                
+
                 // Add placeholder for missing source tokens
                 if (!allTokens.containsKey(sourceKey)) {
-                    val sourceAddressLower = bridge.sourceAddress.lowercase()
-                    // Check if this address is already used by another chain
-                    if (addressesInUse.contains(sourceAddressLower)) {
-                        Log.w(TAG, "Cannot add placeholder for ${bridge.sourceAddress} on chain ${bridge.sourceChain} - address already used by another chain")
-                    } else {
-                        missingTokens.add(sourceKey)
-                        Log.w(TAG, "Bridge references missing source token: ${bridge.sourceAddress} on chain ${bridge.sourceChain}")
-                        allTokens[sourceKey] = TokenJson(
-                            chainId = bridge.sourceChain,
-                            address = bridge.sourceAddress,
-                            name = "${bridge.sourceToken.name} (Bridge Source)",
-                            symbol = bridge.sourceToken.symbol,
-                            decimals = bridge.sourceToken.decimals,
-                            logoURI = bridge.sourceToken.logoURI,
-                            extensions = null
-                        )
-                        addressesInUse.add(sourceAddressLower)
-                    }
+                    missingTokens.add(sourceKey)
+                    allTokens[sourceKey] = TokenJson(
+                        chainId = bridge.sourceChain,
+                        address = bridge.sourceAddress,
+                        name = "${bridge.sourceToken.name} (Bridge Source)",
+                        symbol = bridge.sourceToken.symbol,
+                        decimals = bridge.sourceToken.decimals,
+                        logoURI = bridge.sourceToken.logoURI,
+                        extensions = null
+                    )
                 }
-                
+
                 // Add placeholder for missing target tokens
                 if (!allTokens.containsKey(targetKey)) {
-                    val targetAddressLower = bridge.targetAddress.lowercase()
-                    // Check if this address is already used by another chain
-                    if (addressesInUse.contains(targetAddressLower)) {
-                        Log.w(TAG, "Cannot add placeholder for ${bridge.targetAddress} on chain ${bridge.targetChain} - address already used by another chain")
-                    } else {
-                        missingTokens.add(targetKey)
-                        Log.w(TAG, "Bridge references missing target token: ${bridge.targetAddress} on chain ${bridge.targetChain}")
-                        allTokens[targetKey] = TokenJson(
-                            chainId = bridge.targetChain,
-                            address = bridge.targetAddress,
-                            name = "${bridge.sourceToken.name} (Bridged)",
-                            symbol = bridge.sourceToken.symbol,
-                            decimals = bridge.sourceToken.decimals,
-                            logoURI = bridge.sourceToken.logoURI,
-                            extensions = null
-                        )
-                        addressesInUse.add(targetAddressLower)
-                    }
+                    missingTokens.add(targetKey)
+                    allTokens[targetKey] = TokenJson(
+                        chainId = bridge.targetChain,
+                        address = bridge.targetAddress,
+                        name = "${bridge.sourceToken.name} (Bridged)",
+                        symbol = bridge.sourceToken.symbol,
+                        decimals = bridge.sourceToken.decimals,
+                        logoURI = bridge.sourceToken.logoURI,
+                        extensions = null
+                    )
                 }
             }
             Log.d(TAG, "Added ${missingTokens.size} placeholder tokens for bridge endpoints")
@@ -236,24 +223,23 @@ object TokenSeedingHelper {
                     }
                 }
                 
-                // Insert tokens, handling the primary key constraint
-                // Track which chainId each address was inserted with
-                val insertedTokens = mutableMapOf<String, Int>() // address -> chainId
-                
+                // Insert tokens. The primary key is (contractAddress, chainId), so the same
+                // address may legitimately appear on multiple chains. Track inserted
+                // (chainId, address) pairs — keying dedup on address alone (the old behaviour)
+                // silently dropped a token's row on every chain after the first, hiding the
+                // balance for users who held it on the "second" chain.
+                val insertedTokens = mutableSetOf<Pair<Int, String>>()
+
                 allTokens.forEach { (key, token) ->
                     val address = token.address.lowercase()
-                    
-                    // Skip if we've already inserted this address (primary key constraint)
-                    if (insertedTokens.containsKey(address)) {
-                        val existingChainId = insertedTokens[address]
-                        Log.w(TAG, "Skipping duplicate address $address for ${token.symbol} on chain ${token.chainId} (already inserted for chain $existingChainId)")
-                        return@forEach
-                    }
-                    
+                    val tokenKey = token.chainId to address
+
+                    if (insertedTokens.contains(tokenKey)) return@forEach
+
                     try {
                         database.execSQL(
                             """
-                            INSERT OR IGNORE INTO token_metadata 
+                            INSERT OR IGNORE INTO token_metadata
                             (contractAddress, decimals, name, symbol, logo, chainId, swappable, groupId)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """,
@@ -268,7 +254,7 @@ object TokenSeedingHelper {
                                 null // groupId will be updated later
                             )
                         )
-                        insertedTokens[address] = token.chainId
+                        insertedTokens.add(tokenKey)
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to insert token ${token.symbol} (${token.address}) on chain ${token.chainId}", e)
                         throw e
@@ -300,28 +286,14 @@ object TokenSeedingHelper {
                     group.bridges.forEach { bridge ->
                         val sourceAddress = bridge.sourceAddress.lowercase()
                         val targetAddress = bridge.targetAddress.lowercase()
-                        
-                        // Check if tokens were inserted with the correct chainId
-                        val sourceChainId = insertedTokens[sourceAddress]
-                        val targetChainId = insertedTokens[targetAddress]
-                        
-                        // Skip if either token wasn't inserted or has wrong chainId
-                        val shouldSkip = sourceChainId == null || targetChainId == null ||
-                                        sourceChainId != bridge.sourceChain || targetChainId != bridge.targetChain
-                        
+
+                        // Skip unless BOTH endpoints were actually seeded on the bridge's chains.
+                        val shouldSkip = (bridge.sourceChain to sourceAddress) !in insertedTokens ||
+                                        (bridge.targetChain to targetAddress) !in insertedTokens
+
                         if (shouldSkip) {
                             bridgesSkipped++
-                            Log.w(TAG, "Skipping bridge ${bridge.sourceChain}:$sourceAddress -> ${bridge.targetChain}:$targetAddress")
-                            if (sourceChainId == null) {
-                                Log.w(TAG, "  Source token not inserted")
-                            } else if (sourceChainId != bridge.sourceChain) {
-                                Log.w(TAG, "  Source token inserted with chainId $sourceChainId instead of ${bridge.sourceChain}")
-                            }
-                            if (targetChainId == null) {
-                                Log.w(TAG, "  Target token not inserted")
-                            } else if (targetChainId != bridge.targetChain) {
-                                Log.w(TAG, "  Target token inserted with chainId $targetChainId instead of ${bridge.targetChain}")
-                            }
+                            Log.w(TAG, "Skipping bridge ${bridge.sourceChain}:$sourceAddress -> ${bridge.targetChain}:$targetAddress (endpoint not seeded)")
                             return@forEach
                         }
                         
@@ -390,24 +362,25 @@ object TokenSeedingHelper {
                         val token = allTokens[key]
                         if (token != null) {
                             val address = token.address.lowercase()
-                            
-                            // Skip if token wasn't inserted
-                            if (!insertedTokens.containsKey(address)) {
+
+                            // Skip if this (chain, address) wasn't inserted
+                            if ((token.chainId to address) !in insertedTokens) {
                                 return@forEach
                             }
-                            
+
                             try {
-                                // Since contractAddress is the PK, we can only update based on that
+                                // PK is (contractAddress, chainId) — scope the update to this
+                                // exact row so same-address tokens on other chains aren't touched.
                                 database.execSQL(
                                     """
-                                    UPDATE token_metadata 
+                                    UPDATE token_metadata
                                     SET groupId = ?
-                                    WHERE contractAddress = ?
+                                    WHERE contractAddress = ? AND chainId = ?
                                     """,
-                                    arrayOf(group.id, address)
+                                    arrayOf(group.id, address, token.chainId)
                                 )
                             } catch (e: Exception) {
-                                Log.e(TAG, "Failed to update groupId for token $address", e)
+                                Log.e(TAG, "Failed to update groupId for token $address on chain ${token.chainId}", e)
                             }
                         }
                     }
