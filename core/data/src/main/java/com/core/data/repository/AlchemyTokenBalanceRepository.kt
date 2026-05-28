@@ -52,9 +52,9 @@ class AlchemyTokenBalanceRepository @Inject constructor(
 
     override fun getCombinedTokens(): Flow<List<TokenAsset>> =
         tokenBalanceDao.getCompositeTokens().map { allCompositeTokens ->
-            // Group tokens: those with metadata by symbol, those without separately
+            // Skip tokens without metadata; defaulting decimals to 18 would
+            // misreport balances for non-18-decimal tokens (USDC, USDT, etc.).
             val tokensWithMetadata = allCompositeTokens.filter { it.tokenMetadataEntity != null }
-            val tokensWithoutMetadata = allCompositeTokens.filter { it.tokenMetadataEntity == null && it.tokenBalanceEntity != null }
             
             // Process tokens with metadata (group by symbol)
             val groupedBySymbol = tokensWithMetadata.groupBy { it.tokenMetadataEntity!!.symbol }
@@ -87,34 +87,8 @@ class AlchemyTokenBalanceRepository @Inject constructor(
                     )
                 }
             }
-            
-            // Process tokens without metadata (use contract address as identifier)
-            val assetsWithoutMetadata = tokensWithoutMetadata.map { compositeToken ->
-                val balanceEntity = compositeToken.tokenBalanceEntity!!
-                // Use default decimals of 18 for tokens without metadata
-                val decimals = 18
-                val balance = balanceEntity.tokenBalance
-                    .movePointLeft(decimals)
-                    .stripTrailingZeros()
-                    .toDouble()
-                
-                // Use shortened address as symbol/name for now
-                val shortAddress = "${balanceEntity.contractAddress.take(6)}...${balanceEntity.contractAddress.takeLast(4)}"
-                
-                TokenAsset(
-                    address = balanceEntity.contractAddress,
-                    chainId = balanceEntity.chainId,
-                    symbol = shortAddress,
-                    name = "Unknown Token",
-                    balance = balance,
-                    decimals = decimals,
-                    logoUrl = null,
-                    swappable = false
-                )
-            }
-            
-            // Combine both lists
-            assetsWithMetadata + assetsWithoutMetadata
+
+            assetsWithMetadata
         }
 
     override fun getTokensBalances(): Flow<List<TokenBalance>> =
